@@ -2,7 +2,7 @@ import {
     DirectionalLightInteraction,
     FollowPlayerInteraction, GlobalAudioInteraction, GrabbableInteraction, Interaction,
     ParticleEmitterInteraction, PointLightInteraction,
-    PositionalAudioInteraction, SpotLightInteraction, TriggerVolumeInteraction
+    PositionalAudioInteraction, SeatInteraction, SpotLightInteraction, TriggerVolumeInteraction
 } from "@hyperlinkvr/vr-engine-schemas";
 import {useEffect, useMemo, useRef} from "react";
 
@@ -17,15 +17,22 @@ import {
     AudioLoader,
     DirectionalLight,
     Euler,
-    Group,
+    Group, MathUtils, Object3D,
     PointLight,
-    SpotLight,
+    SpotLight, Vector3,
 } from "three";
 import {PositionalAudio} from "@react-three/drei";
 import type { PositionalAudio as PositionalAudioType } from "three";
 import {rotation_to_euler} from "./rotation";
 import type {ParticleSystemRef} from "quarks.r3f";
 import {ParticleEmitter} from "../interaction/ParticleEmitter";
+import {is_seated_on, sit_on, stand_up} from "../player/seating";
+import {get_capsule_world_position} from "../player/motion";
+import {useSetting} from "@hyperlinkvr/react";
+import {useXRInputSourceState} from "@react-three/xr";
+import {useFrame} from "@react-three/fiber";
+import {useFlatFrameInput} from "../input/impl/flat/bindings";
+import {useSessionMode} from "../contexts/SessionModeContext";
 
 
 interface InteractionWrapperProps<I extends Interaction = Interaction> {
@@ -530,6 +537,111 @@ const ParticleEmitterWrapper = ({interaction, children}: InteractionWrapperProps
     )
 }
 
+const SEAT_ACTIVATE_DISTANCE = 1.2; // metres from the seat you must be within to sit
+
+const _seat_capsule = new Vector3();
+const _seat_anchor = new Vector3();
+
+// stand if already seated on this seat, otherwise sit if within distance of the anchor
+const try_toggle_seat = (
+    anchor: Object3D | null,
+    seat_id: string,
+    yaw_range_rad: [number, number] | null
+) => {
+    if (is_seated_on(seat_id)) {
+        stand_up(seat_id);
+        return;
+    }
+    if (!anchor) return;
+
+    anchor.updateWorldMatrix(true, false);
+    _seat_anchor.setFromMatrixPosition(anchor.matrixWorld);
+    get_capsule_world_position(_seat_capsule);
+
+    const dx = _seat_capsule.x - _seat_anchor.x;
+    const dz = _seat_capsule.z - _seat_anchor.z;
+    if (dx * dx + dz * dz > SEAT_ACTIVATE_DISTANCE * SEAT_ACTIVATE_DISTANCE) return;
+
+    sit_on({ anchor, yaw_range_rad, seat_id });
+};
+
+interface SeatActivationProps {
+    anchor_ref: React.RefObject<Group | null>;
+    seat_id: string;
+    yaw_range_rad: [number, number] | null;
+}
+
+// TODO: seat highlight
+
+// VR: off-hand secondary face button (TODO: should it be configurable or just overlap grab, diff button to dismount)
+const VRSeatActivation = ({ anchor_ref, seat_id, yaw_range_rad }: SeatActivationProps) => {
+    const [locomotion_hand] = useSetting("vr_locomotion_hand");
+    const sit_hand = locomotion_hand === "left" ? "right" : "left";
+    const state = useXRInputSourceState("controller", sit_hand);
+    const was_pressed = useRef(false);
+
+    useFrame(() => {
+        const pressed = state?.gamepad["b-button"]?.state === "pressed";
+        if (pressed && !was_pressed.current) {
+            try_toggle_seat(anchor_ref.current, seat_id, yaw_range_rad);
+        }
+        was_pressed.current = pressed ?? false;
+    });
+
+    return null;
+};
+
+// flat: reuses the "use" action (LMB / right trigger) (TODO: make it a sep bind perhaps, diff button to dismount)
+const FlatSeatActivation = ({ anchor_ref, seat_id, yaw_range_rad }: SeatActivationProps) => {
+    const input = useFlatFrameInput();
+    const was_pressed = useRef(false);
+
+    useFrame(() => {
+        const pressed = input.use;
+        if (pressed && !was_pressed.current) {
+            try_toggle_seat(anchor_ref.current, seat_id, yaw_range_rad);
+        }
+        was_pressed.current = pressed;
+    });
+
+    return null;
+};
+
+const SeatActivation = (props: SeatActivationProps) => {
+    const mode = useSessionMode();
+    return mode === "vr" ? <VRSeatActivation {...props} /> : <FlatSeatActivation {...props} />;
+};
+
+const SeatWrapper = ({ interaction, children }: InteractionWrapperProps<SeatInteraction>) => {
+    const { id } = useObjectRefs();
+    const anchor_ref = useRef<Group>(null);
+    const seat_id = `${id}:seat`;
+
+    const yaw_range_rad = useMemo<[number, number] | null>(() => {
+        if (!interaction.yaw_range_deg) return null;
+        const [min_deg, max_deg] = interaction.yaw_range_deg;
+        return [MathUtils.degToRad(min_deg), MathUtils.degToRad(max_deg)];
+    }, [interaction.yaw_range_deg]);
+
+    const facing_euler = useMemo(() => {
+        const euler = new Euler();
+        rotation_to_euler(interaction.facing, euler);
+        return euler;
+    }, [interaction.facing]);
+
+    return (
+        <>
+            <group
+                ref={anchor_ref}
+                position={interaction.anchor_offset}
+                rotation={facing_euler}
+            />
+            <SeatActivation anchor_ref={anchor_ref} seat_id={seat_id} yaw_range_rad={yaw_range_rad} />
+            {children}
+        </>
+    );
+};
+
 const INTERACTION_MAP: Record<Interaction["type"], React.ComponentType<InteractionWrapperProps<any>> | null> = {
     "grabbable": GrabbableWrapper,
     "follow-player": FollowPlayerWrapper,
@@ -541,6 +653,7 @@ const INTERACTION_MAP: Record<Interaction["type"], React.ComponentType<Interacti
     "directional-light": DirectionalLightWrapper,
     "spot-light": SpotLightWrapper,
     "particle-emitter": ParticleEmitterWrapper,
+    "seat": SeatWrapper,
 } as const;
 
 // first is outermost, last is innermost

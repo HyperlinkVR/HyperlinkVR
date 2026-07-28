@@ -1,7 +1,7 @@
 import {send_via_rtc} from "./messenger";
 import {whoami} from "./auth";
 
-class Player {
+export class Player {
     readonly #selected_username: string | null = null;
 
     // null targets the local player (currently the only one, but thinking ahead to multiplayer)

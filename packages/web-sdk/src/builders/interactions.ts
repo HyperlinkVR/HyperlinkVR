@@ -29,7 +29,7 @@ import {
     PositionalAudioInteraction,
     PositionalAudioInteractionInput,
     PositionalAudioInteractionSchema,
-    Rotation, RotationSchema,
+    Rotation, RotationSchema, SeatInteraction, SeatInteractionInput, SeatInteractionSchema,
     SpotLightInteraction,
     SpotLightInteractionInput,
     SpotLightInteractionSchema,
@@ -39,6 +39,7 @@ import {
     TweenEasing
 } from "@hyperlinkvr/vr-engine-schemas";
 import {send_via_rtc} from "../messenger";
+import {Player} from "../players";
 
 const interaction_command = async (object_id: string, interaction_id: string, command: string, args?: any) => {
     try {
@@ -687,6 +688,53 @@ export class ParticleEmitterInteractionBuilder extends BaseBuilder<ParticleEmitt
     }
 }
 
+export class SeatInteractionBuilder extends BaseBuilder<SeatInteractionInput> {
+    constructor() {
+        super({type: "seat"} as SeatInteractionInput);
+    }
+
+    set_anchor_offset(offset: [number, number, number]) {
+        this._internal.anchor_offset = offset;
+        return this;
+    }
+
+    set_facing(facing: Rotation) {
+        this._internal.facing = RotationSchema.parse(facing);
+        return this;
+    }
+
+    set_yaw_range(deg_range: [number, number] | undefined) {
+        this._internal.yaw_range_deg = deg_range;
+        return this;
+    }
+
+    reports_sit(sitting = true) {
+        this._internal.report_sit = sitting;
+        return this;
+    }
+
+    reports_stand(standing = true) {
+        this._internal.report_stand = standing;
+        return this;
+    }
+
+    build(): SeatInteraction {
+        return SeatInteractionSchema.parse(this._internal);
+    }
+
+
+    static _make_api(object_id: string, interaction_id: string) {
+        return {
+            sit: async (player: Player) => {
+                return await interaction_command(object_id, interaction_id, "sit", {username: await player.get_username()});
+            },
+            stand: async (player: Player) => {
+                return await interaction_command(object_id, interaction_id, "stand", {username: await player.get_username()});
+            },
+        }
+    }
+}
+
 export const _INTERACTION_API_MAKERS = {
     "follow-player": FollowPlayerInteractionBuilder._make_api,
     "positional-audio": PositionalAudioInteractionBuilder._make_api,
@@ -695,4 +743,5 @@ export const _INTERACTION_API_MAKERS = {
     "directional-light": DirectionalLightInteractionBuilder._make_api,
     "spot-light": SpotLightInteractionBuilder._make_api,
     "particle-emitter": ParticleEmitterInteractionBuilder._make_api,
+    "seat": SeatInteractionBuilder._make_api,
 } as Record<string, InteractionMakeAPIFunc>;

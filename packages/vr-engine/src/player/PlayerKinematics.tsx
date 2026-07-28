@@ -1,7 +1,7 @@
 import {useFrame, useThree} from "@react-three/fiber";
 import {RapierCollider, useRapier} from "@react-three/rapier";
 import {RefObject, useCallback, useEffect, useMemo, useRef} from "react";
-import {Vector3} from "three";
+import {Euler, Quaternion, Vector3} from "three";
 import {usePlayerOrigin} from "../contexts";
 import {useSetting} from "@hyperlinkvr/react";
 import {useXRInputSourceState} from "@react-three/xr";
@@ -11,6 +11,9 @@ import {JUMP_SPEED} from "../input/values";
 import {useWorldEnvironment} from "../world/WorldEnvironmentContext";
 import {CAPSULE_RADIUS, consume_player_movement, set_capsule_world_position} from "./motion";
 import {PLAYER_COLLISION_GROUPS, EXCLUDE_SENSORS} from "../engine/collision_groups";
+import {get_active_seat} from "./seating";
+
+const WORLD_UP = new Vector3(0, 1, 0);
 
 const VRJumpButton = ({jump_pressed_ref}: {jump_pressed_ref: RefObject<boolean>}) => {
     const [locomotion_hand] = useSetting("vr_locomotion_hand");
@@ -71,6 +74,15 @@ export const PlayerKinematics = () => {
 
     const last_grounded_pos = useRef(new Vector3(0, 0, 0));
 
+    const seat_captured = useRef(false);
+    const seat_yaw_offset = useRef(0);
+    const seat_local_pos = useRef(new Vector3());
+    const ride_pos = useRef(new Vector3());
+    const anchor_world_pos = useRef(new Vector3());
+    const anchor_quat = useRef(new Quaternion());
+    const seat_euler = useRef(new Euler());
+    const head_local = useRef(new Vector3());
+
     const { world_env } = useWorldEnvironment();
 
     const should_hit_environment = useCallback(
@@ -130,6 +142,56 @@ export const PlayerKinematics = () => {
 
         const origin = origin_ref.current;
         if (!origin) return;
+
+        const seat = get_active_seat();
+        if (seat) {
+            seat.anchor.updateWorldMatrix(true, false);
+
+            if (!seat_captured.current) {
+                // capture frame: face the seat, drop the head over the anchor, floor at anchor height
+                anchor_world_pos.current.setFromMatrixPosition(seat.anchor.matrixWorld);
+                anchor_quat.current.setFromRotationMatrix(seat.anchor.matrixWorld);
+                seat_euler.current.setFromQuaternion(anchor_quat.current, "YXZ");
+                const anchor_yaw = seat_euler.current.y;
+
+                // where the head currently sits within the origin frame (xz only)
+                camera.getWorldPosition(head_world.current);
+                head_local.current.copy(head_world.current);
+                origin.worldToLocal(head_local.current);
+                head_local.current.y = 0;
+
+                // point the origin the seat's way, then place it so the head lands on the anchor
+                origin.rotation.y = anchor_yaw;
+                head_local.current.applyAxisAngle(WORLD_UP, anchor_yaw);
+                origin.position.set(
+                    anchor_world_pos.current.x - head_local.current.x,
+                    anchor_world_pos.current.y,
+                    anchor_world_pos.current.z - head_local.current.z
+                );
+                origin.updateMatrixWorld(true);
+
+                // store the ride pose in the anchor's local frame so we track moving/rotating seats
+                seat_local_pos.current.copy(origin.position);
+                seat.anchor.worldToLocal(seat_local_pos.current);
+                seat_yaw_offset.current = origin.rotation.y - anchor_yaw;
+                seat_captured.current = true;
+            } else {
+                // ride: re-expand the stored local pose under the anchor's current transform
+                anchor_quat.current.setFromRotationMatrix(seat.anchor.matrixWorld);
+                seat_euler.current.setFromQuaternion(anchor_quat.current, "YXZ");
+
+                ride_pos.current.copy(seat_local_pos.current);
+                seat.anchor.localToWorld(ride_pos.current);
+                origin.position.copy(ride_pos.current);
+                origin.rotation.y = seat_euler.current.y + seat_yaw_offset.current;
+            }
+
+            // keep the capsule under the head so the environment blackout still fires
+            camera.getWorldPosition(head_world.current);
+            set_capsule_world_position(head_world.current.x, head_world.current.y, head_world.current.z);
+            return;
+        }
+        seat_captured.current = false;
 
         camera.getWorldPosition(head_world.current);
 

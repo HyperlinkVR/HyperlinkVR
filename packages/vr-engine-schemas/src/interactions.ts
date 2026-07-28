@@ -290,6 +290,18 @@ export type ParticleEmitterInteractionInput = z.input<typeof ParticleEmitterInte
 // TODO: support burst timings
 // TODO: support sprite sheet
 // TODO: support soft particles
+
+export const SeatInteractionSchema = bindable({
+    type: z.literal("seat"),
+    anchor_offset: z.tuple([z.number(), z.number(), z.number()]).default([0, 0, 0]),
+    facing: RotationSchema.default([0, 0, 0]),
+    yaw_range_deg: z.tuple([z.number(), z.number()]).optional(),
+    report_sit: z.boolean().default(false),
+    report_stand: z.boolean().default(false)
+});
+export type SeatInteraction = z.infer<typeof SeatInteractionSchema>;
+export type SeatInteractionInput = z.input<typeof SeatInteractionSchema>;
+
 export const InteractionSchema = z.discriminatedUnion("type", [
     GrabbableInteractionSchema,
     ControllerButtonInteractionSchema,
@@ -300,7 +312,22 @@ export const InteractionSchema = z.discriminatedUnion("type", [
     PointLightInteractionSchema,
     SpotLightInteractionSchema,
     DirectionalLightInteractionSchema,
-    ParticleEmitterInteractionSchema
+    ParticleEmitterInteractionSchema,
+    SeatInteractionSchema
 ]);
 export type Interaction = z.infer<typeof InteractionSchema>;
 export type InteractionInput = z.input<typeof InteractionSchema>;
+
+export type BindableInteraction =
+    | GrabbableInteraction
+    | ControllerButtonInteraction
+    | TriggerVolumeInteraction
+    | FollowPlayerInteraction
+    | PositionalAudioInteraction
+    | GlobalAudioInteraction
+    | PointLightInteraction
+    | SpotLightInteraction
+    | DirectionalLightInteraction
+    | ParticleEmitterInteraction
+    | SeatInteraction;
+

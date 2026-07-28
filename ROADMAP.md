@@ -58,7 +58,7 @@
   - [ ] force avatar items
   - [ ] force spectator camera mode/pos
   - [ ] force avatar expression
-  - [ ] player monitors (e.g. position, expression, velocity, fall of x height/velocity for fall damage, etc)
+  - [ ] player monitors (e.g. position, expression, velocity, fall of x height/velocity for fall damage, direct access to controller buttons, etc)
   - [x] send player to another world
   - [ ] show prompt to confirm going to another world (could allow skipping prompt on same origin)
   - [ ] storing user_data on player for custom tag

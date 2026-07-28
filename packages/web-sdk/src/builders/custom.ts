@@ -1,14 +1,12 @@
 import {BaseBuilder} from "./base";
 import {
-    ControllerButtonInteraction,
+    BindableInteraction,
     CustomObject,
     CustomObjectInput,
     CustomObjectSchema,
     FollowPlayerInteraction,
-    GrabbableInteraction,
     Interaction,
     PhysicsSystem,
-    TriggerVolumeInteraction
 } from "@hyperlinkvr/vr-engine-schemas";
 
 export class CustomObjectBuilder extends BaseBuilder<CustomObjectInput> {
@@ -29,10 +27,7 @@ export class CustomObjectBuilder extends BaseBuilder<CustomObjectInput> {
     add_interaction(interaction: FollowPlayerInteraction): this;
     add_interaction(
         name: string,
-        interaction:
-            | GrabbableInteraction
-            | ControllerButtonInteraction
-            | TriggerVolumeInteraction
+        interaction: BindableInteraction
     ): this;
     add_interaction(
         name_or_interaction: string | Interaction,

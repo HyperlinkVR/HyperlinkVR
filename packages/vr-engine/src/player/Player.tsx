@@ -20,6 +20,7 @@ import { FlatHandsPublisher } from "../input/impl/flat/hands";
 import {Vignette} from "./Vignette";
 import {PlayerKinematics} from "./PlayerKinematics";
 import {useWebSDKMessaging} from "../contexts";
+import {useIsSeated} from "./seating";
 
 const MouthTest = ({
     mouth_name,
@@ -91,6 +92,8 @@ export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>
     const {on_action} = useWebSDKMessaging();
     const messenger = useMessageEngine();
     const {id: tab_id} = useTabSession();
+
+    const seated = useIsSeated();
 
     useEffect(() => {
         // TODO: these ignore target username on the message and assume its for us, nothing to do rn but just remember this is the case when multiplayer happens
@@ -199,7 +202,7 @@ export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>
                             <XRHandsPublisher />
                             <ExpressionTest />
                         </XROrigin>
-                        {can_move && <XRLocomotion origin={origin_ref} />}
+                        {can_move && !seated && <XRLocomotion origin={origin_ref} />}
                     </>
                 ) : (
                     <>
@@ -208,7 +211,7 @@ export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>
                             <FlatCameraRig origin={origin_ref} />
                             <ExpressionTest />
                         </group>
-                        {can_move && <FlatLocomotion origin={origin_ref} />}
+                        {can_move && !seated && <FlatLocomotion origin={origin_ref} />}
                     </>
                 )}
             </PlayerExpressionProvider>
