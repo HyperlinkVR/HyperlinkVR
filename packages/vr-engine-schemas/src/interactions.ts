@@ -48,28 +48,7 @@ export const GrabbableInteractionSchema = bindable({
 });
 export type GrabbableInteraction = z.infer<typeof GrabbableInteractionSchema>;
 export type GrabbableInteractionInput = z.input<typeof GrabbableInteractionSchema>;
-export const ControllerButtonWhenListenSchema = z.union([
-    z.literal("held"),
-    z.literal("nearby"),
-    z.literal("intersecting"),
-    z.literal("always")
-]);
-export type ControllerButtonWhenListen = z.infer<
-    typeof ControllerButtonWhenListenSchema
->;
-export const ControllerButtonInteractionSchema = bindable({
-    type: z.literal("controller-button"),
-    button: z.string(),
-    report_press: z.boolean().default(true),
-    report_release: z.boolean().default(true),
-    when_listen: ControllerButtonWhenListenSchema.default("held")
-});
-export type ControllerButtonInteraction = z.infer<
-    typeof ControllerButtonInteractionSchema
->;
-export type ControllerButtonInteractionInput = z.input<
-    typeof ControllerButtonInteractionSchema
->;
+
 const TriggerVolumeObjectsDisableSchema = z.object({
     include: z.literal(false)
 });
@@ -304,7 +283,6 @@ export type SeatInteractionInput = z.input<typeof SeatInteractionSchema>;
 
 export const InteractionSchema = z.discriminatedUnion("type", [
     GrabbableInteractionSchema,
-    ControllerButtonInteractionSchema,
     TriggerVolumeInteractionSchema,
     FollowPlayerInteractionSchema,
     PositionalAudioInteractionSchema,
@@ -320,7 +298,6 @@ export type InteractionInput = z.input<typeof InteractionSchema>;
 
 export type BindableInteraction =
     | GrabbableInteraction
-    | ControllerButtonInteraction
     | TriggerVolumeInteraction
     | FollowPlayerInteraction
     | PositionalAudioInteraction

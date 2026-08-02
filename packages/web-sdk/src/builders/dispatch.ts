@@ -8,7 +8,7 @@ import {
     EngineObjectModification,
     EngineObjectModificationInput,
     EngineObjectModificationSchema,
-    Monitor,
+    ObjectMonitor,
     PartialTransformInput,
     PrefabInput,
     ReportEvent,
@@ -126,7 +126,7 @@ class EngineObjectModificationBuilder extends BaseBuilder<EngineObjectModificati
         return this;
     }
 
-    add_monitor(name: string, monitor: Monitor) {
+    add_monitor(name: string, monitor: ObjectMonitor) {
         if (this.#burned) {
             throw new Error("This modification builder has already been applied.");
         }
@@ -161,7 +161,7 @@ class EngineObjectModificationBuilder extends BaseBuilder<EngineObjectModificati
 
     // TODO: way to remove monitors from source object, need to pull in its state
 
-    add_monitors(monitors: { name: string, monitor: Monitor }[]) {
+    add_monitors(monitors: { name: string, monitor: ObjectMonitor }[]) {
         if (this.#burned) {
             throw new Error("This modification builder has already been applied.");
         }
@@ -356,7 +356,7 @@ export class EngineObjectDispatchBuilder extends BaseBuilder<EngineObjectDispatc
         return this;
     }
 
-    add_monitor(name: string, monitor: Monitor) {
+    add_monitor(name: string, monitor: ObjectMonitor) {
         if (!this._internal.monitors) {
             this._internal.monitors = [];
         }
@@ -364,7 +364,7 @@ export class EngineObjectDispatchBuilder extends BaseBuilder<EngineObjectDispatc
         return this;
     }
 
-    add_monitors(monitors: { name: string, monitor: Monitor }[]) {
+    add_monitors(monitors: { name: string, monitor: ObjectMonitor }[]) {
         if (!this._internal.monitors) {
             this._internal.monitors = [];
         }
@@ -372,7 +372,7 @@ export class EngineObjectDispatchBuilder extends BaseBuilder<EngineObjectDispatc
         return this;
     }
 
-    set_monitors(monitors: { name: string, monitor: Monitor }[]) {
+    set_monitors(monitors: { name: string, monitor: ObjectMonitor }[]) {
         this._internal.monitors = monitors.map(({name, monitor}) => ({...monitor, binding: {name}}));
         return this;
     }

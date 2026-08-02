@@ -52,11 +52,11 @@ export const AngularVelocityMonitorSchema = AxesBasedMonitorSchema.extend({
 });
 export type AngularVelocityMonitor = z.infer<typeof AngularVelocityMonitorSchema>;
 export type AngularVelocityMonitorInput = z.input<typeof AngularVelocityMonitorSchema>;
-export const MonitorSchema = z.discriminatedUnion("type", [
+export const ObjectMonitorSchema = z.discriminatedUnion("type", [
     PositionMonitorSchema,
     RotationMonitorSchema,
     LinearVelocityMonitorSchema,
     AngularVelocityMonitorSchema
 ]);
-export type Monitor = z.infer<typeof MonitorSchema>;
-export type MonitorInput = z.input<typeof MonitorSchema>;
+export type ObjectMonitor = z.infer<typeof ObjectMonitorSchema>;
+export type ObjectMonitorInput = z.input<typeof ObjectMonitorSchema>;

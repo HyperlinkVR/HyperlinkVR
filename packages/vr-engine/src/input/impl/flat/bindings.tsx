@@ -100,7 +100,7 @@ export const useFlatInputControls = (): FlatInputControls => {
     return value;
 };
 
-enum StandardControllerInput {
+export enum StandardControllerInput {
     FACE_BOTTOM = 0, // xbox: A, ps: Cross, nintendo: B
     FACE_RIGHT = 1, // xbox: B, ps: Circle, nintendo: A
     FACE_LEFT = 2, // xbox: X, ps: Square, nintendo: Y

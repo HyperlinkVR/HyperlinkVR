@@ -1,5 +1,31 @@
 import {send_via_rtc} from "./messenger";
 import {whoami} from "./auth";
+import {PlayerMonitor, ReportEvent} from "@hyperlinkvr/vr-engine-schemas";
+import {subscribe_report} from "./event_bus";
+
+interface RegisteredMonitor {
+    id: string;
+    monitor: PlayerMonitor;
+    unsubscribe: () => void;
+}
+
+// get_current_player() creeates a fresh Player every call, so anything stored on an instance is lost the moment a second one is made
+// TODO: is it better to bookkeep player classes as a whole? probably
+const monitors_by_target = new Map<string, Map<string, RegisteredMonitor>>();
+
+const LOCAL_TARGET_KEY = "@local";
+
+const target_key = (username: string | null) => username ?? LOCAL_TARGET_KEY;
+
+const monitors_for = (username: string | null): Map<string, RegisteredMonitor> => {
+    const key = target_key(username);
+    let registered = monitors_by_target.get(key);
+    if (!registered) {
+        registered = new Map();
+        monitors_by_target.set(key, registered);
+    }
+    return registered;
+};
 
 export class Player {
     readonly #selected_username: string | null = null;
@@ -84,6 +110,110 @@ export class Player {
         }
 
         return res.going;
+    }
+
+    async add_monitor(
+        name: string,
+        monitor: PlayerMonitor,
+        callback: (event: ReportEvent) => void
+    ): Promise<() => Promise<void>> {
+        const registered = monitors_for(this.#selected_username);
+
+        if (registered.has(name)) {
+            throw new Error(`A monitor named "${name}" is already registered on this player.`);
+        }
+
+        const id = crypto.randomUUID();
+
+        // claim the name synchronously so two concurrent adds cannot both pass the check above, then fill in the real entry once the engine accepts
+        const placeholder: RegisteredMonitor = {id, monitor, unsubscribe: () => {}};
+        registered.set(name, placeholder);
+
+        const unsubscribe = subscribe_report(id, callback);
+        placeholder.unsubscribe = unsubscribe;
+
+        let res;
+        try {
+            res = await send_via_rtc({
+                action: "HVRSDK_PLAYER_ADD_MONITOR",
+                target_username: this.#selected_username,
+                monitor: {
+                    ...monitor,
+                    binding: {name, id}
+                }
+            });
+        } catch (error) {
+            unsubscribe();
+            registered.delete(name);
+            throw error;
+        }
+
+        if (!res || !res.success) {
+            unsubscribe();
+            registered.delete(name);
+            throw new Error(`Failed to add player monitor "${name}".`);
+        }
+
+        return () => this.remove_monitor(name);
+    }
+
+    async add_monitors(
+        monitors: {name: string, monitor: PlayerMonitor, callback: (event: ReportEvent) => void}[]
+    ): Promise<() => Promise<void>> {
+        const added: string[] = [];
+
+        try {
+            for (const {name, monitor, callback} of monitors) {
+                await this.add_monitor(name, monitor, callback);
+                added.push(name);
+            }
+        } catch (error) {
+            // roll back so a partial failure does not leave half the batch live
+            for (const name of added) {
+                await this.remove_monitor(name).catch(() => {});
+            }
+            throw error;
+        }
+
+        return async () => {
+            for (const {name} of monitors) {
+                await this.remove_monitor(name);
+            }
+        };
+    }
+
+    async remove_monitor(name: string): Promise<void> {
+        const registered = monitors_for(this.#selected_username);
+        const entry = registered.get(name);
+
+        if (!entry) {
+            throw new Error(`No monitor named "${name}" is registered on this player.`);
+        }
+
+        // drop the local subscription first, and drop the bookkeeping whatever the engine says, so a failed remove cannot lock the name forever
+        entry.unsubscribe();
+        registered.delete(name);
+
+        const res = await send_via_rtc({
+            action: "HVRSDK_PLAYER_REMOVE_MONITOR",
+            target_username: this.#selected_username,
+            monitor_id: entry.id
+        });
+
+        if (!res || !res.success) {
+            throw new Error(`Failed to remove player monitor "${name}".`);
+        }
+    }
+
+    async remove_all_monitors(): Promise<void> {
+        const registered = monitors_for(this.#selected_username);
+        for (const name of [...registered.keys()]) {
+            await this.remove_monitor(name);
+        }
+    }
+
+    get_monitor_names(): string[] {
+        return [...monitors_for(this.#selected_username).keys()];
     }
 }
 

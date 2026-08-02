@@ -21,6 +21,9 @@ import {Vignette} from "./Vignette";
 import {PlayerKinematics} from "./PlayerKinematics";
 import {useWebSDKMessaging} from "../contexts";
 import {useIsSeated} from "./seating";
+import {register_input_monitor, unregister_input_monitor} from "../engine/input_monitor_registry";
+import {PlayerMonitorSchema} from "@hyperlinkvr/vr-engine-schemas";
+import {LOCAL_PLAYER_SUBJECT} from "./subject";
 
 const MouthTest = ({
     mouth_name,
@@ -180,10 +183,53 @@ export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>
             });
         });
 
+        const unlisten_add_monitor = on_action("HVRSDK_PLAYER_ADD_MONITOR", (message, reply) => {
+            const {success, data} = PlayerMonitorSchema.safeParse(message.monitor);
+            if (!success) {
+                console.error("Failed to parse player monitor", message.monitor);
+                reply({
+                    for: "HVRSDK_PLAYER_ADD_MONITOR",
+                    success: false,
+                    error: "Failed to parse player monitor"
+                });
+                return;
+            }
+
+            const registered = register_input_monitor(LOCAL_PLAYER_SUBJECT, data);
+            if (!registered) {
+                reply({
+                    for: "HVRSDK_PLAYER_ADD_MONITOR",
+                    success: false,
+                    error: "Monitor was rejected: it has no binding id or reports nothing"
+                });
+                return;
+            }
+
+            reply({
+                for: "HVRSDK_PLAYER_ADD_MONITOR",
+                success: true,
+                monitor_id: data.binding!.id!
+            });
+        });
+
+        const unlisten_remove_monitor = on_action("HVRSDK_PLAYER_REMOVE_MONITOR", (message, reply) => {
+            const removed = unregister_input_monitor(message.monitor_id);
+
+            // the sdk drops its own bookkeeping regardless of the outcome, so an
+            // unknown id is reported but is not treated as a failure worth retrying
+            reply({
+                for: "HVRSDK_PLAYER_REMOVE_MONITOR",
+                success: true,
+                was_registered: removed
+            });
+        });
+
         return () => {
             unlisten_get_pos();
             unlisten_teleport_to();
             unlisten_send_to_world();
+            unlisten_add_monitor();
+            unlisten_remove_monitor();
         }
     }, []);
 

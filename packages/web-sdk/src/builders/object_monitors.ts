@@ -1,5 +1,5 @@
 import {BaseBuilder} from "./base";
-import {AxesBasedMonitorInput, AxisRange, Monitor, MonitorSchema} from "@hyperlinkvr/vr-engine-schemas";
+import {AxesBasedMonitorInput, AxisRange, ObjectMonitor, ObjectMonitorSchema} from "@hyperlinkvr/vr-engine-schemas";
 
 class AxesBasedMonitorBuilder extends BaseBuilder<AxesBasedMonitorInput> {
     constructor(type: "position" | "rotation" | "linear-velocity" | "angular-velocity",) {
@@ -42,8 +42,8 @@ class AxesBasedMonitorBuilder extends BaseBuilder<AxesBasedMonitorInput> {
         return this;
     }
 
-    build(): Monitor {
-        return MonitorSchema.parse(this._internal);
+    build(): ObjectMonitor {
+        return ObjectMonitorSchema.parse(this._internal);
     }
 }
 

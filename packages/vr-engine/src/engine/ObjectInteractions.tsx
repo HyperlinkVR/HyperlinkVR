@@ -646,7 +646,6 @@ const INTERACTION_MAP: Record<Interaction["type"], React.ComponentType<Interacti
     "grabbable": GrabbableWrapper,
     "follow-player": FollowPlayerWrapper,
     "trigger-volume": TriggerVolumeWrapper,
-    "controller-button": null,
     "positional-audio": PositionalAudioWrapper,
     "global-audio": GlobalAudioWrapper,
     "point-light": PointLightWrapper,
@@ -662,7 +661,6 @@ const INTERACTION_MAP: Record<Interaction["type"], React.ComponentType<Interacti
 const WRAPPER_STRICT_ORDER: Interaction["type"][] = [
     "follow-player",
     "grabbable",
-    "controller-button",
     "trigger-volume",
     "positional-audio",
     "global-audio",

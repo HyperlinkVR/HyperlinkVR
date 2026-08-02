@@ -1,4 +1,4 @@
-import type { AxisRange, Monitor } from "@hyperlinkvr/vr-engine-schemas";
+import type { AxisRange, ObjectMonitor } from "@hyperlinkvr/vr-engine-schemas";
 
 export type MonitorReportKind =
     | "pos-monitor"
@@ -6,7 +6,7 @@ export type MonitorReportKind =
     | "lin-vel-monitor"
     | "ang-vel-monitor";
 
-const REPORT_KIND: Record<Monitor["type"], MonitorReportKind> = {
+const REPORT_KIND: Record<ObjectMonitor["type"], MonitorReportKind> = {
     position: "pos-monitor",
     rotation: "rot-monitor",
     "linear-velocity": "lin-vel-monitor",
@@ -51,7 +51,7 @@ export interface CompiledMonitor {
     object_id: string;
     source_id: string;
     kind: MonitorReportKind;
-    monitor_type: Monitor["type"];
+    monitor_type: ObjectMonitor["type"];
 
     when: "any" | "all" | "xor";
 
@@ -71,7 +71,7 @@ export interface CompiledMonitor {
     last_z: number;
 }
 
-const compile_monitor = (object_id: string, monitor: Monitor): CompiledMonitor | null => {
+const compile_monitor = (object_id: string, monitor: ObjectMonitor): CompiledMonitor | null => {
     const source_id = monitor.binding?.id;
     if (!source_id) {
         // no binding means nobody is listening, so it would be pure cost
@@ -128,7 +128,7 @@ export const get_monitor_entries = (): CompiledMonitor[] => flattened;
 
 export const register_object_monitors = (
     object_id: string,
-    monitors: Monitor[] | undefined
+    monitors: ObjectMonitor[] | undefined
 ): (() => void) => {
     // if the object already had monitors, carry over the mutable state so that the next tick doesn't see a false transition
     const previous = by_object.get(object_id);

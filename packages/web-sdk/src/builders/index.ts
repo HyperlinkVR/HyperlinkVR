@@ -1,5 +1,6 @@
 export * from "./interactions";
-export * from "./monitors";
+export * from "./object_monitors";
+export * from "./player_monitors";
 export * from "./physics";
 export * from "./prefabs";
 export * from "./custom";

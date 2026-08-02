@@ -14,7 +14,7 @@ import {
     mask_to_axes,
     sample_is_unchanged,
     satisfied_axes
-} from "./monitor_registry";
+} from "./object_monitor_registry";
 
 const scratch_sample = new Vector3();
 const scratch_quaternion = new Quaternion();
@@ -82,7 +82,7 @@ const sample_into = (
     }
 };
 
-export const MonitorRunner = () => {
+export const ObjectMonitorRunner = () => {
     const { emit_event, connected } = useWebSDKMessaging();
 
     const connected_ref = useRef(connected);

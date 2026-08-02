@@ -1,10 +1,6 @@
 import {BaseBuilder} from "./base";
 import {
     Collider,
-    ControllerButtonInteraction,
-    ControllerButtonInteractionInput,
-    ControllerButtonInteractionSchema,
-    ControllerButtonWhenListen,
     DirectionalLightInteraction,
     DirectionalLightInteractionInput,
     DirectionalLightInteractionSchema,
@@ -139,38 +135,6 @@ export class GrabbableInteractionBuilder extends BaseBuilder<GrabbableInteractio
 
 
     // TODO: set enabled/disabled, api to change that, api to eject
-}
-
-export class ControllerButtonInteractionBuilder extends BaseBuilder<ControllerButtonInteractionInput> {
-    constructor() {
-        super({
-            type: "controller-button"
-        } as ControllerButtonInteractionInput);
-    }
-
-    set_button(button: string) {
-        this._internal.button = button;
-        return this;
-    }
-
-    set_when_listen(when: ControllerButtonWhenListen) {
-        this._internal.when_listen = when;
-        return this;
-    }
-
-    set_reports_press(reports: boolean) {
-        this._internal.report_press = reports;
-        return this;
-    }
-
-    set_reports_release(reports: boolean) {
-        this._internal.report_release = reports;
-        return this;
-    }
-
-    build(): ControllerButtonInteraction {
-        return ControllerButtonInteractionSchema.parse(this._internal);
-    }
 }
 
 export class TriggerVolumeInteractionBuilder extends BaseBuilder<TriggerVolumeInteractionInput> {

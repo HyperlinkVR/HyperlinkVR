@@ -1,7 +1,7 @@
 import {z} from "zod";
 
 import {PartialTransformSchema, TransformSchema} from "./transforms";
-import {MonitorSchema} from "./monitors";
+import {ObjectMonitorSchema} from "./object_monitors";
 import {EngineObjectSchema} from "./objects";
 
 export const EngineObjectDispatchSchema = z.object({
@@ -12,7 +12,7 @@ export const EngineObjectDispatchSchema = z.object({
         scale: [1, 1, 1]
     }),
     user_data: z.record(z.string(), z.any()).optional(),
-    monitors: z.array(MonitorSchema).optional(),
+    monitors: z.array(ObjectMonitorSchema).optional(),
     tags: z.array(z.string()).optional()
 });
 export type EngineObjectDispatch = z.infer<typeof EngineObjectDispatchSchema>;
@@ -27,7 +27,7 @@ export const EngineObjectModificationSchema = z.object({
     id: z.string(),
     transform: PartialTransformSchema.optional(),
     user_data: z.record(z.string(), z.any()).optional(),
-    monitors: z.array(MonitorSchema).optional(),
+    monitors: z.array(ObjectMonitorSchema).optional(),
     tags: z.array(z.string()).optional()
 });
 export type EngineObjectModification = z.infer<typeof EngineObjectModificationSchema>;

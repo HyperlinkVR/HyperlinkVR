@@ -1,6 +1,6 @@
 import type {
     CreatedEngineObject,
-    EngineObjectDispatch, EngineObjectModification,
+    EngineObjectDispatch, EngineObjectModification, PlayerMonitor,
     ReportEvent, Tween, WorldEnv
 } from "@hyperlinkvr/vr-engine-schemas";
 
@@ -164,6 +164,18 @@ interface WebSDKResetWorldEnvironmentAction extends BaseWebSDKActionMessage {
     type?: "default" | "grayspace";
 }
 
+interface WebSDKPlayerAddMonitorAction extends BaseWebSDKActionMessage {
+    action: "HVRSDK_PLAYER_ADD_MONITOR";
+    target_username: string | null;
+    monitor: PlayerMonitor;
+}
+
+interface WebSDKPlayerRemoveMonitorAction extends BaseWebSDKActionMessage {
+    action: "HVRSDK_PLAYER_REMOVE_MONITOR";
+    target_username: string | null;
+    monitor_id: string;
+}
+
 export type WebSDKActionMessage =
     WebSDKAuthQueryAction
     | WebSDKAuthWhoAmIAction
@@ -181,7 +193,9 @@ export type WebSDKActionMessage =
     | WebSDKMetaAction
     | WebSDKLoadingFinishedAction
     | WebSDKUpdateWorldEnvironmentAction
-    | WebSDKResetWorldEnvironmentAction;
+    | WebSDKResetWorldEnvironmentAction
+    | WebSDKPlayerAddMonitorAction
+    | WebSDKPlayerRemoveMonitorAction;
 
 export type ActionMessage =
     StartStreamAction |
@@ -324,6 +338,18 @@ interface WebSDKLoadingFinishedReplyMessage extends BaseWebSDKReplyMessage {
     success: true;
 }
 
+interface WebSDKPlayerAddMonitorReplyMessage extends BaseWebSDKReplyMessage {
+    for: "HVRSDK_PLAYER_ADD_MONITOR";
+    success: true;
+    monitor_id: string;
+}
+
+interface WebSDKPlayerRemoveMonitorReplyMessage extends BaseWebSDKReplyMessage {
+    for: "HVRSDK_PLAYER_REMOVE_MONITOR";
+    success: true;
+    was_registered: boolean;
+}
+
 export type WebSDKReplyMessage =
     WebSDKAuthQueryReplyMessage
     | WebSDKAuthWhoAmIReplyMessage
@@ -338,7 +364,9 @@ export type WebSDKReplyMessage =
     | WebSDKPlayerTeleportToReplyMessage
     | WebSDKUpdateWorldEnvironmentReplyMessage
     | WebSDKResetWorldEnvironmentReplyMessage
-    | WebSDKLoadingFinishedReplyMessage;
+    | WebSDKLoadingFinishedReplyMessage
+    | WebSDKPlayerAddMonitorReplyMessage
+    | WebSDKPlayerRemoveMonitorReplyMessage;
 
 export type ReplyMessage =
     WebSDKReplyMessage;
