@@ -27,6 +27,8 @@
   - [ ] Crouch for flat
   - [ ] Seated mode that automatically adjusts to player height (with crouch button)
 - [ ] Option for SDK rigid body to forbid teleport onto
+- [ ] Floating text and sign prefabs
+- [ ] Raycast interaction
 - [x] Light interactions: point, spot, directional
   - [ ] Support tweening of light properties 
 - [x] Positional audio interaction/prefab (with option for 2D audio for consistency even though they could do it via their own DOM if they wished)
@@ -34,8 +36,6 @@
   - [x] Implement interaction command message and API binding
   - [x] Actually handle the created commands in engine
 - [ ] Camera interaction/prefab: activating one moves the player POV there (race games etc, altho those could use a forced sit interaction instead added later. figure out what difference there could be)
-- [ ] Implement ControllerButtonInteraction
-- [ ] Expand ControllerButtonInteraction to also read flat input, and axes like movement. Provide option to use consolidated input, or to use raw input per control scheme to customise it
 - [ ] Billboard positioning interaction
 - [x] Implement monitors in engine
 - [ ] Ensure all interaction properties implemented
@@ -44,6 +44,7 @@
 - [x] Environment props via SDK (sky, fog, maybe even gravity and rain!)
 - [x] Watch UI backstack and standardised screen layout
 - [x] Detached watch mode
+- [ ] Finish grabbable options: sticky vs non-sticky, snap-to-hand default, grab offset, translation/rotation constraints, scale unlock and constriants
 - [ ] Expression input
 - [ ] Player stuff via SDK
   - [x] read player position
@@ -81,7 +82,6 @@
 ### Phase 3
 - [ ] VR keyboard for DOM and watch input
 - [ ] Object parenting via SDK (needs transform resolution against parent, and think about what happens when a parent has a rigid body)
-- [ ] Finish grabbable options: sticky vs non-sticky, snap-to-hand default, grab offset, translation/rotation constraints, scale unlock and constriants
 - [ ] Free hand movement on flat with keypress
 - [ ] Define consistent error message interface for SDK and check for it in builders
 - [ ] Fix VR error boundary (doesnt follow player)
