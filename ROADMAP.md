@@ -12,7 +12,7 @@ Singleplayer, to support a handful of games
 - [ ] Gun interaction/monitor - **hitscan only for MVP** (arcing and projectile modes deferred
   to game-feel depth)
 - [ ] Floating text and sign prefabs - required for scores, instructions, win/lose states
-- [ ] Make the `Button` prefab real (currently a placeholder text mesh)
+- [x] Make the `Button` prefab real (currently a placeholder text mesh)
 - [ ] Ensure all interaction properties are actually implemented (audit builders vs engine)
 - [ ] Minimal keyframing system
 - [ ] Starter prefab kit - a deliberately small set beyond button/ball/hoop/skootball:
