@@ -72,6 +72,10 @@ export interface BasketballHoopPrefabPayload {
     object_id?: string;
 }
 
+export interface ButtonPrefabPayload {
+    type: "press" | "release";
+}
+
 export interface ButtonInputMonitorPayload {
     type: "press" | "release" | "hold";
     handedness?: "left" | "right";
@@ -89,5 +93,7 @@ export type ReportEvent =
     | ReportEventEnvelope<"physics-collision", PhysicsCollisionPayload>
     | ReportEventEnvelope<"basketball-hoop-prefab", BasketballHoopPrefabPayload>
     | ReportEventEnvelope<"button-input", ButtonInputMonitorPayload>
-    | ReportEventEnvelope<"axis-input", AxesMonitorPayload>;
+    | ReportEventEnvelope<"axis-input", AxesMonitorPayload>
+    | ReportEventEnvelope<"button-prefab", ButtonPrefabPayload>;
+
 

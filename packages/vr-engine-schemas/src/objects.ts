@@ -56,9 +56,12 @@ export const ButtonPrefabSchema = bindable({
     type: z.literal("prefab"),
     name: z.literal("button"),
     label: z.string(),
-    color: HexColorSchema.default(0x00ff00),
+    body_color: HexColorSchema.default(0x00ff00),
+    label_color: HexColorSchema.default(0xffffff),
     report_press: z.boolean().default(true),
-    report_release: z.boolean().default(true)
+    report_release: z.boolean().default(true),
+    grabbable: z.boolean().default(false),
+    fixed: z.boolean().default(true)
 });
 export type ButtonPrefab = z.infer<typeof ButtonPrefabSchema>;
 export type ButtonPrefabInput = z.input<typeof ButtonPrefabSchema>;

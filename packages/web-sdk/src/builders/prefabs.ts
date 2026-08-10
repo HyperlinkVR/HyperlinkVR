@@ -36,8 +36,13 @@ export class ButtonPrefabBuilder extends BaseBuilder<ButtonPrefabInput> {
         return this;
     }
 
-    set_color(color: HexNumericalColor) {
-        this._internal.color = HexNumericalColorSchema.parse(color);
+    set_body_color(color: HexNumericalColor) {
+        this._internal.body_color = HexNumericalColorSchema.parse(color);
+        return this;
+    }
+
+    set_label_color(color: HexNumericalColor) {
+        this._internal.label_color = HexNumericalColorSchema.parse(color);
         return this;
     }
 
@@ -48,6 +53,16 @@ export class ButtonPrefabBuilder extends BaseBuilder<ButtonPrefabInput> {
 
     set_reports_release(reports: boolean) {
         this._internal.report_release = reports;
+        return this;
+    }
+
+    set_fixed(fixed: boolean) {
+        this._internal.fixed = fixed;
+        return this;
+    }
+
+    grabbable(grabbable = true) {
+        this._internal.grabbable = grabbable;
         return this;
     }
 

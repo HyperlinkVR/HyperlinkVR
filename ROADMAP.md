@@ -22,6 +22,7 @@ Singleplayer, to support a handful of games
 - [ ] Prefab for links that use player sending (a door / portal / big link logo). If it clearly
   displays text it could bypass the prompt
 - [ ] Show prompt to confirm going to another world (allow skipping on same origin)
+- [ ] Start implementing more games, with room for multiplayer soon
 
 ---
 
