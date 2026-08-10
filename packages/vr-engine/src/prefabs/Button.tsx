@@ -246,94 +246,69 @@ export const Button = (props: ButtonProps) => {
         }
     });
 
-    const PhysicsWrapper = useMemo(({children}: {children: React.ReactNode}) => {
+    const physics_config = useMemo(() => {
         if (props.fixed) {
-            return (
-                <ObjectPhysics physics={{
-                    rigid_body: {
-                        type: "fixed",
+            return {
+                rigid_body: {
+                    type: "fixed" as const,
 
-                        collider: {
-                            type: "auto",
-                            approximation: "trimesh"
-                        },
+                    collider: {
+                        type: "auto" as const,
+                        approximation: "trimesh" as const,
+                    },
 
-                        restitution: 0.4,
-                        friction: 0.5,
-                    }
-                }}>
-                    {children}
-                </ObjectPhysics>
-            );
-        } else {
-            return (
-                <ObjectPhysics physics={{
-                    rigid_body: {
-                        type: "dynamic",
-
-                        collider: {
-                            type: "auto",
-                            approximation: "trimesh"
-                        },
-
-                        restitution: 0.4,
-                        friction: 0.5,
-                        mass: 0.5,
-                    }
-                }}>
-                    {children}
-                </ObjectPhysics>
-            );
+                    restitution: 0.4,
+                    friction: 0.5,
+                },
+            };
         }
+
+        return {
+            rigid_body: {
+                type: "dynamic" as const,
+
+                collider: {
+                    type: "auto" as const,
+                    // Dynamic bodies need a convex shape; trimesh colliders don't
+                    // reliably generate contacts when they're the moving body.
+                    approximation: "hull" as const,
+                },
+
+                restitution: 0.4,
+                friction: 0.5,
+                mass: 0.5,
+            },
+        };
     }, [props.fixed]);
 
+    const body = (
+        <group ref={housingRef}>
+            <mesh position={[0, 0, 0]} scale={[0.66, 0.66, 0.1]}>
+                <RoundedBoxGeometry />
+                <meshStandardMaterial color="#aaaaaa" />
+            </mesh>
 
-    const GrabbableWrapper = useMemo(({children}: {children: React.ReactNode}) => {
-        if (!props.grabbable) {
-            return children;
-        } else {
-            return (
-                <Grabbable>
-                    {children}
-                </Grabbable>
-            );
-        }
-    }, [props.grabbable]);
-
-    const Wrappers = useMemo(({children}: {children: React.ReactNode}) => {
-        return (
-            <PhysicsWrapper>
-                <GrabbableWrapper>
-                    {children}
-                </GrabbableWrapper>
-            </PhysicsWrapper>
-        );
-    }, [props.fixed, props.grabbable]);
+            <group ref={plungerRef} position={[0, 0, REST_Z]} onPointerDown={handleRayDown}>
+                <mesh geometry={geometry}>
+                    <meshStandardMaterial color={props.body_color} />
+                </mesh>
+                <Text
+                    position={[0, 0, 0.055]}
+                    fontSize={0.1}
+                    color={props.label_color}
+                    anchorX="center"
+                    anchorY="middle"
+                    raycast={ignoreRaycast}
+                >
+                    {props.label}
+                </Text>
+            </group>
+        </group>
+    );
 
     return (
-        <Wrappers>
-            <group ref={housingRef}>
-                <mesh position={[0, 0, 0]} scale={[0.66, 0.66, 0.1]}>
-                    <RoundedBoxGeometry />
-                    <meshStandardMaterial color="#aaaaaa" />
-                </mesh>
-
-                <group ref={plungerRef} position={[0, 0, REST_Z]} onPointerDown={handleRayDown}>
-                    <mesh geometry={geometry}>
-                        <meshStandardMaterial color={props.body_color} />
-                    </mesh>
-                    <Text
-                        position={[0, 0, 0.055]}
-                        fontSize={0.1}
-                        color={props.label_color}
-                        anchorX="center"
-                        anchorY="middle"
-                        raycast={ignoreRaycast}
-                    >
-                        {props.label}
-                    </Text>
-                </group>
-            </group>
-        </Wrappers>
+        <ObjectPhysics physics={physics_config}>
+            {props.grabbable ? <Grabbable>{body}</Grabbable> : body}
+        </ObjectPhysics>
     );
 };
