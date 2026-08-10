@@ -14,6 +14,7 @@ Singleplayer, to support a handful of games
 - [ ] Floating text and sign prefabs - required for scores, instructions, win/lose states
 - [ ] Make the `Button` prefab real (currently a placeholder text mesh)
 - [ ] Ensure all interaction properties are actually implemented (audit builders vs engine)
+- [ ] Minimal keyframing system
 - [ ] Starter prefab kit - a deliberately small set beyond button/ball/hoop/skootball:
   a target, a simple gun, and a spawner / respawn point
 - [ ] Fix auth bugs: only allow lowercase username, improve UX (JWT/passkey can wait)
@@ -24,7 +25,16 @@ Singleplayer, to support a handful of games
 
 ---
 
-## Epic A - Multiplayer
+## Epic A - Browser runtime
+
+- [ ] Make extension background script a generic package where platform specific impls are slotted in, making porting easy (RTC signaling/host-discovery. etc)
+- [ ] BrowserMessageEngine implementing MessageEngine, slotted beside ExtensionMessageEngine
+- [ ] Publish @hyperlinkvr/web-sdk to npm (runtime + TS declarations in the package)
+- [ ] Version the SDK message/schema contract (vr-engine-schemas) explicitly
+- [ ] Auth against our origin via the host connection, never tokens in the creator's page
+- [ ] Keep ExtensionMessageEngine as the optional privileged platform (raw input, OSC) speaking the identical protocol. Explore how many features are truly extension only to determine how necessary it is to maintain, or if it can be backburnered
+
+## Epic B - Multiplayer
 
 P2P multiplayer, starting with a single node but later a decentralised relay network. Build the abstractions first so the later relay swap is a drop-in.
 
@@ -41,7 +51,7 @@ P2P multiplayer, starting with a single node but later a decentralised relay net
 
 ---
 
-## Epic B - Avatar expansion & self-expression
+## Epic C - Avatar expansion & self-expression
 
 - [ ] Avatar walk animation and sounds (let surfaces choose their walk-sound material type from a selection)
 - [ ] Avatar clothing, more hair options
@@ -58,7 +68,7 @@ P2P multiplayer, starting with a single node but later a decentralised relay net
 
 ---
 
-## Epic C - Game-feel and SDK improvements
+## Epic D - Game-feel and SDK improvements
 
 Interchangeable with Epic B.
 
@@ -120,7 +130,7 @@ Interchangeable with Epic B.
 
 ---
 
-## Epic D - Flat and DOM improvements
+## Epic E - Flat and DOM improvements
 
 - [ ] VR keyboard for DOM and watch input
 - [ ] DOMMirror input: right/middle click, hold-and-drag, thumbstick scroll, click ripple
@@ -132,7 +142,7 @@ Interchangeable with Epic B.
 
 ---
 
-## Epic E - Author tooling & platform plumbing
+## Epic F - Author tooling & platform plumbing
 
 - [ ] Sandbox mode that allows spawning objects a la Maker Pen, maybe serialising to
   builders/built objects
@@ -145,7 +155,7 @@ Interchangeable with Epic B.
 
 ---
 
-## Epic F - Public launch
+## Epic G - Public launch
 
 - [ ] Internal docstrings across engine + SDK, then public-facing SDK docs
 - [ ] Thumbnail and description acquisition
