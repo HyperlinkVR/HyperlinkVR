@@ -43,13 +43,16 @@ interface InteractionWrapperProps<I extends Interaction = Interaction> {
 const GrabbableWrapper = ({interaction, children}: InteractionWrapperProps<GrabbableInteraction>) => {
     const {emit_report} = useObjectBinding(interaction.binding);
 
-    // TODO: add remaining props to grabbable
     // TODO: should we pass through the root ref? or let the wrapper impls manage their own?
-    // TODO: handle grab offset
     return (
         <Grabbable
             collider={interaction.collider}
             grab_distance={interaction.grab_distance}
+            grab_offset={interaction.grab_offset?.position}
+            grab_rotation={interaction.grab_offset?.rotation}
+            grab_offset_space={interaction.grab_offset?.space}
+            sticky={interaction.sticky}
+            snap_to_hand={interaction.snaps_to_hand}
             on_grab_start={
                 interaction.report_grabs
                     ? (hand) => emit_report({ kind: "grab", payload: { type: "grab", handedness: hand.handedness } })

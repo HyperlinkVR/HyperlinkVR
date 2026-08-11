@@ -1,4 +1,4 @@
-import type { GrabCollider } from "@hyperlinkvr/vr-engine-schemas";
+import type {GrabCollider, Rotation} from "@hyperlinkvr/vr-engine-schemas";
 import { useFrame } from "@react-three/fiber";
 import {RapierRigidBody, useRapier} from "@react-three/rapier";
 import { ComponentProps, RefObject, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
@@ -11,6 +11,7 @@ import { Hand, useHands } from "../input/hands";
 import {FULL_THROW_CHARGE_S} from "../input/values";
 import {HintLayer, useSetHintState} from "../input/impl/flat/hints";
 import { CAPSULE_RADIUS, get_capsule_world_position } from "../player/motion";
+import {rotation_to_quaternion} from "../engine/rotation";
 
 enum RigidBodyType {
     Fixed = 1,
@@ -351,6 +352,31 @@ const ray_hit_distance = (
     return hits.length > 0 ? hits[0].distance : null;
 };
 
+// TODO: unite with grabbable props
+interface UseGrabbableProps {
+    enabled?: boolean;
+    grab_distance?: number;
+    nearby_trigger_distance?: number;
+    reach?: number;
+    sticky?: boolean;
+    snap_to_hand?: boolean;
+    snap_grab_offset?: [number, number, number];
+    snap_grab_rotation?: Rotation;
+    snap_grab_offset_space?: "grip" | "aim";
+    ignore_player_while_held?: boolean;
+    player_ignore_release_delay?: number;
+    collider?: GrabCollider;
+    on_grab_start?: (hand: Hand) => void;
+    on_grab_end?: (hand: Hand) => void;
+    on_nearby_start?: (hand: Hand) => void;
+    on_nearby_end?: (hand: Hand) => void;
+    on_trigger_start?: (hand: Hand) => void;
+    on_trigger_end?: (hand: Hand | null) => void;
+    flat_throwable?: boolean;
+    min_flat_throw_speed?: number;
+    max_throw_speed?: number;
+}
+
 export const useGrabbable = (
     target_ref: RefObject<Object3D | null>,
     {
@@ -358,8 +384,12 @@ export const useGrabbable = (
         grab_distance = 1,
         nearby_trigger_distance = 1,
         reach = 0, // 0 = ray-grab disabled (VR default); flat derives a crosshair reach from grab_distance when unset
+        // sticky: the grip can be let go, the next grab press drops the object // TODO: it would probably be better as a face button
+        // non-sticky: held only while the grip button is down
+        sticky = false,
         snap_to_hand = true,
         snap_grab_offset,
+        snap_grab_rotation,
         // "grip": offset in raw WebXR grip-space axes (tilts with the wrist).
         // "aim":  offset as [right, up, forward] built from the ray/pointer
         //         direction and world-up, positioned at the grip. Intuitive,
@@ -377,27 +407,7 @@ export const useGrabbable = (
         flat_throwable = true, // false only prevents using the throw button on flat mode (ui hint). we cant stop vr players throwing. use max_throw_speed = 0 to make it slip out their hand instead
         min_flat_throw_speed = DEFAULT_FLAT_MIN_THROW_SPEED,
         max_throw_speed = DEFAULT_MAX_THROW_SPEED
-    }: {
-        enabled?: boolean;
-        grab_distance?: number;
-        nearby_trigger_distance?: number;
-        reach?: number;
-        snap_to_hand?: boolean;
-        snap_grab_offset?: [number, number, number];
-        snap_grab_offset_space?: "grip" | "aim";
-        ignore_player_while_held?: boolean;
-        player_ignore_release_delay?: number;
-        collider?: GrabCollider;
-        on_grab_start?: (hand: Hand) => void;
-        on_grab_end?: (hand: Hand) => void;
-        on_nearby_start?: (hand: Hand) => void;
-        on_nearby_end?: (hand: Hand) => void;
-        on_trigger_start?: (hand: Hand) => void;
-        on_trigger_end?: (hand: Hand | null) => void;
-        flat_throwable?: boolean;
-        min_flat_throw_speed?: number;
-        max_throw_speed?: number;
-    } = {}
+    }: UseGrabbableProps = {}
 ) => {
     const hands = useHands();
     const obj_refs = useObjectRefsOptional();
@@ -415,8 +425,31 @@ export const useGrabbable = (
     const effective_reach =
         flat_mode && reach === 0 ? grab_distance + FLAT_REACH_HEAD_OFFSET : reach;
 
-    // ref'd so the unmount cleanup sees the live hands array without re-running
-    // (re-running on hands identity change would drop an active hold claim)
+    // both offset props are resolved once
+    const resolved_grab_offset: [number, number, number] = snap_grab_offset ?? [0, 0, 0];
+
+    // arrays are fresh objects every render, so key the memo on the values
+    const grab_rotation_key = snap_grab_rotation ? snap_grab_rotation.join(",") : "";
+
+    const grab_offset_quat = useMemo(() => {
+        const quaternion = new Quaternion();
+        if (snap_grab_rotation) rotation_to_quaternion(snap_grab_rotation, quaternion);
+        return quaternion;
+    }, [grab_rotation_key]);
+
+    // a sticky hold only becomes droppable once the grabbing press has ended, otherwise the same press that picked the object up drops it a frame later // TODO: separate btton
+    const sticky_release_armed = useRef(false);
+
+    const should_release = (hand: Hand) => {
+        if (!sticky) return !hand.grab.pressed;
+
+        if (!sticky_release_armed.current) {
+            sticky_release_armed.current = !hand.grab.pressed;
+            return false;
+        }
+        return hand.grab.just_pressed;
+    };
+
     const hands_ref = useRef(hands);
     hands_ref.current = hands;
 
@@ -462,6 +495,8 @@ export const useGrabbable = (
     const aim_up = useRef(new Vector3());
     const aim_displacement = useRef(new Vector3());
     const unit_scale = useRef(new Vector3(1, 1, 1));
+    const grip_offset_position = useRef(new Vector3());
+    const aim_target_quat = useRef(new Quaternion());
 
     const throw_dir_quat = useRef(new Quaternion());
     const throw_velocity = useRef(new Vector3());
@@ -703,10 +738,14 @@ export const useGrabbable = (
 
         grip_world_pos.current.add(aim_displacement.current);
 
-        // keep the object's orientation matched to the grip (irrelevant for balls)
+        // orientation tracks the grip, then the authored rotation offset is applied in the object's own frame
+        aim_target_quat.current
+            .copy(grip_world_quat.current)
+            .multiply(grab_offset_quat);
+
         return out_matrix.compose(
             grip_world_pos.current,
-            grip_world_quat.current,
+            aim_target_quat.current,
             unit_scale.current
         );
     };
@@ -862,13 +901,17 @@ export const useGrabbable = (
                 snapped_grab.current = use_carry_slot;
 
                 if (use_carry_slot) {
-                    // grip-space offset is baked here; aim-space offset is
-                    // recomputed per frame in the move tail (needs live pointer)
-                    if (snap_grab_offset && snap_grab_offset_space === "grip") {
-                        offsetMatrix.current.makeTranslation(
-                            snap_grab_offset[0],
-                            snap_grab_offset[1],
-                            snap_grab_offset[2]
+                    // grip-space offset is baked here, aim-space offset is recomputed per frame in the move tail
+                    if (snap_grab_offset_space === "grip") {
+                        grip_offset_position.current.set(
+                            resolved_grab_offset[0],
+                            resolved_grab_offset[1],
+                            resolved_grab_offset[2]
+                        );
+                        offsetMatrix.current.compose(
+                            grip_offset_position.current,
+                            grab_offset_quat,
+                            unit_scale.current
                         );
                     } else {
                         offsetMatrix.current.identity();
@@ -893,6 +936,7 @@ export const useGrabbable = (
                 prevGrabPos.current.copy(objPos);
                 grabVelocity.current.set(0, 0, 0);
                 just_grabbed.current = true;
+                sticky_release_armed.current = false;
 
                 // constrained bodies stay dynamic and get velocity-driven, so
                 // the joint solver keeps authority over what motion is legal
@@ -910,7 +954,12 @@ export const useGrabbable = (
                 // stop colliding with the player while held, and cancel any pending restore from a previous quick release
                 apply_player_ignore(body);
                 restore_countdown.current = null;
-            } else if (!hand.grab.pressed && grabbingHand.current === hand) {
+            } else if (grabbingHand.current === hand && should_release(hand)) {
+                if (sticky) {
+                    // the dropping press is still physically held, reuse the throw lockout so it can't immediately re-grab what it just put down
+                    throw_lockout.current.add(hand);
+                }
+
                 // boost for vr throws only (which dont use the intent system)
                 release_held(hand, body, hand.throw_intent ? grabVelocity.current : grabVelocity.current.multiplyScalar(VR_THROW_BOOST));
             }
@@ -982,9 +1031,7 @@ export const useGrabbable = (
         // ---- move / throw tail ----
         if (grabbingHand.current && activeHandMatrix) {
             const use_aim_offset =
-                snapped_grab.current &&
-                snap_grab_offset_space === "aim" &&
-                !!snap_grab_offset;
+                snapped_grab.current && snap_grab_offset_space === "aim";
 
             let newWorldMatrix: Matrix4;
             if (use_aim_offset) {
@@ -1062,19 +1109,22 @@ interface GrabbableProps extends ComponentProps<"group"> {
     grab_distance?: number;
     nearby_trigger_distance?: number;
     reach?: number; // explicit ray-grab distance; flat auto-derives one when unset, vr stays touch-only at 0
+    snap_to_hand?: boolean; // false keeps the pose the object had when touched (vr only, ray grabs always snap)
+    sticky?: boolean; // true = press to pick up, press again to drop. false = held only while gripped
     grab_offset?: [number, number, number];
+    grab_rotation?: Rotation;
     grab_offset_space?: "grip" | "aim";
     ignore_player_while_held?: boolean;
+    player_ignore_release_delay?: number;
     // optional grab-region override from GrabbableInteraction.collider
     // undefined defaults to auto bounding box
     collider?: GrabCollider;
-    // TODO: add remaining props from useGrabbable and GrabbableInteraction
     on_grab_start?: (input: Hand) => void;
     on_grab_end?: (input: Hand) => void;
     on_nearby_start?: (input: Hand) => void;
     on_nearby_end?: (input: Hand | null) => void;
     on_trigger_start?: (input: Hand) => void;
-    on_trigger_end?: (input: Hand | null) => void; // TODO: unite these with the wider controller button interaction?
+    on_trigger_end?: (input: Hand | null) => void; // TODO: unite these with the wider controller button monitor (or delete)?
     flat_throwable?: boolean;
     min_flat_throw_speed?: number;
     max_throw_speed?: number;
@@ -1113,9 +1163,13 @@ export const Grabbable = (props: GrabbableProps) => {
         grab_distance: props.grab_distance,
         nearby_trigger_distance: props.nearby_trigger_distance || props.grab_distance,
         reach: props.reach,
+        snap_to_hand: props.snap_to_hand,
+        sticky: props.sticky,
         snap_grab_offset: props.grab_offset || [0, 0, 0.15],
+        snap_grab_rotation: props.grab_rotation,
         snap_grab_offset_space: props.grab_offset_space || "aim",
         ignore_player_while_held: props.ignore_player_while_held,
+        player_ignore_release_delay: props.player_ignore_release_delay,
         collider,
         on_grab_start: props.on_grab_start,
         on_grab_end: props.on_grab_end,

@@ -4,8 +4,8 @@
 
 Singleplayer, to support a handful of games
 
-- [ ] Finish grabbable options: sticky vs non-sticky, snap-to-hand default, grab offset,
-  translation/rotation constraints, scale unlock and constraints
+- [x] Finish grabbable options: sticky vs non-sticky, snap-to-hand default, grab offset
+- [ ] Grabbable translation/rotation constraints, scale unlock and constraints
 - [ ] Grabbable hand positioning / hiding (guns, gauntlets, gloves) - a floating gun looks
   broken, so this rides along with shooting
 - [ ] Raycast interaction

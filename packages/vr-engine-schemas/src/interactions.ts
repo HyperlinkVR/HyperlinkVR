@@ -6,9 +6,18 @@ import {RotationSchema} from "./transforms";
 
 import {HexColorSchema} from "./colors";
 
+export const GrabOffsetSpaceSchema = z.enum(["grip", "aim"]);
+export type GrabOffsetSpace = z.infer<typeof GrabOffsetSpaceSchema>;
+
 export const GrabOffsetSchema = z.object({
     position: z.tuple([z.number(), z.number(), z.number()]).default([0, 0, 0]),
-    rotation: RotationSchema.default([0, 0, 0])
+    rotation: RotationSchema.default([0, 0, 0]),
+
+    // "grip": raw webxr grip axes, so the offset tilts with the wrist
+    // "aim":  [right, up, forward] built from the pointer direction and world up,
+    //         positioned at the grip. wrist-independent, reads more predictably
+    // only applies when the object actually snaps (snaps_to_hand, or any ray grab)
+    space: GrabOffsetSpaceSchema.default("aim")
 });
 export type GrabOffset = z.infer<typeof GrabOffsetSchema>;
 export type GrabOffsetInput = z.input<typeof GrabOffsetSchema>;
@@ -37,7 +46,7 @@ export const GrabbableInteractionSchema = bindable({
     collider: GrabColliderSchema.default({type: "auto-bounding-box"}),
     grab_distance: z.number().positive().optional(),
     grab_offset: GrabOffsetSchema.optional(),
-    sticky: z.boolean().default(true),
+    sticky: z.boolean().default(false),
     snaps_to_hand: z.boolean().default(true),
     report_grabs: z.boolean().default(false),
     report_releases: z.boolean().default(false),
@@ -45,7 +54,10 @@ export const GrabbableInteractionSchema = bindable({
     flat_throwable: z.boolean().default(true), // false only prevents using the throw button on flat mode (ui hint). we cant stop vr players throwing. use max_throw_speed = 0 to make it slip out their hand instead
     min_flat_throw_speed: z.number().nonnegative().optional(), // the speed of the minimum throw on flat (tapping the throw key)
     max_throw_speed: z.number().nonnegative().optional(), // the maximum throw speed on flat and vr. note that an additional headroom of 1.2x is applied so that locomotion can add to the speed
-});
+})
+    .refine((interaction) => {
+        return !(interaction.grab_offset && !interaction.snaps_to_hand);
+    }, "grab_offset is only valid when snaps_to_hand is true");
 export type GrabbableInteraction = z.infer<typeof GrabbableInteractionSchema>;
 export type GrabbableInteractionInput = z.input<typeof GrabbableInteractionSchema>;
 

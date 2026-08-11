@@ -77,24 +77,28 @@ export class GrabbableInteractionBuilder extends BaseBuilder<GrabbableInteractio
         return this;
     }
 
-    set_grab_offset(offset: GrabOffsetInput) {
-        this._internal.grab_offset = offset;
-        return this;
-    }
-
     // these ones default to true, so having a default boolean here doesnt make sense, must explicitly set to false to disable
-
-    set_sticky(sticky: boolean) {
-        this._internal.sticky = sticky;
-        return this;
-    }
 
     set_snaps_to_hand(snaps: boolean) {
         this._internal.snaps_to_hand = snaps;
         return this;
     }
 
+    set_grab_offset(offset: GrabOffsetInput) {
+        if (!this._internal.snaps_to_hand) {
+            throw new Error("Cannot set grab offset when snaps_to_hand is false. Set snaps_to_hand to true first.");
+        }
+
+        this._internal.grab_offset = offset;
+        return this;
+    }
+
     // these below are default false, so specifying .reports_grabs() should make it true by default
+
+    sticky(sticky = true) {
+        this._internal.sticky = sticky;
+        return this;
+    }
 
     reports_grabs(reports = true) {
         this._internal.report_grabs = reports;
@@ -134,7 +138,7 @@ export class GrabbableInteractionBuilder extends BaseBuilder<GrabbableInteractio
     }
 
 
-    // TODO: set enabled/disabled, api to change that, api to eject
+    // TODO: set enabled/disabled, api to change that, api to change sticky/snaps to hand etc, api to eject
 }
 
 export class TriggerVolumeInteractionBuilder extends BaseBuilder<TriggerVolumeInteractionInput> {
