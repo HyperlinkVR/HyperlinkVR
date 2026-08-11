@@ -86,11 +86,52 @@ export const ReflectiveMirrorPrefabSchema = z.object({
 export type ReflectiveMirrorPrefab = z.infer<typeof ReflectiveMirrorPrefabSchema>;
 export type ReflectiveMirrorPrefabInput = z.input<typeof ReflectiveMirrorPrefabSchema>;
 
+const TextPrefabBaseSchema = z.object({
+    type: z.literal("prefab"),
+    text: z.string(),
+    font_size: z.number().positive().default(0.1),
+    color: HexColorSchema.default(0xffffff),
+});
+export type TextPrefabBase = z.infer<typeof TextPrefabBaseSchema>;
+export type TextPrefabBaseInput = z.input<typeof TextPrefabBaseSchema>;
+
+export const FloatingText2DPrefabSchema = TextPrefabBaseSchema.extend({
+    type: z.literal("prefab"),
+    name: z.literal("floating_text_2d"),
+});
+export type FloatingText2DPrefab = z.infer<typeof FloatingText2DPrefabSchema>;
+export type FloatingText2DPrefabInput = z.input<typeof FloatingText2DPrefabSchema>;
+
+export const FloatingText3DPrefabSchema = TextPrefabBaseSchema.extend({
+    type: z.literal("prefab"),
+    name: z.literal("floating_text_3d"),
+    depth: z.number().positive().default(0.05),
+});
+export type FloatingText3DPrefab = z.infer<typeof FloatingText3DPrefabSchema>;
+export type FloatingText3DPrefabInput = z.input<typeof FloatingText3DPrefabSchema>;
+
+export const TextSignPrefabSchema = TextPrefabBaseSchema.extend({
+    type: z.literal("prefab"),
+    name: z.literal("text_sign"),
+
+    // TODO: is this the best way to be doing multiple styles, or should they be sep prefabs (or strongly typed union)?
+    style: z.enum(["default", "wooden", "nameplate"]).default("default"),
+    style_parameters: z.record(z.string(), z.any()).optional(),
+
+    // override default color
+    color: HexColorSchema.default(0x000000),
+});
+export type TextSignPrefab = z.infer<typeof TextSignPrefabSchema>;
+export type TextSignPrefabInput = z.input<typeof TextSignPrefabSchema>;
+
 export const PrefabSchema = z.discriminatedUnion("name", [
     StandardPrefabSchema,
     ButtonPrefabSchema,
     BasketballHoopPrefabSchema,
-    ReflectiveMirrorPrefabSchema
+    ReflectiveMirrorPrefabSchema,
+    FloatingText2DPrefabSchema,
+    FloatingText3DPrefabSchema,
+    TextSignPrefabSchema
 ]);
 export type Prefab = z.infer<typeof PrefabSchema>;
 export type PrefabInput = z.input<typeof PrefabSchema>;

@@ -15,6 +15,7 @@ import { mergeVertices, toCreasedNormals } from "three/examples/jsm/utils/Buffer
 import {useObjectBinding} from "../hooks/useObjectBinding";
 import {ObjectPhysics} from "../engine/ObjectPhysics";
 import {Grabbable} from "../interaction";
+import {PrefabProps} from "../types";
 
 const WIDTH = 0.55;
 const HEIGHT = 0.55;
@@ -67,7 +68,7 @@ const gatherPokeSources = (xrManager: WebXRManager, target: Object3D[]) => {
     }
 };
 
-type ButtonProps = Omit<ButtonPrefab, "type" | "name"> & {
+type ButtonProps = PrefabProps<ButtonPrefab> & {
     on_press_override?: () => void;
     on_release_override?: () => void;
 };

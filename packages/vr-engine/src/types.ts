@@ -13,3 +13,5 @@ export type RendererComponentProps<T extends CreatedEngineObject["object"]> = Om
     id: CreatedEngineObject["id"];
     transform: CreatedEngineObject["transform"];
 }
+
+export type PrefabProps<T extends {type: "prefab", name: string}> = Omit<T, "type" | "name">;

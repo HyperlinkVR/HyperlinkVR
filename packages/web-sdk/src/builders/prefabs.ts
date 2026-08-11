@@ -4,11 +4,12 @@ import {
     BasketballHoopPrefabInput, BasketballHoopPrefabSchema,
     ButtonPrefab,
     ButtonPrefabInput,
-    ButtonPrefabSchema,
+    ButtonPrefabSchema, FloatingText2DPrefab, FloatingText2DPrefabSchema, FloatingText3DPrefab,
+    FloatingText3DPrefabSchema,
     HexNumericalColor,
     HexNumericalColorSchema, ReflectiveMirrorPrefab, ReflectiveMirrorPrefabInput, ReflectiveMirrorPrefabSchema,
     StandardPrefab, StandardPrefabInput, StandardPrefabName,
-    StandardPrefabSchema
+    StandardPrefabSchema, TextPrefabBaseInput, TextSignPrefab, TextSignPrefabSchema
 } from "@hyperlinkvr/vr-engine-schemas";
 
 export class StandardPrefabBuilder extends BaseBuilder<StandardPrefabInput> {
@@ -118,5 +119,71 @@ export class ReflectiveMirrorPrefabBuilder extends BaseBuilder<ReflectiveMirrorP
 
     build(): ReflectiveMirrorPrefab {
         return ReflectiveMirrorPrefabSchema.parse(this._internal);
+    }
+}
+
+class TextPrefabBuilderBase extends BaseBuilder<TextPrefabBaseInput & {depth?: number, style?: string, style_parameters?: Record<string, any>}> {
+    constructor(type: "floating_text_2d" | "floating_text_3d" | "text_sign") {
+        super({type: "prefab", name: type} as unknown as TextPrefabBaseInput);
+    }
+
+    set_text(text: string) {
+        this._internal.text = text;
+        return this;
+    }
+
+    set_font_size(size: number) {
+        this._internal.font_size = size;
+        return this;
+    }
+
+    set_color(color: HexNumericalColor) {
+        this._internal.color = HexNumericalColorSchema.parse(color);
+        return this;
+    }
+}
+
+export class FloatingText2DPrefabBuilder extends TextPrefabBuilderBase {
+    constructor() {
+        super("floating_text_2d");
+    }
+
+    build(): FloatingText2DPrefab {
+        return FloatingText2DPrefabSchema.parse(this._internal);
+    }
+}
+
+export class FloatingText3DPrefabBuilder extends TextPrefabBuilderBase {
+    constructor() {
+        super("floating_text_3d");
+    }
+
+    set_depth(depth: number) {
+        this._internal.depth = depth;
+        return this;
+    }
+
+    build(): FloatingText3DPrefab {
+        return FloatingText3DPrefabSchema.parse(this._internal);
+    }
+}
+
+export class TextSignPrefabBuilder extends TextPrefabBuilderBase {
+    constructor() {
+        super("text_sign");
+    }
+
+    set_style(style: "default" | "wooden" | "nameplate") {
+        this._internal.style = style;
+        return this;
+    }
+
+    set_style_parameters(params: Record<string, any>) {
+        this._internal.style_parameters = params;
+        return this;
+    }
+
+    build(): TextSignPrefab {
+        return TextSignPrefabSchema.parse(this._internal);
     }
 }

@@ -11,7 +11,7 @@ Singleplayer, to support a handful of games
 - [ ] Raycast interaction
 - [ ] Gun interaction/monitor - **hitscan only for MVP** (arcing and projectile modes deferred
   to game-feel depth)
-- [ ] Floating text and sign prefabs - required for scores, instructions, win/lose states
+- [x] Floating text and sign prefabs - required for scores, instructions, win/lose states
 - [x] Make the `Button` prefab real (currently a placeholder text mesh)
 - [ ] Ensure all interaction properties are actually implemented (audit builders vs engine)
 - [ ] Minimal keyframing system
@@ -23,6 +23,7 @@ Singleplayer, to support a handful of games
   displays text it could bypass the prompt
 - [ ] Show prompt to confirm going to another world (allow skipping on same origin)
 - [ ] Start implementing more games, with room for multiplayer soon
+- [ ] UI layer in SDK. Shows around controls in flat, in space around face in VR
 
 ---
 

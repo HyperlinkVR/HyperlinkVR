@@ -1,4 +1,4 @@
-import type {ReflectiveMirrorPrefab} from "@hyperlinkvr/vr-engine-schemas";
+import {ReflectiveMirrorPrefab} from "@hyperlinkvr/vr-engine-schemas";
 
 import {useFrame} from "@react-three/fiber";
 import {ComponentProps, useEffect, useMemo} from "react";
@@ -8,6 +8,7 @@ import {Reflector} from "three/examples/jsm/objects/Reflector";
 
 import {compute_layer_mask, Layer} from "../render";
 import {get_head_cameras} from "../util/get_head_cameras";
+import {PrefabProps} from "../types";
 
 
 const DEFAULT_RESOLUTION = 2048;
@@ -18,7 +19,7 @@ export const ReflectiveMirror = ({
     tint = 0xb0b0b0,
     resolution = DEFAULT_RESOLUTION,
     ...props
-}: Omit<ReflectiveMirrorPrefab, "type" | "name"> & Omit<ComponentProps<"primitive">, "object">) => {
+}: PrefabProps<ReflectiveMirrorPrefab> & Omit<ComponentProps<"primitive">, "object">) => {
     // extract object id from props, as it'll crash if we assign it to the group element
     const {id, ...rest} = props;
 
