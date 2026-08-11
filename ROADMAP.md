@@ -5,12 +5,8 @@
 Singleplayer, to support a handful of games
 
 - [x] Finish grabbable options: sticky vs non-sticky, snap-to-hand default, grab offset
-- [ ] Grabbable translation/rotation constraints, scale unlock and constraints
-- [ ] Grabbable hand positioning / hiding (guns, gauntlets, gloves) - a floating gun looks
-  broken, so this rides along with shooting
 - [ ] Raycast interaction
-- [ ] Gun interaction/monitor - **hitscan only for MVP** (arcing and projectile modes deferred
-  to game-feel depth)
+- [ ] Gun interaction/monitor using raycasts + some default handling of ammo, reloading etc - **hitscan only for MVP** (arcing and projectile modes deferred to game-feel depth)
 - [x] Floating text and sign prefabs - required for scores, instructions, win/lose states
 - [x] Make the `Button` prefab real (currently a placeholder text mesh)
 - [ ] Ensure all interaction properties are actually implemented (audit builders vs engine)
@@ -98,6 +94,8 @@ Interchangeable with Epic B.
 - [ ] Change whether flat and teleport are allowed, via meta
 
 ### Objects, physics & prefabs
+- [ ] Grabbable translation/rotation constraints, scale unlock and constraints
+- [ ] Grabbable hand positioning / hiding (guns, gauntlets, gloves)
 - [ ] Gun interaction/monitor: arcing and projectile modes (hitscan shipped in MVP)
 - [ ] Support tweening of light properties
 - [ ] Scripted object pathways / full keyframing system on SDK (could a gradual tween already do
