@@ -25,6 +25,10 @@ import {
     PositionalAudioInteraction,
     PositionalAudioInteractionInput,
     PositionalAudioInteractionSchema,
+    RaycastAim, RaycastAimInput, RaycastAimSchema, RaycastInteraction, RaycastInteractionInput,
+    RaycastInteractionSchema, RaycastRays,
+    RaycastRaysInput, RaycastRaysSchema, RaycastResult, RaycastSpace, RaycastTargets,
+    RaycastTargetsInput, RaycastTargetsSchema, RaycastTrigger, RaycastTriggerInput, RaycastTriggerSchema,
     Rotation, RotationSchema, SeatInteraction, SeatInteractionInput, SeatInteractionSchema,
     SpotLightInteraction,
     SpotLightInteractionInput,
@@ -703,6 +707,303 @@ export class SeatInteractionBuilder extends BaseBuilder<SeatInteractionInput> {
     }
 }
 
+// mutually exclusive calls like collider has, rather than separate builders for each type
+export class RaycastAimBuilder extends BaseBuilder<RaycastAimInput> {
+    constructor() {
+        super({type: "direction"} as RaycastAimInput);
+    }
+
+    direction(
+        direction: [number, number, number],
+        distance?: number,
+        space: RaycastSpace = "local"
+    ) {
+        this._internal = {type: "direction", direction, space, distance};
+        return this;
+    }
+
+    // applied to the object's forward, so [0, 0, 0] casts straight ahead
+    rotation(rotation: Rotation, distance?: number) {
+        this._internal = {
+            type: "rotation",
+            rotation: RotationSchema.parse(rotation),
+            distance
+        };
+        return this;
+    }
+    endpoint(point: [number, number, number], space: RaycastSpace = "local") {
+        this._internal = {type: "endpoint", point, space};
+        return this;
+    }
+
+    // overshoot > 0 keeps casting past the target, so a blocked line of sight is distinguishable from a clear one
+    at_object(object_id: string, overshoot?: number) {
+        this._internal = {type: "object", object_id, overshoot};
+        return this;
+    }
+
+    build(): RaycastAim {
+        return RaycastAimSchema.parse(this._internal);
+    }
+}
+
+// TODO: trigger volumes want most of this too (eg tag and object id exclusion), so maybe a shared base class for raycast and trigger volume targets
+
+export class RaycastTargetsBuilder extends BaseBuilder<RaycastTargetsInput> {
+    constructor() {
+        super({});
+    }
+
+    casts_against(mode: "physics" | "visual") {
+        this._internal.against = mode;
+        return this;
+    }
+
+    include_sensors(include = true) {
+        this._internal.include_sensors = include;
+        return this;
+    }
+
+    include_self(include = true) {
+        this._internal.include_self = include;
+        return this;
+    }
+
+    include_players(options?: {
+        ignore_hands?: boolean;
+        ignore_head?: boolean;
+        ignore_torso?: boolean;
+    }) {
+        this._internal.players = {include: true, ...options};
+        return this;
+    }
+
+    exclude_players() {
+        this._internal.players = {include: false};
+        return this;
+    }
+
+    // no filter = all objects, filter = only objects carrying one of these tags
+    include_objects(tag_filter?: string[]) {
+        this._internal.objects = {...this._internal.objects, include: true, tag_filter};
+        return this;
+    }
+
+    exclude_objects() {
+        this._internal.objects = {...this._internal.objects, include: false};
+        return this;
+    }
+
+    exclude_tags(tags: string[]) {
+        this._internal.objects = {...this._internal.objects, exclude_tags: tags};
+        return this;
+    }
+
+    exclude_object_ids(object_ids: string[]) {
+        this._internal.objects = {...this._internal.objects, exclude_object_ids: object_ids};
+        return this;
+    }
+
+    // by default a filtered-out wall still stops the ray and you get a miss
+    // pass-through makes the ray ignore non-targets entirely and keep going
+    pass_through_non_targets(pass = true) {
+        this._internal.non_targets = pass ? "pass-through" : "block";
+        return this;
+    }
+
+    // > 1 keeps going after a valid hit and reports each one in order
+    pierce(max_hits: number) {
+        if (!Number.isInteger(max_hits) || max_hits < 1) {
+            throw new Error("max_hits must be a positive integer.");
+        }
+        this._internal.max_hits = max_hits;
+        return this;
+    }
+
+    build(): RaycastTargets {
+        return RaycastTargetsSchema.parse(this._internal);
+    }
+}
+
+export class RaycastTriggerBuilder extends BaseBuilder<RaycastTriggerInput> {
+    constructor() {
+        super({type: "manual"} as RaycastTriggerInput);
+    }
+
+    // only fires when the sdk calls fire()
+    manual() {
+        this._internal = {type: "manual"};
+        return this;
+    }
+
+    continuous(options?: {
+        interval_ms?: number;
+        ignore_unchanged?: boolean;
+        min_change_delta?: number;
+    }) {
+        this._internal = {type: "continuous", ...options};
+        return this;
+    }
+
+    // flat LMB / vr trigger, handled engine-side so there is no round trip per shot
+    on_use(options?: {require_held?: boolean; cooldown_ms?: number}) {
+        this._internal = {type: "on-use", ...options};
+        return this;
+    }
+
+    build(): RaycastTrigger {
+        return RaycastTriggerSchema.parse(this._internal);
+    }
+}
+
+export class RaycastRaysBuilder extends BaseBuilder<RaycastRaysInput> {
+    constructor() {
+        super({});
+    }
+
+    // spreads count rays evenly within angle_deg of the aim direction
+    cone(count: number, angle_deg: number) {
+        this._internal = {...this._internal, count, pattern: "cone", angle_deg};
+        return this;
+    }
+
+    // puts every ray on the edge of the cone instead of filling it
+    ring(count: number, angle_deg: number) {
+        this._internal = {...this._internal, count, pattern: "ring", angle_deg};
+        return this;
+    }
+
+    set_jitter(jitter_deg: number) {
+        this._internal.jitter_deg = jitter_deg;
+        return this;
+    }
+
+    // seeding makes the pattern replay identically, which the multiplayer swap will need so pellet directions agree across peers
+    set_seed(seed: number) {
+        this._internal.seed = seed;
+        return this;
+    }
+
+    build(): RaycastRays {
+        return RaycastRaysSchema.parse(this._internal);
+    }
+}
+
+export class RaycastInteractionBuilder extends BaseBuilder<RaycastInteractionInput> {
+    constructor() {
+        super({type: "raycast"} as RaycastInteractionInput);
+    }
+
+    set_enabled(enabled: boolean) {
+        this._internal.enabled = enabled;
+        return this;
+    }
+
+    set_origin_offset(offset: [number, number, number]) {
+        this._internal.origin = {...this._internal.origin, offset};
+        return this;
+    }
+
+    set_origin_rotation(rotation: Rotation) {
+        this._internal.origin = {
+            ...this._internal.origin,
+            rotation: RotationSchema.parse(rotation)
+        };
+        return this;
+    }
+
+    set_aim(aim: RaycastAim) {
+        this._internal.aim = aim;
+        return this;
+    }
+
+    set_targets(targets: RaycastTargets) {
+        this._internal.targets = targets;
+        return this;
+    }
+
+    set_trigger(trigger: RaycastTrigger) {
+        this._internal.trigger = trigger;
+        return this;
+    }
+
+    set_rays(rays: RaycastRays) {
+        this._internal.rays = rays;
+        return this;
+    }
+
+    // 0 is a true ray, > 0 sphere-casts instead for forgiving aim
+    set_thickness(thickness: number) {
+        this._internal.thickness = thickness;
+        return this;
+    }
+
+    set_min_distance(min_distance: number) {
+        this._internal.min_distance = min_distance;
+        return this;
+    }
+
+    set_reports_hits(reports: boolean) {
+        this._internal.report_hits = reports;
+        return this;
+    }
+
+    report_misses(reports = true) {
+        this._internal.report_misses = reports;
+        return this;
+    }
+
+    // enter/exit style, fires when the thing being hit changes
+    report_target_changes(reports = true) {
+        this._internal.report_target_changes = reports;
+        return this;
+    }
+
+    build(): RaycastInteraction {
+        const built = RaycastInteractionSchema.parse(this._internal);
+
+        if (built.thickness > 0 && built.rays.count > 1) {
+            console.warn(
+                "Raycast has both thickness and multiple rays. Prefer either thickness for a single forgiving ray, or rays for countable pellets."
+            );
+        }
+
+        if (built.trigger.type === "manual" && built.report_target_changes) {
+            console.warn(
+                "report_target_changes on a manual raycast only fires when consecutive fire() calls hit different things, which is rarely what is wanted."
+            );
+        }
+
+        return built;
+    }
+
+    static _make_api(object_id: string, interaction_id: string) {
+        return {
+            fire: async (options?: {extra_spread_deg?: number}): Promise<RaycastResult> => {
+                return await interaction_command(object_id, interaction_id, "fire", options);
+            },
+            set_enabled: async (enabled: boolean) => {
+                return await interaction_command(object_id, interaction_id, "set_enabled", {enabled});
+            },
+            set_aim: async (aim: RaycastAim) => {
+                return await interaction_command(object_id, interaction_id, "set_aim", {aim});
+            },
+            set_targets: async (targets: RaycastTargets) => {
+                return await interaction_command(object_id, interaction_id, "set_targets", {targets});
+            },
+            set_rays: async (rays: RaycastRays) => {
+                return await interaction_command(object_id, interaction_id, "set_rays", {rays});
+            },
+            set_thickness: async (thickness: number) => {
+                return await interaction_command(object_id, interaction_id, "set_thickness", {thickness});
+            },
+            set_min_distance: async (min_distance: number) => {
+                return await interaction_command(object_id, interaction_id, "set_min_distance", {min_distance});
+            },
+        };
+    }
+}
+
 export const _INTERACTION_API_MAKERS = {
     "follow-player": FollowPlayerInteractionBuilder._make_api,
     "positional-audio": PositionalAudioInteractionBuilder._make_api,
@@ -712,4 +1013,5 @@ export const _INTERACTION_API_MAKERS = {
     "spot-light": SpotLightInteractionBuilder._make_api,
     "particle-emitter": ParticleEmitterInteractionBuilder._make_api,
     "seat": SeatInteractionBuilder._make_api,
+    "raycast": RaycastInteractionBuilder._make_api
 } as Record<string, InteractionMakeAPIFunc>;

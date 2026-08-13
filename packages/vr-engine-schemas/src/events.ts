@@ -17,25 +17,27 @@ interface InteractedHeadOrTorso {
 
 type InteractedBodyPart = InteractedHand | InteractedHeadOrTorso;
 
-type InteractedPlayer = InteractedBodyPart & {
+export type InteractedPlayer = InteractedBodyPart & {
     type: "player"
 }
 
-interface InteractedObject {
+export interface InteractedObject {
     type: "object";
     object_id: string;
     tags: string[];
 }
 
+export type Interacted = InteractedPlayer | InteractedObject;
+
 export interface TriggerVolumeInteractionEnterPayload {
     type: "enter";
-    interacted: InteractedPlayer | InteractedObject;
+    interacted: Interacted;
     positioning?: {direction: "top" | "bottom" | "side", local_offset: { x: number; y: number; z: number }};
 }
 
 export interface TriggerVolumeInteractionExitPayload {
     type: "exit";
-    interacted: InteractedPlayer | InteractedObject;
+    interacted: Interacted;
 }
 
 export type TriggerVolumeInteractionPayload = TriggerVolumeInteractionEnterPayload | TriggerVolumeInteractionExitPayload;
@@ -67,6 +69,43 @@ export interface PhysicsCollisionExitPayload {
 
 export type PhysicsCollisionPayload = PhysicsCollisionEnterPayload | PhysicsCollisionExitPayload;
 
+export interface RaycastHit {
+    // which ray of the pattern produced this hit, always 0 for a single ray
+    ray_index: number;
+    // order along that ray, 0 is nearest. only ever > 0 when piercing
+    hit_index: number;
+
+    distance: number;
+    point: { x: number; y: number; z: number };
+    normal: { x: number; y: number; z: number };
+
+    interacted: Interacted;
+}
+
+export interface RaycastResult {
+    // groups every ray of one fire, so five pellets on one target are
+    // distinguishable from five separate shots
+    shot_id: string;
+    // nearest first, then by ray, empty when every ray missed
+    hits: RaycastHit[];
+    // rays that reached max distance or were stopped by a non-target
+    missed_rays: number;
+}
+
+export interface RaycastCastPayload extends RaycastResult {
+    type: "cast";
+}
+
+// enter/exit style, emitted only when the nearest thing hit changes
+// interacted is null when the ray stopped hitting anything
+export interface RaycastTargetChangePayload {
+    type: "target-change";
+    shot_id: string;
+    interacted: Interacted | null;
+}
+
+export type RaycastPayload = RaycastCastPayload | RaycastTargetChangePayload;
+
 export interface BasketballHoopPrefabPayload {
     type: "scored"
     object_id?: string;
@@ -81,7 +120,14 @@ export interface ButtonInputMonitorPayload {
     handedness?: "left" | "right";
 }
 
-export type ReportEventPayload = TriggerVolumeInteractionPayload | GrabInteractionPayload | AxesMonitorPayload | ButtonInputMonitorPayload | PhysicsCollisionPayload | BasketballHoopPrefabPayload;
+export type ReportEventPayload =
+    TriggerVolumeInteractionPayload
+    | GrabInteractionPayload
+    | AxesMonitorPayload
+    | ButtonInputMonitorPayload
+    | PhysicsCollisionPayload
+    | BasketballHoopPrefabPayload
+    | RaycastPayload;
 
 export type ReportEvent =
     | ReportEventEnvelope<"trigger-volume", TriggerVolumeInteractionPayload>
@@ -94,6 +140,7 @@ export type ReportEvent =
     | ReportEventEnvelope<"basketball-hoop-prefab", BasketballHoopPrefabPayload>
     | ReportEventEnvelope<"button-input", ButtonInputMonitorPayload>
     | ReportEventEnvelope<"axis-input", AxesMonitorPayload>
-    | ReportEventEnvelope<"button-prefab", ButtonPrefabPayload>;
+    | ReportEventEnvelope<"button-prefab", ButtonPrefabPayload>
+    | ReportEventEnvelope<"raycast", RaycastPayload>;
 
 

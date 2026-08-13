@@ -293,6 +293,156 @@ export const SeatInteractionSchema = bindable({
 export type SeatInteraction = z.infer<typeof SeatInteractionSchema>;
 export type SeatInteractionInput = z.input<typeof SeatInteractionSchema>;
 
+export const RaycastSpaceSchema = z.enum(["local", "world"]);
+export type RaycastSpace = z.infer<typeof RaycastSpaceSchema>;
+
+// direction + distance
+export const RaycastAimDirectionSchema = z.object({
+    type: z.literal("direction"),
+    direction: z.tuple([z.number(), z.number(), z.number()]).default([0, 0, -1]),
+    space: RaycastSpaceSchema.default("local"),
+    distance: z.number().positive().default(50)
+});
+
+// euler/quat applied to the object's forward (-Z), so [0,0,0] casts straight ahead
+export const RaycastAimRotationSchema = z.object({
+    type: z.literal("rotation"),
+    rotation: RotationSchema.default([0, 0, 0]),
+    distance: z.number().positive().default(50)
+});
+
+export const RaycastAimEndpointSchema = z.object({
+    type: z.literal("endpoint"),
+    point: z.tuple([z.number(), z.number(), z.number()]),
+    space: RaycastSpaceSchema.default("local")
+});
+
+// tracks a moving object each cast. overshoot > 0 keeps casting past it, so you can tell "hit the target" from "something got in the way"
+export const RaycastAimObjectSchema = z.object({
+    type: z.literal("object"),
+    object_id: z.string(),
+    overshoot: z.number().nonnegative().default(0)
+});
+
+export const RaycastAimSchema = z.discriminatedUnion("type", [
+    RaycastAimDirectionSchema,
+    RaycastAimRotationSchema,
+    RaycastAimEndpointSchema,
+    RaycastAimObjectSchema
+]);
+export type RaycastAim = z.infer<typeof RaycastAimSchema>;
+export type RaycastAimInput = z.input<typeof RaycastAimSchema>;
+
+export const RaycastTargetsSchema = z.object({
+    // "physics" casts rapier colliders: fast, gives normals, resolves object ids and player body parts, but misses objects with no physics
+    // "visual" casts three meshes instead
+    against: z.enum(["physics", "visual"]).default("physics"),
+
+    // trigger volumes are sensors, they should not stop a bullet by default
+    include_sensors: z.boolean().default(false),
+
+    // the object the interaction is attached to, and anything under it
+    include_self: z.boolean().default(false),
+
+    players: z.object({
+            include: z.boolean().default(true),
+            ignore_hands: z.boolean().default(false),
+            ignore_head: z.boolean().default(false),
+            ignore_torso: z.boolean().default(false)
+        })
+        .optional(),
+
+    objects: z
+        .object({
+            include: z.boolean().default(true),
+            tag_filter: z.array(z.string()).optional(),
+
+            // TODO: port these 2 fields to trigger volume too
+            exclude_tags: z.array(z.string()).optional(),
+            exclude_object_ids: z.array(z.string()).optional(),
+        })
+        .optional(),
+
+    // what happens to things the filters rejected
+    // "block" means a wall still stops the ray and you get a miss
+    // "pass-through" means the ray ignores them entirely and keeps going until a valid hit or the max distance is reached
+    non_targets: z.enum(["block", "pass-through"]).default("block"),
+
+    // > 1 pierces: keeps going after a valid hit and reports each in order
+    max_hits: z.number().int().positive().default(1)
+});
+export type RaycastTargets = z.infer<typeof RaycastTargetsSchema>;
+export type RaycastTargetsInput = z.input<typeof RaycastTargetsSchema>;
+
+export const RaycastTriggerSchema = z.discriminatedUnion("type", [
+    // only fires when the sdk calls .fire()
+    z.object({ type: z.literal("manual") }),
+
+    z.object({
+        type: z.literal("continuous"),
+        interval_ms: z.number().nonnegative().default(0), // 0 = every frame
+        // only report when the thing being hit actually changes
+        ignore_unchanged: z.boolean().default(true),
+        // or when the hit point moves this far on the same target
+        min_change_delta: z.number().nonnegative().default(0.01)
+    }),
+
+    // flat LMB / vr trigger, avoids a round trip per shot for guns
+    z.object({
+        type: z.literal("on-use"),
+        require_held: z.boolean().default(true),
+        cooldown_ms: z.number().nonnegative().default(0)
+    })
+]);
+export type RaycastTrigger = z.infer<typeof RaycastTriggerSchema>;
+export type RaycastTriggerInput = z.input<typeof RaycastTriggerSchema>;
+
+export const RaycastRaysSchema = z.object({
+    count: z.number().int().positive().default(1),
+
+    // "cone" distributes evenly within angle_deg
+    // "ring" puts them all at angle_deg
+    pattern: z.enum(["cone", "ring"]).default("cone"),
+    angle_deg: z.number().nonnegative().default(0),
+    // 0 keeps the pattern exact. > 0 jitters each ray within this many
+    // degrees of its slot, seeded so it stays reproducible
+    jitter_deg: z.number().nonnegative().default(0),
+    seed: z.number().int().optional()
+});
+export type RaycastRays = z.infer<typeof RaycastRaysSchema>;
+export type RaycastRaysInput = z.input<typeof RaycastRaysSchema>;
+
+export const RaycastInteractionSchema = bindable({
+    type: z.literal("raycast"),
+    enabled: z.boolean().default(true),
+
+    origin: z
+        .object({
+            offset: z.tuple([z.number(), z.number(), z.number()]).default([0, 0, 0]),
+            rotation: RotationSchema.default([0, 0, 0])
+        })
+        .optional(),
+
+    aim: RaycastAimSchema.default({ type: "direction" } as RaycastAim),
+    targets: RaycastTargetsSchema.default({} as RaycastTargets),
+    trigger: RaycastTriggerSchema.default({ type: "manual" }),
+
+    // 0 is a true ray. > 0 sphere-casts instead, for forgiving aim
+    thickness: z.number().nonnegative().default(0),
+
+    min_distance: z.number().nonnegative().default(0),
+
+    rays: RaycastRaysSchema.default({} as RaycastRays),
+
+    report_hits: z.boolean().default(true),
+    report_misses: z.boolean().default(false),
+
+    // enter/exit style: fires when the hit target changes, for hover and lasers
+    report_target_changes: z.boolean().default(false)
+});
+export type RaycastInteraction = z.infer<typeof RaycastInteractionSchema>;
+export type RaycastInteractionInput = z.input<typeof RaycastInteractionSchema>;
+
 export const InteractionSchema = z.discriminatedUnion("type", [
     GrabbableInteractionSchema,
     TriggerVolumeInteractionSchema,
@@ -303,7 +453,8 @@ export const InteractionSchema = z.discriminatedUnion("type", [
     SpotLightInteractionSchema,
     DirectionalLightInteractionSchema,
     ParticleEmitterInteractionSchema,
-    SeatInteractionSchema
+    SeatInteractionSchema,
+    RaycastInteractionSchema
 ]);
 export type Interaction = z.infer<typeof InteractionSchema>;
 export type InteractionInput = z.input<typeof InteractionSchema>;

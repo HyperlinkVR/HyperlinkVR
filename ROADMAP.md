@@ -5,8 +5,8 @@
 Singleplayer, to support a handful of games
 
 - [x] Finish grabbable options: sticky vs non-sticky, snap-to-hand default, grab offset
-- [ ] Raycast interaction
-- [ ] Gun interaction/monitor using raycasts + some default handling of ammo, reloading etc - **hitscan only for MVP** (arcing and projectile modes deferred to game-feel depth)
+- [x] Raycast interaction
+- [ ] Gun interaction/monitor using raycasts + some default handling of ammo, reloading, spread etc - **hitscan only for MVP** (arcing and projectile modes deferred to game-feel depth)
 - [x] Floating text and sign prefabs - required for scores, instructions, win/lose states
 - [x] Make the `Button` prefab real (currently a placeholder text mesh)
 - [ ] Ensure all interaction properties are actually implemented (audit builders vs engine)

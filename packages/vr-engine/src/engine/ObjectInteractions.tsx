@@ -2,7 +2,7 @@ import {
     DirectionalLightInteraction,
     FollowPlayerInteraction, GlobalAudioInteraction, GrabbableInteraction, Interaction,
     ParticleEmitterInteraction, PointLightInteraction,
-    PositionalAudioInteraction, SeatInteraction, SpotLightInteraction, TriggerVolumeInteraction
+    PositionalAudioInteraction, SeatInteraction, SpotLightInteraction, TriggerVolumeInteraction, RaycastInteraction
 } from "@hyperlinkvr/vr-engine-schemas";
 import {useEffect, useMemo, useRef} from "react";
 
@@ -12,6 +12,8 @@ import { useObjectBinding } from "../hooks/useObjectBinding";
 import { Grabbable } from "../interaction";
 import { FollowPlayer } from "../interaction/FollowPlayer";
 import {detect_trigger_direction, resolve_interacted, TriggerVolume} from "../interaction/TriggerVolume";
+import { Raycast, RaycastHandle } from "../interaction/Raycast";
+import type {  } from "@hyperlinkvr/vr-engine-schemas";
 import {
     Audio,
     AudioLoader,
@@ -645,6 +647,69 @@ const SeatWrapper = ({ interaction, children }: InteractionWrapperProps<SeatInte
     );
 };
 
+const RaycastWrapper = ({interaction, children}: InteractionWrapperProps<RaycastInteraction>) => {
+    const {emit_report, on_command} = useObjectBinding(interaction.binding);
+    const {id} = useObjectRefs();
+    const handle_ref = useRef<RaycastHandle>(null);
+
+    useEffect(() => {
+        const handle_command = async (command: string, args?: any) => {
+            const handle = handle_ref.current;
+            if (!handle) return {success: false, error: "Raycast not mounted"};
+
+            switch (command) {
+                case "fire":
+                    // returned rather than reported, so a gun gets its hits
+                    // back on the same call it fired with
+                    return handle.fire({extra_spread_deg: args?.extra_spread_deg});
+                case "set_enabled":
+                    handle.set_enabled(args.enabled);
+                    break;
+                case "set_aim":
+                    handle.set_aim(args.aim);
+                    break;
+                case "set_targets":
+                    handle.set_targets(args.targets);
+                    break;
+                case "set_rays":
+                    handle.set_rays(args.rays);
+                    break;
+                case "set_thickness":
+                    handle.set_thickness(args.thickness);
+                    break;
+                case "set_min_distance":
+                    handle.set_min_distance(args.min_distance);
+                    break;
+                default:
+                    return {success: false, error: `Unknown command ${command}`};
+            }
+
+            return {success: true};
+        };
+
+        return on_command(handle_command);
+    }, [on_command]);
+
+    return (
+        <>
+            <Raycast
+                config={interaction}
+                object_id={id}
+                handle_ref={handle_ref}
+                on_result={(result) => emit_report({
+                    kind: "raycast",
+                    payload: {type: "cast", ...result}
+                })}
+                on_target_change={(interacted, result) => emit_report({
+                    kind: "raycast",
+                    payload: {type: "target-change", interacted, shot_id: result.shot_id}
+                })}
+            />
+            {children}
+        </>
+    );
+};
+
 const INTERACTION_MAP: Record<Interaction["type"], React.ComponentType<InteractionWrapperProps<any>> | null> = {
     "grabbable": GrabbableWrapper,
     "follow-player": FollowPlayerWrapper,
@@ -656,6 +721,7 @@ const INTERACTION_MAP: Record<Interaction["type"], React.ComponentType<Interacti
     "spot-light": SpotLightWrapper,
     "particle-emitter": ParticleEmitterWrapper,
     "seat": SeatWrapper,
+    "raycast": RaycastWrapper,
 } as const;
 
 // first is outermost, last is innermost
@@ -670,6 +736,9 @@ const WRAPPER_STRICT_ORDER: Interaction["type"][] = [
     "point-light",
     "directional-light",
     "spot-light",
+    "particle-emitter",
+    "seat",
+    "raycast"
 ];
 
 export const ObjectInteractions = ({interactions, children}: {interactions: Interaction[], children: React.ReactNode}) => {

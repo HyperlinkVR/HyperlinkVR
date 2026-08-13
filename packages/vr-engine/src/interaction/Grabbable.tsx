@@ -12,6 +12,7 @@ import {FULL_THROW_CHARGE_S} from "../input/values";
 import {HintLayer, useSetHintState} from "../input/impl/flat/hints";
 import { CAPSULE_RADIUS, get_capsule_world_position } from "../player/motion";
 import {rotation_to_quaternion} from "../engine/rotation";
+import {set_object_holder, clear_object_holder} from "./util/holders";
 
 enum RigidBodyType {
     Fixed = 1,
@@ -673,6 +674,7 @@ export const useGrabbable = (
     ) => {
         grabbingHand.current = null;
         release_hand_claim(hand, grabbable_id);
+        if (obj_refs) clear_object_holder(obj_refs, hand);
         on_grab_end?.(hand);
         publish_held(false);
         attach_gliding.current = false;
@@ -925,6 +927,7 @@ export const useGrabbable = (
                 }
                 grabbingHand.current = hand;
                 claim_hand(hand, grabbable_id);
+                if (obj_refs) set_object_holder(obj_refs.id, hand);
                 on_grab_start?.(hand);
                 publish_held(true);
 
