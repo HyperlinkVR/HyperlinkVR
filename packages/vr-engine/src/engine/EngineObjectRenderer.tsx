@@ -10,6 +10,7 @@ import {rotation_to_quaternion} from "./rotation";
 import {Group} from "three";
 import {ObjectReadyMarker} from "./object_ready_registry";
 import {register_object_monitors} from "./object_monitor_registry";
+import {register_triggers} from "./trigger_registry";
 
 export const EngineObjectRenderer = ({ data }: { data: CreatedEngineObject }) => {
     const { type, ...obj_rest } = data.object;
@@ -30,6 +31,12 @@ export const EngineObjectRenderer = ({ data }: { data: CreatedEngineObject }) =>
     useEffect(
         () => register_object_monitors(data.id, data.monitors),
         [data.id, data.monitors]
+    );
+
+    // register triggers
+    useEffect(
+        () => register_triggers(data.triggers),
+        [data.triggers]
     );
 
     // a physics object's pose is owned by its rigid body so the outer group must stay at identity or the mesh double-transforms

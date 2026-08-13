@@ -119,6 +119,11 @@ export class GrabbableInteractionBuilder extends BaseBuilder<GrabbableInteractio
         return this;
     }
 
+    reports_trigger(reports = true) {
+        this._internal.report_trigger = reports;
+        return this;
+    }
+
     // false only prevents using the throw button on flat mode (ui hint). we cant stop vr players throwing. use max_throw_speed = 0 to make it slip out their hand instead
     set_flat_throwable(throwable: boolean) {
         this._internal.flat_throwable = throwable;
@@ -948,13 +953,13 @@ export class RaycastInteractionBuilder extends BaseBuilder<RaycastInteractionInp
         return this;
     }
 
-    report_misses(reports = true) {
+    reports_misses(reports = true) {
         this._internal.report_misses = reports;
         return this;
     }
 
     // enter/exit style, fires when the thing being hit changes
-    report_target_changes(reports = true) {
+    reports_target_changes(reports = true) {
         this._internal.report_target_changes = reports;
         return this;
     }

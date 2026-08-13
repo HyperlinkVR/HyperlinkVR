@@ -674,7 +674,7 @@ export const useGrabbable = (
     ) => {
         grabbingHand.current = null;
         release_hand_claim(hand, grabbable_id);
-        if (obj_refs) clear_object_holder(obj_refs, hand);
+        if (obj_refs) clear_object_holder(obj_refs.id, hand);
         on_grab_end?.(hand);
         publish_held(false);
         attach_gliding.current = false;

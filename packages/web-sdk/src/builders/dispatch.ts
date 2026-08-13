@@ -12,7 +12,7 @@ import {
     PartialTransformInput,
     PrefabInput,
     ReportEvent,
-    TransformInput,
+    TransformInput, Trigger,
     TweenEasingInput,
     TweenSchema, Vector3, Vector3Schema, Vector4, Vector4Schema
 } from "@hyperlinkvr/vr-engine-schemas";
@@ -28,16 +28,52 @@ export interface EngineObjectCreationResult {
     refresh: () => Promise<void>;
 }
 
+// triggers are authored against binding names, but the engine only ever routes on the id
+// the map is built once at create time and carried forward so later modifications can resolve the same names without the engine having to store them
+const resolve_trigger_bindings = (triggers: Trigger[], binding_ids: Map<string, string>) => {
+    for (const trigger of triggers) {
+        const source_name = trigger.source.name;
+        const source_id = source_name ? binding_ids.get(source_name) : trigger.source.id;
+
+        if (!source_id) {
+            const known = [...binding_ids.keys()].map((name) => `"${name}"`).join(", ");
+            throw new Error(
+                `Trigger source "${source_name}" matches no named binding on this object. Known bindings: ${known || "none"}.`
+            );
+        }
+
+        trigger.source = {...trigger.source, id: source_id};
+
+        for (const target of trigger.targets) {
+            const target_name = target.target.name;
+            const target_id = target_name ? binding_ids.get(target_name) : target.target.id;
+
+            if (!target_id) {
+                const known = [...binding_ids.keys()].map((name) => `"${name}"`).join(", ");
+                throw new Error(
+                    `Trigger target "${target_name}" matches no named binding on this object. Known bindings: ${known || "none"}.`
+                );
+            }
+
+            target.target = {...target.target, id: target_id};
+        }
+    }
+};
+
 class EngineObjectModificationBuilder extends BaseBuilder<EngineObjectModificationInput> {
     //#source: EngineObjectCreationResult;
     #burned = false;
+
+    // name to binding id for everything already on the object, plus anything this modification adds
+    #binding_ids: Map<string, string>;
 
     //constructor(source: EngineObjectCreationResult) {
     //super({ id: source.object.id } as EngineObjectModificationInput);
     //this.#source = source;
     //}
-    constructor(id: string) {
+    constructor(id: string, binding_ids?: Map<string, string>) {
         super({id} as EngineObjectModificationInput);
+        this.#binding_ids = new Map(binding_ids ?? []);
     }
 
     set_position(x_or_vect: number | Vector3, y?: number, z?: number) {
@@ -135,7 +171,11 @@ class EngineObjectModificationBuilder extends BaseBuilder<EngineObjectModificati
             this._internal.monitors = [];
         }
 
-        this._internal.monitors.push({...monitor, binding: {name}});
+        // minted here rather than at create time, so a trigger added in this same modification can source from it by name
+        const id = crypto.randomUUID();
+        this.#binding_ids.set(name, id);
+
+        this._internal.monitors.push({...monitor, binding: {name, id}});
         return this;
     }
 
@@ -156,6 +196,7 @@ class EngineObjectModificationBuilder extends BaseBuilder<EngineObjectModificati
             throw new Error(`No monitors were found with name "${name}".`);
         }
 
+        this.#binding_ids.delete(name);
         return this;
     }
 
@@ -166,11 +207,68 @@ class EngineObjectModificationBuilder extends BaseBuilder<EngineObjectModificati
             throw new Error("This modification builder has already been applied.");
         }
 
-        if (!this._internal.monitors) {
-            this._internal.monitors = [];
+        for (const {name, monitor} of monitors) {
+            this.add_monitor(name, monitor);
         }
 
-        this._internal.monitors.push(...monitors.map(({name, monitor}) => ({...monitor, binding: {name}})));
+        return this;
+    }
+
+    add_trigger(trigger: Trigger) {
+        if (this.#burned) {
+            throw new Error("This modification builder has already been applied.");
+        }
+
+        if (!this._internal.triggers) {
+            this._internal.triggers = [];
+        }
+
+        this._internal.triggers.push(trigger);
+        return this;
+    }
+
+    add_triggers(triggers: Trigger[]) {
+        if (this.#burned) {
+            throw new Error("This modification builder has already been applied.");
+        }
+
+        if (!this._internal.triggers) {
+            this._internal.triggers = [];
+        }
+
+        this._internal.triggers.push(...triggers);
+        return this;
+    }
+
+    remove_triggers_from_modification(source_name: string) {
+        if (this.#burned) {
+            throw new Error("This modification builder has already been applied.");
+        }
+
+        if (!this._internal.triggers) {
+            throw new Error("No triggers to remove.");
+        }
+
+        const original_length = this._internal.triggers.length;
+        this._internal.triggers = this._internal.triggers.filter(
+            (trigger) => trigger.source.name !== source_name
+        );
+
+        if (this._internal.triggers.length === original_length) {
+            throw new Error(`No triggers were found with source "${source_name}".`);
+        }
+
+        return this;
+    }
+
+    // TODO: way to remove triggers from source object, need to pull in its state
+
+    set_triggers(triggers: Trigger[]) {
+        if (this.#burned) {
+            throw new Error("This modification builder has already been applied.");
+        }
+
+        this._internal.triggers = triggers;
         return this;
     }
 
@@ -216,7 +314,13 @@ class EngineObjectModificationBuilder extends BaseBuilder<EngineObjectModificati
     // TODO: way to check if source object has tag, need to pull in its state
 
     build(): EngineObjectModification {
-        return EngineObjectModificationSchema.parse(this._internal);
+        const built = EngineObjectModificationSchema.parse(this._internal);
+
+        if (built.triggers) {
+            resolve_trigger_bindings(built.triggers, this.#binding_ids);
+        }
+
+        return built;
     }
 
     async apply(): Promise<void> {
@@ -251,7 +355,7 @@ class EngineObjectModificationBuilder extends BaseBuilder<EngineObjectModificati
             throw new Error("This modification builder has already been applied.");
         }
 
-        if (this._internal.user_data || this._internal.monitors) {
+        if (this._internal.user_data || this._internal.monitors || this._internal.triggers) {
             throw new Error("Only transform changes may be tweened");
         }
 
@@ -377,6 +481,27 @@ export class EngineObjectDispatchBuilder extends BaseBuilder<EngineObjectDispatc
         return this;
     }
 
+    add_trigger(trigger: Trigger) {
+        if (!this._internal.triggers) {
+            this._internal.triggers = [];
+        }
+        this._internal.triggers.push(trigger);
+        return this;
+    }
+
+    add_triggers(triggers: Trigger[]) {
+        if (!this._internal.triggers) {
+            this._internal.triggers = [];
+        }
+        this._internal.triggers.push(...triggers);
+        return this;
+    }
+
+    set_triggers(triggers: Trigger[]) {
+        this._internal.triggers = triggers;
+        return this;
+    }
+
     add_tag(tag: string) {
         if (!this._internal.tags) {
             this._internal.tags = [];
@@ -486,9 +611,14 @@ export class EngineObjectDispatchBuilder extends BaseBuilder<EngineObjectDispatc
         const unsubscribes: Array<() => void> = [];
         const unbound = new Set(this.#callbacks.keys());
 
+        // kept so triggers here and in later modifications can resolve the
+        // author's binding names, which the engine never sees
+        const binding_ids = new Map<string, string>();
+
         for (const source of named_sources) {
             const id = crypto.randomUUID();
             source.assign_id(id);
+            binding_ids.set(source.name, id);
 
             const callback = this.#callbacks.get(source.name);
             if (!callback) {
@@ -506,6 +636,18 @@ export class EngineObjectDispatchBuilder extends BaseBuilder<EngineObjectDispatc
             throw new Error(`No reporting source named ${missing} in this dispatch.`);
         }
 
+        // swap names for ids now that every named source has one. throws on a
+        // name that matches nothing, which is the only place a mistyped
+        // trigger can be caught before it silently does nothing at runtime
+        if (dispatch.triggers) {
+            try {
+                resolve_trigger_bindings(dispatch.triggers, binding_ids);
+            } catch (e) {
+                for (const unsubscribe of unsubscribes) unsubscribe();
+                throw e;
+            }
+        }
+
         const bind_interaction_apis = (object_id: string) => {
             const apis: Record<string, Function> = {};
 
@@ -517,12 +659,12 @@ export class EngineObjectDispatchBuilder extends BaseBuilder<EngineObjectDispatc
             return apis;
         }
 
-        return {unsubscribes, bind_interaction_apis};
+        return {unsubscribes, bind_interaction_apis, binding_ids};
     }
 
     async create(): Promise<EngineObjectCreationResult> {
         const built_object = this.build();
-        const {unsubscribes, bind_interaction_apis} = this.#bind_callbacks(built_object);
+        const {unsubscribes, bind_interaction_apis, binding_ids} = this.#bind_callbacks(built_object);
 
         try {
             const created = (await send_via_rtc({
@@ -556,7 +698,7 @@ export class EngineObjectDispatchBuilder extends BaseBuilder<EngineObjectDispatc
                         throw new Error("This object has already been destroyed.");
                     }
 
-                    return new EngineObjectModificationBuilder(created.object.id);
+                    return new EngineObjectModificationBuilder(created.object.id, binding_ids);
                 },
                 refresh: async () => {
                     if (burned) {

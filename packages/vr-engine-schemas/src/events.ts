@@ -42,10 +42,15 @@ export interface TriggerVolumeInteractionExitPayload {
 
 export type TriggerVolumeInteractionPayload = TriggerVolumeInteractionEnterPayload | TriggerVolumeInteractionExitPayload;
 
-export interface GrabInteractionPayload {
-    type: "grab" | "release" | "proximity";
+interface GrabInteractionPayloadBase {
+    type: "grab" | "release" | "proximity" | "trigger-start";
     handedness: "left" | "right";
 }
+interface GrabInteractionPayloadTriggerEnd {
+    type: "trigger-end";
+    handedness: "left" | "right" | null;
+}
+export type GrabInteractionPayload = GrabInteractionPayloadBase | GrabInteractionPayloadTriggerEnd;
 
 export interface AxesMonitorPayload {
     axes: ("x" | "y" | "z")[];

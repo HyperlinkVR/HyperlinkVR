@@ -3,6 +3,7 @@ import {useCallback, useEffect, useRef} from "react";
 
 import {useObjectRefsOptional} from "../contexts/ObjectRefsContext";
 import { useWebSDKMessaging } from "../contexts/WebSDKMessagingContext";
+import {register_command_handler, run_triggers} from "../engine/trigger_registry";
 
 type ReportBody = Pick<ReportEvent, "kind" | "payload">;
 
@@ -22,7 +23,14 @@ export const useObjectBinding = (binding: BindingConfig | undefined) => {
 
     const emit_report = useCallback(
         (body: ReportBody) => {
-            if (!source_id || !connected || !object_id) {
+            if (!source_id || !object_id) {
+                return;
+            }
+
+            // run triggers regardless of if the sdk is connected
+            run_triggers(source_id, body.payload);
+
+            if (!connected) {
                 return;
             }
 
@@ -48,7 +56,10 @@ export const useObjectBinding = (binding: BindingConfig | undefined) => {
     const on_command = useCallback((callback: (command: string, args?: any) => Promise<any> | null) => {
         command_callback.current = callback;
 
+        const unregister = source_id ? register_command_handler(source_id, callback) : () => {};
+
         return () => {
+            unregister();
             if (command_callback.current === callback) {
                 command_callback.current = null;
             }

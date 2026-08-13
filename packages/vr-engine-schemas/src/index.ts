@@ -9,4 +9,5 @@ export * from "./physics";
 export * from "./transforms";
 export * from "./tween";
 export * from "./world_env";
+export * from "./triggers";
 export {BindingConfigSchema, type BindingConfig, type Bindable} from "./binding";

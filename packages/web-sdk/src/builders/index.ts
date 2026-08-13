@@ -6,6 +6,7 @@ export * from "./prefabs";
 export * from "./custom";
 export * from "./dispatch";
 export * from "./world_env";
+export * from "./triggers";
 
 // example usage for custom object:
 /*
