@@ -13,7 +13,6 @@ import { Grabbable } from "../interaction";
 import { FollowPlayer } from "../interaction/FollowPlayer";
 import {detect_trigger_direction, resolve_interacted, TriggerVolume} from "../interaction/TriggerVolume";
 import { Raycast, RaycastHandle } from "../interaction/Raycast";
-import type {  } from "@hyperlinkvr/vr-engine-schemas";
 import {
     Audio,
     AudioLoader,
@@ -46,6 +45,7 @@ const GrabbableWrapper = ({interaction, children}: InteractionWrapperProps<Grabb
     const {emit_report} = useObjectBinding(interaction.binding);
 
     // TODO: should we pass through the root ref? or let the wrapper impls manage their own?
+    // TODO: implement commands and maybe even discrete animation channels
     return (
         <Grabbable
             collider={interaction.collider}
@@ -162,7 +162,7 @@ const FollowPlayerWrapper = ({interaction, children}: InteractionWrapperProps<Fo
 }
 
 const PositionalAudioWrapper = ({interaction, children}: InteractionWrapperProps<PositionalAudioInteraction>) => {
-    const {on_command} = useObjectBinding(interaction.binding);
+    const {on_command, register_channels} = useObjectBinding(interaction.binding);
     const audio_ref = useRef<PositionalAudioType>(null);
 
     useEffect(() => {
@@ -219,6 +219,38 @@ const PositionalAudioWrapper = ({interaction, children}: InteractionWrapperProps
         }
     }, [on_command, interaction]);
 
+    useEffect(() => register_channels({
+        volume: {
+            value_type: "number",
+            set: (value) => audio_ref.current?.setVolume(value as number)
+        },
+        playback_rate: {
+            value_type: "number",
+            set: (value) => audio_ref.current?.setPlaybackRate(value as number)
+        },
+        max_distance: {
+            value_type: "number",
+            set: (value) => {
+                audio_ref.current?.setRefDistance(value as number);
+                interaction.max_distance = value as number;
+            }
+        },
+        offset: {
+            value_type: "vector3",
+            set: (value) => {
+                audio_ref.current?.position.fromArray(value as number[]);
+                interaction.offset = [...(value as number[])] as [number, number, number];
+            }
+        },
+        loop: {
+            value_type: "boolean",
+            set: (value) => {
+                audio_ref.current?.setLoop(value as boolean);
+                interaction.loop = value as boolean;
+            }
+        }
+    }), [register_channels, interaction]);
+
     return (
         <>
             <PositionalAudio
@@ -235,7 +267,7 @@ const PositionalAudioWrapper = ({interaction, children}: InteractionWrapperProps
 }
 
 const GlobalAudioWrapper = ({interaction, children}: InteractionWrapperProps<GlobalAudioInteraction>) => {
-    const {on_command} = useObjectBinding(interaction.binding);
+    const {on_command, register_channels} = useObjectBinding(interaction.binding);
 
     const audio_listener = useAudioListener();
     const audio = useMemo(() => new Audio(audio_listener), [audio_listener]);
@@ -304,11 +336,33 @@ const GlobalAudioWrapper = ({interaction, children}: InteractionWrapperProps<Glo
         }
     }, [on_command, interaction]);
 
+    useEffect(() => register_channels({
+        volume: {
+            value_type: "number",
+            set: (value) => {
+                audio.setVolume(value as number);
+                interaction.volume = value as number;
+            }
+        },
+        playback_rate: {
+            value_type: "number",
+            set: (value) => audio.setPlaybackRate(value as number)
+        },
+        // discrete, so it flips at the keyframe rather than interpolating
+        loop: {
+            value_type: "boolean",
+            set: (value) => {
+                audio.setLoop(value as boolean);
+                interaction.loop = value as boolean;
+            }
+        }
+    }), [register_channels, audio, interaction]);
+
     return children;
 }
 
 const PointLightWrapper = ({interaction, children}: InteractionWrapperProps<PointLightInteraction>) => {
-    const {on_command} = useObjectBinding(interaction.binding);
+    const {on_command, register_channels} = useObjectBinding(interaction.binding);
 
     // doesn't auto sync to props, so need to manually update value via ref when command is received
     const light_ref = useRef<PointLight>(null);
@@ -352,6 +406,49 @@ const PointLightWrapper = ({interaction, children}: InteractionWrapperProps<Poin
         return () => unlisten();
     }, [on_command, interaction]);
 
+    useEffect(() => register_channels({
+        intensity: {
+            value_type: "number",
+            set: (value) => {
+                const light = light_ref.current;
+                if (!light) return;
+                light.intensity = value as number;
+                interaction.intensity = value as number;
+            }
+        },
+        distance: {
+            value_type: "number",
+            set: (value) => {
+                const light = light_ref.current;
+                if (!light) return;
+                light.distance = value as number;
+                interaction.distance = value as number;
+            }
+        },
+        decay: {
+            value_type: "number",
+            set: (value) => {
+                const light = light_ref.current;
+                if (!light) return;
+                light.decay = value as number;
+                interaction.decay = value as number;
+            }
+        },
+        color: {
+            value_type: "color",
+            set: (value) => light_ref.current?.color.fromArray(value as number[])
+        },
+        offset: {
+            value_type: "vector3",
+            set: (value) => {
+                const light = light_ref.current;
+                if (!light) return;
+                light.position.fromArray(value as number[]);
+                interaction.offset = [...(value as number[])] as [number, number, number];
+            }
+        }
+    }), [register_channels, interaction]);
+
     return (
         <>
             <pointLight
@@ -368,7 +465,7 @@ const PointLightWrapper = ({interaction, children}: InteractionWrapperProps<Poin
 }
 
 const DirectionalLightWrapper = ({interaction, children}: InteractionWrapperProps<DirectionalLightInteraction>) => {
-    const {on_command} = useObjectBinding(interaction.binding);
+    const {on_command, register_channels} = useObjectBinding(interaction.binding);
 
     // doesn't auto sync to props, so need to manually update value via ref when command is received
     const light_ref = useRef<DirectionalLight>(null);
@@ -408,6 +505,37 @@ const DirectionalLightWrapper = ({interaction, children}: InteractionWrapperProp
         return () => unlisten();
     }, [on_command, interaction]);
 
+    useEffect(() => register_channels({
+        intensity: {
+            value_type: "number",
+            set: (value) => {
+                const light = light_ref.current;
+                if (!light) return;
+                light.intensity = value as number;
+                interaction.intensity = value as number;
+            }
+        },
+        color: {
+            value_type: "color",
+            set: (value) => light_ref.current?.color.fromArray(value as number[])
+        },
+        offset: {
+            value_type: "vector3",
+            set: (value) => {
+                const light = light_ref.current;
+                if (!light) return;
+                light.position.fromArray(value as number[]);
+                interaction.offset = [...(value as number[])] as [number, number, number];
+            }
+        },
+        // no writeback, since interaction.rotation is a Rotation union rather than a raw
+        // quaternion. a rerender will snap it back to the authored value until the next sample
+        rotation: {
+            value_type: "quaternion",
+            set: (value) => light_ref.current?.quaternion.fromArray(value as number[])
+        }
+    }), [register_channels, interaction]);
+
     const euler_rotation = useMemo(() => {
         const euler = new Euler();
         rotation_to_euler(interaction.rotation, euler);
@@ -429,7 +557,7 @@ const DirectionalLightWrapper = ({interaction, children}: InteractionWrapperProp
 }
 
 const SpotLightWrapper = ({interaction, children}: InteractionWrapperProps<SpotLightInteraction>) => {
-    const {on_command} = useObjectBinding(interaction.binding);
+    const {on_command, register_channels} = useObjectBinding(interaction.binding);
 
     // doesn't auto sync to props, so need to manually update value via ref when command is received
     const light_ref = useRef<SpotLight>(null);
@@ -484,6 +612,71 @@ const SpotLightWrapper = ({interaction, children}: InteractionWrapperProps<SpotL
         const unlisten = on_command(handle_command);
         return () => unlisten();
     }, [on_command, interaction]);
+
+    useEffect(() => register_channels({
+        intensity: {
+            value_type: "number",
+            set: (value) => {
+                const light = light_ref.current;
+                if (!light) return;
+                light.intensity = value as number;
+                interaction.intensity = value as number;
+            }
+        },
+        angle: {
+            value_type: "number",
+            set: (value) => {
+                const light = light_ref.current;
+                if (!light) return;
+                light.angle = value as number;
+                interaction.angle = value as number;
+            }
+        },
+        penumbra: {
+            value_type: "number",
+            set: (value) => {
+                const light = light_ref.current;
+                if (!light) return;
+                light.penumbra = value as number;
+                interaction.penumbra = value as number;
+            }
+        },
+        distance: {
+            value_type: "number",
+            set: (value) => {
+                const light = light_ref.current;
+                if (!light) return;
+                light.distance = value as number;
+                interaction.distance = value as number;
+            }
+        },
+        decay: {
+            value_type: "number",
+            set: (value) => {
+                const light = light_ref.current;
+                if (!light) return;
+                light.decay = value as number;
+                interaction.decay = value as number;
+            }
+        },
+        color: {
+            value_type: "color",
+            set: (value) => light_ref.current?.color.fromArray(value as number[])
+        },
+        offset: {
+            value_type: "vector3",
+            set: (value) => {
+                const light = light_ref.current;
+                if (!light) return;
+                light.position.fromArray(value as number[]);
+                interaction.offset = [...(value as number[])] as [number, number, number];
+            }
+        },
+        rotation: {
+            value_type: "quaternion",
+            set: (value) => light_ref.current?.quaternion.fromArray(value as number[])
+        }
+    }), [register_channels, interaction]);
 
     const euler_rotation = useMemo(() => {
         const euler = new Euler();
@@ -658,7 +851,7 @@ const SeatWrapper = ({ interaction, children }: InteractionWrapperProps<SeatInte
 };
 
 const RaycastWrapper = ({interaction, children}: InteractionWrapperProps<RaycastInteraction>) => {
-    const {emit_report, on_command} = useObjectBinding(interaction.binding);
+    const {emit_report, on_command, register_channels} = useObjectBinding(interaction.binding);
     const {id} = useObjectRefs();
     const handle_ref = useRef<RaycastHandle>(null);
 
@@ -699,6 +892,21 @@ const RaycastWrapper = ({interaction, children}: InteractionWrapperProps<Raycast
 
         return on_command(handle_command);
     }, [on_command]);
+
+    useEffect(() => register_channels({
+        enabled: {
+            value_type: "boolean",
+            set: (value) => handle_ref.current?.set_enabled(value as boolean)
+        },
+        thickness: {
+            value_type: "number",
+            set: (value) => handle_ref.current?.set_thickness(value as number)
+        },
+        min_distance: {
+            value_type: "number",
+            set: (value) => handle_ref.current?.set_min_distance(value as number)
+        },
+    }), [register_channels]);
 
     return (
         <>

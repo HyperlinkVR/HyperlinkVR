@@ -4,6 +4,7 @@ import {PartialTransformSchema, TransformSchema} from "./transforms";
 import {ObjectMonitorSchema} from "./object_monitors";
 import {EngineObjectSchema} from "./objects";
 import {TriggerSchema} from "./triggers";
+import {AnimationSchema} from "./animation";
 
 export const EngineObjectDispatchSchema = z.object({
     object: EngineObjectSchema,
@@ -35,3 +36,8 @@ export const EngineObjectModificationSchema = z.object({
 });
 export type EngineObjectModification = z.infer<typeof EngineObjectModificationSchema>;
 export type EngineObjectModificationInput = z.input<typeof EngineObjectModificationSchema>;
+
+export const CreatedAnimationSchema = AnimationSchema.extend({
+    id: z.string()
+});
+export type CreatedAnimation = z.infer<typeof CreatedAnimationSchema>;

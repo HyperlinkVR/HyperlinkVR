@@ -11,6 +11,8 @@ import {Group} from "three";
 import {ObjectReadyMarker} from "./object_ready_registry";
 import {register_object_monitors} from "./object_monitor_registry";
 import {register_triggers} from "./trigger_registry";
+import {body_owns_pose_for} from "./object_modification";
+import {register_animation_channels} from "../animation/channel_registry";
 
 export const EngineObjectRenderer = ({ data }: { data: CreatedEngineObject }) => {
     const { type, ...obj_rest } = data.object;
@@ -38,6 +40,33 @@ export const EngineObjectRenderer = ({ data }: { data: CreatedEngineObject }) =>
         () => register_triggers(data.triggers),
         [data.triggers]
     );
+
+    // register animation channels for transform
+    useEffect(() => {
+        const object_refs = refs.current;
+
+        const write = (target: "position" | "quaternion" | "scale", value: number[]) => {
+            // dynamic and fixed bodies own their own pose, so leave them to the solver
+            // TODO: tell the sdk if they're trying to illegally animate a fixed or dynamic body, so they ensure they use kinematic pos instead. maybe could convert temporarily to kinematic pos but that should be explicit behaviour
+            if (body_owns_pose_for(object_refs)) return;
+            object_refs.root.current?.[target].fromArray(value);
+        };
+
+        return register_animation_channels(data.id, {
+            "transform.position": {
+                value_type: "vector3",
+                set: (value) => write("position", value as number[])
+            },
+            "transform.rotation": {
+                value_type: "quaternion",
+                set: (value) => write("quaternion", value as number[])
+            },
+            "transform.scale": {
+                value_type: "vector3",
+                set: (value) => write("scale", value as number[])
+            }
+        });
+    }, [data.id]);
 
     // a physics object's pose is owned by its rigid body so the outer group must stay at identity or the mesh double-transforms
     // a non-physics object's pose is owned by this group

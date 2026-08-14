@@ -1,7 +1,7 @@
 import {
     Animation,
     AnimationInput,
-    AnimationSchema,
+    AnimationSchema, CreatedAnimation,
     HexColor,
     InterpolationType,
     KeyframeTrack,
@@ -12,6 +12,7 @@ import {
 import {BaseBuilder} from "./base";
 
 import {BindingMap} from "./triggers";
+import {send_via_rtc} from "../messenger";
 
 // loosely a created object dispatch, which is the only form that can resolve interaction binding names
 export interface AnimationTargetHost {
@@ -207,6 +208,25 @@ export const KeyframeTrackBuilder = {
         )
 };
 
+const animation_command = async (animation_id: string, command: string, args?: any) =>
+    await send_via_rtc({
+        action: "HVRSDK_ANIMATION_COMMAND",
+        animation_id,
+        command,
+        args
+    });
+
+export interface AnimationCreationResult {
+    animation: CreatedAnimation;
+    bindings: BindingMap;
+    destroy: () => Promise<void>;
+    play: () => Promise<any>;
+    pause: () => Promise<any>;
+    stop: () => Promise<any>;
+    restart: () => Promise<any>;
+    seek: (time_ms: number) => Promise<any>;
+}
+
 export class AnimationBuilder extends BaseBuilder<AnimationInput> {
     constructor() {
         super({tracks: []} as AnimationInput);
@@ -260,4 +280,129 @@ export class AnimationBuilder extends BaseBuilder<AnimationInput> {
 
         return AnimationSchema.parse(this._internal);
     }
+
+    async create(): Promise<AnimationCreationResult> {
+        const animation = this.build();
+
+        // triggers can resolve against animation name too
+        const bindings = new Map<string, string>();
+        if (animation.binding?.name) {
+            const binding_id = crypto.randomUUID();
+            animation.binding = {...animation.binding, id: binding_id};
+            bindings.set(animation.binding.name!, binding_id);
+        }
+
+        const response = await send_via_rtc({
+            action: "HVRSDK_CREATE_ANIMATION",
+            animation
+        });
+
+        const created: CreatedAnimation = response.animation;
+
+        return {
+            animation: created,
+            bindings,
+            destroy: async () => {
+                await send_via_rtc({
+                    action: "HVRSDK_DESTROY_ANIMATION",
+                    animation_id: created.id
+                });
+            },
+            play: () => animation_command(created.id, "play"),
+            pause: () => animation_command(created.id, "pause"),
+            stop: () => animation_command(created.id, "stop"),
+            restart: () => animation_command(created.id, "restart"),
+            seek: (time_ms: number) => animation_command(created.id, "seek", {time_ms})
+        };
+    }
 }
+
+/*
+usage example
+
+const h = hyperlinkvr.builders;
+
+// kinematic-pos so the group owns the pose. body_owns_pose_for skips fixed and dynamic, so a lift on either would silently not move
+const platform = new h.CustomObjectBuilder()
+    .set_mesh("https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/refs/heads/main/2.0/Box/glTF-Binary/Box.glb")
+    .set_physics(new h.PhysicsSystemBuilder()
+        .set_rigid_body(new h.KinematicPosRigidBodyBuilder()
+            .set_collider(new h.ColliderBuilder().box([0.5, 0.1, 0.5]).build())
+            .build()
+        )
+        .build()
+    )
+    .build();
+
+const created_lift = await new h.EngineObjectDispatchBuilder()
+    .set_object(platform)
+    .set_position(0, 0.2, -4)
+    .create();
+
+// no physics, so this object's group owns its pose outright
+const lamp = new h.CustomObjectBuilder()
+    .add_interaction("bulb", new h.PointLightInteractionBuilder()
+        .set_color("#ffdd88")
+        .set_intensity(0)
+        .set_distance(10)
+        .build())
+    .build();
+
+const created_lamp = await new h.EngineObjectDispatchBuilder()
+    .set_object(lamp)
+    .set_position(0, 3, -4)
+    .create();
+
+// loops from creation, no trigger needed
+const lift_cycle = await new h.AnimationBuilder()
+    .named("lift_cycle")
+    .loops()
+    .autoplay()
+    .add_track(h.KeyframeTrackBuilder.position(created_lift)
+        .add_keyframe(0, [0, 0.2, -4])
+        .add_keyframe(3000, [0, 3.0, -4])
+        .add_keyframe(6000, [0, 0.2, -4])
+        .build())
+    .add_track(h.KeyframeTrackBuilder.rotation(created_lift)
+        .add_keyframe(0, [0, 0, 0, 1])
+        .add_keyframe(3000, [0, 0.7071, 0, 0.7071])
+        .add_keyframe(6000, [0, 0, 0, 1])
+        .build())
+    .create();
+
+console.log("Lift animation:", lift_cycle.animation.id);
+
+// interaction channel on a different object, started by a button
+const lamp_pulse = await new h.AnimationBuilder()
+    .named("lamp_pulse")
+    .add_track(h.KeyframeTrackBuilder.number(created_lamp, "interactions.bulb.intensity")
+        .set_interpolation("smooth")
+        .add_keyframe(0, 0)
+        .add_keyframe(400, 6)
+        .add_keyframe(1600, 0)
+        .build())
+    .create();
+
+const button = new h.ButtonPrefabBuilder()
+    .named("pulse_button")
+    .set_label("Pulse")
+    .set_body_color(0xff0000)
+    .build();
+
+await new h.EngineObjectDispatchBuilder()
+    .set_object(button)
+    .set_position(1, 1, -2)
+    .add_trigger(new h.TriggerBuilder("pulse_button")
+        .add_target(new h.TriggerTargetBuilder(
+            {target: lamp_pulse, name: "lamp_pulse"},
+            "restart"
+        ).build())
+        .set_cooldown(1600)
+        .build())
+    .create();
+
+// exercises the command path rather than the trigger path. the lift should resume
+// from where it stopped, not restart
+setTimeout(() => lift_cycle.pause(), 10000);
+setTimeout(() => lift_cycle.play(), 13000);
+ */

@@ -48,6 +48,8 @@ import {QuarksProvider} from "quarks.r3f";
 import {AutoHintGlyphs, HintDevicePublisher, HintStateProvider} from "../input/impl/flat/hints";
 import {ObjectMonitorRunner} from "./ObjectMonitorRunner";
 import {InputMonitorRunner} from "./InputMonitorRunner";
+import {AnimationRunner} from "../animation/AnimationRunner";
+import {AnimationSync} from "../animation/AnimationSync";
 
 configureTextBuilder({
     useWorker: false
@@ -253,6 +255,7 @@ const SceneContents = ({
 
             {show_loader && <VRLoadingScreen />}
 
+            <AnimationRunner />
             <TweenRunner />
             <ObjectMonitorRunner />
             <InputMonitorRunner />
@@ -365,6 +368,7 @@ const EngineHostInternal = memo(
                         <HintStateProvider>
                             <WorldSessionListener />
                             <EngineObjectSync />
+                            <AnimationSync />
 
                             <div
                                 className={`w-full h-full relative ${mode === "vr" ? "max-w-[calc(100vh*16/9)] max-h-[calc(100vw*9/16)]" : ""}`}

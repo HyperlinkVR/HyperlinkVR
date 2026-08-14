@@ -4,6 +4,7 @@ import {useCallback, useEffect, useRef} from "react";
 import {useObjectRefsOptional} from "../contexts/ObjectRefsContext";
 import { useWebSDKMessaging } from "../contexts/WebSDKMessagingContext";
 import {register_command_handler, run_triggers} from "../engine/trigger_registry";
+import {AnimationChannel, register_animation_channels} from "../animation/channel_registry";
 
 type ReportBody = Pick<ReportEvent, "kind" | "payload">;
 
@@ -99,8 +100,19 @@ export const useObjectBinding = (binding: BindingConfig | undefined) => {
         };
     }, [object_id, source_id, on_action]);
 
+    const register_channels = useCallback((channels: Record<string, AnimationChannel>) => {
+        if (!binding?.id || !object_id) return () => {};
+
+        const prefixed = Object.fromEntries(
+            Object.entries(channels).map(([name, channel]) => [`interactions.${binding.id}.${name}`, channel])
+        );
+
+        return register_animation_channels(object_id, prefixed);
+    }, [binding?.id, object_id]);
+
     return {
         emit_report,
-        on_command
+        on_command,
+        register_channels
     };
 };

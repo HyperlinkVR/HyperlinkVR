@@ -1,4 +1,6 @@
 import type {
+    AnimationDispatch,
+    CreatedAnimation,
     CreatedEngineObject,
     EngineObjectDispatch, EngineObjectModification, PlayerMonitor,
     ReportEvent, Tween, WorldEnv
@@ -126,6 +128,23 @@ interface WebSDKInteractionCommandAction extends BaseWebSDKActionMessage {
     args?: any;
 }
 
+interface WebSDKCreateAnimationAction extends BaseWebSDKActionMessage {
+    action: "HVRSDK_CREATE_ANIMATION";
+    animation: AnimationDispatch["animation"];
+}
+
+interface WebSDKDestroyAnimationAction extends BaseWebSDKActionMessage {
+    action: "HVRSDK_DESTROY_ANIMATION";
+    animation_id: string;
+}
+
+interface WebSDKAnimationCommandAction extends BaseWebSDKActionMessage {
+    action: "HVRSDK_ANIMATION_COMMAND";
+    animation_id: string;
+    command: string;
+    args?: any;
+}
+
 interface WebSDKMetaAction extends BaseWebSDKActionMessage {
     action: "HVRSDK_META";
     content: "supported" | "defer" | "disable";
@@ -187,6 +206,9 @@ export type WebSDKActionMessage =
     | WebSDKModifyEngineObjectAction
     | WebSDKRefreshEngineObjectAction
     | WebSDKInteractionCommandAction
+    | WebSDKCreateAnimationAction
+    | WebSDKDestroyAnimationAction
+    | WebSDKAnimationCommandAction
     | WebSDKPlayerGetPositionAction
     | WebSDKPlayerTeleportToAction
     | WebSDKPlayerSendToWorldAction
@@ -306,6 +328,21 @@ interface WebSDKInteractionCommandReplyMessage extends BaseWebSDKReplyMessage {
     response?: any;
 }
 
+interface WebSDKAnimationCreatedReplyMessage extends BaseWebSDKReplyMessage {
+    for: "HVRSDK_CREATE_ANIMATION";
+    animation: CreatedAnimation;
+}
+
+interface WebSDKAnimationDestroyedReplyMessage extends BaseWebSDKReplyMessage {
+    for: "HVRSDK_DESTROY_ANIMATION";
+    animation_id: string;
+}
+
+interface WebSDKAnimationCommandReplyMessage extends BaseWebSDKReplyMessage {
+    for: "HVRSDK_ANIMATION_COMMAND";
+    result: { success: boolean; error?: string };
+}
+
 interface WebSDKPlayerGetPositionReplyMessage extends BaseWebSDKReplyMessage {
     for: "HVRSDK_PLAYER_GET_POSITION";
     position: [number, number, number];
@@ -359,6 +396,9 @@ export type WebSDKReplyMessage =
     | WebSDKObjectModifiedReplyMessage
     | WebSDKObjectRefreshReplyMessage
     | WebSDKInteractionCommandReplyMessage
+    | WebSDKAnimationCreatedReplyMessage
+    | WebSDKAnimationDestroyedReplyMessage
+    | WebSDKAnimationCommandReplyMessage
     | WebSDKPlayerGetPositionReplyMessage
     | WebSDKPlayerSendToWorldReplyMessage
     | WebSDKPlayerTeleportToReplyMessage
