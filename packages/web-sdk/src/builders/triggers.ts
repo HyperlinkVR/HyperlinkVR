@@ -8,9 +8,42 @@ import {
     TriggerTargetSchema
 } from "@hyperlinkvr/vr-engine-schemas";
 
+export type BindingMap = ReadonlyMap<string, string>;
+
+export interface BindingHost {
+    readonly bindings: BindingMap;
+}
+
+// string = a binding name within the same object, options object = ability to bind to other objects/classes
+export type TriggerTargetBinding = string | {target?: BindingHost, name: string};
+
 export class TriggerTargetBuilder extends BaseBuilder<TriggerTargetInput> {
-    constructor(target_binding: string, command: string) {
-        super({target: {name: target_binding}, command});
+    constructor(target_binding: TriggerTargetBinding, command: string) {
+        if (!target_binding) {
+            throw new Error("Trigger target binding is required.");
+        }
+
+        if (typeof target_binding === "object") {
+            if (!target_binding.target) {
+                // bind to myself, just like if only the name string was passed (id will be minted at dispatch)
+                super({target: {name: target_binding.name}, command});
+                return;
+            }
+
+            const named_binding = target_binding.target.bindings.get(target_binding.name);
+            if (!named_binding) {
+                const known = [...target_binding.target.bindings.keys()].map((name) => `"${name}"`).join(", ");
+                throw new Error(
+                    `Trigger target "${target_binding.name}" matches no named binding on the target object. Known bindings: ${known || "none"}.`
+                );
+            }
+
+            // bind to the target on the other object by its id
+            super({target: {id: named_binding}, command});
+        } else {
+            // bind to the name within the same object (id will be minted at dispatch)
+            super({target: {name: target_binding}, command});
+        }
     }
 
 

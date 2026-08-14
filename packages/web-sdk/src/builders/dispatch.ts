@@ -20,9 +20,12 @@ import {BaseBuilder} from "./base";
 import {subscribe_report} from "../event_bus";
 import {send_via_rtc} from "../messenger";
 import {_INTERACTION_API_MAKERS} from "./interactions";
+import type {BindingMap} from "./triggers";
 
 export interface EngineObjectCreationResult {
     object: CreatedEngineObject;
+    interactions: Record<string, Function>;
+    bindings: BindingMap;
     destroy: () => Promise<void>;
     modify: () => EngineObjectModificationBuilder;
     refresh: () => Promise<void>;
@@ -677,6 +680,7 @@ export class EngineObjectDispatchBuilder extends BaseBuilder<EngineObjectDispatc
             const ret_val = {
                 object: Object.freeze(created.object),
                 interactions: bind_interaction_apis(created.object.id),
+                bindings: new Map(binding_ids), // clone so the caller can't mutate the internal map
                 destroy: async () => {
                     if (burned) {
                         throw new Error("This object has already been destroyed.");
@@ -712,7 +716,7 @@ export class EngineObjectDispatchBuilder extends BaseBuilder<EngineObjectDispatc
 
                     ret_val.object = Object.freeze(refreshed.object);
                 }
-            }
+            } satisfies EngineObjectCreationResult;
 
             return ret_val;
         } catch (e) {
