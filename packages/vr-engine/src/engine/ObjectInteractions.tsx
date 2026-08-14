@@ -862,8 +862,7 @@ const RaycastWrapper = ({interaction, children}: InteractionWrapperProps<Raycast
 
             switch (command) {
                 case "fire":
-                    // returned rather than reported, so a gun gets its hits
-                    // back on the same call it fired with
+                    // returned rather than reported, so a gun gets its hits back on the same call it fired with
                     return handle.fire({extra_spread_deg: args?.extra_spread_deg});
                 case "set_enabled":
                     handle.set_enabled(args.enabled);

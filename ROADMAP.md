@@ -10,7 +10,7 @@ Singleplayer, to support a handful of games
 - [x] Floating text and sign prefabs - required for scores, instructions, win/lose states
 - [x] Make the `Button` prefab real (currently a placeholder text mesh)
 - [ ] Ensure all interaction properties are actually implemented (audit builders vs engine)
-- [ ] Minimal keyframing system
+- [x] Keyframing system
 - [ ] Starter prefab kit - a deliberately small set beyond button/ball/hoop/skootball:
   a target, a simple gun, and a spawner / respawn point
 - [ ] Fix auth bugs: only allow lowercase username, improve UX (JWT/passkey can wait)
@@ -98,8 +98,17 @@ Interchangeable with Epic B.
 - [ ] Grabbable hand positioning / hiding (guns, gauntlets, gloves)
 - [ ] Gun interaction/monitor: arcing and projectile modes (hitscan shipped in MVP)
 - [ ] Support tweening of light properties
-- [ ] Scripted object pathways / full keyframing system on SDK (could a gradual tween already do
-  this? Probably nicer to define a path in advance)
+- [ ] Animation reports (finished / looped) so clips can chain and trigger side effects
+- [ ] Send channel value_types alongside paths, so a mismatched track fails at build
+  rather than being silently skipped by the runner
+- [ ] Reimplement tweens on the channel registry, so every registered channel gets
+  tween_* for free and the per-interaction arms stop duplicating writes
+- [ ] Player riding keyframed platforms (character controller doesn't inherit
+  platform velocity, so a lift slides out from under you)
+- [ ] Animation sequences: one clock and one binding over several clips, for group
+  pause/seek and a single finished report
+- [ ] Clip library / reuse, if the same clip on many objects ever becomes a bandwidth
+  or authoring problem
 - [ ] Anchored option on kinematic-pos rigid body builder
 - [ ] Option for SDK rigid body to forbid teleport onto
 - [ ] Option for bodies to ignore player or object collisions
