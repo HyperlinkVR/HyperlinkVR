@@ -24,8 +24,9 @@ import type {BindingMap} from "./triggers";
 
 export interface EngineObjectCreationResult {
     object: CreatedEngineObject;
-    interactions: Record<string, Function>;
-    bindings: BindingMap;
+    interactions: Record<string, Function>; // interaction apis
+    bindings: BindingMap; // map of binding names to their ids for automatic trigger resolution
+    channels: string[]; // list of animation channels on this object (which can be used for keyframing)
     destroy: () => Promise<void>;
     modify: () => EngineObjectModificationBuilder;
     refresh: () => Promise<void>;
@@ -681,6 +682,7 @@ export class EngineObjectDispatchBuilder extends BaseBuilder<EngineObjectDispatc
                 object: Object.freeze(created.object),
                 interactions: bind_interaction_apis(created.object.id),
                 bindings: new Map(binding_ids), // clone so the caller can't mutate the internal map
+                channels: created.channels || [],
                 destroy: async () => {
                     if (burned) {
                         throw new Error("This object has already been destroyed.");

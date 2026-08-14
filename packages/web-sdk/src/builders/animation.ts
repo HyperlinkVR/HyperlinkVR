@@ -18,6 +18,7 @@ import {send_via_rtc} from "../messenger";
 export interface AnimationTargetHost {
     readonly object: { readonly id: string };
     readonly bindings: BindingMap;
+    readonly channels: string[];
 }
 
 // a bare object reference or id resolves transform channels only
@@ -82,6 +83,22 @@ const resolve_binding_segments = (target: AnimationTarget, segments: string[]): 
     return [prefix, binding_id, ...rest];
 };
 
+// exchange interaction ids in error message known list for their name
+const to_display_path = (path: string, bindings: BindingMap): string => {
+    const segments = path.split(".");
+    if (segments[0] !== "interactions" || segments.length < 3) {
+        return path;
+    }
+
+    for (const [name, id] of bindings) {
+        if (id === segments[1]) {
+            return [segments[0], name, ...segments.slice(2)].join(".");
+        }
+    }
+
+    return path;
+};
+
 abstract class BaseKeyframeTrackBuilder<TValue> {
     protected readonly _selector: KeyframeTrackSelector;
     protected readonly _type: string;
@@ -94,6 +111,19 @@ abstract class BaseKeyframeTrackBuilder<TValue> {
             object_id: resolve_object_id(target),
             property: resolve_binding_segments(target, resolve_property(property))
         };
+
+        const path = this._selector.property.join(".");
+
+        // the engine reports resolved paths at create time, so check if the target has the channel
+        if (is_host(target) && !target.channels.includes(path)) {
+            const known = target.channels
+                .map((channel) => `"${to_display_path(channel, target.bindings)}"`)
+                .join(", ");
+
+            throw new Error(
+                `Animation track targets "${to_display_path(path, target.bindings)}", which is not an animatable channel on this object. Available: ${known || "none"}.`
+            );
+        }
     }
 
     add_keyframe(time_ms: number, value: TValue) {

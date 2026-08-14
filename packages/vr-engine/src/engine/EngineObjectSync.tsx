@@ -7,6 +7,7 @@ import {get_object_refs} from "./object_ref_registry";
 import {apply_modification, sample_live_transform} from "./object_modification";
 import {cancel_active_tween, set_active_tween} from "./tween_registry";
 import {clear_object_ready, wait_for_object_ready} from "./object_ready_registry";
+import {list_animation_channels} from "../animation/channel_registry";
 
 
 export const EngineObjectSync = () => {
@@ -35,7 +36,8 @@ export const EngineObjectSync = () => {
 
                 reply({
                     for: "HVRSDK_CREATE_ENGINE_OBJECT",
-                    object: created_object
+                    object: created_object,
+                    channels: list_animation_channels(id)
                 });
             });
         });

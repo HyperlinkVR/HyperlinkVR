@@ -1,5 +1,4 @@
 import type {
-    AnimationDispatch,
     CreatedAnimation,
     CreatedEngineObject,
     EngineObjectDispatch, EngineObjectModification, PlayerMonitor,
@@ -130,7 +129,7 @@ interface WebSDKInteractionCommandAction extends BaseWebSDKActionMessage {
 
 interface WebSDKCreateAnimationAction extends BaseWebSDKActionMessage {
     action: "HVRSDK_CREATE_ANIMATION";
-    animation: AnimationDispatch["animation"];
+    animation: Animation;
 }
 
 interface WebSDKDestroyAnimationAction extends BaseWebSDKActionMessage {
@@ -303,6 +302,7 @@ interface WebSDKRTCOfferReplyMessage extends BaseWebSDKReplyMessage {
 interface WebSDKObjectCreatedReplyMessage extends BaseWebSDKReplyMessage {
     for: "HVRSDK_CREATE_ENGINE_OBJECT";
     object: CreatedEngineObject;
+    channels?: string[];
 }
 
 interface WebSDKObjectDestroyedReplyMessage extends BaseWebSDKReplyMessage {
