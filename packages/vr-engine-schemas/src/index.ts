@@ -10,4 +10,5 @@ export * from "./transforms";
 export * from "./tween";
 export * from "./world_env";
 export * from "./triggers";
+export * from "./animation";
 export {BindingConfigSchema, type BindingConfig, type Bindable} from "./binding";

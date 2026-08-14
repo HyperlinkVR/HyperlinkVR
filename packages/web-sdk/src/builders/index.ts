@@ -7,6 +7,7 @@ export * from "./custom";
 export * from "./dispatch";
 export * from "./world_env";
 export * from "./triggers";
+export * from "./animation";
 
 // example usage for custom object:
 /*
