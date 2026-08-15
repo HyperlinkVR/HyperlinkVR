@@ -7,6 +7,7 @@ on:
       - main
     paths:
       - 'apps/website/**'
+      - 'packages/web-sdk/**'
 
 permissions:
   contents: write
@@ -18,8 +19,23 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build the website
+        run: pnpm --filter @hyperlinkvr/website build
+
       - name: Deploy to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./apps/website/public 
+          publish_dir: ./apps/website/dist

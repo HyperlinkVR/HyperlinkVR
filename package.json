@@ -10,6 +10,7 @@
         "build": "turbo run build",
         "build:extension": "cd apps/extension && pnpm build",
         "build:schema": "tsx scripts/build_json_schema.ts",
+        "build:website": "cd apps/website && pnpm build",
         "typecheck": "turbo run typecheck --output-logs=errors-only --continue",
         "unused": "knip"
     },
