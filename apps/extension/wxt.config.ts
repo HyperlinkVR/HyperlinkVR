@@ -159,5 +159,11 @@ export default defineConfig({
 
     webExt: {
         disabled: true
-    }
+    },
+
+    hooks: {
+        "prepare:tsconfig": (wxt, { tsconfig }) => {
+            tsconfig.compilerOptions.verbatimModuleSyntax = false;
+        },
+    },
 });

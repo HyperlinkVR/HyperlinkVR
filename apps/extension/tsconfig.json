@@ -11,6 +11,7 @@
         },
         "baseUrl": ".",
         "composite": false,
-        "resolveJsonModule": true
+        "resolveJsonModule": true,
+        "verbatimModuleSyntax": false
     }
 }
