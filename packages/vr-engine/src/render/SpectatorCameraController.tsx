@@ -1,20 +1,19 @@
-import { useFrame, useThree } from "@react-three/fiber";
-import { useEffect, useMemo, type RefObject } from "react";
+import {useFrame, useThree} from "@react-three/fiber";
+import {type RefObject, useEffect, useMemo} from "react";
 import {
     Matrix4,
-    PerspectiveCamera,
-    Vector3,
     type Object3D,
+    PerspectiveCamera,
     type Quaternion,
+    Vector3,
     type WebGLRenderer,
     type WebXRArrayCamera
 } from "three";
 
 
-
-import { usePlayerOrigin, PlayerOriginContextType } from "../contexts";
-import { Eye } from "../types";
-import { Layer } from "./layers";
+import {PlayerOriginContextType, usePlayerOrigin} from "../contexts";
+import {Eye} from "../types";
+import {Layer} from "./layers";
 
 
 // TODO: params kinda redundant (having current, as well as being able to mod in place) but will keep as is for consistency for now
@@ -67,10 +66,12 @@ export const frame_transforms: Record<string, (...args: any[]) => CameraControll
     }
 } as const;
 
+// TODO: ability to disable spectator cam (or maybe use lighterweight capture left eye and crop) to save performance
+
 export const camera_controller_configs: Record<string, (...args: any[]) => CameraControllerConfiguration> = {
     first_person: (preferred_eye: Eye = Eye.Left) => ({
         frame_transform: frame_transforms.first_person(preferred_eye),
-        layers: [Layer.Default, Layer.PlayerModel_TorsoAndHands, Layer.ThirdPerson_ForceHide]
+        layers: [Layer.Default, Layer.PlayerModel_TorsoAndHands, Layer.ThirdPerson_ForceHide, Layer.HUD] // TODO: maybe add setting that puts the hud flat over the render or disables entirely for some cool cinematic footage
     }),
 
     third_person: ({position_ref, quaternion_ref}: {position_ref: RefObject<Vector3>, quaternion_ref: RefObject<Quaternion>}) => ({
