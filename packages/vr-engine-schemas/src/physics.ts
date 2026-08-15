@@ -3,6 +3,7 @@ import {z} from "zod";
 import {RotationSchema, Vector3Schema} from "./transforms";
 
 import {bindable} from "./binding";
+import {AbsoluteAssetURLSchema} from "./assets";
 
 // TODO: collider combo?
 
@@ -37,10 +38,7 @@ export const CustomMeshApproximationSchema = z.enum(["hull", "trimesh"]).default
 export type CustomMeshApproximation = z.infer<typeof CustomMeshApproximationSchema>;
 export const CustomMeshColliderSchema = BaseColliderSchema.extend({
     type: z.literal("custom-mesh"),
-    mesh: z.url({
-        protocol: /^https?$/,
-        hostname: z.regexes.domain
-    }),
+    mesh: AbsoluteAssetURLSchema,
     approximation: CustomMeshApproximationSchema.optional()
 });
 export type CustomMeshCollider = z.infer<typeof CustomMeshColliderSchema>;

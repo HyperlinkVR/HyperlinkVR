@@ -5,6 +5,7 @@ import {bindable} from "./binding";
 import {RotationSchema} from "./transforms";
 
 import {HexColorSchema} from "./colors";
+import {AbsoluteAssetURLSchema} from "./assets";
 
 export const GrabOffsetSpaceSchema = z.enum(["grip", "aim"]);
 export type GrabOffsetSpace = z.infer<typeof GrabOffsetSpaceSchema>;
@@ -98,10 +99,7 @@ export type FollowPlayerInteraction = z.infer<typeof FollowPlayerInteractionSche
 export type FollowPlayerInteractionInput = z.input<typeof FollowPlayerInteractionSchema>;
 export const PositionalAudioInteractionSchema = bindable({
     type: z.literal("positional-audio"),
-    url: z.url({
-        protocol: /^https?$/,
-        hostname: z.regexes.domain
-    }),
+    url: AbsoluteAssetURLSchema,
     max_distance: z.number().positive().default(10),
     loop: z.boolean().default(false),
     autoplay: z.boolean().default(false),
@@ -111,10 +109,7 @@ export type PositionalAudioInteraction = z.infer<typeof PositionalAudioInteracti
 export type PositionalAudioInteractionInput = z.input<typeof PositionalAudioInteractionSchema>
 export const GlobalAudioInteractionSchema = bindable({
     type: z.literal("global-audio"),
-    url: z.url({
-        protocol: /^https?$/,
-        hostname: z.regexes.domain
-    }),
+    url: AbsoluteAssetURLSchema,
     loop: z.boolean().default(false),
     autoplay: z.boolean().default(false),
     volume: z.number().min(0).max(1).default(1)
@@ -191,10 +186,7 @@ export type ParticleEmitterShape = z.infer<typeof ParticleEmitterShapeSchema>;
 export type ParticleEmitterShapeInput = z.input<typeof ParticleEmitterShapeSchema>;
 export const ParticleEmitterVisualImageSchema = z.object({
     type: z.literal("image"),
-    url: z.url({
-        protocol: /^https?$/,
-        hostname: z.regexes.domain
-    }),
+    url: AbsoluteAssetURLSchema,
     alpha: z.number().min(0).max(1).default(1).optional()
 });
 export type ParticleEmitterVisualImage = z.infer<typeof ParticleEmitterVisualImageSchema>;

@@ -8,6 +8,7 @@ import {
     Interaction,
     PhysicsSystem,
 } from "@hyperlinkvr/vr-engine-schemas";
+import {asset_url} from "../assets";
 
 export class CustomObjectBuilder extends BaseBuilder<CustomObjectInput> {
     constructor() {
@@ -15,7 +16,7 @@ export class CustomObjectBuilder extends BaseBuilder<CustomObjectInput> {
     }
 
     set_mesh(glb_url: string) {
-        this._internal.mesh = glb_url;
+        this._internal.mesh = asset_url(glb_url);
         return this;
     }
 

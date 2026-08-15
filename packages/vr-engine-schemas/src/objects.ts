@@ -3,6 +3,7 @@ import {PhysicsSystemSchema} from "./physics";
 import {bindable} from "./binding";
 import {InteractionSchema} from "./interactions";
 import {HexColorSchema} from "./colors";
+import {AbsoluteAssetURLSchema} from "./assets";
 
 
 // export const MaterialAlbedoColorSchema = z.object({
@@ -26,12 +27,7 @@ import {HexColorSchema} from "./colors";
 
 export const CustomObjectSchema = z.object({
     type: z.literal("custom"),
-    mesh: z
-        .url({
-            protocol: /^https?$/,
-            hostname: z.regexes.domain
-        })
-        .optional(),
+    mesh: AbsoluteAssetURLSchema.optional(),
     // material_override: MaterialSchema.optional(),
     physics: PhysicsSystemSchema.optional(),
     interactions: z.array(InteractionSchema).optional()

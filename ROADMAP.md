@@ -135,7 +135,7 @@ Interchangeable with Epic B.
 ### Robustness
 - [ ] Define a consistent error-message interface for the SDK and check for it in builders
 - [ ] Fix VR error boundary (doesn't follow the player)
-- [ ] Resolve relative paths from the SDK relative to the world URL, not the VR host
+- [x] Resolve relative paths from the SDK relative to the world URL, not the VR host
 - [ ] A way for the SDK to grab frame delta? Probably not possible with RTC overhead - good reason
   to have paths, and maybe a stable timing system
 

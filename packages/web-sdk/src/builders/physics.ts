@@ -14,6 +14,7 @@ import {
     RigidBodySchema,
     RigidBodyType, Rotation
 } from "@hyperlinkvr/vr-engine-schemas";
+import {asset_url} from "../assets";
 
 export class PhysicsSystemBuilder extends BaseBuilder<PhysicsSystemInput> {
     constructor() {
@@ -237,7 +238,7 @@ export class ColliderBuilder extends BaseBuilder<Collider> {
     }
 
     custom_mesh(mesh_url: string, approximation?: CustomMeshApproximation) {
-        this._internal = {type: "custom-mesh", mesh: mesh_url, approximation};
+        this._internal = {type: "custom-mesh", mesh: asset_url(mesh_url), approximation};
         return this;
     }
 

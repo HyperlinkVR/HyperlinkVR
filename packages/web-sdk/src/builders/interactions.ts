@@ -40,6 +40,7 @@ import {
 } from "@hyperlinkvr/vr-engine-schemas";
 import {send_via_rtc} from "../messenger";
 import {Player} from "../players";
+import {asset_url} from "../assets";
 
 const interaction_command = async (object_id: string, interaction_id: string, command: string, args?: any) => {
     try {
@@ -237,7 +238,7 @@ export class PositionalAudioInteractionBuilder extends BaseBuilder<PositionalAud
     }
 
     set_url(url: string) {
-        this._internal.url = url;
+        this._internal.url = asset_url(url);
         return this;
     }
 
@@ -302,7 +303,7 @@ export class GlobalAudioInteractionBuilder extends BaseBuilder<GlobalAudioIntera
     }
 
     set_url(url: string) {
-        this._internal.url = url;
+        this._internal.url = asset_url(url);
         return this;
     }
 
@@ -611,6 +612,10 @@ export class ParticleEmitterInteractionBuilder extends BaseBuilder<ParticleEmitt
     }
 
     set_visual(visual: ParticleEmitterVisualInput) {
+        if (visual.type === "image") {
+            visual.url = asset_url(visual.url);
+        }
+
         this._internal.visual = ParticleEmitterVisualSchema.parse(visual);
         return this;
     }

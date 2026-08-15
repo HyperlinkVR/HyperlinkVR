@@ -30,11 +30,11 @@
         );
         
         const interior = new h.CustomObjectBuilder()
-            .set_mesh("https://hyperlink.surf/clubhouse/visual.glb")
+            .set_mesh("/clubhouse/visual.glb")
             .set_physics(new h.PhysicsSystemBuilder()
                 .set_rigid_body(new h.FixedRigidBodyBuilder()
                     .set_collider(new h.ColliderBuilder()
-                        .custom_mesh("https://hyperlink.surf/clubhouse/colliders.glb", "trimesh")
+                        .custom_mesh("/clubhouse/colliders.glb", "trimesh")
                         .build()
                     )
                     .build()
