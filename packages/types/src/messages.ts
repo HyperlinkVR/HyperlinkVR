@@ -1,7 +1,7 @@
 import type {
     CreatedAnimation,
-    CreatedEngineObject,
-    EngineObjectDispatch, EngineObjectModification, PlayerMonitor,
+    CreatedEngineObject, CreatedHUDElement,
+    EngineObjectDispatch, EngineObjectModification, HUDDispatch, HUDElementModification, PlayerMonitor,
     ReportEvent, Tween, WorldEnv
 } from "@hyperlinkvr/vr-engine-schemas";
 
@@ -194,6 +194,30 @@ interface WebSDKPlayerRemoveMonitorAction extends BaseWebSDKActionMessage {
     monitor_id: string;
 }
 
+interface WebSDKCreateHUDElementAction extends BaseWebSDKActionMessage {
+    action: "HVRSDK_CREATE_HUD_ELEMENT";
+    element: HUDDispatch;
+}
+
+interface WebSDKDestroyHUDElementAction extends BaseWebSDKActionMessage {
+    action: "HVRSDK_DESTROY_HUD_ELEMENT";
+    element_id: string;
+}
+
+interface WebSDKUpdateHUDElementAction extends BaseWebSDKActionMessage {
+    action: "HVRSDK_UPDATE_HUD_ELEMENT";
+    element_id: string;
+    changes: HUDElementModification;
+    // undefined writes the element's own scope, a value writes one player's override
+    target_username?: string | null;
+    tween?: Tween;
+}
+
+interface WebSDKResetHUDAction extends BaseWebSDKActionMessage {
+    action: "HVRSDK_RESET_HUD";
+    target_username?: string | null;
+}
+
 export type WebSDKActionMessage =
     WebSDKAuthQueryAction
     | WebSDKAuthWhoAmIAction
@@ -216,7 +240,11 @@ export type WebSDKActionMessage =
     | WebSDKUpdateWorldEnvironmentAction
     | WebSDKResetWorldEnvironmentAction
     | WebSDKPlayerAddMonitorAction
-    | WebSDKPlayerRemoveMonitorAction;
+    | WebSDKPlayerRemoveMonitorAction
+    | WebSDKCreateHUDElementAction
+    | WebSDKDestroyHUDElementAction
+    | WebSDKUpdateHUDElementAction
+    | WebSDKResetHUDAction;
 
 export type ActionMessage =
     StartStreamAction |
@@ -387,6 +415,28 @@ interface WebSDKPlayerRemoveMonitorReplyMessage extends BaseWebSDKReplyMessage {
     was_registered: boolean;
 }
 
+interface WebSDKHUDElementCreatedReplyMessage extends BaseWebSDKReplyMessage {
+    for: "HVRSDK_CREATE_HUD_ELEMENT";
+    element: CreatedHUDElement;
+    channels?: string[];
+}
+
+interface WebSDKHUDElementDestroyedReplyMessage extends BaseWebSDKReplyMessage {
+    for: "HVRSDK_DESTROY_HUD_ELEMENT";
+    element_id: string;
+}
+
+interface WebSDKHUDElementUpdatedReplyMessage extends BaseWebSDKReplyMessage {
+    for: "HVRSDK_UPDATE_HUD_ELEMENT";
+    element_id: string;
+    success: true;
+}
+
+interface WebSDKHUDResetReplyMessage extends BaseWebSDKReplyMessage {
+    for: "HVRSDK_RESET_HUD";
+    success: true;
+}
+
 export type WebSDKReplyMessage =
     WebSDKAuthQueryReplyMessage
     | WebSDKAuthWhoAmIReplyMessage
@@ -406,7 +456,11 @@ export type WebSDKReplyMessage =
     | WebSDKResetWorldEnvironmentReplyMessage
     | WebSDKLoadingFinishedReplyMessage
     | WebSDKPlayerAddMonitorReplyMessage
-    | WebSDKPlayerRemoveMonitorReplyMessage;
+    | WebSDKPlayerRemoveMonitorReplyMessage
+    | WebSDKHUDElementCreatedReplyMessage
+    | WebSDKHUDElementDestroyedReplyMessage
+    | WebSDKHUDElementUpdatedReplyMessage
+    | WebSDKHUDResetReplyMessage;
 
 export type ReplyMessage =
     WebSDKReplyMessage;

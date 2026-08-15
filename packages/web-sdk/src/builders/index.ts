@@ -4,10 +4,11 @@ export * from "./player_monitors";
 export * from "./physics";
 export * from "./prefabs";
 export * from "./custom";
-export * from "./dispatch";
+export * from "./object_dispatch";
 export * from "./world_env";
 export * from "./triggers";
 export * from "./animation";
+export * from "./hud";
 
 // example usage for custom object:
 /*

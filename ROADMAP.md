@@ -41,7 +41,6 @@ P2P multiplayer, starting with a single node but later a decentralised relay net
 - [ ] Player presence + avatar transform sync (position, head, hands)
 - [ ] Object / scene state authority + sync
 - [ ] Voice chat
-- [ ] If multiplayer has voice chat, extend audio effects to apply to player voices too
 - [ ] If multiplayer has text chat: positional narration, and let players choose their own TTS voice
 - [ ] SDK-hosted XR session handoff: investigate feasibility first (can we host on their behalf
   so they don't need a permission prompt?) and implement in a multiplayer-friendly way, or
@@ -126,6 +125,7 @@ Interchangeable with Epic B.
 
 ### Effects
 - [ ] SDK audio effects (all audio, or specific audio sources)
+- [ ] If multiplayer has voice chat, extend audio effects to apply to player voices too
 - [ ] SDK visual effects (b&w, sepia, bloom, etc). Beware react-three/postprocessing limitations
   with XR; may need vignette-layer shaders)
 - [ ] SDK can set time-scale changes (if possible)
