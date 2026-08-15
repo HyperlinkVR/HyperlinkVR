@@ -75,11 +75,15 @@ export const HUDScopeSchema = z.union([
 ]);
 export type HUDScope = z.infer<typeof HUDScopeSchema>;
 
+// flat hud is all one surface so only applies to vr
 export const HUDVRAnchorSchema = z.enum([
-    "body",
-    "head"
+    "origin", // glued to the player origin at a fixed height. moves with stick yaw, but not playspace movement and rotation
+    "body", // similar positioning to origin, but follows playspace movement and yaw (with a lerp)
+    "head" // glued to the face as an overlay. use sparingly as it can be disorienting or distracting
 ]);
 export type HUDVRAnchor = z.infer<typeof HUDVRAnchorSchema>;
+
+// TODO: belt anchor for hud that looks up? floor mounted hud?
 
 export const HUDDispatchSchema = z.object({
     component: HUDComponentSchema,

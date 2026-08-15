@@ -25,10 +25,13 @@ import {register_input_monitor, unregister_input_monitor} from "../engine/input_
 import {PlayerMonitorSchema} from "@hyperlinkvr/vr-engine-schemas";
 import {LOCAL_PLAYER_SUBJECT} from "./subject";
 import {Layer, LayerGroup} from "../render";
-import {HUD_VR_BODY_DISTANCE, hud_vr_body_pixel_size, HUDSurface} from "../hud/HUDSurface";
+import {HUD_VR_DISTANCE, hud_vr_pixel_size, HUDSurface} from "../hud/HUDSurface";
 import {Fullscreen} from "@react-three/uikit";
 import {useThree} from "@react-three/fiber";
 import {FlatHUD} from "../hud/FlatHUD";
+import {OriginHUD} from "../hud/OriginHUD";
+import {BodyHUD} from "../hud/BodyHUD";
+import {HeadHUD} from "../hud/HeadHUD";
 
 const MouthTest = ({
     mouth_name,
@@ -100,11 +103,6 @@ export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>
     const {on_action} = useWebSDKMessaging();
     const messenger = useMessageEngine();
     const {id: tab_id} = useTabSession();
-
-    const [player_height_cm] = useSetting("player_height_cm");
-
-    // TODO: shiuld prob follow torso/capsule height, not fixed body relative pos. maybe follow head yaw somewhat too with lerp (or not, depends what feels more right, sticking to stick view or slowly following real view)
-    const body_hud_origin_height = useMemo(() => 0.85 * player_height_cm / 100, [player_height_cm]);
 
     const seated = useIsSeated();
 
@@ -257,12 +255,10 @@ export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>
                         <XROrigin ref={origin_ref}>
                             <XRHandsPublisher />
                             <ExpressionTest />
-
-                            {/* TODO: head anchor, probably in head or camera control */}
-                            <LayerGroup layers={[Layer.HUD]} position={[0, body_hud_origin_height, -HUD_VR_BODY_DISTANCE]}>
-                                <HUDSurface anchor="body" pixel_size={hud_vr_body_pixel_size()} />
-                            </LayerGroup>
+                            <OriginHUD />
                         </XROrigin>
+                        <BodyHUD />
+                        <HeadHUD />
                         {can_move && !seated && <XRLocomotion origin={origin_ref} />}
                     </>
                 ) : (

@@ -11,11 +11,17 @@ import {mark_hud_element_ready} from "../engine/hud_ready_registry";
 export const HUD_CANVAS_WIDTH = 1920;
 export const HUD_CANVAS_HEIGHT = 1080;
 
-// the body anchored vr hud is a rectangle constrained to an fov at a certain distance, so the ideal pixel values can be calculated in advance
-export const HUD_VR_BODY_FOV = Math.PI / 4;
-export const HUD_VR_BODY_DISTANCE = 0.5;
-export const hud_vr_body_width = (distance = HUD_VR_BODY_DISTANCE) => 2 * distance * Math.tan(HUD_VR_BODY_FOV / 2);
-export const hud_vr_body_pixel_size = (distance = HUD_VR_BODY_DISTANCE) => hud_vr_body_width(distance) / HUD_CANVAS_WIDTH;
+// the vr hud is a rectangle constrained to an fov at a certain distance, so the ideal pixel values can be calculated in advance
+export const HUD_VR_FOV = Math.PI / 3;
+export const HUD_VR_DISTANCE = 0.5;
+export const hud_vr_width = (distance = HUD_VR_DISTANCE) => 2 * distance * Math.tan(HUD_VR_FOV / 2);
+export const hud_vr_pixel_size = (distance = HUD_VR_DISTANCE) => hud_vr_width(distance) / HUD_CANVAS_WIDTH;
+
+// the head mounted hud should have a much smaller fov so it doesnt go into peripheral vision
+export const HUD_VR_HEAD_FOV = Math.PI / 5;
+export const HUD_VR_HEAD_DISTANCE = 0.5;
+export const hud_vr_head_width = (distance = HUD_VR_HEAD_DISTANCE) => 2 * distance * Math.tan(HUD_VR_HEAD_FOV / 2);
+export const hud_vr_head_pixel_size = (distance = HUD_VR_HEAD_DISTANCE) => hud_vr_head_width(distance) / HUD_CANVAS_WIDTH;
 
 const VERTICAL_JUSTIFY = {
     top: "flex-start",
