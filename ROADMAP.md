@@ -123,6 +123,7 @@ Interchangeable with Epic B.
 - [ ] Meta value telling the engine to preload assets from URLs so mesh/audio loading is immediate
   when used (shows as loading)
 - [ ] Do we add first-party health, loadout, etc systems, or have creators always build it themselves? Depends on interop requirements
+- [ ] Probably will want some basic AI systems, navmesh etc for PvE stuff/PVP bots. Could see how simple it can truly be to be viable then flesh out later
 
 ### Effects
 - [ ] SDK audio effects (all audio, or specific audio sources)
@@ -162,6 +163,7 @@ Interchangeable with Epic B.
 - [ ] Camera debugger devtool
 - [ ] externalcamera.cfg for MR camera position
 - [ ] Third-person camera lockable to avoid accidental moving
+- [ ] Templates (i.e. base worlds that can be added to, think how Rec Room had either a basically blank world or you could use the RRO scene like park and paintball)
 
 ---
 
