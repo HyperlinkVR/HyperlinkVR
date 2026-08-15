@@ -180,6 +180,10 @@ export const DevToolsPage = () => {
                             setting_key="debug_show_expression_ui"
                         />
                     </ToolGroup>
+
+                    <ToolGroup title="Danger Zone">
+                        <ToolSettingSwitch label="Allow remote worlds to load local network assets (dangerous)" setting_key="devtools_dangerously_allow_localhost_fetch" />
+                    </ToolGroup>
                 </div>
             </div>
         </main>

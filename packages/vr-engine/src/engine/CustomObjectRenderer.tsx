@@ -9,6 +9,7 @@ import { ObjectPhysics } from "./ObjectPhysics";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils";
 import {useMemo} from "react";
 import {useMaterialPatternDisruptor} from "../hooks/useMaterialPatternDisruption";
+import {useAssetURL} from "../hooks/useAssetURL";
 
 const GLTFRenderer = ({url}: {url: string}) => {
     const {scene, materials} = useGLTF(url);
@@ -25,8 +26,10 @@ const GLTFRenderer = ({url}: {url: string}) => {
 
 
 export const CustomObjectRenderer = ({ mesh, interactions, physics, transform }: RendererComponentProps<CustomObject>) => {
+    const resolved_url = useAssetURL(mesh);
+
     const visual = useMemo(
-        () => (mesh ? <GLTFRenderer url={mesh} /> : null),
+        () => (resolved_url ? <GLTFRenderer url={resolved_url} /> : null),
         [mesh]
     );
 

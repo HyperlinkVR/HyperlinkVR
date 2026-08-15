@@ -51,6 +51,7 @@ import {InputMonitorRunner} from "./InputMonitorRunner";
 import {AnimationRunner} from "../animation/AnimationRunner";
 import {AnimationSync} from "../animation/AnimationSync";
 import {HUDSync} from "../hud/HUDSync";
+import {LocalAssetWarningBanner} from "../security/LocalAssetWarningBanner";
 
 configureTextBuilder({
     useWorker: false
@@ -372,6 +373,8 @@ const EngineHostInternal = memo(
                             <EngineObjectSync />
                             <AnimationSync />
                             <HUDSync />
+
+                            <LocalAssetWarningBanner />
 
                             <div
                                 className={`w-full h-full relative ${mode === "vr" ? "max-w-[calc(100vh*16/9)] max-h-[calc(100vw*9/16)]" : ""}`}

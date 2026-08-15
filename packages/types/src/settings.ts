@@ -397,6 +397,11 @@ export const settings_def = build_settings({
     debug_rerenders: {
         default_value: false,
         local_only: true
+    },
+
+    devtools_dangerously_allow_localhost_fetch: {
+        default_value: false,
+        local_only: true // TODO: store this in session storage so they have to re-enable it every time
     }
 });
 

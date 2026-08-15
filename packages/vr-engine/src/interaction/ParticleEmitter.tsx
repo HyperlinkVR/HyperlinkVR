@@ -17,6 +17,7 @@ import {
     TextureLoader
 } from "three";
 import {rotation_to_euler} from "../engine/rotation";
+import {useAssetURL} from "../hooks/useAssetURL";
 
 export const ParticleEmitter = ({config, ref = null}: {config: Omit<ParticleEmitterInteraction, "type">, ref?: React.Ref<ParticleSystemRef | null>}) => {
     const convert_randomisable_value = useCallback(
@@ -133,10 +134,10 @@ export const ParticleEmitter = ({config, ref = null}: {config: Omit<ParticleEmit
     );
 
     const instance_visual = useCallback(
-        (visual?: ParticleEmitterVisual): {
+        (visual?: ParticleEmitterVisual, maybe_particle_image_url?: string): {
             material?: Material,
             geometry?: BufferGeometry,
-            render_mode: RenderMode
+            render_mode: RenderMode,
         } => {
             if (!visual) {
                 return {render_mode: RenderMode.BillBoard};
@@ -144,7 +145,12 @@ export const ParticleEmitter = ({config, ref = null}: {config: Omit<ParticleEmit
 
             switch (visual.type) {
                 case "image": {
-                    const texture = new TextureLoader().load(visual.url);
+                    if (!maybe_particle_image_url) {
+                        console.warn("Particle image URL is not available yet (or was rejected)");
+                        return {render_mode: RenderMode.BillBoard};
+                    }
+
+                    const texture = new TextureLoader().load(maybe_particle_image_url);
                     return {
                         material: new MeshBasicMaterial({
                             map: texture,
@@ -202,8 +208,13 @@ export const ParticleEmitter = ({config, ref = null}: {config: Omit<ParticleEmit
     const per_second = useMemo(() => convert_randomisable_value(config.per_second), [config.per_second, convert_randomisable_value]);
     const color = useMemo(() => generate_color_value(config.color), [config.color, generate_color_value]);
     const emitter_shape = useMemo(() => instance_shape(config.emitter_shape), [config.emitter_shape, instance_shape]);
-    const visual = useMemo(() => instance_visual(config.visual), [config.visual, instance_visual]);
+
+    const maybe_particle_image_url = useAssetURL(
+        config.visual?.type === "image" ? config.visual.url : undefined
+    );
+    const visual = useMemo(() => instance_visual(config.visual, maybe_particle_image_url || undefined), [config.visual, maybe_particle_image_url, instance_visual]);
     const material = useMemo(() => visual.material, [visual]);
+
     const geometry = useMemo(() => visual.geometry, [visual]);
     const render_mode = useMemo(() => visual.render_mode, [visual]);
     const behaviors = useMemo(() => instance_behaviors(config.behaviors), [config.behaviors, instance_behaviors]);

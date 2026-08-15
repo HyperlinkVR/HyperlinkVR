@@ -1,4 +1,10 @@
-import {Collider, PhysicsSystem, RigidBody as RigidBodyConfig, Transform} from "@hyperlinkvr/vr-engine-schemas";
+import {
+    AssetRef,
+    Collider,
+    PhysicsSystem,
+    RigidBody as RigidBodyConfig,
+    Transform
+} from "@hyperlinkvr/vr-engine-schemas";
 import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import {
@@ -14,6 +20,7 @@ import { useObjectRefsOptional } from "../contexts/ObjectRefsContext";
 import {rotation_to_euler, rotation_to_quaternion_array} from "./rotation";
 import {useObjectBinding} from "../hooks/useObjectBinding";
 import {useWorldHinge} from "./physics_constraints";
+import {useAssetURL} from "../hooks/useAssetURL";
 
 
 const RB_TYPE = {
@@ -92,14 +99,20 @@ export const PrimitiveCollider = ({ collider, ...rest }: ColliderProps & { colli
 const INVISIBLE_MATERIAL = new MeshBasicMaterial({ visible: false });
 
 export const URLMeshCollider = ({
-    url,
+    asset_ref,
     approximation,
     ...rest
 }: ColliderProps & {
-    url: string;
+    asset_ref: AssetRef;
     approximation: string;
 }) => {
-    const { scene } = useGLTF(url);
+    const resolved_url = useAssetURL(asset_ref);
+    if (!resolved_url) {
+        console.warn(`URLMeshCollider: failed to resolve asset_ref ${asset_ref}`);
+        return null;
+    }
+
+    const { scene } = useGLTF(resolved_url);
     const instance = useMemo(() => {
         const cloned = clone(scene);
 
@@ -167,7 +180,7 @@ export const useCollider = (collider: Collider): {auto_strategy: RigidBodyAutoCo
     const ColliderComponent = useMemo(() => {
         switch (stable_collider.type) {
             case "custom-mesh":
-                return (props: ColliderProps) => <URLMeshCollider url={stable_collider.mesh} approximation={stable_collider.approximation || "hull"} {...props} />;
+                return (props: ColliderProps) => <URLMeshCollider asset_ref={stable_collider.mesh} approximation={stable_collider.approximation || "hull"} {...props} />;
             case "box":
             case "sphere":
             case "capsule":
