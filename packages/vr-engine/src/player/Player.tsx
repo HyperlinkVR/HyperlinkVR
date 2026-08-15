@@ -102,7 +102,9 @@ export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>
     const {id: tab_id} = useTabSession();
 
     const [player_height_cm] = useSetting("player_height_cm");
-    const body_hud_origin_height = useMemo(() => player_height_cm / 200, [player_height_cm]);
+
+    // TODO: shiuld prob follow torso/capsule height, not fixed body relative pos. maybe follow head yaw somewhat too with lerp (or not, depends what feels more right, sticking to stick view or slowly following real view)
+    const body_hud_origin_height = useMemo(() => 0.85 * player_height_cm / 100, [player_height_cm]);
 
     const seated = useIsSeated();
 

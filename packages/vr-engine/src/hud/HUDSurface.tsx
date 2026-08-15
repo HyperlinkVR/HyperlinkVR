@@ -13,7 +13,7 @@ export const HUD_CANVAS_HEIGHT = 1080;
 
 // the body anchored vr hud is a rectangle constrained to an fov at a certain distance, so the ideal pixel values can be calculated in advance
 export const HUD_VR_BODY_FOV = Math.PI / 4;
-export const HUD_VR_BODY_DISTANCE = 1.5;
+export const HUD_VR_BODY_DISTANCE = 0.5;
 export const hud_vr_body_width = (distance = HUD_VR_BODY_DISTANCE) => 2 * distance * Math.tan(HUD_VR_BODY_FOV / 2);
 export const hud_vr_body_pixel_size = (distance = HUD_VR_BODY_DISTANCE) => hud_vr_body_width(distance) / HUD_CANVAS_WIDTH;
 
@@ -115,7 +115,6 @@ export const HUDSurface = ({
 
     const by_slot = useMemo(() => {
         const resolved = useHUDStore.getState().resolve_for(username, anchor);
-        console.log("HUD resolved", anchor, resolved.length, resolved);
         const grouped = new Map<string, StoreResolvedHUDElement[]>();
 
         for (const element of resolved) {
