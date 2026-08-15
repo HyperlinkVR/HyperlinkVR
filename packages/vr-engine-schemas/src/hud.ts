@@ -87,8 +87,8 @@ export const HUDDispatchSchema = z.object({
     slot: HUDSlotOrShorthandSchema,
     order: z.number().default(0),
     offset: z.tuple([z.number(), z.number()]).optional(),
-    scope: HUDScopeSchema.default("global").optional(),
-    vr_anchor: HUDVRAnchorSchema.default("body").optional()
+    scope: HUDScopeSchema.default("global"),
+    vr_anchor: HUDVRAnchorSchema.default("body")
 });
 export type HUDDispatch = z.infer<typeof HUDDispatchSchema>;
 export type HUDDispatchInput = z.input<typeof HUDDispatchSchema>;

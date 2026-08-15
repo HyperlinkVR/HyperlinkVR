@@ -50,6 +50,7 @@ import {ObjectMonitorRunner} from "./ObjectMonitorRunner";
 import {InputMonitorRunner} from "./InputMonitorRunner";
 import {AnimationRunner} from "../animation/AnimationRunner";
 import {AnimationSync} from "../animation/AnimationSync";
+import {HUDSync} from "../hud/HUDSync";
 
 configureTextBuilder({
     useWorker: false
@@ -367,8 +368,10 @@ const EngineHostInternal = memo(
                     <WebSDKMessagingProvider>
                         <HintStateProvider>
                             <WorldSessionListener />
+
                             <EngineObjectSync />
                             <AnimationSync />
+                            <HUDSync />
 
                             <div
                                 className={`w-full h-full relative ${mode === "vr" ? "max-w-[calc(100vh*16/9)] max-h-[calc(100vw*9/16)]" : ""}`}

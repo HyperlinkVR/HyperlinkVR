@@ -11,7 +11,8 @@ const world_layer_mask = compute_layer_mask([
     Layer.Default,
     Layer.PlayerModel_TorsoAndHands,
     Layer.ThirdPerson_ForceHide,
-    Layer.Vignette
+    Layer.Vignette,
+    Layer.HUD
 ]);
 
 // while loading, the world isnt rendered, only the loader

@@ -8,7 +8,8 @@ export enum Layer {
     MR_PlayerCapsule ,
     ThirdPerson_ForceHide,
     Vignette,
-    Loader
+    Loader,
+    HUD
 }
 
 export const compute_layer_mask = (layers: Layer[]): number => {
