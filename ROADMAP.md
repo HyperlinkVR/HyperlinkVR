@@ -19,7 +19,8 @@ Singleplayer, to support a handful of games
   displays text it could bypass the prompt
 - [ ] Show prompt to confirm going to another world (allow skipping on same origin)
 - [ ] Start implementing more games, with room for multiplayer soon
-- [ ] UI layer in SDK. Shows around controls in flat, in space around face in VR
+- [x] SDK HUD layer
+- [ ] Add more components to HUD
 
 ---
 
