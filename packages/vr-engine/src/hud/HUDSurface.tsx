@@ -11,6 +11,12 @@ import {mark_hud_element_ready} from "../engine/hud_ready_registry";
 export const HUD_CANVAS_WIDTH = 1920;
 export const HUD_CANVAS_HEIGHT = 1080;
 
+// the body anchored vr hud is a rectangle constrained to an fov at a certain distance, so the ideal pixel values can be calculated in advance
+export const HUD_VR_BODY_FOV = Math.PI / 4;
+export const HUD_VR_BODY_DISTANCE = 1.5;
+export const hud_vr_body_width = (distance = HUD_VR_BODY_DISTANCE) => 2 * distance * Math.tan(HUD_VR_BODY_FOV / 2);
+export const hud_vr_body_pixel_size = (distance = HUD_VR_BODY_DISTANCE) => hud_vr_body_width(distance) / HUD_CANVAS_WIDTH;
+
 const VERTICAL_JUSTIFY = {
     top: "flex-start",
     middle: "center",
@@ -88,12 +94,14 @@ const HUDSlotView = ({slot, elements}: {slot: HUDSlot; elements: StoreResolvedHU
 export interface HUDSurfaceProps {
     // the anchor this surface represents (note that the caller is responsible for positioning, this is just a filter)
     anchor: HUDVRAnchor | null;
+    pixel_size?: number;
     width?: number;
     height?: number;
 }
 
 export const HUDSurface = ({
     anchor,
+    pixel_size = 1,
     width = HUD_CANVAS_WIDTH,
     height = HUD_CANVAS_HEIGHT
 }: HUDSurfaceProps) => {
@@ -107,6 +115,7 @@ export const HUDSurface = ({
 
     const by_slot = useMemo(() => {
         const resolved = useHUDStore.getState().resolve_for(username, anchor);
+        console.log("HUD resolved", anchor, resolved.length, resolved);
         const grouped = new Map<string, StoreResolvedHUDElement[]>();
 
         for (const element of resolved) {
@@ -120,7 +129,7 @@ export const HUDSurface = ({
     }, [elements, username, anchor]);
 
     return (
-        <Container width={width} height={height} flexDirection="column">
+        <Container width={width} height={height} flexDirection="column" pixelSize={pixel_size}>
             {VERTICALS.map((vertical) => (
                 <Container key={vertical} flexGrow={1} flexBasis={0} flexDirection="row">
                     {HORIZONTALS.map((horizontal) => (

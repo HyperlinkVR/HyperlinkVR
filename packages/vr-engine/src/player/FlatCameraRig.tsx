@@ -75,6 +75,7 @@ export const FlatCameraRig = ({ origin }: { origin: React.RefObject<Group | null
         input.look.y = 0;
 
         // still need to apply the yaw to the camera as it isn't a child of the origin
+        // TODO: is this problematic? maybe we should be parenting? using a separate camera? it means hud etc doesnt need to manually copy cam position, fine for now but worth investigating
         camera.rotation.set(pitch.current, origin.current.rotation.y, 0, "YXZ");
 
         origin.current.getWorldPosition(head);

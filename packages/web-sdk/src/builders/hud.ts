@@ -354,3 +354,44 @@ export class HUDTextBuilder extends HUDElementBuilder<HUDTextComponentInput, HUD
 }
 
 export const hud_text = (name: string, text: string) => new HUDTextBuilder(name, text);
+
+/*
+usage example
+
+const {hud_text} = hyperlinkvr.builders;
+
+const score = await hud_text("score", "Score: 0")
+    .set_slot("top-left")
+    .set_font_size(48)
+    .create();
+
+const timer = await hud_text("timer", "60")
+    .set_slot("top-center")
+    .set_font_size(64)
+    .set_color("#FFDD00")
+    .create();
+
+let points = 0;
+let seconds_remaining = 60;
+
+const countdown = setInterval(async () => {
+    seconds_remaining -= 1;
+    await timer.set_text(String(seconds_remaining));
+
+    if (seconds_remaining <= 10) {
+        await timer.modify().set_component({color: "#FF3333"}).apply();
+    }
+
+    if (seconds_remaining <= 0) {
+        clearInterval(countdown);
+        await timer.destroy();
+        await score.modify().set_slot("middle-center").set_component({font_size: 96}).apply();
+    }
+}, 1000);
+
+// somewhere in your game logic
+const award = async (amount) => {
+    points += amount;
+    await score.set_text(`Score: ${points}`);
+};
+ */
