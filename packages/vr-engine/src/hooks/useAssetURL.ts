@@ -5,6 +5,8 @@ import {fetch_asset} from "../security/fetch_asset";
 
 // TODO: cache resulting blobs keyed by source url, they can use standard cache busting to bypass it
 
+// it doesn't matter here if we get tricked by a domain name pointing at localhost, they're just scamming themself out of access to localhost
+// the same is not true for the other direction, url inspection is not sufficient to determine if a resource comes from loopback
 const world_url_is_local = (world_url: string): boolean => {
     try {
         const hostname = new URL(world_url).hostname.toLowerCase().replace(/\.$/, "");
