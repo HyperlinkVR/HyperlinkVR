@@ -120,7 +120,7 @@ export const TextSignPrefabSchema = TextPrefabBaseSchema.extend({
 export type TextSignPrefab = z.infer<typeof TextSignPrefabSchema>;
 export type TextSignPrefabInput = z.input<typeof TextSignPrefabSchema>;
 
-export const GolfBallPrefabSchema = z.object({
+export const GolfBallPrefabSchema = bindable({
     type: z.literal("prefab"),
     name: z.literal("golf_ball"),
     color: HexColorSchema.default(0xd9d9d9)
@@ -128,7 +128,7 @@ export const GolfBallPrefabSchema = z.object({
 export type GolfBallPrefab = z.infer<typeof GolfBallPrefabSchema>;
 export type GolfBallPrefabInput = z.input<typeof GolfBallPrefabSchema>;
 
-export const GolfPutterPrefabSchema = z.object({
+export const GolfPutterPrefabSchema = bindable({
     type: z.literal("prefab"),
     name: z.literal("golf_putter"),
     color: HexColorSchema.default(0xe7056e)

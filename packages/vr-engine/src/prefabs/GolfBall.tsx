@@ -8,15 +8,12 @@ import {useEffect, useMemo, useRef} from "react";
 import {Mesh} from "three";
 import {useObjectBinding} from "../hooks/useObjectBinding";
 import {useObjectRefsOptional} from "../contexts/ObjectRefsContext";
-import {resolve_object_node} from "../interaction/util/target_resolution";
-import {collect_tags, has_tag_in_object_tree} from "../util/tags";
+import {has_tag_in_object_tree} from "../util/tags";
 
 const MESH_URL = new URL("../../assets/prefabs/golf_ball/golf_ball.glb", import.meta.url).href;
 
 // the material has this colour baked in, so no work required if the user doesn't specify a colour
 const DEFAULT_ALBEDO = 0xd9d9d9;
-
-const PUTTER_TAG = "golf_putter";
 
 // a ball is settled only when it's both slow and has stopped moving across the ground
 const REST_SPEED = 0.08; // m/s, the "clearly still moving" ceiling

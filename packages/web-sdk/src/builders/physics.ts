@@ -73,6 +73,27 @@ class RigidBodyBuilder<RB extends RigidBodyInput> extends BaseBuilder<RB> {
         return this;
     }
 
+    collides_with(filter: {players?: boolean; props?: boolean; world?: boolean}) {
+        this._internal.collision_filter = {...this._internal.collision_filter, ...filter};
+        return this;
+    }
+
+    collides_with_tag(tag: string, collides: boolean) {
+        this._internal.collision_filter = {
+            ...this._internal.collision_filter,
+            tags: {...this._internal.collision_filter?.tags, [tag]: collides}
+        };
+        return this;
+    }
+
+    collides_with_tags(tags: Record<string, boolean>) {
+        this._internal.collision_filter = {
+            ...this._internal.collision_filter,
+            tags: {...this._internal.collision_filter?.tags, ...tags}
+        };
+        return this;
+    }
+
     build(): RigidBody {
         return RigidBodySchema.parse(this._internal);
     }

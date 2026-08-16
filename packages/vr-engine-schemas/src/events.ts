@@ -120,6 +120,18 @@ export interface ButtonPrefabPayload {
     type: "press" | "release";
 }
 
+interface GolfBallPrefabStruckPayload {
+    type: "struck";
+    velocity: { x: number; y: number; z: number };
+}
+
+interface GolfBallPrefabAtRestPayload {
+    type: "at-rest";
+    position: { x: number; y: number; z: number };
+}
+
+export type GolfBallPrefabPayload = GolfBallPrefabStruckPayload | GolfBallPrefabAtRestPayload;
+
 export interface ButtonInputMonitorPayload {
     type: "press" | "release" | "hold";
     handedness?: "left" | "right";
@@ -132,7 +144,9 @@ export type ReportEventPayload =
     | ButtonInputMonitorPayload
     | PhysicsCollisionPayload
     | BasketballHoopPrefabPayload
-    | RaycastPayload;
+    | RaycastPayload
+    | ButtonPrefabPayload
+    | GolfBallPrefabPayload;
 
 export type ReportEvent =
     | ReportEventEnvelope<"trigger-volume", TriggerVolumeInteractionPayload>
@@ -146,6 +160,5 @@ export type ReportEvent =
     | ReportEventEnvelope<"button-input", ButtonInputMonitorPayload>
     | ReportEventEnvelope<"axis-input", AxesMonitorPayload>
     | ReportEventEnvelope<"button-prefab", ButtonPrefabPayload>
-    | ReportEventEnvelope<"raycast", RaycastPayload>;
-
-
+    | ReportEventEnvelope<"raycast", RaycastPayload>
+    | ReportEventEnvelope<"golf-ball-prefab", GolfBallPrefabPayload>;

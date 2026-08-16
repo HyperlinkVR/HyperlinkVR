@@ -101,12 +101,23 @@ export const BodyConstraintSchema = z.discriminatedUnion("type", [
 export type BodyConstraint = z.infer<typeof BodyConstraintSchema>;
 export type BodyConstraintInput = z.input<typeof BodyConstraintSchema>;
 
+export const CollisionFilterSchema = z.object({
+    players: z.boolean().default(true).optional(),
+    props: z.boolean().default(true).optional(),
+    world: z.boolean().default(true).optional(),
+    // per-tag overrides, e.g. {golf_ball: false} to pass through other balls
+    tags: z.record(z.string(), z.boolean()).default({}).optional(),
+});
+export type CollisionFilter = z.infer<typeof CollisionFilterSchema>;
+export type CollisionFilterInput = z.input<typeof CollisionFilterSchema>;
+
 const BaseRigidBodySchema = z.object({
     restitution: z.number().optional(),
     restitution_combine_rule: z.enum(["average", "min", "max", "multiply"]).default("average").optional(),
     friction: z.number().optional(),
     linear_damping: z.number().optional(),
     angular_damping: z.number().optional(),
+    collision_filter: CollisionFilterSchema.default({} as CollisionFilter).optional(),
     collider: ColliderSchema.optional()
 });
 export const FixedRigidBodySchema = BaseRigidBodySchema.extend({

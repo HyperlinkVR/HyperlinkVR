@@ -197,6 +197,11 @@ export class GolfBallPrefabBuilder extends BaseBuilder<GolfBallPrefabInput> {
         super({type: "prefab", name: "golf_ball"} as GolfBallPrefabInput);
     }
 
+    named(name: string) {
+        this._internal.binding = {...this._internal.binding, name};
+        return this;
+    }
+
     set_color(color: HexColor) {
         this._internal.color = HexColorSchema.parse(color);
         return this;

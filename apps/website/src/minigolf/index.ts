@@ -11,15 +11,23 @@ hyperlinkvr.on_ready(async () => {
 
         // random neon putter color, and the ball automatically matches just like real mini golf :)
         const putter = new h.GolfPutterPrefabBuilder().random_color().build();
-        console.log(`Putter color: ${putter.color.toString(16)}`);
-        const ball = new h.GolfBallPrefabBuilder().set_color(putter.color).build();
+        const ball = new h.GolfBallPrefabBuilder().named("ball").set_color(putter.color).build();
 
         promises.push(
-            new h.EngineObjectDispatchBuilder().set_object(putter).set_position(x, 2, -1).create()
+            new h.EngineObjectDispatchBuilder()
+                .set_object(putter)
+                .set_position(x, 2, -1)
+                .create()
         );
 
         promises.push(
-            new h.EngineObjectDispatchBuilder().set_object(ball).set_position(x, 1, -2).create()
+            new h.EngineObjectDispatchBuilder()
+                .set_object(ball)
+                .set_position(x, 1, -2)
+                .on("ball", async (event) => {
+                    console.log(`Ball ${i}`, event);
+                })
+                .create()
         );
     }
 
