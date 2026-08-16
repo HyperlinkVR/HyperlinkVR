@@ -5,6 +5,7 @@ export {version} from "../package.json";
 export * as auth from "./auth";
 export * as builders from "./builders";
 export * as players from "./players";
+export * as color from "./color";
 
 import {bind_rtc_event, facilitate_rtc, send_via_rtc} from "./messenger";
 

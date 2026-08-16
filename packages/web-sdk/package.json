@@ -11,7 +11,8 @@
     "dependencies": {
         "@hyperlinkvr/auth": "workspace:*",
         "@hyperlinkvr/types": "workspace:*",
-        "@hyperlinkvr/vr-engine-schemas": "workspace:*"
+        "@hyperlinkvr/vr-engine-schemas": "workspace:*",
+        "colord": "^2.9.3"
     },
     "devDependencies": {}
 }

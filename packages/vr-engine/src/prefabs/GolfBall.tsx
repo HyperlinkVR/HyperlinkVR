@@ -2,17 +2,17 @@ import {useGLTF} from "@react-three/drei";
 import {ObjectPhysics} from "../engine/ObjectPhysics";
 import {PrefabProps} from "../types";
 import {GolfBallPrefab} from "@hyperlinkvr/vr-engine-schemas";
-import {useEffect} from "react";
+import {useEffect, useMemo} from "react";
 import {Mesh} from "three";
 
 const MESH_URL = new URL("../../assets/prefabs/golf_ball/golf_ball.glb", import.meta.url).href;
 
 // the material has this colour backed in, so work not required if the user doesn't specify a colour
-const DEFAULT_ALBEDO = 0xb1b1b1;
+const DEFAULT_ALBEDO = 0xd9d9d9;
 
 export const GolfBall = (props: PrefabProps<GolfBallPrefab>) => {
     const {scene} = useGLTF(MESH_URL);
-    const instance = scene.clone(true);
+    const instance = useMemo(() => scene.clone(true), [scene]);
 
     useEffect(() => {
         if (!props.color || props.color === DEFAULT_ALBEDO) {
@@ -24,7 +24,7 @@ export const GolfBall = (props: PrefabProps<GolfBallPrefab>) => {
             // TODO: can we access by the material name? might be quicker. but only 1 object in the scene so not a big deal
             if (child instanceof Mesh && child.material) {
                 const cloned_material = child.material.clone();
-                cloned_material.color.set(props.color);
+                cloned_material.color.setHex(props.color);
                 child.material = cloned_material;
             }
         });

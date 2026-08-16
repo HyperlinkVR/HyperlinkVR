@@ -14,6 +14,7 @@ import {
     StandardPrefab, StandardPrefabInput, StandardPrefabName,
     StandardPrefabSchema, TextPrefabBaseInput, TextSignPrefab, TextSignPrefabSchema
 } from "@hyperlinkvr/vr-engine-schemas";
+import {HSVHueBagRandomiser, to_hex} from "../color";
 
 export class StandardPrefabBuilder extends BaseBuilder<StandardPrefabInput> {
     constructor(name: StandardPrefabName) {
@@ -206,6 +207,21 @@ export class GolfBallPrefabBuilder extends BaseBuilder<GolfBallPrefabInput> {
     }
 }
 
+// matching the hot pink defined in the material
+const PUTTER_SATURATION_PERCENT = 97.84;
+const PUTTER_VALUE_PERCENT = 90.59;
+const PUTTER_HUE_START_POINT_DEG = 332.12;
+
+// the gap in values to ensure a good spread when spawning many putters
+const PUTTER_RANDOM_HUE_STEP_SIZE_DEG = 30;
+
+const putter_color_randomiser = new HSVHueBagRandomiser(
+    PUTTER_HUE_START_POINT_DEG,
+    PUTTER_RANDOM_HUE_STEP_SIZE_DEG,
+    PUTTER_SATURATION_PERCENT,
+    PUTTER_VALUE_PERCENT
+);
+
 export class GolfPutterPrefabBuilder extends BaseBuilder<GolfPutterPrefabInput> {
     constructor() {
         super({type: "prefab", name: "golf_putter"} as GolfPutterPrefabInput);
@@ -217,7 +233,7 @@ export class GolfPutterPrefabBuilder extends BaseBuilder<GolfPutterPrefabInput> 
     }
 
     random_color() {
-        this._internal.color = undefined;
+        this._internal.color = to_hex(putter_color_randomiser.generate_color());
         return this;
     }
 
