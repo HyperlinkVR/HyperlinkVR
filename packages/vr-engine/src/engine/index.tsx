@@ -2,7 +2,7 @@ import {TabSessionProvider, useMessageEngine, useSetting, useStorage, useTabSess
 import {Stats, Text} from "@react-three/drei";
 import { Canvas, RootState } from "@react-three/fiber";
 import type { DefaultGLProps } from "@react-three/fiber/dist/declarations/src/core/renderer";
-import { Physics } from "@react-three/rapier";
+import {Physics, useFilterContactPair} from "@react-three/rapier";
 import { createXRStore, XR } from "@react-three/xr";
 import {memo, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState} from "react";
 import { ErrorBoundary, getErrorMessage, type FallbackProps } from "react-error-boundary";
@@ -52,6 +52,7 @@ import {AnimationRunner} from "../animation/AnimationRunner";
 import {AnimationSync} from "../animation/AnimationSync";
 import {HUDSync} from "../hud/HUDSync";
 import {LocalAssetWarningBanner} from "../security/LocalAssetWarningBanner";
+import {clear_collider_collision_info, filter_contact_pair} from "./collision_hooks";
 
 configureTextBuilder({
     useWorker: false
@@ -226,6 +227,9 @@ const SceneContents = ({
 
     const [ssao_mode] = useSetting("ssao_mode");
 
+    // apply collision filters
+    useFilterContactPair(filter_contact_pair);
+
     return (
         <>
             <FloorCollider />
@@ -315,6 +319,7 @@ const WorldSessionListener = () => {
         // reset world
         clear_all_objects();
         reset_for_new_document();
+        clear_collider_collision_info();
     }, [meta_generation, meta, clear_all_objects, reset_for_new_document]);
 
     return null;

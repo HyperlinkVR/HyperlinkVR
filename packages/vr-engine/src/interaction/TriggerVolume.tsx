@@ -9,6 +9,8 @@ import {Euler, EulerOrder, Group, Quaternion, Vector3} from "three";
 
 import {get_collider_extents, useCollider, useKinematicPosition} from "../engine/ObjectPhysics";
 import {rotation_to_euler} from "../engine/rotation";
+import {resolve_object_node} from "./util/target_resolution";
+import {collect_tags} from "../util/tags";
 
 
 interface TriggerVolumeProps extends ComponentProps<"group"> {
@@ -103,22 +105,18 @@ export const resolve_interacted = (payload: IntersectionPayload, config: MiniInt
     }
 
     if (config.objects && config.objects.include) {
-        // TODO: more stable way to get the root object
-        const rb_parent = payload.other.rigidBodyObject?.parent;
-        if (!rb_parent) return null;
-        const root = rb_parent.parent;
+        const root = resolve_object_node(payload.other.rigidBodyObject ?? null);
         if (!root) return null;
 
         const object_id = root.userData?.object_id as string | undefined;
         if (!object_id) return null;
 
-        const object_tags = root.userData?.tags as string[] | undefined;
-        if (!object_tags) return null;
+        const object_tags = collect_tags(payload.other.rigidBodyObject ?? null);
 
         const filter = config.objects.tag_filter;
         if (filter) {
-            const has_tag = filter.some(tag => object_tags.includes(tag));
-            if (!has_tag) return null;
+            const has_matching_tag = filter.some(tag => object_tags.includes(tag));
+            if (!has_matching_tag) return null;
         }
 
         return {type: "object", object_id, tags: object_tags};

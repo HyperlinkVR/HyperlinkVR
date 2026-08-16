@@ -21,6 +21,9 @@ import {rotation_to_euler, rotation_to_quaternion_array} from "./rotation";
 import {useObjectBinding} from "../hooks/useObjectBinding";
 import {useWorldHinge} from "./physics_constraints";
 import {useAssetURL} from "../hooks/useAssetURL";
+import {build_collision_groups, GROUP_PROP, GROUP_WORLD} from "./collision_groups";
+import {register_collider_collision_info} from "./collision_hooks";
+import {resolve_object_node} from "../interaction/util/target_resolution";
 
 
 const RB_TYPE = {
@@ -126,7 +129,7 @@ export const URLMeshCollider = ({
     approximation,
     ...rest
 }: ColliderProps & {
-    asset_ref: AssetRef;
+    asset_ref: AssetRef | string;
     approximation: string;
 }) => {
     const resolved_url = useAssetURL(asset_ref);
@@ -268,8 +271,7 @@ export const get_collision_info = <T extends number | undefined>({ manifold, oth
         z: this_vel.z - other_vel.z,
     };
 
-    // TODO: better way to get obj root
-    const other_object_id = other.rigidBodyObject?.parent?.parent?.userData?.object_id || null;
+    const other_object_id = resolve_object_node(other.rigidBodyObject ?? null)?.userData?.object_id ?? null;
 
     return {
         type: "enter" as const,
@@ -372,7 +374,40 @@ export const ObjectPhysics = ({
 
     const { world } = useRapier();
 
-    const collision_group_props = collision_groups !== undefined ? { collisionGroups: collision_groups } : {};
+    const collision_group_props = useMemo(() => ({
+        collisionGroups: build_collision_groups(
+            rb.type === "fixed" ? GROUP_WORLD : GROUP_PROP,
+            rb.collision_filter || {},
+        )
+    }), [rb.type, rb.collision_filter]);
+
+    useEffect(() => {
+        const body = rb_ref.current;
+        if (!body) return;
+
+        if (!refs) {
+            return;
+        }
+
+        const unregisters: (() => void)[] = [];
+
+        for (let index = 0; index < body.numColliders(); index++) {
+            const body_collider = body.collider(index);
+            body_collider.setActiveHooks(1); // ActiveHooks.FILTER_CONTACT_PAIRS
+
+            unregisters.push(
+                register_collider_collision_info(body.collider(index).handle, {
+                    get_tags: () => {
+                        const node = resolve_object_node(refs.root.current);
+                        return (node?.userData?.tags as string[] | undefined) ?? [];
+                    },
+                    filter: rb.collision_filter || {},
+                })
+            );
+        }
+
+        return () => unregisters.forEach((unregister) => unregister());
+    }, [refs, rb.collision_filter]);
 
     const {emit_report} = useObjectBinding(physics.binding);
 
@@ -418,8 +453,7 @@ export const ObjectPhysics = ({
                 return;
             }
 
-            // TODO: better way to get obj root
-            const other_object_id = payload.other.rigidBodyObject?.parent?.parent?.userData?.object_id || null;
+            const other_object_id = resolve_object_node(payload.other.rigidBodyObject ?? null)?.userData?.object_id ?? null;
 
             emit_report({
                 kind: "physics-collision",
@@ -457,4 +491,4 @@ export const ObjectPhysics = ({
     );
 };
 
-// TODO: option to ignore player collisions, and option to allow players to pass through objects
+// TODO: differentiate not colliding in response the player (getting slapped basically) vs letting the player walk through something

@@ -34,24 +34,26 @@ export const GolfPutter = (props: PrefabProps<GolfPutterPrefab>) => {
 
             child.material = plastic_material;
         });
-    }, [props.color]);
+    }, [body_instance, props.color]);
 
     return (
-        <ObjectPhysics physics={{
-            rigid_body: {
-                type: "dynamic",
-                mass: 0.5,
-                ccd: true,
-                collider: {
-                    type: "auto"
+        <group userData={{tags: ["golf_putter"]}}>
+            <ObjectPhysics physics={{
+                rigid_body: {
+                    type: "dynamic",
+                    mass: 0.5,
+                    ccd: true,
+                    collider: {
+                        type: "auto"
+                    }
                 }
-            }
-        }}>
-            <primitive object={body_instance} />
+            }}>
+                <primitive object={body_instance} />
 
-            <Grabbable grab_offset={[0, 0, 0.1]} grab_rotation={[Math.PI/4, 0, 0]}>
-                <primitive object={handle_instance} />
-            </Grabbable>
-        </ObjectPhysics>
+                <Grabbable grab_offset={[0, 0, 0.1]} grab_rotation={[Math.PI/4, 0, 0]}>
+                    <primitive object={handle_instance} />
+                </Grabbable>
+            </ObjectPhysics>
+        </group>
     );
 };

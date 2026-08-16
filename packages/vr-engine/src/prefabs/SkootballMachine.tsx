@@ -63,7 +63,7 @@ const Ball = ({machine_id, machine_ref, id, initial_position, handle}: BallProps
 
     return (
         <ObjectRefsProvider value={object_refs.current}>
-            <group userData={{object_id: `SKOOTBALL-${id}`, tags: ["skootball_ball", `skootball-${machine_id}`]}}>
+            <group ref={object_refs.current.root} userData={{object_id: `SKOOTBALL-${id}`, tags: ["skootball_ball", `skootball-${machine_id}`]}}>
                 <ObjectPhysics
                     physics={{
                         rigid_body: {

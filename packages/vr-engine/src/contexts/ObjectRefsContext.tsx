@@ -31,6 +31,6 @@ export const create_object_refs = (id: string): ObjectRefsContextType => {
         id,
         root: { current: null },
         rigid_body: { current: null },
-        constrained: { current: false }
+        constrained: { current: false },
     };
 }
