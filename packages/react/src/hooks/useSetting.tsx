@@ -17,10 +17,14 @@ export const useSettingWithEngines = <K extends SettingKey>(
         settings_def[key].default_value
     );
 
+    const [loaded, setLoaded] = useState(false);
+
     useEffect(() => {
-        get_setting(key, storage).then(setValue);
-        return watch_setting(key, setValue, storage);
-    }, [key, storage]);
+        get_setting(key).then((stored) => {
+            setValue(stored);
+            setLoaded(true);
+        });
+    }, [key, get_setting]);
 
     const update_value = useCallback(
         (new_value: (typeof settings_def)[K]["default_value"]) => {
@@ -38,7 +42,7 @@ export const useSettingWithEngines = <K extends SettingKey>(
         update_setting(key, debounced_value, storage);
     }, [key, debounced_value, storage]);
 
-    return [value, update_value] as const;
+    return [value, update_value, loaded] as const;
 };
 
 export const useSettingWithoutContext = <K extends SettingKey>(key: K, debounce_delay = 500) => {
@@ -151,9 +155,14 @@ export const useSetting = <K extends SettingKey>(key: K, debounce_delay = 500) =
 
     const [value, setValue] = useState<(typeof settings_def)[K]["default_value"]>(settings_def[key].default_value);
 
+    const [loaded, setLoaded] = useState(false);
+
     // get default value from storage on mount
     useEffect(() => {
-        get_setting(key).then(setValue);
+        get_setting(key).then((stored) => {
+            setValue(stored);
+            setLoaded(true);
+        });
     }, [key, get_setting]);
 
     // subscribe to changes in the setting value
@@ -170,5 +179,5 @@ export const useSetting = <K extends SettingKey>(key: K, debounce_delay = 500) =
         [key, set_setting]
     );
 
-    return [value, update_value] as const;
+    return [value, update_value, loaded] as const;
 }

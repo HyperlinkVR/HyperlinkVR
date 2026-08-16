@@ -22,7 +22,7 @@ const world_url_is_local = (world_url: string): boolean => {
 };
 
 export const useAssetURL = (ref: AssetRef | string | undefined): string | null | undefined => {
-    const [allow_local_anywhere] = useSetting("devtools_dangerously_allow_localhost_fetch");
+    const [allow_local_anywhere, _, allow_local_anywhere_setting_loaded] = useSetting("devtools_dangerously_allow_localhost_fetch");
     const {url} = useTabSession();
 
     const allow_local = useMemo(() => allow_local_anywhere || (url ? world_url_is_local(url) : false), [allow_local_anywhere, url]);
@@ -44,7 +44,7 @@ export const useAssetURL = (ref: AssetRef | string | undefined): string | null |
     }, [ref]);
 
     useEffect(() => {
-        if (!source_url) {
+        if (!source_url || !allow_local_anywhere_setting_loaded) {
             setObjectURL(undefined);
             return;
         }
@@ -77,7 +77,9 @@ export const useAssetURL = (ref: AssetRef | string | undefined): string | null |
                 URL.revokeObjectURL(blob_url);
             }
         };
-    }, [source_url, allow_local]);
+    }, [source_url, allow_local, allow_local_anywhere_setting_loaded]);
 
     return object_url;
 };
+
+// TODO: the sdk should know when the asset loading is blocked for mesh, interaction, collider etc so it can decide whether to continue
