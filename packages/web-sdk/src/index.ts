@@ -9,16 +9,29 @@ export * as color from "./color";
 
 import {bind_rtc_event, facilitate_rtc, send_via_rtc} from "./messenger";
 
+
+let unbind_rtc_events: (() => void) | undefined;
 export const connect = async () => {
+    // unbind any previous bindings, if they exist. could use a disconnect handler but this works just as well
+    if (unbind_rtc_events) {
+        unbind_rtc_events();
+    }
+
+
     await facilitate_rtc();
 
     // connect reports to internal dispatch
-    bind_rtc_event("HVRSDK_ENGINE_OBJECT_REPORT", (msg) => publish_report(msg.report));
-    bind_rtc_event("HVRSDK_ENGINE_OBJECT_REPORT_BATCH", (msg) => {
+    const unbind_report = bind_rtc_event("HVRSDK_ENGINE_OBJECT_REPORT", (msg) => publish_report(msg.report));
+    const unbind_report_batch = bind_rtc_event("HVRSDK_ENGINE_OBJECT_REPORT_BATCH", (msg) => {
         for (const report of msg.reports) {
             publish_report(report);
         }
     });
+
+    unbind_rtc_events = () => {
+        unbind_report();
+        unbind_report_batch();
+    }
 }
 
 export const bind_messages = () => {
