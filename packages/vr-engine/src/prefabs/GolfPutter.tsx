@@ -48,6 +48,8 @@ const generate_color = () => {
     return color;
 };
 
+// TODO: expose color to sdk so it can make matching ball (maybe we set the color in the builder and then they can read it there? but then if they arent using the builder then it won't be auto randomised)
+
 export const GolfPutter = (props: PrefabProps<GolfPutterPrefab>) => {
     const {scene: handle_scene} = useGLTF(HANDLE_URL);
     const {scene: body_scene} = useGLTF(BODY_URL);
@@ -90,7 +92,7 @@ export const GolfPutter = (props: PrefabProps<GolfPutterPrefab>) => {
         }}>
             <primitive object={body_instance} />
 
-            <Grabbable>
+            <Grabbable grab_offset={[0, 0, 0.1]} grab_rotation={[Math.PI/4, 0, 0]}>
                 <primitive object={handle_instance} />
             </Grabbable>
         </ObjectPhysics>
