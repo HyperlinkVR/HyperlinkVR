@@ -5,7 +5,8 @@ import {
     ButtonPrefab,
     ButtonPrefabInput,
     ButtonPrefabSchema, FloatingText2DPrefab, FloatingText2DPrefabSchema, FloatingText3DPrefab,
-    FloatingText3DPrefabSchema,
+    FloatingText3DPrefabSchema, GolfPutterPrefab, GolfPutterPrefabInput, GolfPutterPrefabSchema,
+    HexColor, HexColorSchema,
     HexNumericalColor,
     HexNumericalColorSchema, ReflectiveMirrorPrefab, ReflectiveMirrorPrefabInput, ReflectiveMirrorPrefabSchema,
     StandardPrefab, StandardPrefabInput, StandardPrefabName,
@@ -185,5 +186,25 @@ export class TextSignPrefabBuilder extends TextPrefabBuilderBase {
 
     build(): TextSignPrefab {
         return TextSignPrefabSchema.parse(this._internal);
+    }
+}
+
+export class GolfPutterPrefabBuilder extends BaseBuilder<GolfPutterPrefabInput> {
+    constructor() {
+        super({type: "prefab", name: "golf_putter"} as GolfPutterPrefabInput);
+    }
+
+    set_color(color: HexColor) {
+        this._internal.color = HexColorSchema.parse(color);
+        return this;
+    }
+
+    random_color() {
+        this._internal.color = undefined;
+        return this;
+    }
+
+    build(): GolfPutterPrefab {
+        return GolfPutterPrefabSchema.parse(this._internal);
     }
 }

@@ -27,11 +27,6 @@ export class AssetRef {
         return this.#url;
     }
 
-    // serialised state (multiplayer sync, storage) carries plain URL strings
-    toJSON(): string {
-        return this.#url;
-    }
-
     toString(): string {
         console.error(
             "AssetRef coerced to string outside the asset pipeline. This asset URL was not fetched.",
@@ -52,15 +47,7 @@ const is_absolute_http_url = (value: string): boolean => {
     }
 };
 
-// validation only
-export const AssetURLStringSchema = z.string().refine(is_absolute_http_url, {
-    message: "Asset URLs must be absolute http(s) URLs."
-});
-
-// ensure the engine only recieves an assetref
-export const AbsoluteAssetURLSchema = AssetURLStringSchema.transform(
-    (url) => new AssetRef(url)
-);
-
-export type AbsoluteAssetURL = z.infer<typeof AbsoluteAssetURLSchema>;
-export type AbsoluteAssetURLInput = z.input<typeof AbsoluteAssetURLSchema>;
+export const AbsoluteAssetURLSchema = z
+    .string()
+    .refine(is_absolute_http_url, { message: "Asset URLs must be absolute http(s) URLs." })
+    .meta({ IS_ASSET_URL: true });

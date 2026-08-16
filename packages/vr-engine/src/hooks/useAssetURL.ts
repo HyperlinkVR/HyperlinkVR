@@ -1,5 +1,5 @@
 import {useEffect, useMemo, useState} from "react";
-import type { AssetRef } from "@hyperlinkvr/vr-engine-schemas";
+import {AssetRef, is_asset_ref} from "@hyperlinkvr/vr-engine-schemas";
 import {useSetting, useTabSession} from "@hyperlinkvr/react";
 import {fetch_asset} from "../security/fetch_asset";
 
@@ -21,20 +21,31 @@ const world_url_is_local = (world_url: string): boolean => {
     }
 };
 
-export const useAssetURL = (ref: AssetRef | undefined): string | null => {
+export const useAssetURL = (ref: AssetRef | string | undefined): string | null | undefined => {
     const [allow_local_anywhere] = useSetting("devtools_dangerously_allow_localhost_fetch");
     const {url} = useTabSession();
 
     const allow_local = useMemo(() => allow_local_anywhere || (url ? world_url_is_local(url) : false), [allow_local_anywhere, url]);
 
-    const [object_url, setObjectURL] = useState<string | null>(null);
+    const [object_url, setObjectURL] = useState<string | null | undefined>(undefined);
 
-    // the only place this should be called!!!
-    const source_url = ref?.dangerously_get_source_url();
+    const source_url = useMemo(() => {
+        if (!ref) {
+            return null;
+        }
+
+       if (!is_asset_ref(ref)) {
+           console.warn(`useAssetURL was passed a direct URL (${ref}). This strongly suggests that assets are being mishandled. Pass an AssetRef. Interpreting as URL regardless.`);
+           return ref;
+       } else {
+           // this is the only place this is allowed to be used!!!! don't use it anywhere else!!!
+           return ref.dangerously_get_source_url();
+       }
+    }, [ref]);
 
     useEffect(() => {
         if (!source_url) {
-            setObjectURL(null);
+            setObjectURL(undefined);
             return;
         }
 
@@ -60,7 +71,7 @@ export const useAssetURL = (ref: AssetRef | undefined): string | null => {
 
         return () => {
             cancelled = true;
-            setObjectURL(null);
+            setObjectURL(undefined);
 
             if (blob_url) {
                 URL.revokeObjectURL(blob_url);

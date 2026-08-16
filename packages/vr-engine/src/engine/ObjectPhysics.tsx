@@ -98,20 +98,7 @@ export const PrimitiveCollider = ({ collider, ...rest }: ColliderProps & { colli
 
 const INVISIBLE_MATERIAL = new MeshBasicMaterial({ visible: false });
 
-export const URLMeshCollider = ({
-    asset_ref,
-    approximation,
-    ...rest
-}: ColliderProps & {
-    asset_ref: AssetRef;
-    approximation: string;
-}) => {
-    const resolved_url = useAssetURL(asset_ref);
-    if (!resolved_url) {
-        console.warn(`URLMeshCollider: failed to resolve asset_ref ${asset_ref}`);
-        return null;
-    }
-
+const URLMeshColliderInternal = ({ resolved_url, approximation, ...rest }: ColliderProps & { resolved_url: string; approximation: string }) => {
     const { scene } = useGLTF(resolved_url);
     const instance = useMemo(() => {
         const cloned = clone(scene);
@@ -132,6 +119,27 @@ export const URLMeshCollider = ({
             <primitive object={instance} />
         </MeshCollider>
     );
+}
+
+export const URLMeshCollider = ({
+    asset_ref,
+    approximation,
+    ...rest
+}: ColliderProps & {
+    asset_ref: AssetRef;
+    approximation: string;
+}) => {
+    const resolved_url = useAssetURL(asset_ref);
+    if (resolved_url === null) {
+        console.warn("URLMeshCollider: failed to resolve asset ref");
+        return null;
+    }
+
+    if (resolved_url === undefined) {
+        return null; // still loading
+    }
+
+    return <URLMeshColliderInternal resolved_url={resolved_url} approximation={approximation} {...rest} />;
 };
 
 const arrays_equal = (left: readonly unknown[], right: readonly unknown[]): boolean => {

@@ -62,6 +62,7 @@ export const ColliderSchema = z.discriminatedUnion("type", [
     AutoColliderSchema
 ]);
 export type Collider = z.infer<typeof ColliderSchema>;
+export type ColliderInput = z.input<typeof ColliderSchema>;
 
 const AxisLockSchema = z.object({
     x: z.boolean().default(false),

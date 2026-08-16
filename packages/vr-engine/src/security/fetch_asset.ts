@@ -1,6 +1,6 @@
 declare global {
     interface RequestInit {
-        // chrome and some firefox versions support this. it's best effort. see vr-engine-schemas/src/assets.ts for my rant on why this is all we can reasonably do to prevent local network access
+        // chrome and some firefox versions support this. it's best effort. see asset_ref.ts for my rant on why this is all we can reasonably do to prevent local network access
         targetAddressSpace?: "public" | "local" | "loopback";
     }
 }

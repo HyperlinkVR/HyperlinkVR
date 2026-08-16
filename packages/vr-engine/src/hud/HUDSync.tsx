@@ -5,7 +5,7 @@ import {useHUDStore} from "../stores/HUDStore";
 import {
     CreatedHUDElementSchema,
     HUDDispatchSchema,
-    HUDElementModificationSchema
+    HUDElementModificationSchema, safe_parse_and_adopt
 } from "@hyperlinkvr/vr-engine-schemas";
 import {
     clear_hud_element_ready,
@@ -20,7 +20,7 @@ export const HUDSync = () => {
         const unlisten_create = rtc.on_action("HVRSDK_CREATE_HUD_ELEMENT", (message, reply) => {
             const {add_element, resolve_for} = useHUDStore.getState();
 
-            const {success, data} = HUDDispatchSchema.safeParse(message.element);
+            const {success, data} = safe_parse_and_adopt(HUDDispatchSchema, message.element);
             if (!success) {
                 console.error("Failed to parse HUD element dispatch", data);
                 reply({success: false, error: "Failed to parse HUD element dispatch"});
@@ -76,7 +76,7 @@ export const HUDSync = () => {
                 return;
             }
 
-            const {success, data} = HUDElementModificationSchema.safeParse(message.changes);
+            const {success, data} = safe_parse_and_adopt(HUDElementModificationSchema, message.changes);
             if (!success) {
                 console.error("Failed to parse HUD element modification", data);
                 reply({success: false, error: "Failed to parse HUD element modification"});

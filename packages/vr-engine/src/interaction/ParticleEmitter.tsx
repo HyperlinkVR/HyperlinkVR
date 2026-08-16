@@ -145,9 +145,12 @@ export const ParticleEmitter = ({config, ref = null}: {config: Omit<ParticleEmit
 
             switch (visual.type) {
                 case "image": {
-                    if (!maybe_particle_image_url) {
-                        console.warn("Particle image URL is not available yet (or was rejected)");
+                    if (maybe_particle_image_url === undefined) {
                         return {render_mode: RenderMode.BillBoard};
+                    }
+
+                    if (maybe_particle_image_url === null) {
+                        throw new Error("Failed to load particle image from asset ref");
                     }
 
                     const texture = new TextureLoader().load(maybe_particle_image_url);

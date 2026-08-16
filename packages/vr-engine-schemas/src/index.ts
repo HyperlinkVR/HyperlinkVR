@@ -1,4 +1,5 @@
 export * from "./assets";
+export * from "./adopt_assets";
 export * from "./colors";
 export * from "./dispatch";
 export * from "./events";

@@ -2,7 +2,11 @@ import { useEffect } from "react";
 
 import { useWebSDKMessaging } from "../contexts/WebSDKMessagingContext";
 import { useEngineObjectStore } from "../stores/EngineObjectStore";
-import {EngineObjectDispatchSchema, EngineObjectModificationSchema} from "@hyperlinkvr/vr-engine-schemas";
+import {
+    EngineObjectDispatchSchema,
+    EngineObjectModificationSchema,
+    safe_parse_and_adopt
+} from "@hyperlinkvr/vr-engine-schemas";
 import {get_object_refs} from "./object_ref_registry";
 import {apply_modification, sample_live_transform} from "./object_modification";
 import {cancel_active_tween, set_active_tween} from "./tween_registry";
@@ -17,7 +21,7 @@ export const EngineObjectSync = () => {
         const unlisten_create = rtc.on_action("HVRSDK_CREATE_ENGINE_OBJECT", (message, reply) => {
             const {add_object} = useEngineObjectStore.getState();
 
-            const {success, data} = EngineObjectDispatchSchema.safeParse(message.object);
+            const {success, data} = safe_parse_and_adopt(EngineObjectDispatchSchema, message.object);
             if (!success) {
                 // TODO: proper error support, this is just stuffing it into a type that wont go. just need a standard error reply then expect it on the builder's create method/sdk sender
                 console.error("Failed to parse engine object dispatch", data);
@@ -86,7 +90,7 @@ export const EngineObjectSync = () => {
         const unlisten_modify = rtc.on_action("HVRSDK_MODIFY_ENGINE_OBJECT", (message, reply) => {
             const {get_object, add_object} = useEngineObjectStore.getState();
 
-            const {success, data} = EngineObjectModificationSchema.safeParse(message.changes);
+            const {success, data} = safe_parse_and_adopt(EngineObjectModificationSchema, message.changes);
             if (!success) {
                 reply({ success: false, error: `Failed to parse engine object modification: ${data}` });
                 return;

@@ -1,4 +1,4 @@
-import { AssetURLStringSchema } from "@hyperlinkvr/vr-engine-schemas";
+import { AbsoluteAssetURLSchema } from "@hyperlinkvr/vr-engine-schemas";
 
 export const asset_url = (path: string, field_name: string = "Asset URL"): string => {
     let absolute: string;
@@ -11,7 +11,7 @@ export const asset_url = (path: string, field_name: string = "Asset URL"): strin
         );
     }
 
-    const result = AssetURLStringSchema.safeParse(absolute);
+    const result = AbsoluteAssetURLSchema.safeParse(absolute);
 
     if (!result.success) {
         const reasons = result.error.issues.map((issue) => issue.message).join("; ");

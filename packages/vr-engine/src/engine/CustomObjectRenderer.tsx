@@ -27,10 +27,13 @@ const GLTFRenderer = ({url}: {url: string}) => {
 
 export const CustomObjectRenderer = ({ mesh, interactions, physics, transform }: RendererComponentProps<CustomObject>) => {
     const resolved_url = useAssetURL(mesh);
+    if (resolved_url === null) {
+        console.warn("CustomObjectRenderer: mesh asset ref could not be resolved");
+    }
 
     const visual = useMemo(
         () => (resolved_url ? <GLTFRenderer url={resolved_url} /> : null),
-        [mesh]
+        [mesh, resolved_url]
     );
 
     const with_interactions = useMemo(

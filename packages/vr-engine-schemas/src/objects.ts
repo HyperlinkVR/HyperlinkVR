@@ -38,7 +38,7 @@ export type CustomObjectInput = z.input<typeof CustomObjectSchema>;
 // TODO: built in primitive meshes, either by a path or explicit in schema. would be useless without material override tho
 
 // prefabs without special behaviour, we just need to tell zod the name
-const StandardPrefabName = z.enum(["basketball", "avatar_mirror", "skootball"]);
+const StandardPrefabName = z.enum(["basketball", "avatar_mirror", "skootball", "golf_ball"]);
 export type StandardPrefabName = z.infer<typeof StandardPrefabName>;
 
 export const StandardPrefabSchema = z.object({
@@ -120,6 +120,14 @@ export const TextSignPrefabSchema = TextPrefabBaseSchema.extend({
 export type TextSignPrefab = z.infer<typeof TextSignPrefabSchema>;
 export type TextSignPrefabInput = z.input<typeof TextSignPrefabSchema>;
 
+export const GolfPutterPrefabSchema = z.object({
+    type: z.literal("prefab"),
+    name: z.literal("golf_putter"),
+    color: HexColorSchema.optional(), // omit for random color (from a selection of neonish colors)
+});
+export type GolfPutterPrefab = z.infer<typeof GolfPutterPrefabSchema>;
+export type GolfPutterPrefabInput = z.input<typeof GolfPutterPrefabSchema>;
+
 export const PrefabSchema = z.discriminatedUnion("name", [
     StandardPrefabSchema,
     ButtonPrefabSchema,
@@ -127,7 +135,8 @@ export const PrefabSchema = z.discriminatedUnion("name", [
     ReflectiveMirrorPrefabSchema,
     FloatingText2DPrefabSchema,
     FloatingText3DPrefabSchema,
-    TextSignPrefabSchema
+    TextSignPrefabSchema,
+    GolfPutterPrefabSchema
 ]);
 export type Prefab = z.infer<typeof PrefabSchema>;
 export type PrefabInput = z.input<typeof PrefabSchema>;

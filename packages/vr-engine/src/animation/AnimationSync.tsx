@@ -1,5 +1,5 @@
 import {useEffect} from "react";
-import {AnimationSchema} from "@hyperlinkvr/vr-engine-schemas";
+import {AnimationSchema, safe_parse_and_adopt} from "@hyperlinkvr/vr-engine-schemas";
 
 import {useWebSDKMessaging} from "../contexts/WebSDKMessagingContext";
 import {register_command_handler} from "../engine/trigger_registry";
@@ -43,7 +43,7 @@ export const AnimationSync = () => {
         };
 
         const unlisten_create = rtc.on_action("HVRSDK_CREATE_ANIMATION", (message, reply) => {
-            const {success, data: animation} = AnimationSchema.safeParse(message.animation);
+            const {success, data: animation} = safe_parse_and_adopt(AnimationSchema, message.animation);
             if (!success) {
                 console.error("Failed to parse animation dispatch", animation);
                 reply({success: false, error: "Failed to parse animation dispatch"});

@@ -1,7 +1,7 @@
 import {BaseBuilder} from "./base";
 import {
     AxisLockInput, BodyConstraintInput, BodyConstraintSchema,
-    Collider,
+    Collider, ColliderInput,
     ColliderSchema,
     CustomMeshApproximation, DynamicRigidBodyInput, FixedRigidBodyInput, KinematicPositionRigidBodyInput,
     KinematicVelocityRigidBodyInput,
@@ -43,7 +43,7 @@ class RigidBodyBuilder<RB extends RigidBodyInput> extends BaseBuilder<RB> {
         super({type} as RB);
     }
 
-    set_collider(collider: Collider) {
+    set_collider(collider: ColliderInput) {
         this._internal.collider = collider;
         return this;
     }
@@ -212,7 +212,7 @@ export class FixedRigidBodyBuilder extends RigidBodyBuilder<FixedRigidBodyInput>
     }
 }
 
-export class ColliderBuilder extends BaseBuilder<Collider> {
+export class ColliderBuilder extends BaseBuilder<ColliderInput> {
     constructor() {
         super({type: "auto"});
     }
