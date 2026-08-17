@@ -45,7 +45,7 @@ const get_markers_from_gltf_header = (header: string, name_regex: RegExp, remove
             // TODO: resolve nested transform (parenting), or at least warn for now
             const resolved_transform: Transform = {
                 position: node.translation || [0, 0, 0],
-                rotation: node.rotation || [0, 0, 0, 0],
+                rotation: node.rotation || [0, 0, 0, 1],
                 scale: node.scale || [1, 1, 1]
             };
 
