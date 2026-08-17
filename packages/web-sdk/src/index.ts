@@ -7,6 +7,14 @@ export * as builders from "./builders";
 export * as players from "./players";
 export * as color from "./color";
 
+// re-export markers api with loader name shortened
+import * as markers_imp from "./markers";
+const {load_markers, ...rest_markers_imp} = markers_imp;
+export const markers = {
+    load: load_markers,
+    ...rest_markers_imp
+}
+
 import {bind_rtc_event, facilitate_rtc, send_via_rtc} from "./messenger";
 
 
