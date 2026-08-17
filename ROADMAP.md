@@ -116,7 +116,7 @@ Interchangeable with Epic B.
 - [ ] Scene/collection dispatch
 - [ ] Object parenting via SDK (transform resolution against parent; decide what happens when a
   parent has a rigid body)
-- [ ] Way to add prefabs using empties with custom props
+- [x] Way to add prefabs using empties with custom props (replaced with generic marker system that creators can set their own convention for)
 - [ ] Extend prefab library in general (props, weapons, sports stuff, maybe even vehicles)
 - [ ] `usePhysicsReporting` for motion (expensive, discourage in docs, point to monitors)
 - [ ] Way for SDK to add HUD layer stuff (could reuse the vignette layer)
