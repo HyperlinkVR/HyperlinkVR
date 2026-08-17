@@ -197,6 +197,14 @@ export class TriggerVolumeInteractionBuilder extends BaseBuilder<TriggerVolumeIn
         return this;
     }
 
+    exclude_players() {
+        this._internal.ignore_head = true;
+        this._internal.ignore_torso = true;
+        this._internal.ignore_hands = true;
+
+        return this;
+    }
+
     build(): TriggerVolumeInteraction {
         return TriggerVolumeInteractionSchema.parse(this._internal);
     }

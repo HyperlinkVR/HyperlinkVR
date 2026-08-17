@@ -57,3 +57,5 @@ export const GolfPutter = (props: PrefabProps<GolfPutterPrefab>) => {
         </group>
     );
 };
+
+// TODO: grabbable doesnt know to exclude children from collision

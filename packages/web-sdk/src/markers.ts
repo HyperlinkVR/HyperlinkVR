@@ -4,12 +4,15 @@ import {Transform} from "@hyperlinkvr/vr-engine-schemas";
 glMatrix.setMatrixArrayType(Array);
 
 
-// only relevant properties covered
-interface GLTFNodeFull {
-    name: string;
+interface GLTFTransform {
     translation: [number, number, number];
     rotation: [number, number, number, number]; // quaternion
     scale: [number, number, number];
+}
+
+// only relevant properties covered
+interface GLTFNodeFull extends GLTFTransform {
+    name: string;
     extras: Record<string, unknown>;
     matrix: number[];
     children: number[];
@@ -23,18 +26,25 @@ interface GLTFHeader {
 
 const QUAT_IDENTITY = [0, 0, 0, 1] as [number, number, number, number];
 
+const to_mat4 = (transform: Transform | Partial<GLTFTransform>, mat = mat4.create()): mat4 => {
+    const pos = "position" in transform ? transform.position : transform.translation;
+
+    mat4.fromRotationTranslationScale(
+        mat,
+        transform.rotation ?? QUAT_IDENTITY,
+        pos ?? [0, 0, 0],
+        transform.scale ?? [1, 1, 1]
+    );
+    return mat;
+}
+
 const local_matrix = (node: GLTFNode) => {
     const mat = mat4.create();
 
     if (node.matrix) {
         mat4.copy(mat, node.matrix);
     } else {
-        mat4.fromRotationTranslationScale(
-            mat,
-            node.rotation ?? QUAT_IDENTITY,
-            node.translation ?? [0, 0, 0],
-            node.scale ?? [1, 1, 1]
-        );
+        to_mat4(node, mat);
     }
 
     return mat;
@@ -77,18 +87,53 @@ const decompose = (mat: mat4): Transform => {
     };
 };
 
+const offset_by = (base: mat4, offset: mat4) => {
+    const out = mat4.create();
+    mat4.multiply(out, offset, base);
+    return out;
+}
+
 export interface Marker {
     name: string;
     transform: Transform;
-    local_transform: Transform;
+    source_transforms: {
+        global: Transform,
+        local: Transform,
+        offset_local: Transform,
+    },
     properties: Record<string, unknown>;
 }
+
+export interface LoadMarkersOptions {
+    name_regex: RegExp;
+    remove_regex_match: boolean;
+    transform_offset: Partial<Omit<Transform, "scale">>;
+}
+
+const DEFAULT_OPTIONS = {
+    name_regex: /^marker_/i,
+    remove_regex_match: true,
+    transform_offset: {}
+} as LoadMarkersOptions;
 
 const GLTF_MAGIC = 0x46546C67; // "glTF"
 const JSON_MAGIC = 0x4E4F534A; // "JSON"
 const OPEN_CURLY_MAGIC = 0x7B; // "{"
 
-const get_markers_from_gltf_header = (header: string, name_regex: RegExp, remove_regex_match = true) => {
+const get_markers_from_gltf_header = (header: string, options: Partial<LoadMarkersOptions> = DEFAULT_OPTIONS) => {
+    const opts = {
+        ...DEFAULT_OPTIONS,
+        ...options
+    } as LoadMarkersOptions;
+
+    if (!opts.transform_offset.position) {
+        opts.transform_offset.position = [0, 0, 0];
+    }
+
+    if (!opts.transform_offset.rotation) {
+        opts.transform_offset.rotation = [0, 0, 0, 1];
+    }
+
     const data: Partial<GLTFHeader> = JSON.parse(header);
 
     const nodes = data.nodes;
@@ -102,26 +147,36 @@ const get_markers_from_gltf_header = (header: string, name_regex: RegExp, remove
     nodes.forEach((n, i) => n.children?.forEach((c) => parent_map.set(c, i)));
     const cache = new Map<number, mat4>();
 
+    const offset_mat = to_mat4(opts.transform_offset as Transform);
+
     const markers: Map<string, Marker> = new Map();
     nodes.forEach((node, node_idx) => {
-        if (node.name && name_regex.test(node.name)) {
-            const resolved_name = remove_regex_match ? node.name.replace(name_regex, "") : node.name;
+        if (node.name && opts.name_regex.test(node.name)) {
+            const resolved_name = opts.remove_regex_match ? node.name.replace(opts.name_regex, "") : node.name;
 
             if (markers.has(resolved_name)) {
                 throw new Error(`Duplicate marker name! Multiple markers share resolved name ${resolved_name}. Rename them in the file, or adjust the name_regex.`)
             }
 
-            const resolved_local_transform: Transform = {
+            const local_transform: Transform = {
                 position: node.translation ?? [0, 0, 0],
                 rotation: node.rotation ?? QUAT_IDENTITY,
                 scale: node.scale ?? [1, 1, 1]
             };
 
-            const world_transform = resolve_world(node_idx, nodes, parent_map, cache);
+            const global_transform = resolve_world(node_idx, nodes, parent_map, cache);
+
+            const offset_global = decompose(offset_by(global_transform, offset_mat));
+            const offset_local = decompose(offset_by(to_mat4(local_transform), offset_mat));
+
             markers.set(resolved_name, {
                 name: resolved_name,
-                transform: decompose(world_transform),
-                local_transform: resolved_local_transform,
+                transform: offset_global,
+                source_transforms: {
+                    global: decompose(global_transform),
+                    local: local_transform,
+                    offset_local
+                },
                 properties: node.extras ?? {}
             });
         }
@@ -197,7 +252,12 @@ const identify_gltf_format = (buffer: ArrayBuffer) => {
     return null;
 }
 
-export const load_markers = async (url: string | URL, name_regex = /^marker_/i, remove_regex_match = true): Promise<Map<string, Marker>> => {
+export const load_markers = async (url: string | URL, options: Partial<LoadMarkersOptions> = DEFAULT_OPTIONS): Promise<Map<string, Marker>> => {
+    const opts = {
+        ...DEFAULT_OPTIONS,
+        ...options
+    };
+
     const res = await fetch(url, {
         credentials: "omit"
     });
@@ -214,5 +274,7 @@ export const load_markers = async (url: string | URL, name_regex = /^marker_/i, 
     }
 
     const header_str = format === "glb" ? extract_header_from_glb(buffer) : decode_buffer(buffer);
-    return get_markers_from_gltf_header(header_str, name_regex, remove_regex_match);
+    return get_markers_from_gltf_header(header_str, opts);
 }
+
+// TODO: more natural api for translating markers to an object, maybe even track motion

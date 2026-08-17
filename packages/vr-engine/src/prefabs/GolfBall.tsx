@@ -114,24 +114,26 @@ export const GolfBall = (props: PrefabProps<GolfBallPrefab>) => {
     });
 
     return (
-        <ObjectPhysics
-            physics={{
-                report_collisions: false,
-                rigid_body: {
-                    type: "dynamic",
-                    mass: 0.045,
-                    restitution: 0.4,
-                    friction: 0.5,
-                    linear_damping: 0.75,
-                    angular_damping: 0.75,
-                    ccd: true,
-                    collider: {type: "sphere", radius: 0.03},
-                    collision_filter: {players: false}
-                }
-            }}
-            on_collision_enter={on_collision_enter}
-        >
-            <primitive object={instance} />
-        </ObjectPhysics>
+        <group userData={{tags: ["golf_ball"]}}>
+            <ObjectPhysics
+                physics={{
+                    report_collisions: false,
+                    rigid_body: {
+                        type: "dynamic",
+                        mass: 0.045,
+                        restitution: 0.4,
+                        friction: 0.5,
+                        linear_damping: 0.75,
+                        angular_damping: 0.75,
+                        ccd: true,
+                        collider: {type: "sphere", radius: 0.03},
+                        collision_filter: {players: false}
+                    }
+                }}
+                on_collision_enter={on_collision_enter}
+            >
+                <primitive object={instance} />
+            </ObjectPhysics>
+        </group>
     );
 };
