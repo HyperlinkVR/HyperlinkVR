@@ -12,7 +12,7 @@
         "@hyperlinkvr/auth": "workspace:*",
         "@hyperlinkvr/types": "workspace:*",
         "@hyperlinkvr/vr-engine-schemas": "workspace:*",
-        "colord": "^2.9.3"
-    },
-    "devDependencies": {}
+        "colord": "^2.9.3",
+        "gl-matrix": "^3.4.4"
+    }
 }

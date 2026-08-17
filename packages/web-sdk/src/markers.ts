@@ -1,22 +1,86 @@
+import {glMatrix, mat4, quat, vec3} from "gl-matrix";
 import {Transform} from "@hyperlinkvr/vr-engine-schemas";
+
+glMatrix.setMatrixArrayType(Array);
 
 
 // only relevant properties covered
-interface GLTFNode {
+interface GLTFNodeFull {
     name: string;
     translation: [number, number, number];
     rotation: [number, number, number, number]; // quaternion
     scale: [number, number, number];
     extras: Record<string, unknown>;
+    matrix: number[];
+    children: number[];
 }
 
+type GLTFNode = Partial<GLTFNodeFull>;
+
 interface GLTFHeader {
-    nodes: Partial<GLTFNode>[]
+    nodes: GLTFNode[];
 }
+
+const QUAT_IDENTITY = [0, 0, 0, 1] as [number, number, number, number];
+
+const local_matrix = (node: GLTFNode) => {
+    const mat = mat4.create();
+
+    if (node.matrix) {
+        mat4.copy(mat, node.matrix);
+    } else {
+        mat4.fromRotationTranslationScale(
+            mat,
+            node.rotation ?? QUAT_IDENTITY,
+            node.translation ?? [0, 0, 0],
+            node.scale ?? [1, 1, 1]
+        );
+    }
+
+    return mat;
+}
+
+// collect the global transform by recursing tree
+const resolve_world = (node_idx: number, nodes: GLTFNode[], parent_map: Map<number, number>, cache: Map<number, mat4>) => {
+    const cached = cache.get(node_idx);
+    if (cached) {
+        return cached;
+    }
+
+    const local = local_matrix(nodes[node_idx]);
+    const parent = parent_map.get(node_idx);
+    const world = mat4.create();
+
+    if (parent === undefined) {
+        mat4.copy(world, local);
+    } else {
+        // parent (dot) local
+        mat4.multiply(world, resolve_world(parent, nodes, parent_map, cache), local);
+    }
+
+    cache.set(node_idx, world);
+    return world;
+}
+
+const decompose = (mat: mat4): Transform => {
+    const position = vec3.create();
+    const rotation = quat.create();
+    const scale = vec3.create();
+    mat4.getTranslation(position, mat);
+    mat4.getRotation(rotation, mat);
+    quat.normalize(rotation, rotation);   // getRotation doesn't divide scale out
+    mat4.getScaling(scale, mat);
+    return {
+        position: position as [number, number, number],
+        rotation: rotation as [number, number, number, number],
+        scale: scale as [number, number, number],
+    };
+};
 
 export interface Marker {
     name: string;
     transform: Transform;
+    local_transform: Transform;
     properties: Record<string, unknown>;
 }
 
@@ -33,8 +97,13 @@ const get_markers_from_gltf_header = (header: string, name_regex: RegExp, remove
         return new Map<string, Marker>();
     }
 
+    // build metadata for tree walk
+    const parent_map = new Map<number, number>();
+    nodes.forEach((n, i) => n.children?.forEach((c) => parent_map.set(c, i)));
+    const cache = new Map<number, mat4>();
+
     const markers: Map<string, Marker> = new Map();
-    for (const node of nodes) {
+    nodes.forEach((node, node_idx) => {
         if (node.name && name_regex.test(node.name)) {
             const resolved_name = remove_regex_match ? node.name.replace(name_regex, "") : node.name;
 
@@ -42,20 +111,21 @@ const get_markers_from_gltf_header = (header: string, name_regex: RegExp, remove
                 throw new Error(`Duplicate marker name! Multiple markers share resolved name ${resolved_name}. Rename them in the file, or adjust the name_regex.`)
             }
 
-            // TODO: resolve nested transform (parenting), or at least warn for now
-            const resolved_transform: Transform = {
-                position: node.translation || [0, 0, 0],
-                rotation: node.rotation || [0, 0, 0, 1],
-                scale: node.scale || [1, 1, 1]
+            const resolved_local_transform: Transform = {
+                position: node.translation ?? [0, 0, 0],
+                rotation: node.rotation ?? QUAT_IDENTITY,
+                scale: node.scale ?? [1, 1, 1]
             };
 
+            const world_transform = resolve_world(node_idx, nodes, parent_map, cache);
             markers.set(resolved_name, {
                 name: resolved_name,
-                transform: resolved_transform,
-                properties: node.extras || {}
+                transform: decompose(world_transform),
+                local_transform: resolved_local_transform,
+                properties: node.extras ?? {}
             });
         }
-    }
+    });
 
     return markers;
 }
