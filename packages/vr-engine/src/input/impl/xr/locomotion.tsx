@@ -278,7 +278,7 @@ export const XRTeleportControl = ({
             />
 
             {createPortal(
-                <group ref={marker_ref} visible={false}>
+                <group ref={marker_ref} visible={false} position={[0, 0.01, 0]}>
                     <mesh rotation={[-Math.PI / 2, 0, 0]}>
                         <ringGeometry args={[0.2, 0.3, 32]} />
                         <meshBasicMaterial color={0x44ccff} transparent opacity={0.8} />
@@ -289,3 +289,5 @@ export const XRTeleportControl = ({
         </>
     );
 };
+
+// TODO: you can teleport onto yourself :sob:

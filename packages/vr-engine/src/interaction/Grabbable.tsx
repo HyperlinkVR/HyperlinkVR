@@ -1193,3 +1193,5 @@ export const Grabbable = (props: GrabbableProps) => {
         </group>
     );
 }
+
+// TODO: grab slowing through objects is harsh when stuff is on ground, e.g. golf putter wants to be upright, gets stuck in floor
