@@ -55,6 +55,7 @@ export const SpectatorCamera = () => {
                         on_trigger_start={() => setFollowPlayer(!follow_player)}
                         grab_distance={0.25}
                         enabled={mode !== "first_person"}
+                        snap_to_hand={false}
                     >
                         {mode !== "mixed_reality" && (
                             <EnhancedBillboard
