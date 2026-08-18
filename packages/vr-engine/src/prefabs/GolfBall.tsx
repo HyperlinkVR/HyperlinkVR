@@ -121,10 +121,10 @@ export const GolfBall = (props: PrefabProps<GolfBallPrefab>) => {
                     rigid_body: {
                         type: "dynamic",
                         mass: 0.045,
-                        restitution: 0.4,
+                        restitution: 0.35,
                         friction: 0.5,
-                        linear_damping: 0.75,
-                        angular_damping: 0.75,
+                        linear_damping: 2.0,
+                        angular_damping: 1.0,
                         ccd: true,
                         collider: {type: "sphere", radius: 0.03},
                         collision_filter: {players: false}

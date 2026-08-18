@@ -13,6 +13,7 @@ hyperlinkvr.on_ready(async () => {
         .set_physics(new h.PhysicsSystemBuilder()
             .set_rigid_body(new h.FixedRigidBodyBuilder()
                 .set_collider(new h.ColliderBuilder().custom_mesh("./course.glb", "trimesh").build())
+                .set_friction(0.6)
                 .build()
             )
             .build()
