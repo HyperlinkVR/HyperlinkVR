@@ -299,10 +299,17 @@ interface WebSDKBatchEngineObjectReportEventMessage extends BaseWebSDKEventMessa
     reports: ReportEvent[];
 }
 
+interface WebSDKPlayerSpawnedEventMessage extends BaseWebSDKEventMessage {
+    type: "HVRSDK_PLAYER_SPAWNED";
+    username: string | null;
+    mode: "vr" | "flat";
+}
+
 export type WebSDKEventMessage =
     WebSDKReadyEventMessage
     | WebSDKEngineObjectReportEventMessage
-    | WebSDKBatchEngineObjectReportEventMessage;
+    | WebSDKBatchEngineObjectReportEventMessage
+    | WebSDKPlayerSpawnedEventMessage;
 
 export type EventMessage =
     StreamEvent |

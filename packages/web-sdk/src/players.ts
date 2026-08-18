@@ -2,6 +2,7 @@ import {send_via_rtc} from "./messenger";
 import {whoami} from "./auth";
 import {PlayerMonitor, ReportEvent} from "@hyperlinkvr/vr-engine-schemas";
 import {subscribe_report} from "./event_bus";
+import type {NamedWebSDKEvent} from "@hyperlinkvr/types";
 
 interface RegisteredMonitor {
     id: string;
@@ -220,3 +221,30 @@ export class Player {
 export const get_current_player = () => {
     return new Player();
 }
+
+export interface SpawnInfo {
+    mode: "vr" | "flat";
+}
+
+type SpawnCallback = (player: Player, info: SpawnInfo) => void;
+
+const spawn_callbacks = new Set<SpawnCallback>();
+
+// fires when a player enters the world (rig + colliders live)
+export const on_spawn = (callback: SpawnCallback): (() => void) => {
+    spawn_callbacks.add(callback);
+    return () => {
+        spawn_callbacks.delete(callback);
+    };
+};
+
+export const _dispatch_spawn = (event: NamedWebSDKEvent<"HVRSDK_PLAYER_SPAWNED">) => {
+    const player = new Player(event.username);
+    for (const callback of spawn_callbacks) {
+        try {
+            callback(player, {mode: event.mode});
+        } catch (error) {
+            console.error("Error in player spawn callback:", error);
+        }
+    }
+};

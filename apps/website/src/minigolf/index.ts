@@ -10,13 +10,19 @@ hyperlinkvr.on_ready(async () => {
 
     const course = new h.CustomObjectBuilder()
         .set_mesh("./course.glb")
-        .set_physics(new h.PhysicsSystemBuilder()
-            .set_rigid_body(new h.FixedRigidBodyBuilder()
-                .set_collider(new h.ColliderBuilder().custom_mesh("./course.glb", "trimesh").build())
-                .set_friction(0.6)
+        .set_physics(
+            new h.PhysicsSystemBuilder()
+                .set_rigid_body(
+                    new h.FixedRigidBodyBuilder()
+                        .set_collider(
+                            new h.ColliderBuilder()
+                                .custom_mesh("./course.glb", "trimesh")
+                                .build()
+                        )
+                        .set_friction(0.6)
+                        .build()
+                )
                 .build()
-            )
-            .build()
         )
         .build();
 
@@ -28,11 +34,15 @@ hyperlinkvr.on_ready(async () => {
     );
 
     const trigger_dummy = new h.CustomObjectBuilder()
-        .add_interaction("trigger", new h.TriggerVolumeInteractionBuilder()
-            .set_collider(new h.ColliderBuilder().cylinder(0.45, 0.01).build())
-            .include_objects(["golf_ball"])
-            .exclude_players()
-            .build()
+        .add_interaction(
+            "trigger",
+            new h.TriggerVolumeInteractionBuilder()
+                .set_collider(
+                    new h.ColliderBuilder().cylinder(0.45, 0.01).build()
+                )
+                .include_objects(["golf_ball"])
+                .exclude_players()
+                .build()
         )
         .build();
 
@@ -41,7 +51,7 @@ hyperlinkvr.on_ready(async () => {
             position: COURSE_POS
         }
     });
-    markers.forEach(marker => {
+    markers.forEach((marker) => {
         // create trigger volume at the marker
         // could add these all to the course mesh, but easier to just make separate dummies
 
@@ -57,7 +67,10 @@ hyperlinkvr.on_ready(async () => {
 
         // random neon putter color, and the ball automatically matches just like real mini golf :)
         const putter = new h.GolfPutterPrefabBuilder().random_color().build();
-        const ball = new h.GolfBallPrefabBuilder().named("ball").set_color(putter.color).build();
+        const ball = new h.GolfBallPrefabBuilder()
+            .named("ball")
+            .set_color(putter.color)
+            .build();
 
         promises.push(
             new h.EngineObjectDispatchBuilder()
@@ -79,10 +92,9 @@ hyperlinkvr.on_ready(async () => {
 
     await Promise.all(promises);
 
-    // wait til AFTER the course has loaded to teleport so colliders catch the player
-    // TODO: is this happening before colliders are ready? i'm still in the floor
-    const me = hyperlinkvr.players.get_current_player();
-    await me.teleport_to([COURSE_POS[0], COURSE_POS[1] + 1.5, COURSE_POS[2]]);
-
     hyperlinkvr.finished_loading();
+});
+
+hyperlinkvr.players.on_spawn((p) => {
+    p.teleport_to([COURSE_POS[0], COURSE_POS[1] + 0.5, COURSE_POS[2]]);
 });

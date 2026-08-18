@@ -91,11 +91,13 @@
 
         promises.push(...skootballs);
 
-        promises.push(hyperlinkvr.players.get_current_player().teleport_to([0, 0, 10.5], 0));
-
         await Promise.all(promises);
         hyperlinkvr.finished_loading();
       });
+
+      hyperlinkvr.players.on_spawn((p) => {
+        p.teleport_to([0, 0, 10.5], 0)
+      })
     </script>
 
     <link rel="icon" href="/hyperlinkvr_anim.svg" type="image/svg+xml">

@@ -4,19 +4,26 @@ export {version} from "../package.json";
 
 export * as auth from "./auth";
 export * as builders from "./builders";
-export * as players from "./players";
 export * as color from "./color";
 
 // re-export markers api with loader name shortened
 import * as markers_imp from "./markers";
-const {load_markers, ...rest_markers_imp} = markers_imp;
+import { bind_rtc_event, facilitate_rtc, send_via_rtc } from "./messenger";
+import { _dispatch_spawn as dispatch_player_spawn } from "./players";
+
+const { load_markers, ...rest_markers_imp } = markers_imp;
 export const markers = {
     load: load_markers,
     ...rest_markers_imp
 }
 
-import {bind_rtc_event, facilitate_rtc, send_via_rtc} from "./messenger";
+// re-export players api omitting the internal _dispatch_spawn function
+import * as players_imp from "./players";
 
+const { _dispatch_spawn, ...rest_players_imp } = players_imp;
+export const players = {
+    ...rest_players_imp
+}
 
 let unbind_rtc_events: (() => void) | undefined;
 export const connect = async () => {
@@ -36,9 +43,12 @@ export const connect = async () => {
         }
     });
 
+    const unbind_spawn = bind_rtc_event("HVRSDK_PLAYER_SPAWNED", (msg) => dispatch_player_spawn(msg));
+
     unbind_rtc_events = () => {
         unbind_report();
         unbind_report_batch();
+        unbind_spawn();
     }
 }
 

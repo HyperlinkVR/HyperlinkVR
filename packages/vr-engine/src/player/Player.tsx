@@ -1,7 +1,7 @@
 import {useMessageEngine, useSetting, useTabSession} from "@hyperlinkvr/react";
 import { Text } from "@react-three/drei";
 import { XROrigin } from "@react-three/xr";
-import {useEffect, useImperativeHandle, useMemo, useRef} from "react";
+import {useEffect, useImperativeHandle, useRef} from "react";
 import { Group } from "three";
 
 import {
@@ -20,14 +20,11 @@ import { FlatHandsPublisher } from "../input/impl/flat/hands";
 import {Vignette} from "./Vignette";
 import {PlayerKinematics} from "./PlayerKinematics";
 import {useWebSDKMessaging} from "../contexts";
+import {useWorldLoadingStateStore} from "../stores/WorldLoadingStateStore";
 import {useIsSeated} from "./seating";
 import {register_input_monitor, unregister_input_monitor} from "../monitors/input_monitor_registry";
 import {PlayerMonitorSchema} from "@hyperlinkvr/vr-engine-schemas";
 import {LOCAL_PLAYER_SUBJECT} from "./subject";
-import {Layer, LayerGroup} from "../render";
-import {HUD_VR_DISTANCE, hud_vr_pixel_size, HUDSurface} from "../hud/HUDSurface";
-import {Fullscreen} from "@react-three/uikit";
-import {useThree} from "@react-three/fiber";
 import {FlatHUD} from "../hud/FlatHUD";
 import {OriginHUD} from "../hud/OriginHUD";
 import {BodyHUD} from "../hud/BodyHUD";
@@ -100,11 +97,38 @@ export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>
 
     const session_mode = useSessionMode();
 
-    const {on_action} = useWebSDKMessaging();
+    const {on_action, emit_event, connected} = useWebSDKMessaging();
     const messenger = useMessageEngine();
     const {id: tab_id} = useTabSession();
 
     const seated = useIsSeated();
+
+    const world_ready = useWorldLoadingStateStore((store) => store.world_ready);
+    const spawned_for_world = useRef(false);
+
+    useEffect(() => {
+        if (!world_ready) {
+            // re-arm for the next world
+            spawned_for_world.current = false;
+            return;
+        }
+
+        // only emit the spawn event once per world load, and only if we are connected and have a valid origin ref
+        if (spawned_for_world.current || !connected || !origin_ref.current) {
+            return;
+        }
+
+        spawned_for_world.current = true;
+        try {
+            emit_event({
+                type: "HVRSDK_PLAYER_SPAWNED",
+                username: null, // local player
+                mode: session_mode
+            });
+        } catch (error) {
+            console.warn("Failed to emit player spawn event", error);
+        }
+    }, [world_ready, connected, session_mode, emit_event]);
 
     useEffect(() => {
         // TODO: these ignore target username on the message and assume its for us, nothing to do rn but just remember this is the case when multiplayer happens
