@@ -278,8 +278,10 @@ const WorldPhysics = ({children}: {children: React.ReactNode}) => {
     const {world_env} = useWorldEnvironment();
     const [show_colliders] = useSetting("debug_colliders");
 
+    // using varying timestep rather than interpolate as determinism not required (mutliplayer will be authoritative state, not lockstep)
+    // interpolate also makes physics run a step behind, which makes the grab driving less responsive for example
     return (
-        <Physics interpolate gravity={[0, world_env.physics.gravity, 0]} debug={show_colliders}>
+        <Physics timeStep="vary" gravity={[0, world_env.physics.gravity, 0]} debug={show_colliders}>
             {children}
         </Physics>
     );

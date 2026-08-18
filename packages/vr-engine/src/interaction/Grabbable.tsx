@@ -8,7 +8,7 @@ import { BackSide, Box3, Group, Matrix4, Mesh, MeshBasicMaterial, Object3D, Quat
 
 import { useObjectRefsOptional } from "../contexts";
 import { useSessionMode } from "../contexts/SessionModeContext";
-import { DEFAULT_IGNORE_RELEASE_DELAY_S, PLAYER_FILTER_BIT, WORLD_FILTER_BIT} from "../engine/collision_groups";
+import { DEFAULT_IGNORE_RELEASE_DELAY_S, PLAYER_FILTER_BIT, PROP_FILTER_BIT, WORLD_FILTER_BIT} from "../engine/collision_groups";
 import { rotation_to_quaternion } from "../engine/rotation";
 import { Hand, useHands } from "../input/hands";
 import { HintLayer, useSetHintState } from "../input/impl/flat/hints";
@@ -44,12 +44,30 @@ const HOVER_BID_PRIORITY = -1000;
 const RESTORE_CLEARANCE_SKIN = 0.05;
 const RESTORE_FOOT_PROBE_DROP = 0.7;
 
-// jumping to the carry pose in one step gives the kinematic body a huge implied velocity,
-// which rockets any dynamic body it clips on the way
-// instead the held body approaches the carry pose at a capped speed
+// jumping to the carry pose in one step gives the body a huge implied velocity,
+// which rockets any dynamic body it clips on the way. instead the held body
+// ramps to the carry pose at this speed (the attach glide). this governs pickup
+// only; steady-state tracking of the hand is capped by MAX_DRIVE_SPEED below
 const ATTACH_MAX_SPEED = 8; // m/s
 
-const MAX_DRIVE_ANGVEL = 25; // rad/s, same job as ATTACH_MAX_SPEED but for spin
+// the attach glide latches to steady 1:1 tracking once the object reaches the
+// hand (within this distance), or after the hard time cap below. the cap stops
+// sustained fast motion from denying "arrived" and pinning the ramp on forever
+const ATTACH_ARRIVE_DISTANCE = 0.03; // m
+const ATTACH_MAX_TIME_MS = 500;
+
+// run the grab loop before rapier's step (which is at priority 0), so a kinematic
+// body's setNextKinematic target / a driven body's velocity is set in time for the
+// same frame's step. otherwise it lands a frame late and the held object trails the
+// hand during motion, snapping back when it stops. matches ObjectPhysics's -1 hook
+const GRAB_UPDATE_PRIORITY = -1;
+
+// steady-state cap on how fast the driven body chases the hand. set well above
+// human hand speed so fast swings don't lag behind; it only exists to stop a
+// tracking spike or teleport flinging whatever the body happens to be touching
+const MAX_DRIVE_SPEED = 40; // m/s
+
+const MAX_DRIVE_ANGVEL = 50; // rad/s, same job as MAX_DRIVE_SPEED but for spin
 
 const drive_target_quat = new Quaternion();
 const drive_error_quat = new Quaternion();
@@ -73,7 +91,7 @@ const drive_body_toward = (
             target_pos.z - translation.z
         )
         .multiplyScalar(inv_dt)
-        .clampLength(0, ATTACH_MAX_SPEED);
+        .clampLength(0, MAX_DRIVE_SPEED);
     body.setLinvel({ x: drive_linvel.x, y: drive_linvel.y, z: drive_linvel.z }, true);
 
     const rotation = body.rotation();
@@ -370,6 +388,11 @@ interface UseGrabbableProps {
     ignore_player_while_held?: boolean;
     ignore_world_while_held?: boolean;
     ignore_release_delay?: number;
+    // true = a "physical" hold: the body stays dynamic and is velocity-driven,
+    // so props can block/push it (at the cost of a little tracking lag). false
+    // (default) = crisp kinematic hold that tracks the hand 1:1 and pushes props
+    // without ever being blocked by them
+    physical_hold?: boolean;
     collider?: GrabCollider;
     on_grab_start?: (hand: Hand) => void;
     on_grab_end?: (hand: Hand) => void;
@@ -403,6 +426,7 @@ export const useGrabbable = (
         ignore_player_while_held = true,
         ignore_world_while_held = true,
         ignore_release_delay = DEFAULT_IGNORE_RELEASE_DELAY_S,
+        physical_hold = false,
         collider,
         on_grab_start,
         on_grab_end,
@@ -558,6 +582,7 @@ export const useGrabbable = (
     };
 
     const attach_gliding = useRef(false);
+    const attach_started_at = useRef(0);
     const glide_pos = useRef(new Vector3());
     const glide_quat = useRef(new Quaternion());
     const glide_target_pos = useRef(new Vector3());
@@ -577,8 +602,12 @@ export const useGrabbable = (
             const distance = glide_pos.current.distanceTo(glide_target_pos.current);
             const max_step = ATTACH_MAX_SPEED * delta;
 
-            if (distance <= max_step) {
-                // caught up
+            // latch to steady tracking once the object has reached the hand, or
+            // after the time cap so a fast swing during pickup can't keep the gap
+            // open forever and leave the object permanently speed-limited
+            const arrived = distance <= Math.max(ATTACH_ARRIVE_DISTANCE, max_step);
+            const timed_out = performance.now() - attach_started_at.current > ATTACH_MAX_TIME_MS;
+            if (arrived || timed_out) {
                 attach_gliding.current = false;
                 return;
             }
@@ -639,52 +668,52 @@ export const useGrabbable = (
 
     const is_trigger_held = useRef(false);
 
-    // ---- player-collision ignore (so a held object can't be batted by the
-    // ---- owner's own hands/head/torso), with a falling-edge restore delay ----
-    const player_ignored = useRef(false);
-    const world_ignored = useRef(false);
+    // ---- collision-group override while held ----
+    // a held object stops colliding with the player (so the owner's own hands/
+    // head/torso can't bat it) and with the world (so it can't stick on the floor
+    // as it tilts to the hand). while it's still gliding in on pickup it also
+    // ignores props, so it doesn't bowl things over on the way; once it arrives
+    // props are re-enabled so it can be swung into them. restores on release,
+    // after a short falling-edge delay so the receding hand can't bat it
     const saved_collision_groups = useRef<number[] | null>(null);
+    const groups_overridden = useRef(false);
     const restore_countdown = useRef<number | null>(null); // null = no pending restore
 
-    const target_group_mask = useMemo(() => {
+    // mask applied once the object is in-hand: props still collide
+    const held_group_mask = useMemo(() => {
         let mask = ~0;
-
-        if (ignore_player_while_held) {
-            mask &= ~PLAYER_FILTER_BIT;
-        }
-
-        if (ignore_world_while_held) {
-            mask &= ~WORLD_FILTER_BIT;
-        }
-
+        if (ignore_player_while_held) mask &= ~PLAYER_FILTER_BIT;
+        if (ignore_world_while_held) mask &= ~WORLD_FILTER_BIT;
         return mask;
     }, [ignore_player_while_held, ignore_world_while_held]);
 
-    const apply_collision_groups = (body: RapierRigidBody | null) => {
-        // determine if action needed
-        if (!body || (!ignore_player_while_held && !ignore_world_while_held) || (player_ignored.current && world_ignored.current)) return;
+    // mask applied during the pickup glide: also ignore props
+    const attach_group_mask = held_group_mask & ~PROP_FILTER_BIT;
+
+    const apply_group_mask = (body: RapierRigidBody | null, mask: number) => {
+        if (!body) return;
 
         const collider_count = body.numColliders();
-        const saved: number[] = [];
-        for (let index = 0; index < collider_count; index++) {
-            const body_collider = body.collider(index);
-            const original = body_collider.collisionGroups();
-            saved.push(original);
-            body_collider.setCollisionGroups(original & target_group_mask);
-        }
-        
-        saved_collision_groups.current = saved;
 
-        if (ignore_player_while_held) {
-            player_ignored.current = true;
+        // capture the originals once per hold, so a phase switch (attach -> held)
+        // doesn't save the already-masked groups as if they were the originals
+        if (!groups_overridden.current) {
+            const saved: number[] = [];
+            for (let index = 0; index < collider_count; index++) {
+                saved.push(body.collider(index).collisionGroups());
+            }
+            saved_collision_groups.current = saved;
+            groups_overridden.current = true;
         }
-        if (ignore_world_while_held) {
-            world_ignored.current = true;
+
+        const saved = saved_collision_groups.current!;
+        for (let index = 0; index < collider_count && index < saved.length; index++) {
+            body.collider(index).setCollisionGroups(saved[index] & mask);
         }
     };
 
     const restore_collision = (body: RapierRigidBody | null) => {
-        if (!body || (!player_ignored.current && !world_ignored.current)) return;
+        if (!body || !groups_overridden.current) return;
 
         const saved = saved_collision_groups.current;
         if (saved) {
@@ -695,8 +724,7 @@ export const useGrabbable = (
         }
 
         saved_collision_groups.current = null;
-        player_ignored.current = false;
-        world_ignored.current = false;
+        groups_overridden.current = false;
     };
 
     const release_held = (
@@ -722,8 +750,8 @@ export const useGrabbable = (
             body.setLinvel({ x: velocity.x, y: velocity.y, z: velocity.z }, true);
         }
 
-        // keep ignoring the player briefly so the receding hand can't bat the object as it turns dynamic again
-        if (player_ignored.current) {
+        // keep ignoring collisions briefly so the receding hand can't bat the object as it turns dynamic again
+        if (groups_overridden.current) {
             restore_countdown.current = ignore_release_delay;
         }
     };
@@ -973,9 +1001,10 @@ export const useGrabbable = (
                 just_grabbed.current = true;
                 sticky_release_armed.current = false;
 
-                // constrained bodies stay dynamic and get velocity-driven, so
-                // the joint solver keeps authority over what motion is legal
-                if (!obj_refs?.constrained.current) {
+                // driven bodies (constrained, or an explicit physical hold) stay
+                // dynamic and get velocity-driven, so the solver keeps authority
+                // over what motion is legal; everything else holds kinematically
+                if (!obj_refs?.constrained.current && !physical_hold) {
                     body?.setBodyType(RigidBodyType.KinematicPositionBased, true);
                 }
 
@@ -984,10 +1013,14 @@ export const useGrabbable = (
                     glide_quat.current,
                     glide_target_scale.current
                 );
-                attach_gliding.current = true;
+                // only snap/carry grabs travel to the hand; a captured-relative
+                // (vr touch) grab is already in-hand, so it skips the glide
+                attach_gliding.current = use_carry_slot;
+                attach_started_at.current = performance.now();
 
-                // stop colliding with the player while held, and cancel any pending restore from a previous quick release
-                apply_collision_groups(body);
+                // ignore props too while gliding in, then re-enable them on
+                // arrival. also cancel any pending restore from a quick release
+                apply_group_mask(body, use_carry_slot ? attach_group_mask : held_group_mask);
                 restore_countdown.current = null;
             } else if (grabbingHand.current === hand && should_release(hand)) {
                 if (sticky) {
@@ -1083,6 +1116,18 @@ export const useGrabbable = (
                 );
             }
 
+            // ramp the target toward the hand pose during pickup so the body
+            // arrives smoothly instead of snapping (a no-op once it has caught
+            // up, so steady-state tracking then follows the hand exactly). must
+            // run before the decompose so the driven/kinematic target and the
+            // throw velocity are all read from the ramped pose
+            const was_attaching = attach_gliding.current;
+            clamp_attach_glide(newWorldMatrix, delta);
+            if (was_attaching && !attach_gliding.current) {
+                // arrived: collide with props again so it can be swung into them
+                apply_group_mask(body, held_group_mask);
+            }
+
             newWorldMatrix.decompose(_p.current, _q.current, _s.current);
             if (just_grabbed.current) {
                 // the object may have teleported to the carry slot this frame;
@@ -1098,7 +1143,7 @@ export const useGrabbable = (
             }
             prevGrabPos.current.copy(_p.current);
 
-            if (body && obj_refs?.constrained.current) {
+            if (body && (obj_refs?.constrained.current || physical_hold)) {
                 drive_body_toward(body, _p.current, _q.current, world.timestep);
             } else if (body) {
                 body.setNextKinematicTranslation({
@@ -1127,12 +1172,10 @@ export const useGrabbable = (
                 );
                 target_ref.current.matrixAutoUpdate = true;
             }
-
-            clamp_attach_glide(newWorldMatrix, delta);
         }
 
         tick_collision_restore(body, region_scale, delta);
-    });
+    }, GRAB_UPDATE_PRIORITY);
 };
 
 // TODO: accept props to allow scaling, position/rotation lock etc
@@ -1152,6 +1195,9 @@ interface GrabbableProps extends ComponentProps<"group"> {
     ignore_player_while_held?: boolean;
     ignore_world_while_held?: boolean;
     ignore_release_delay?: number;
+    // true = physical (dynamic, velocity-driven) hold that props can block/push;
+    // false (default) = crisp kinematic hold that tracks 1:1 and is never blocked
+    physical_hold?: boolean;
     // optional grab-region override from GrabbableInteraction.collider
     // undefined defaults to auto bounding box
     collider?: GrabCollider;
@@ -1207,6 +1253,7 @@ export const Grabbable = (props: GrabbableProps) => {
         ignore_player_while_held: props.ignore_player_while_held,
         ignore_world_while_held: props.ignore_world_while_held,
         ignore_release_delay: props.ignore_release_delay,
+        physical_hold: props.physical_hold,
         collider,
         on_grab_start: props.on_grab_start,
         on_grab_end: props.on_grab_end,
