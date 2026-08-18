@@ -1,29 +1,21 @@
-import {
-    AssetRef,
-    Collider,
-    PhysicsSystem,
-    RigidBody as RigidBodyConfig,
-    Transform
-} from "@hyperlinkvr/vr-engine-schemas";
+import { AssetRef, Collider, PhysicsSystem, RigidBody as RigidBodyConfig, Transform } from "@hyperlinkvr/vr-engine-schemas";
 import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import {
-    BallCollider, CapsuleCollider, CollisionEnterPayload, CollisionPayload, CuboidCollider,
-    CylinderCollider, MeshCollider, RapierRigidBody, RigidBody, RigidBodyAutoCollider, useRapier
-} from "@react-three/rapier";
-import {ComponentProps, useCallback, useEffect, useMemo, useRef} from "react";
-import {Group, MeshBasicMaterial, Quaternion, Vector3, Mesh, EulerOrder, Euler} from "three";
+import { BallCollider, CapsuleCollider, CollisionEnterPayload, CollisionPayload, CuboidCollider, CylinderCollider, MeshCollider, RapierRigidBody, RigidBody, RigidBodyAutoCollider, useRapier } from "@react-three/rapier";
+import { ComponentProps, useCallback, useEffect, useMemo, useRef } from "react";
+import { Euler, EulerOrder, Group, Mesh, MeshBasicMaterial, Quaternion, Vector3 } from "three";
+import { clone } from "three/examples/jsm/utils/SkeletonUtils";
 
-import { clone } from "three/examples/jsm/utils/SkeletonUtils"
+
 
 import { useObjectRefsOptional } from "../contexts/ObjectRefsContext";
-import {rotation_to_euler, rotation_to_quaternion_array} from "./rotation";
-import {useObjectBinding} from "../hooks/useObjectBinding";
-import {useWorldHinge} from "./physics_constraints";
-import {useAssetURL} from "../hooks/useAssetURL";
-import {build_collision_groups, GROUP_PROP, GROUP_WORLD} from "./collision_groups";
-import {register_collider_collision_info} from "./collision_hooks";
-import {resolve_object_node} from "../interaction/util/target_resolution";
+import { useAssetURL } from "../hooks/useAssetURL";
+import { useObjectBinding } from "../hooks/useObjectBinding";
+import { resolve_object_node } from "../interaction/util/target_resolution";
+import { build_collision_groups, GROUP_PROP, GROUP_WORLD } from "./collision_groups";
+import { register_collider_collision_info } from "./collision_hooks";
+import { useWorldHinge } from "./physics_constraints";
+import { rotation_to_euler, rotation_to_quaternion_array } from "./rotation";
 
 
 const RB_TYPE = {
@@ -370,10 +362,17 @@ export const ObjectPhysics = ({
         console.warn(`RigidBody "${body_name || "unnamed"}" has auto collider but no children to generate colliders from. This may result in no colliders being generated.`);
     }
 
+    if ((collider.type === "auto" || collider.type === "custom-mesh") && collider.approximation === "trimesh" && rb.type !== "fixed") {
+        console.warn(
+            `RigidBody "${body_name || "unnamed"}" has a collider with trimesh approximation but is not fixed. This may result in very poor performance. Change to a cheaper approximation (e.g. hull) or define a specific collider.`
+        );
+    }
+
     const { auto_strategy, ColliderComponent } = useCollider(collider);
 
     const { world } = useRapier();
 
+    // TODO: this is somewhat arbitrary, allow it to be overridden (maybe some fixed objects are indeed to be treated as props). otherwise could be lazy and rename the group to fixed and dynamic or something
     const collision_group_props = useMemo(() => ({
         collisionGroups: build_collision_groups(
             rb.type === "fixed" ? GROUP_WORLD : GROUP_PROP,

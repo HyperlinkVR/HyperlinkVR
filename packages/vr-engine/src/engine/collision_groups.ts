@@ -7,10 +7,13 @@ export const GROUP_PROP = 2;
 
 export const PLAYER_COLLISION_GROUPS = interactionGroups(GROUP_PLAYER);
 
+export const WORLD_FILTER_BIT = 1 << GROUP_WORLD;
 export const PLAYER_FILTER_BIT = 1 << GROUP_PLAYER;
+export const PROP_FILTER_BIT = 1 << GROUP_PROP;
+
 
 // how long after release we keep ignoring the player, so a receding hand can't bat the object as it turns dynamic again
-export const PLAYER_IGNORE_RELEASE_DELAY_S = 0.25;
+export const DEFAULT_IGNORE_RELEASE_DELAY_S = 0.25;
 
 // rapier flag
 export const EXCLUDE_SENSORS = 8;

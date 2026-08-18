@@ -26,14 +26,6 @@ hyperlinkvr.on_ready(async () => {
             .create()
     );
 
-    const me = hyperlinkvr.players.get_current_player();
-    promises.push(
-        me.teleport_to(COURSE_POS)
-    );
-
-    // TODO: fix
-    setTimeout(() => {me.teleport_to(COURSE_POS)}, 5000);
-
     const trigger_dummy = new h.CustomObjectBuilder()
         .add_interaction("trigger", new h.TriggerVolumeInteractionBuilder()
             .set_collider(new h.ColliderBuilder().cylinder(0.45, 0.01).build())
@@ -85,5 +77,11 @@ hyperlinkvr.on_ready(async () => {
     }
 
     await Promise.all(promises);
+
+    // wait til AFTER the course has loaded to teleport so colliders catch the player
+    // TODO: is this happening before colliders are ready? i'm still in the floor
+    const me = hyperlinkvr.players.get_current_player();
+    await me.teleport_to([COURSE_POS[0], COURSE_POS[1] + 1.5, COURSE_POS[2]]);
+
     hyperlinkvr.finished_loading();
 });

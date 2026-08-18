@@ -46,6 +46,7 @@ P2P multiplayer, starting with a single node but later a decentralised relay net
 - [ ] SDK-hosted XR session handoff: investigate feasibility first (can we host on their behalf
   so they don't need a permission prompt?) and implement in a multiplayer-friendly way, or
   drop the idea entirely
+- [ ] Add local display name sent when joining (to allow caps and stuff). Decide whether it only allows changing case of existing username, or allows completely different display names
 
 ---
 
@@ -138,6 +139,7 @@ Interchangeable with Epic B.
 - [x] Resolve relative paths from the SDK relative to the world URL, not the VR host
 - [ ] A way for the SDK to grab frame delta? Probably not possible with RTC overhead - good reason
   to have paths, and maybe a stable timing system
+- [ ] Detect hangs and abort the world (e.g. if animation frame hangs for 5 seconds multiple times in succession), lag spikes need to be allowed through but not constant hang. Need a good heuristic that won't affect lower power players too
 
 ---
 

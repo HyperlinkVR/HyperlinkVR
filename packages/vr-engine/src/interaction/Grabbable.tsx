@@ -1,18 +1,21 @@
-import type {GrabCollider, Rotation} from "@hyperlinkvr/vr-engine-schemas";
+import type { GrabCollider, Rotation } from "@hyperlinkvr/vr-engine-schemas";
 import { useFrame } from "@react-three/fiber";
-import {RapierRigidBody, useRapier} from "@react-three/rapier";
+import { RapierRigidBody, useRapier } from "@react-three/rapier";
 import { ComponentProps, RefObject, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { BackSide, Box3, Group, Matrix4, Mesh, MeshBasicMaterial, Object3D, Quaternion, Raycaster, Sphere, Vector3 } from "three";
 
+
+
 import { useObjectRefsOptional } from "../contexts";
 import { useSessionMode } from "../contexts/SessionModeContext";
-import { PLAYER_FILTER_BIT, PLAYER_IGNORE_RELEASE_DELAY_S } from "../engine/collision_groups";
+import { DEFAULT_IGNORE_RELEASE_DELAY_S, PLAYER_FILTER_BIT, WORLD_FILTER_BIT} from "../engine/collision_groups";
+import { rotation_to_quaternion } from "../engine/rotation";
 import { Hand, useHands } from "../input/hands";
-import {FULL_THROW_CHARGE_S} from "../input/values";
-import {HintLayer, useSetHintState} from "../input/impl/flat/hints";
+import { HintLayer, useSetHintState } from "../input/impl/flat/hints";
+import { FULL_THROW_CHARGE_S } from "../input/values";
 import { CAPSULE_RADIUS, get_capsule_world_position } from "../player/motion";
-import {rotation_to_quaternion} from "../engine/rotation";
-import {set_object_holder, clear_object_holder} from "./util/holders";
+import { clear_object_holder, set_object_holder } from "./util/holders";
+
 
 enum RigidBodyType {
     Fixed = 1,
@@ -365,7 +368,8 @@ interface UseGrabbableProps {
     snap_grab_rotation?: Rotation;
     snap_grab_offset_space?: "grip" | "aim";
     ignore_player_while_held?: boolean;
-    player_ignore_release_delay?: number;
+    ignore_world_while_held?: boolean;
+    ignore_release_delay?: number;
     collider?: GrabCollider;
     on_grab_start?: (hand: Hand) => void;
     on_grab_end?: (hand: Hand) => void;
@@ -397,7 +401,8 @@ export const useGrabbable = (
         //         wrist-independent. Only applies to snap/ray grabs.
         snap_grab_offset_space = "aim",
         ignore_player_while_held = true,
-        player_ignore_release_delay = PLAYER_IGNORE_RELEASE_DELAY_S,
+        ignore_world_while_held = true,
+        ignore_release_delay = DEFAULT_IGNORE_RELEASE_DELAY_S,
         collider,
         on_grab_start,
         on_grab_end,
@@ -626,7 +631,7 @@ export const useGrabbable = (
                 // zero and retry; restores the moment the player steps clear
                 restore_countdown.current = 0;
             } else {
-                restore_player_collision(body);
+                restore_collision(body);
                 restore_countdown.current = null;
             }
         }
@@ -637,25 +642,50 @@ export const useGrabbable = (
     // ---- player-collision ignore (so a held object can't be batted by the
     // ---- owner's own hands/head/torso), with a falling-edge restore delay ----
     const player_ignored = useRef(false);
+    const world_ignored = useRef(false);
     const saved_collision_groups = useRef<number[] | null>(null);
     const restore_countdown = useRef<number | null>(null); // null = no pending restore
 
-    const apply_player_ignore = (body: RapierRigidBody | null) => {
-        if (!body || !ignore_player_while_held || player_ignored.current) return;
+    const target_group_mask = useMemo(() => {
+        let mask = ~0;
+
+        if (ignore_player_while_held) {
+            mask &= ~PLAYER_FILTER_BIT;
+        }
+
+        if (ignore_world_while_held) {
+            mask &= ~WORLD_FILTER_BIT;
+        }
+
+        return mask;
+    }, [ignore_player_while_held, ignore_world_while_held]);
+
+    const apply_collision_groups = (body: RapierRigidBody | null) => {
+        // determine if action needed
+        if (!body || (!ignore_player_while_held && !ignore_world_while_held) || (player_ignored.current && world_ignored.current)) return;
+
         const collider_count = body.numColliders();
         const saved: number[] = [];
         for (let index = 0; index < collider_count; index++) {
             const body_collider = body.collider(index);
             const original = body_collider.collisionGroups();
             saved.push(original);
-            body_collider.setCollisionGroups(original & ~PLAYER_FILTER_BIT);
+            body_collider.setCollisionGroups(original & target_group_mask);
         }
+        
         saved_collision_groups.current = saved;
-        player_ignored.current = true;
+
+        if (ignore_player_while_held) {
+            player_ignored.current = true;
+        }
+        if (ignore_world_while_held) {
+            world_ignored.current = true;
+        }
     };
 
-    const restore_player_collision = (body: RapierRigidBody | null) => {
-        if (!body || !player_ignored.current) return;
+    const restore_collision = (body: RapierRigidBody | null) => {
+        if (!body || (!player_ignored.current && !world_ignored.current)) return;
+
         const saved = saved_collision_groups.current;
         if (saved) {
             const collider_count = body.numColliders();
@@ -663,8 +693,10 @@ export const useGrabbable = (
                 body.collider(index).setCollisionGroups(saved[index]);
             }
         }
+
         saved_collision_groups.current = null;
         player_ignored.current = false;
+        world_ignored.current = false;
     };
 
     const release_held = (
@@ -692,7 +724,7 @@ export const useGrabbable = (
 
         // keep ignoring the player briefly so the receding hand can't bat the object as it turns dynamic again
         if (player_ignored.current) {
-            restore_countdown.current = player_ignore_release_delay;
+            restore_countdown.current = ignore_release_delay;
         }
     };
 
@@ -955,7 +987,7 @@ export const useGrabbable = (
                 attach_gliding.current = true;
 
                 // stop colliding with the player while held, and cancel any pending restore from a previous quick release
-                apply_player_ignore(body);
+                apply_collision_groups(body);
                 restore_countdown.current = null;
             } else if (grabbingHand.current === hand && should_release(hand)) {
                 if (sticky) {
@@ -1118,7 +1150,8 @@ interface GrabbableProps extends ComponentProps<"group"> {
     grab_rotation?: Rotation;
     grab_offset_space?: "grip" | "aim";
     ignore_player_while_held?: boolean;
-    player_ignore_release_delay?: number;
+    ignore_world_while_held?: boolean;
+    ignore_release_delay?: number;
     // optional grab-region override from GrabbableInteraction.collider
     // undefined defaults to auto bounding box
     collider?: GrabCollider;
@@ -1172,7 +1205,8 @@ export const Grabbable = (props: GrabbableProps) => {
         snap_grab_rotation: props.grab_rotation,
         snap_grab_offset_space: props.grab_offset_space || "aim",
         ignore_player_while_held: props.ignore_player_while_held,
-        player_ignore_release_delay: props.player_ignore_release_delay,
+        ignore_world_while_held: props.ignore_world_while_held,
+        ignore_release_delay: props.ignore_release_delay,
         collider,
         on_grab_start: props.on_grab_start,
         on_grab_end: props.on_grab_end,
@@ -1194,4 +1228,4 @@ export const Grabbable = (props: GrabbableProps) => {
     );
 }
 
-// TODO: grab slowing through objects is harsh when stuff is on ground, e.g. golf putter wants to be upright, gets stuck in floor
+// TODO: add ignore props while held option

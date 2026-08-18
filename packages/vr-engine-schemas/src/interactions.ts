@@ -56,6 +56,7 @@ export const GrabbableInteractionSchema = bindable({
     flat_throwable: z.boolean().default(true), // false only prevents using the throw button on flat mode (ui hint). we cant stop vr players throwing. use max_throw_speed = 0 to make it slip out their hand instead
     min_flat_throw_speed: z.number().nonnegative().optional(), // the speed of the minimum throw on flat (tapping the throw key)
     max_throw_speed: z.number().nonnegative().optional(), // the maximum throw speed on flat and vr. note that an additional headroom of 1.2x is applied so that locomotion can add to the speed
+    // TODO: add ability to disable player and world ignore when held (probably add prop ignore as an option too)
 })
     .refine((interaction) => {
         return !(interaction.grab_offset && !interaction.snaps_to_hand);

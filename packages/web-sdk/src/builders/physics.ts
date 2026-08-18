@@ -95,6 +95,11 @@ class RigidBodyBuilder<RB extends RigidBodyInput> extends BaseBuilder<RB> {
     }
 
     build(): RigidBody {
+        const collider = this._internal.collider;
+        if (collider && (collider.type === "auto" || collider.type === "custom-mesh") && collider.approximation === "trimesh" && this._internal.type !== "fixed") {
+            console.warn("RigidBody has a collider with trimesh approximation but is not fixed. This may result in very poor performance. Change to a cheaper approximation (e.g. hull) or define a specific collider.");
+        }
+
         return RigidBodySchema.parse(this._internal);
     }
 }
