@@ -1,5 +1,5 @@
 import { CuboidCollider, interactionGroups, RigidBody } from "@react-three/rapier";
-import { GROUP_PLAYER, GROUP_PROP, GROUP_WORLD } from "../engine/collision_groups";
+import { GROUP_PLAYER, GROUP_PROP, GROUP_WORLD } from "../physics/collision_groups";
 
 export const FloorCollider = ({ height = 0, size = 1000, thickness = 0.2 }) => {
     return (

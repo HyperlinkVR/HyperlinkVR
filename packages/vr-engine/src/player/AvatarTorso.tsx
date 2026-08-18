@@ -9,7 +9,7 @@ import { Group, Quaternion, Vector3 } from "three";
 import { useAvatarMaterials } from "../contexts/AvatarContext";
 import { ObjectPhysics } from "../engine/ObjectPhysics";
 import { Layer, LayerGroup } from "../render";
-import {PLAYER_COLLISION_GROUPS} from "../engine/collision_groups";
+import {PLAYER_COLLISION_GROUPS} from "../physics/collision_groups";
 
 
 const torso = new URL("../../assets/player/torso/torso.glb", import.meta.url).href;

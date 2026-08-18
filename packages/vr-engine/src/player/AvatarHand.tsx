@@ -13,7 +13,7 @@ import { Hand, useHands } from "../input/hands";
 import { LayerGroup } from "../render/LayerGroup";
 import { Layer } from "../render/layers";
 import {XRTeleportControl} from "../input/impl/xr/locomotion";
-import {PLAYER_COLLISION_GROUPS} from "../engine/collision_groups";
+import {PLAYER_COLLISION_GROUPS} from "../physics/collision_groups";
 
 
 const left_hand = new URL("../../assets/player/hands/left.glb", import.meta.url).href;

@@ -32,7 +32,7 @@ import { FloorCollider } from "../world/FloorCollider";
 import { Sky } from "../world/Sky";
 import { EngineObjectSpawner } from "./EngineObjectSpawner";
 import { EngineObjectSync } from "./EngineObjectSync";
-import {TweenRunner} from "./TweenRunner";
+import {TweenRunner} from "../animation/TweenRunner";
 import {AudioListenerProvider} from "../contexts/AudioListenerContext";
 import {
     SDKWorldEnvironmentProvider,
@@ -46,13 +46,13 @@ import {FlatLoadingScreen, VRLoadingScreen} from "./LoadingScreen";
 import {SSAO} from "../render/SSAO";
 import {QuarksProvider} from "quarks.r3f";
 import {AutoHintGlyphs, HintDevicePublisher, HintStateProvider} from "../input/impl/flat/hints";
-import {ObjectMonitorRunner} from "./ObjectMonitorRunner";
-import {InputMonitorRunner} from "./InputMonitorRunner";
+import {ObjectMonitorRunner} from "../monitors/ObjectMonitorRunner";
+import {InputMonitorRunner} from "../monitors/InputMonitorRunner";
 import {AnimationRunner} from "../animation/AnimationRunner";
 import {AnimationSync} from "../animation/AnimationSync";
 import {HUDSync} from "../hud/HUDSync";
 import {LocalAssetWarningBanner} from "../security/LocalAssetWarningBanner";
-import {clear_collider_collision_info, filter_contact_pair} from "./collision_hooks";
+import {clear_collider_collision_info, filter_contact_pair} from "../physics/collision_hooks";
 
 configureTextBuilder({
     useWorker: false

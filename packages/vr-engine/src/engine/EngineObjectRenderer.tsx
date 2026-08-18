@@ -6,10 +6,10 @@ import { create_object_refs, ObjectRefsProvider } from "../contexts/ObjectRefsCo
 import { register_object_refs } from "./object_ref_registry";
 import { CustomObjectRenderer } from "./CustomObjectRenderer";
 import { PrefabRenderer } from "./PrefabRenderer";
-import {rotation_to_quaternion} from "./rotation";
+import {rotation_to_quaternion} from "../util/rotation";
 import {Group} from "three";
 import {ObjectReadyMarker} from "./object_ready_registry";
-import {register_object_monitors} from "./object_monitor_registry";
+import {register_object_monitors} from "../monitors/object_monitor_registry";
 import {register_triggers} from "./trigger_registry";
 import {body_owns_pose_for} from "./object_modification";
 import {register_animation_channels} from "../animation/channel_registry";

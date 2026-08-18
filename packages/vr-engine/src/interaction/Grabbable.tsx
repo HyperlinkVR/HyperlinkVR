@@ -8,8 +8,8 @@ import { BackSide, Box3, Group, Matrix4, Mesh, MeshBasicMaterial, Object3D, Quat
 
 import { useObjectRefsOptional } from "../contexts";
 import { useSessionMode } from "../contexts/SessionModeContext";
-import { DEFAULT_IGNORE_RELEASE_DELAY_S, PLAYER_FILTER_BIT, PROP_FILTER_BIT, WORLD_FILTER_BIT} from "../engine/collision_groups";
-import { rotation_to_quaternion } from "../engine/rotation";
+import { DEFAULT_IGNORE_RELEASE_DELAY_S, PLAYER_FILTER_BIT, PROP_FILTER_BIT, WORLD_FILTER_BIT} from "../physics/collision_groups";
+import { rotation_to_quaternion } from "../util/rotation";
 import { Hand, useHands } from "../input/hands";
 import { HintLayer, useSetHintState } from "../input/impl/flat/hints";
 import { FULL_THROW_CHARGE_S } from "../input/values";

@@ -21,7 +21,7 @@ import {Vignette} from "./Vignette";
 import {PlayerKinematics} from "./PlayerKinematics";
 import {useWebSDKMessaging} from "../contexts";
 import {useIsSeated} from "./seating";
-import {register_input_monitor, unregister_input_monitor} from "../engine/input_monitor_registry";
+import {register_input_monitor, unregister_input_monitor} from "../monitors/input_monitor_registry";
 import {PlayerMonitorSchema} from "@hyperlinkvr/vr-engine-schemas";
 import {LOCAL_PLAYER_SUBJECT} from "./subject";
 import {Layer, LayerGroup} from "../render";

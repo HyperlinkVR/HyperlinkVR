@@ -12,10 +12,10 @@ import { useObjectRefsOptional } from "../contexts/ObjectRefsContext";
 import { useAssetURL } from "../hooks/useAssetURL";
 import { useObjectBinding } from "../hooks/useObjectBinding";
 import { resolve_object_node } from "../interaction/util/target_resolution";
-import { build_collision_groups, GROUP_PROP, GROUP_WORLD } from "./collision_groups";
-import { register_collider_collision_info } from "./collision_hooks";
-import { useWorldHinge } from "./physics_constraints";
-import { rotation_to_euler, rotation_to_quaternion_array } from "./rotation";
+import { build_collision_groups, GROUP_PROP, GROUP_WORLD } from "../physics/collision_groups";
+import { register_collider_collision_info } from "../physics/collision_hooks";
+import { useWorldHinge } from "../physics/physics_constraints";
+import { rotation_to_euler, rotation_to_quaternion_array } from "../util/rotation";
 
 
 const RB_TYPE = {

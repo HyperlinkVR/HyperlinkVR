@@ -15,7 +15,7 @@ import { useFlatFrameInput } from "../input/impl/flat/bindings";
 import { useHands } from "../input/hands";
 import { get_object_refs } from "../engine/object_ref_registry";
 import { sample_live_transform } from "../engine/object_modification";
-import { rotation_to_quaternion } from "../engine/rotation";
+import { rotation_to_quaternion } from "../util/rotation";
 import {
     resolve_hit_target,
     resolve_object_node,

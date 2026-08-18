@@ -10,7 +10,7 @@ import {
 import {
     clear_hud_element_ready,
     wait_for_hud_element_ready
-} from "../engine/hud_ready_registry"; // TODO: reorganise stuff in engine/
+} from "./hud_ready_registry"; // TODO: reorganise stuff in engine/
 import {list_animation_channels} from "../animation/channel_registry";
 
 export const HUDSync = () => {

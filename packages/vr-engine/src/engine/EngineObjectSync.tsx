@@ -9,7 +9,7 @@ import {
 } from "@hyperlinkvr/vr-engine-schemas";
 import {get_object_refs} from "./object_ref_registry";
 import {apply_modification, sample_live_transform} from "./object_modification";
-import {cancel_active_tween, set_active_tween} from "./tween_registry";
+import {cancel_active_tween, set_active_tween} from "../animation/tween_registry";
 import {clear_object_ready, wait_for_object_ready} from "./object_ready_registry";
 import {list_animation_channels} from "../animation/channel_registry";
 

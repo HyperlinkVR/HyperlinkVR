@@ -8,7 +8,7 @@ import type { RapierRigidBody } from "@react-three/rapier";
 import { Quaternion, Vector3 } from "three";
 
 import type { ObjectRefsContextType } from "../contexts/ObjectRefsContext";
-import { rotation_to_quaternion } from "./rotation";
+import { rotation_to_quaternion } from "../util/rotation";
 
 const scratch_position = new Vector3();
 const scratch_quaternion = new Quaternion();

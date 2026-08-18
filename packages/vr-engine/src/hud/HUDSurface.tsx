@@ -6,7 +6,7 @@ import {
 } from "@hyperlinkvr/vr-engine-schemas";
 
 import {useHUDStore, ResolvedHUDElement as StoreResolvedHUDElement} from "../stores/HUDStore";
-import {mark_hud_element_ready} from "../engine/hud_ready_registry";
+import {mark_hud_element_ready} from "./hud_ready_registry";
 
 export const HUD_CANVAS_WIDTH = 1920;
 export const HUD_CANVAS_HEIGHT = 1080;

@@ -10,7 +10,7 @@ import {useSessionMode} from "../contexts/SessionModeContext";
 import {JUMP_SPEED} from "../input/values";
 import {useWorldEnvironment} from "../world/WorldEnvironmentContext";
 import {CAPSULE_RADIUS, consume_player_movement, set_capsule_world_position} from "./motion";
-import {PLAYER_COLLISION_GROUPS, EXCLUDE_SENSORS} from "../engine/collision_groups";
+import {PLAYER_COLLISION_GROUPS, EXCLUDE_SENSORS} from "../physics/collision_groups";
 import {get_active_seat} from "./seating";
 
 const WORLD_UP = new Vector3(0, 1, 0);

@@ -24,7 +24,7 @@ import {
 } from "three";
 import {PositionalAudio} from "@react-three/drei";
 import type { PositionalAudio as PositionalAudioType } from "three";
-import {rotation_to_euler} from "./rotation";
+import {rotation_to_euler} from "../util/rotation";
 import type {ParticleSystemRef} from "quarks.r3f";
 import {ParticleEmitter} from "../interaction/ParticleEmitter";
 import {is_seated_on, sit_on, stand_up} from "../player/seating";

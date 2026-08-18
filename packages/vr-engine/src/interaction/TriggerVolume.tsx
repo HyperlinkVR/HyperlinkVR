@@ -8,7 +8,7 @@ import {ComponentProps, useMemo, useRef} from "react";
 import {Euler, EulerOrder, Group, Quaternion, Vector3} from "three";
 
 import {get_collider_extents, useCollider, useKinematicPosition} from "../engine/ObjectPhysics";
-import {rotation_to_euler} from "../engine/rotation";
+import {rotation_to_euler} from "../util/rotation";
 import {resolve_object_node} from "./util/target_resolution";
 import {collect_tags} from "../util/tags";
 

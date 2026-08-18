@@ -6,7 +6,7 @@ import { Euler, Quaternion, Vector3 } from "three";
 
 import type { ObjectRefsContextType } from "../contexts/ObjectRefsContext";
 import { useWebSDKMessaging } from "../contexts/WebSDKMessagingContext";
-import { get_object_refs } from "./object_ref_registry";
+import { get_object_refs } from "../engine/object_ref_registry";
 import {
     CompiledMonitor,
     get_monitor_entries,

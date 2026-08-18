@@ -16,7 +16,7 @@ import {
     PlaneGeometry,
     TextureLoader
 } from "three";
-import {rotation_to_euler} from "../engine/rotation";
+import {rotation_to_euler} from "../util/rotation";
 import {useAssetURL} from "../hooks/useAssetURL";
 
 export const ParticleEmitter = ({config, ref = null}: {config: Omit<ParticleEmitterInteraction, "type">, ref?: React.Ref<ParticleSystemRef | null>}) => {
