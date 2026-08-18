@@ -71,6 +71,7 @@ export const EngineObjectRenderer = ({ data }: { data: CreatedEngineObject }) =>
     // a physics object's pose is owned by its rigid body so the outer group must stay at identity or the mesh double-transforms
     // a non-physics object's pose is owned by this group
     const has_physics = data.object.type === "custom" && !!data.object.physics;
+    // TODO: what about prefabs? or do they not need considering here as they can fully own their pose. but this also affects ready marker now
 
     useLayoutEffect(() => {
         const group = refs.current.root.current as Group | null;
@@ -110,7 +111,7 @@ export const EngineObjectRenderer = ({ data }: { data: CreatedEngineObject }) =>
                     transform={data.transform}
                     {...obj_rest}
                 />
-                <ObjectReadyMarker object_id={data.id} />
+                <ObjectReadyMarker object_id={data.id} has_physics={has_physics} />
             </group>
         </ObjectRefsProvider>
     );

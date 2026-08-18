@@ -1,4 +1,11 @@
-import {useEffect} from "react";
+import { useFrame } from "@react-three/fiber";
+import { useState } from "react";
+
+import {
+    ObjectRefsContextType,
+    useObjectRefs,
+} from "../contexts";
+
 
 const ready_ids = new Set<string>();
 const waiters = new Map<string, Set<() => void>>();
@@ -41,11 +48,48 @@ export const wait_for_object_ready = (object_id: string, timeout_ms = 15000) => 
     });
 };
 
-export const ObjectReadyMarker = ({ object_id }: { object_id: string }) => {
-    useEffect(() => {
-        const raf_handle = requestAnimationFrame(() => mark_object_ready(object_id));
-        return () => cancelAnimationFrame(raf_handle);
-    }, [object_id]);
+export const ObjectReadyMarker = ({
+    object_id,
+    has_physics
+}: {
+    object_id: string;
+    has_physics: boolean;
+}) => {
+    const [polling, setPolling] = useState(true);
+    const refs = useObjectRefs();
+
+    // fully unmount poller once ready to avoid dormant useFrames
+    return polling ? (
+        <ObjectReadyPoll
+            refs={refs}
+            has_physics={has_physics}
+            on_ready={() => {
+                mark_object_ready(object_id);
+                setPolling(false);
+            }}
+        />
+    ) : null;
+};
+
+const ObjectReadyPoll = ({
+    refs,
+    has_physics,
+    on_ready
+}: {
+    refs: ObjectRefsContextType;
+    has_physics: boolean;
+    on_ready: () => void;
+}) => {
+    useFrame(() => {
+        if (has_physics) {
+            // wait for the first frame where the rigid body has colliders (assumes all or most are loaded at once, typically the case with rapier)
+            const body = refs?.rigid_body.current;
+            if (!body || body.numColliders() === 0) return;
+        }
+
+        // without physics, this falls straight through to ready on the first frame, which was the previous behaviour and fine for non-physics objects
+        on_ready();
+    });
 
     return null;
 };
