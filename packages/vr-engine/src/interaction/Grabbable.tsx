@@ -387,7 +387,7 @@ interface UseGrabbableProps {
     snap_grab_offset_space?: "grip" | "aim";
     ignore_player_while_held?: boolean;
     ignore_world_while_held?: boolean;
-    ignore_release_delay?: number;
+    player_ignore_release_delay?: number;
     // true = a "physical" hold: the body stays dynamic and is velocity-driven,
     // so props can block/push it (at the cost of a little tracking lag). false
     // (default) = crisp kinematic hold that tracks the hand 1:1 and pushes props
@@ -425,7 +425,7 @@ export const useGrabbable = (
         snap_grab_offset_space = "aim",
         ignore_player_while_held = true,
         ignore_world_while_held = true,
-        ignore_release_delay = DEFAULT_IGNORE_RELEASE_DELAY_S,
+        player_ignore_release_delay = DEFAULT_IGNORE_RELEASE_DELAY_S,
         physical_hold = false,
         collider,
         on_grab_start,
@@ -690,6 +690,12 @@ export const useGrabbable = (
     // mask applied during the pickup glide: also ignore props
     const attach_group_mask = held_group_mask & ~PROP_FILTER_BIT;
 
+    // mask applied the instant the object is released: world (and props) collide
+    // again immediately, so a quick throw can't lob it through the floor, but the
+    // player stays ignored for the falling-edge delay below so the receding hand/
+    // head can't bat it. the world is static, so it needs no such grace period
+    const release_group_mask = ignore_player_while_held ? ~PLAYER_FILTER_BIT : ~0;
+
     const apply_group_mask = (body: RapierRigidBody | null, mask: number) => {
         if (!body) return;
 
@@ -750,9 +756,12 @@ export const useGrabbable = (
             body.setLinvel({ x: velocity.x, y: velocity.y, z: velocity.z }, true);
         }
 
-        // keep ignoring collisions briefly so the receding hand can't bat the object as it turns dynamic again
+        // restore world + prop collision immediately so a quick throw can't lob
+        // the object through the floor, but keep ignoring only the player for the
+        // delay so the receding hand/head can't bat it as it turns dynamic again
         if (groups_overridden.current) {
-            restore_countdown.current = ignore_release_delay;
+            apply_group_mask(body, release_group_mask);
+            restore_countdown.current = player_ignore_release_delay;
         }
     };
 
@@ -1194,7 +1203,7 @@ interface GrabbableProps extends ComponentProps<"group"> {
     grab_offset_space?: "grip" | "aim";
     ignore_player_while_held?: boolean;
     ignore_world_while_held?: boolean;
-    ignore_release_delay?: number;
+    player_ignore_release_delay?: number;
     // true = physical (dynamic, velocity-driven) hold that props can block/push;
     // false (default) = crisp kinematic hold that tracks 1:1 and is never blocked
     physical_hold?: boolean;
@@ -1252,7 +1261,7 @@ export const Grabbable = (props: GrabbableProps) => {
         snap_grab_offset_space: props.grab_offset_space || "aim",
         ignore_player_while_held: props.ignore_player_while_held,
         ignore_world_while_held: props.ignore_world_while_held,
-        ignore_release_delay: props.ignore_release_delay,
+        player_ignore_release_delay: props.player_ignore_release_delay,
         physical_hold: props.physical_hold,
         collider,
         on_grab_start: props.on_grab_start,
