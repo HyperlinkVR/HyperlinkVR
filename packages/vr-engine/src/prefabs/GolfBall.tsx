@@ -57,9 +57,6 @@ export const GolfBall = (props: PrefabProps<GolfBallPrefab>) => {
 
     const [sdk_requested_lock, setSDKRequestedLock] = useState(false);
     const locked = useMemo(() => (locked_until_rest && locks_out) || sdk_requested_lock, [locked_until_rest, sdk_requested_lock]);
-    useEffect(() => {
-        console.log(`GolfBall: locked=${locked} (locked_until_rest=${locked_until_rest}, locks_out=${locks_out}, sdk_requested_lock=${sdk_requested_lock})`);
-    }, [locked, locked_until_rest, locks_out, sdk_requested_lock]);
 
     useEffect(() => {
         if (!on_prefab_command) return;
