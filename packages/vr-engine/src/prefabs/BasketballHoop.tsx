@@ -49,8 +49,6 @@ export const BasketballHoop = ({
 
     const entered_top = useRef(new Map<string, number>());
 
-    // TODO: confetti emitter using particleemitter
-
     return (
         <PrefabRoot {...rest}>
             <ObjectPhysics
