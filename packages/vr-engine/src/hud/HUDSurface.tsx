@@ -17,8 +17,8 @@ export const HUD_VR_DISTANCE = 0.5;
 export const hud_vr_width = (distance = HUD_VR_DISTANCE) => 2 * distance * Math.tan(HUD_VR_FOV / 2);
 export const hud_vr_pixel_size = (distance = HUD_VR_DISTANCE) => hud_vr_width(distance) / HUD_CANVAS_WIDTH;
 
-// the head mounted hud should have a much smaller fov so it doesnt go into peripheral vision
-export const HUD_VR_HEAD_FOV = Math.PI / 5;
+// the head mounted hud should have a bit smaller fov so it doesnt go too far into peripheral vision
+export const HUD_VR_HEAD_FOV = Math.PI / 3.5;
 export const HUD_VR_HEAD_DISTANCE = 0.5;
 export const hud_vr_head_width = (distance = HUD_VR_HEAD_DISTANCE) => 2 * distance * Math.tan(HUD_VR_HEAD_FOV / 2);
 export const hud_vr_head_pixel_size = (distance = HUD_VR_HEAD_DISTANCE) => hud_vr_head_width(distance) / HUD_CANVAS_WIDTH;

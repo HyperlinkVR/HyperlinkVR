@@ -104,7 +104,8 @@ export const show_result = async (username: string | null, strokes: number, par:
     const result_text = get_result_text(strokes, par);
     const result_hud = await h.hud_text("result", result_text)
         .set_slot("middle-center")
-        .set_font_size(48)
+        .set_font_size(64)
+        .set_vr_anchor("head")
         .player(username)
         .create();
 
