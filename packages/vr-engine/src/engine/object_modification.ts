@@ -72,8 +72,7 @@ export const body_owns_pose_for = (refs: ObjectRefsContextType): boolean => {
 
 const teleport_body = (
     body: RapierRigidBody,
-    transform: PartialTransform,
-    rb_type?: string
+    transform: PartialTransform
 ): void => {
     if (transform.position) {
         body.setTranslation(
@@ -94,8 +93,9 @@ const teleport_body = (
         );
     }
 
-    // dynamic bodies keep momentum from the old spot unless we clear it
-    if (rb_type === "dynamic") {
+    // dynamic bodies keep momentum from the old spot unless we clear it.
+    // read from rapier, not user specified rb type, as prefabs don't set that
+    if (body.bodyType() === 0) {
         body.setLinvel({ x: 0, y: 0, z: 0 }, true);
         body.setAngvel({ x: 0, y: 0, z: 0 }, true);
     }
@@ -114,7 +114,7 @@ export const apply_modification = (
     const body_authority = body_owns_pose(body, rb_type);
 
     if (changes.transform && body_authority && body) {
-        teleport_body(body, changes.transform, rb_type);
+        teleport_body(body, changes.transform);
 
         // scale still belongs to the group even for physics objects
         if (changes.transform.scale && refs?.root.current) {
