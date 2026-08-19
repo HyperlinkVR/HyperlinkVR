@@ -1,6 +1,9 @@
+import type { Marker } from "@hyperlinkvr/web-sdk/src/markers";
+
+
+
 import { show_hole, show_stroke } from "./hud";
 import type { Player } from "./types";
-
 
 const h = hyperlinkvr.builders;
 
@@ -39,11 +42,9 @@ export const add_player = async (player: Player) => {
         .set_color(putter.color)
         .build();
 
-
     const created_putter = await new h.EngineObjectDispatchBuilder(putter)
         .set_position(0, 3, -1)
         .create();
-
 
     const created_ball = await new h.EngineObjectDispatchBuilder(ball)
         .set_position(0, 2.5, -2)
@@ -59,20 +60,40 @@ export const add_player = async (player: Player) => {
         .create();
 
     players.set(username, create_player_state(created_ball, created_putter));
-}
+};
 
 let current_hole = 0;
 
 export const get_current_hole = () => current_hole;
 
+let start_markers: Map<string, Marker>;
+
+export const load_start_markers = async (offset_pos?: [number, number, number]) => {
+    start_markers = await hyperlinkvr.markers.load("./course.glb", {
+        transform_offset: {
+            position: offset_pos || [0, 0, 0]
+        },
+        name_regex: /^marker_start_/i,
+    });
+}
+
 export const next_hole = () => {
+    if (!start_markers) {
+        throw new Error("Start markers not loaded yet");
+    }
+
     current_hole++;
+
+    const start_marker = start_markers.get(current_hole.toString());
+    if (!start_marker) {
+        throw new Error(`Start marker for hole ${current_hole} not found`);
+    }
     
     for (const [username, state] of players.entries()) {
         state.strokes_this_hole = 0;
 
-        // TODO: teleport ball to hole start point defined by markers
-        state.ball.modify().set_position(0, 2.5, -2).apply();
+        // teleport ball to hole start point defined by marker
+        state.ball.modify().set_position(start_marker.transform.position).apply();
     }
     
     show_hole(current_hole);

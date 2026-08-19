@@ -1,4 +1,4 @@
-import { add_player, next_hole } from "./game_state";
+import { add_player, load_start_markers, next_hole } from "./game_state";
 import { countdown_to_start } from "./hud";
 
 
@@ -9,6 +9,7 @@ const start_game = async () => {
     if (starting) return;
 
     starting = true;
+    await load_start_markers(COURSE_POS);
     await countdown_to_start();
 
     // go to first hole
@@ -51,7 +52,7 @@ hyperlinkvr.on_ready(async () => {
             "trigger",
             new h.TriggerVolumeInteractionBuilder()
                 .set_collider(
-                    new h.ColliderBuilder().cylinder(0.45, 0.01).build()
+                    new h.ColliderBuilder().cylinder(0.045, 0.01).build()
                 )
                 .include_objects(["golf_ball"])
                 .exclude_players()
@@ -59,13 +60,14 @@ hyperlinkvr.on_ready(async () => {
         )
         .build();
 
-    const markers = await hyperlinkvr.markers.load("./course.glb", {
+    const hole_markers = await hyperlinkvr.markers.load("./course.glb", {
         transform_offset: {
             position: COURSE_POS
-        }
+        },
+        name_regex: /^marker_hole_/i,
     });
 
-    markers.forEach((marker) => {
+    hole_markers.forEach((marker) => {
         // create trigger volume at the marker
         // could add these all to the course mesh, but easier to just make separate dummies
 
