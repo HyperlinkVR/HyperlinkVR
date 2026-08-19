@@ -44,16 +44,14 @@
         .build();
 
         promises.push(
-            new h.EngineObjectDispatchBuilder()
-                    .set_object(interior)
+            new h.EngineObjectDispatchBuilder(interior)
                     .create()
         );
 
         const ball = new h.StandardPrefabBuilder("basketball").build()
 
         promises.push(
-            new h.EngineObjectDispatchBuilder()
-                    .set_object(ball)
+            new h.EngineObjectDispatchBuilder(ball)
                     .set_position(0, 1.5, -10)
                     .create()
         );
@@ -61,8 +59,7 @@
         const hoop = new h.BasketballHoopPrefabBuilder().named("hoop").build()
 
         promises.push(
-            new h.EngineObjectDispatchBuilder()
-                    .set_object(hoop)
+            new h.EngineObjectDispatchBuilder(hoop)
                     .set_position(1.25,3.505,-11.87) // regulation height!
                     .on("hoop", () => {
                       document.getElementById("score").innerText = parseInt(document.getElementById("score").innerText) + 1;
@@ -72,8 +69,7 @@
 
         const av_mirror = new h.StandardPrefabBuilder("avatar_mirror").build();
         promises.push(
-            new h.EngineObjectDispatchBuilder()
-                    .set_object(av_mirror)
+            new h.EngineObjectDispatchBuilder(av_mirror)
                     .set_position(-5, 0, 11.95)
                     .set_euler_rotation(0, Math.PI, 0)
                     .create()
@@ -83,11 +79,11 @@
 
         const skoot = new h.StandardPrefabBuilder("skootball").build();
 
-        skootballs.push(new h.EngineObjectDispatchBuilder().set_object(skoot).set_position(-14,0,-10.5).create());
-        skootballs.push(new h.EngineObjectDispatchBuilder().set_object(skoot).set_position(-12.75,0,-10.5).create());
-        skootballs.push(new h.EngineObjectDispatchBuilder().set_object(skoot).set_position(-11.5,0,-10.5).create());
-        skootballs.push(new h.EngineObjectDispatchBuilder().set_object(skoot).set_position(-10,0,-10.5).create());
-        skootballs.push(new h.EngineObjectDispatchBuilder().set_object(skoot).set_position(-8.5,0,-10.5).create());
+        skootballs.push(new h.EngineObjectDispatchBuilder(skoot).set_position(-14,0,-10.5).create());
+        skootballs.push(new h.EngineObjectDispatchBuilder(skoot).set_position(-12.75,0,-10.5).create());
+        skootballs.push(new h.EngineObjectDispatchBuilder(skoot).set_position(-11.5,0,-10.5).create());
+        skootballs.push(new h.EngineObjectDispatchBuilder(skoot).set_position(-10,0,-10.5).create());
+        skootballs.push(new h.EngineObjectDispatchBuilder(skoot).set_position(-8.5,0,-10.5).create());
 
         promises.push(...skootballs);
 
