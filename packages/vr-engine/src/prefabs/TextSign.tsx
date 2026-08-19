@@ -1,7 +1,12 @@
-import {TextSignPrefab} from "@hyperlinkvr/vr-engine-schemas";
-import {PrefabProps} from "../types";
-import {useMemo} from "react";
-import {FloatingText2D} from "./FloatingText2D";
+import { TextSignPrefab } from "@hyperlinkvr/vr-engine-schemas";
+import { useMemo } from "react";
+
+
+
+import { PrefabProps } from "../types";
+import { FloatingText2D } from "./FloatingText2D";
+import { PrefabRoot } from "./PrefabRoot";
+
 
 export const DefaultTextSign = (props: PrefabProps<TextSignPrefab>) => {
     if (props.text.length > 20) {
@@ -22,6 +27,7 @@ export const DefaultTextSign = (props: PrefabProps<TextSignPrefab>) => {
                 <meshStandardMaterial color={bg_color} emissive={bg_color} />
 
             </mesh>
+
             <FloatingText2D offset={[0, 0, 0.015]} text={props.text} font_size={0.075} color={props.color} />
         </group>
     );
@@ -32,7 +38,7 @@ export const DefaultTextSign = (props: PrefabProps<TextSignPrefab>) => {
 // TODO: enforce length limit on sdk
 // TODO: apply physics, with option to be fixed or dynamic, and whether grabbable
 
-export const TextSign = (props: PrefabProps<TextSignPrefab>) => {
+const TextSignInternal = (props: PrefabProps<TextSignPrefab>) => {
     switch (props.style) {
         case "default":
             return <DefaultTextSign {...props} />;
@@ -44,3 +50,11 @@ export const TextSign = (props: PrefabProps<TextSignPrefab>) => {
             throw new Error(`Unknown text sign style: ${props.style}`);
     }
 }
+
+export const TextSign = (props: PrefabProps<TextSignPrefab>) => {
+    return (
+        <PrefabRoot {...props}>
+            <TextSignInternal {...props} />
+        </PrefabRoot>
+    );
+};

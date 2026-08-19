@@ -133,7 +133,7 @@ const TriggerVolumeWrapper = ({interaction, children}: InteractionWrapperProps<T
 }
 
 const FollowPlayerWrapper = ({interaction, children}: InteractionWrapperProps<FollowPlayerInteraction>) => {
-    const {on_command} = useObjectBinding(interaction.binding);
+    const {on_interaction_command} = useObjectBinding(interaction.binding);
 
     useEffect(() => {
         const handle_command = async (command: string, args?: any) => {
@@ -148,11 +148,11 @@ const FollowPlayerWrapper = ({interaction, children}: InteractionWrapperProps<Fo
             return {success: true};
         }
 
-        const unlisten = on_command(handle_command);
+        const unlisten = on_interaction_command(handle_command);
         return () => {
             unlisten();
         }
-    }, [on_command, interaction]);
+    }, [on_interaction_command, interaction]);
 
     return (
         <FollowPlayer enabled={interaction.enabled} snap_on_release={interaction.snap_on_release}>
@@ -162,7 +162,7 @@ const FollowPlayerWrapper = ({interaction, children}: InteractionWrapperProps<Fo
 }
 
 const PositionalAudioWrapper = ({interaction, children}: InteractionWrapperProps<PositionalAudioInteraction>) => {
-    const {on_command, register_channels} = useObjectBinding(interaction.binding);
+    const {on_interaction_command, register_channels} = useObjectBinding(interaction.binding);
     const audio_ref = useRef<PositionalAudioType>(null);
 
     useEffect(() => {
@@ -213,11 +213,11 @@ const PositionalAudioWrapper = ({interaction, children}: InteractionWrapperProps
             return {success: true};
         }
 
-        const unlisten = on_command(handle_command);
+        const unlisten = on_interaction_command(handle_command);
         return () => {
             unlisten();
         }
-    }, [on_command, interaction]);
+    }, [on_interaction_command, interaction]);
 
     useEffect(() => register_channels({
         volume: {
@@ -267,7 +267,7 @@ const PositionalAudioWrapper = ({interaction, children}: InteractionWrapperProps
 }
 
 const GlobalAudioWrapper = ({interaction, children}: InteractionWrapperProps<GlobalAudioInteraction>) => {
-    const {on_command, register_channels} = useObjectBinding(interaction.binding);
+    const {on_interaction_command, register_channels} = useObjectBinding(interaction.binding);
 
     const audio_listener = useAudioListener();
     const audio = useMemo(() => new Audio(audio_listener), [audio_listener]);
@@ -330,11 +330,11 @@ const GlobalAudioWrapper = ({interaction, children}: InteractionWrapperProps<Glo
             return {success: true};
         }
 
-        const unlisten = on_command(handle_command);
+        const unlisten = on_interaction_command(handle_command);
         return () => {
             unlisten();
         }
-    }, [on_command, interaction]);
+    }, [on_interaction_command, interaction]);
 
     useEffect(() => register_channels({
         volume: {
@@ -362,7 +362,7 @@ const GlobalAudioWrapper = ({interaction, children}: InteractionWrapperProps<Glo
 }
 
 const PointLightWrapper = ({interaction, children}: InteractionWrapperProps<PointLightInteraction>) => {
-    const {on_command, register_channels} = useObjectBinding(interaction.binding);
+    const {on_interaction_command, register_channels} = useObjectBinding(interaction.binding);
 
     // doesn't auto sync to props, so need to manually update value via ref when command is received
     const light_ref = useRef<PointLight>(null);
@@ -402,9 +402,9 @@ const PointLightWrapper = ({interaction, children}: InteractionWrapperProps<Poin
             return {success: true};
         }
 
-        const unlisten = on_command(handle_command);
+        const unlisten = on_interaction_command(handle_command);
         return () => unlisten();
-    }, [on_command, interaction]);
+    }, [on_interaction_command, interaction]);
 
     useEffect(() => register_channels({
         intensity: {
@@ -465,7 +465,7 @@ const PointLightWrapper = ({interaction, children}: InteractionWrapperProps<Poin
 }
 
 const DirectionalLightWrapper = ({interaction, children}: InteractionWrapperProps<DirectionalLightInteraction>) => {
-    const {on_command, register_channels} = useObjectBinding(interaction.binding);
+    const {on_interaction_command, register_channels} = useObjectBinding(interaction.binding);
 
     // doesn't auto sync to props, so need to manually update value via ref when command is received
     const light_ref = useRef<DirectionalLight>(null);
@@ -501,9 +501,9 @@ const DirectionalLightWrapper = ({interaction, children}: InteractionWrapperProp
             return {success: true};
         }
 
-        const unlisten = on_command(handle_command);
+        const unlisten = on_interaction_command(handle_command);
         return () => unlisten();
-    }, [on_command, interaction]);
+    }, [on_interaction_command, interaction]);
 
     useEffect(() => register_channels({
         intensity: {
@@ -557,7 +557,7 @@ const DirectionalLightWrapper = ({interaction, children}: InteractionWrapperProp
 }
 
 const SpotLightWrapper = ({interaction, children}: InteractionWrapperProps<SpotLightInteraction>) => {
-    const {on_command, register_channels} = useObjectBinding(interaction.binding);
+    const {on_interaction_command, register_channels} = useObjectBinding(interaction.binding);
 
     // doesn't auto sync to props, so need to manually update value via ref when command is received
     const light_ref = useRef<SpotLight>(null);
@@ -609,9 +609,9 @@ const SpotLightWrapper = ({interaction, children}: InteractionWrapperProps<SpotL
             return {success: true};
         }
 
-        const unlisten = on_command(handle_command);
+        const unlisten = on_interaction_command(handle_command);
         return () => unlisten();
-    }, [on_command, interaction]);
+    }, [on_interaction_command, interaction]);
 
     useEffect(() => register_channels({
         intensity: {
@@ -705,10 +705,10 @@ const SpotLightWrapper = ({interaction, children}: InteractionWrapperProps<SpotL
 const ParticleEmitterWrapper = ({interaction, children}: InteractionWrapperProps<ParticleEmitterInteraction>) => {
     const system_ref = useRef<ParticleSystemRef>(null);
 
-    const {on_command} = useObjectBinding(interaction.binding);
+    const {on_interaction_command} = useObjectBinding(interaction.binding);
 
     useEffect(() => {
-        const unlisten = on_command(async (command: string, args?: any) => {
+        const unlisten = on_interaction_command(async (command: string, args?: any) => {
             const system = system_ref.current;
             if (!system) {
                 return {success: false, error: "Particle system not ready"};
@@ -851,7 +851,7 @@ const SeatWrapper = ({ interaction, children }: InteractionWrapperProps<SeatInte
 };
 
 const RaycastWrapper = ({interaction, children}: InteractionWrapperProps<RaycastInteraction>) => {
-    const {emit_report, on_command, register_channels} = useObjectBinding(interaction.binding);
+    const {emit_report, on_interaction_command, register_channels} = useObjectBinding(interaction.binding);
     const {id} = useObjectRefs();
     const handle_ref = useRef<RaycastHandle>(null);
 
@@ -889,8 +889,8 @@ const RaycastWrapper = ({interaction, children}: InteractionWrapperProps<Raycast
             return {success: true};
         };
 
-        return on_command(handle_command);
-    }, [on_command]);
+        return on_interaction_command(handle_command);
+    }, [on_interaction_command]);
 
     useEffect(() => register_channels({
         enabled: {

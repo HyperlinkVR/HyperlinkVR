@@ -2,20 +2,17 @@ import type { ButtonPrefab } from "@hyperlinkvr/vr-engine-schemas";
 import { RoundedBoxGeometry, Text } from "@react-three/drei";
 import { useFrame, type ThreeEvent } from "@react-three/fiber";
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import {
-    ExtrudeGeometry,
-    MathUtils,
-    Shape,
-    Vector3,
-    type Group,
-    type Object3D,
-    type WebXRManager,
-} from "three";
+import { ExtrudeGeometry, MathUtils, Shape, Vector3, type Group, type Object3D, type WebXRManager } from "three";
 import { mergeVertices, toCreasedNormals } from "three/examples/jsm/utils/BufferGeometryUtils";
-import {useObjectBinding} from "../hooks/useObjectBinding";
-import {ObjectPhysics} from "../engine/ObjectPhysics";
-import {Grabbable} from "../interaction";
-import {PrefabProps} from "../types";
+
+
+
+import { ObjectPhysics } from "../engine/ObjectPhysics";
+import { useObjectBinding } from "../hooks/useObjectBinding";
+import { Grabbable } from "../interaction";
+import { PrefabProps } from "../types";
+import { PrefabRoot } from "./PrefabRoot";
+
 
 const WIDTH = 0.55;
 const HEIGHT = 0.55;
@@ -289,7 +286,10 @@ export const Button = (props: ButtonProps) => {
                 <meshStandardMaterial color="#aaaaaa" />
             </mesh>
 
-            <group ref={plungerRef} position={[0, 0, REST_Z]} onPointerDown={handleRayDown}>
+            <group
+                ref={plungerRef}
+                position={[0, 0, REST_Z]}
+                onPointerDown={handleRayDown}>
                 <mesh geometry={geometry}>
                     <meshStandardMaterial color={props.body_color} />
                 </mesh>
@@ -299,8 +299,7 @@ export const Button = (props: ButtonProps) => {
                     color={props.label_color}
                     anchorX="center"
                     anchorY="middle"
-                    raycast={ignoreRaycast}
-                >
+                    raycast={ignoreRaycast}>
                     {props.label}
                 </Text>
             </group>
@@ -308,8 +307,10 @@ export const Button = (props: ButtonProps) => {
     );
 
     return (
-        <ObjectPhysics physics={physics_config}>
-            {props.grabbable ? <Grabbable>{body}</Grabbable> : body}
-        </ObjectPhysics>
+        <PrefabRoot>
+            <ObjectPhysics physics={physics_config}>
+                {props.grabbable ? <Grabbable>{body}</Grabbable> : body}
+            </ObjectPhysics>
+        </PrefabRoot>
     );
 };

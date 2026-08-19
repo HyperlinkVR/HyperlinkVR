@@ -123,7 +123,8 @@ export type TextSignPrefabInput = z.input<typeof TextSignPrefabSchema>;
 export const GolfBallPrefabSchema = bindable({
     type: z.literal("prefab"),
     name: z.literal("golf_ball"),
-    color: HexColorSchema.default(0xd9d9d9)
+    color: HexColorSchema.default(0xd9d9d9),
+    locks_out: z.boolean().default(true)
 });
 export type GolfBallPrefab = z.infer<typeof GolfBallPrefabSchema>;
 export type GolfBallPrefabInput = z.input<typeof GolfBallPrefabSchema>;

@@ -26,12 +26,11 @@ hyperlinkvr.on_ready(async () => {
         )
         .build();
 
-    promises.push(
-        new h.EngineObjectDispatchBuilder()
-            .set_object(course)
-            .set_position(0, 1, 0)
-            .create()
-    );
+    // dispatch course first and await to ensure colliders catch putters and balls
+    await new h.EngineObjectDispatchBuilder()
+        .set_object(course)
+        .set_position(0, 1, 0)
+        .create()
 
     const trigger_dummy = new h.CustomObjectBuilder()
         .add_interaction(

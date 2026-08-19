@@ -2,7 +2,7 @@ import { AssetRef, Collider, PhysicsSystem, RigidBody as RigidBodyConfig, Transf
 import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { BallCollider, CapsuleCollider, CollisionEnterPayload, CollisionPayload, CuboidCollider, CylinderCollider, MeshCollider, RapierRigidBody, RigidBody, RigidBodyAutoCollider, useRapier } from "@react-three/rapier";
-import { ComponentProps, useCallback, useEffect, useMemo, useRef } from "react";
+import { ComponentProps, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Euler, EulerOrder, Group, Mesh, MeshBasicMaterial, Quaternion, Vector3 } from "three";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils";
 
@@ -380,13 +380,17 @@ export const ObjectPhysics = ({
         )
     }), [rb.type, rb.collision_filter]);
 
+   // wait for colliders to actually be created before registering collision info, otherwise colliders can be missed, or be without tags
+    const [colliders_ready, setCollidersReady] = useState(false);
+    useFrame(() => {
+        if (colliders_ready) return;
+        const body = rb_ref.current;
+        if (body && body.numColliders() > 0) setCollidersReady(true);
+    });
+
     useEffect(() => {
         const body = rb_ref.current;
-        if (!body) return;
-
-        if (!refs) {
-            return;
-        }
+        if (!body || !refs || !colliders_ready) return;
 
         const unregisters: (() => void)[] = [];
 
@@ -406,7 +410,7 @@ export const ObjectPhysics = ({
         }
 
         return () => unregisters.forEach((unregister) => unregister());
-    }, [refs, rb.collision_filter]);
+    }, [refs, rb.collision_filter, colliders_ready]);
 
     const {emit_report} = useObjectBinding(physics.binding);
 

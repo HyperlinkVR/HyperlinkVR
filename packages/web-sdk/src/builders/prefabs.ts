@@ -15,6 +15,27 @@ import {
     StandardPrefabSchema, TextPrefabBaseInput, TextSignPrefab, TextSignPrefabSchema
 } from "@hyperlinkvr/vr-engine-schemas";
 import {HSVHueBagRandomiser, to_hex} from "../color";
+import { send_via_rtc } from "../messenger";
+
+const prefab_command = async (object_id: string, command: string, args?: any) => {
+    try {
+        const res = await send_via_rtc({
+            action: "HVRSDK_PREFAB_COMMAND",
+            object_id,
+            command,
+            args
+        });
+
+        if ("response" in res) {
+            return res.response;
+        } else {
+            return undefined;
+        }
+    } catch (err) {
+        console.error("Error sending prefab command:", err);
+        throw err;
+    }
+}
 
 export class StandardPrefabBuilder extends BaseBuilder<StandardPrefabInput> {
     constructor(name: StandardPrefabName) {
@@ -207,8 +228,27 @@ export class GolfBallPrefabBuilder extends BaseBuilder<GolfBallPrefabInput> {
         return this;
     }
 
+    set_locks_out(locks_out: boolean) {
+        this._internal.locks_out = locks_out;
+        return this;
+    }
+
     build(): GolfBallPrefab {
         return GolfBallPrefabSchema.parse(this._internal);
+    }
+
+
+    static _make_api(object_id: string) {
+        return {
+            set_color: (color: HexColor) => prefab_command(object_id, "set_color", {color}),
+            set_locks_out: (locks_out: boolean) => prefab_command(object_id, "set_locks_out", {locks_out}),
+
+            lock: () => prefab_command(object_id, "lock"),
+
+            // by default, this only clears the lock requested by the lock() command
+            // in force mode, it will also clear the lock imposed by the ball itself (via locks_out, which prevents the ball from being putt until it comes to rest)
+            unlock: (force = false) => prefab_command(object_id, "unlock", {force})
+        };
     }
 }
 

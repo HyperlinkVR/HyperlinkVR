@@ -13,6 +13,7 @@ import {register_object_monitors} from "../monitors/object_monitor_registry";
 import {register_triggers} from "./trigger_registry";
 import {body_owns_pose_for} from "./object_modification";
 import {register_animation_channels} from "../animation/channel_registry";
+import {recompute_object_tags} from "../util/tags";
 
 export const EngineObjectRenderer = ({ data }: { data: CreatedEngineObject }) => {
     const { type, ...obj_rest } = data.object;
@@ -25,6 +26,15 @@ export const EngineObjectRenderer = ({ data }: { data: CreatedEngineObject }) =>
     const user_data_ref = useRef(data.user_data);
 
     const refs = useRef(create_object_refs(data.id));
+
+    // publish tags to user data (that live on object refs, not the render group itself)
+    useLayoutEffect(() => {
+        const user_data = refs.current.user_data;
+        user_data.object_id = data.id;
+        Object.assign(user_data, data.user_data);
+        user_data.__base_tags = data.tags ?? [];
+        recompute_object_tags(user_data);
+    }, [data.id, data.user_data, data.tags]);
 
     // register refs with registry for retrieval by sdk
     useEffect(() => register_object_refs(refs.current), []);
@@ -102,7 +112,7 @@ export const EngineObjectRenderer = ({ data }: { data: CreatedEngineObject }) =>
                 ref={refs.current.root}
                 position={data.transform.position}
                 scale={data.transform.scale}
-                userData={{object_id: data.id, ...data.user_data, tags: data.tags ?? []}}
+                userData={refs.current.user_data}
             >
                 <RendererComponent
                     root_ref={refs.current.root}

@@ -1,14 +1,17 @@
-import {useGLTF} from "@react-three/drei";
-import {useFrame} from "@react-three/fiber";
-import {CollisionEnterPayload} from "@react-three/rapier";
-import {ObjectPhysics} from "../engine/ObjectPhysics";
-import {PrefabProps} from "../types";
-import {GolfBallPrefab} from "@hyperlinkvr/vr-engine-schemas";
-import {useEffect, useMemo, useRef} from "react";
-import {Mesh} from "three";
-import {useObjectBinding} from "../hooks/useObjectBinding";
-import {useObjectRefsOptional} from "../contexts/ObjectRefsContext";
-import {has_tag_in_object_tree} from "../util/tags";
+import { GolfBallPrefab } from "@hyperlinkvr/vr-engine-schemas";
+import { useGLTF } from "@react-three/drei";
+import { useFrame } from "@react-three/fiber";
+import { CollisionEnterPayload } from "@react-three/rapier";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Mesh } from "three";
+
+import { useObjectRefsOptional } from "../contexts/ObjectRefsContext";
+import { ObjectPhysics } from "../engine/ObjectPhysics";
+import { useObjectBinding } from "../hooks/useObjectBinding";
+import { PrefabProps } from "../types";
+import { has_tag_in_object_tree } from "../util/tags";
+import { PrefabRoot } from "./PrefabRoot";
+
 
 const MESH_URL = new URL("../../assets/prefabs/golf_ball/golf_ball.glb", import.meta.url).href;
 
@@ -22,25 +25,77 @@ const REST_FRAMES = 20; // consecutive qualifying frames before we call it
 const MAX_ROLL_MS = 8000; // hard cap so a ball that never fully stops can't hang the turn
 
 export const GolfBall = (props: PrefabProps<GolfBallPrefab>) => {
-    const {emit_report} = useObjectBinding(props.binding);
+    const {emit_report, on_prefab_command} = useObjectBinding(props.binding);
     const refs = useObjectRefsOptional();
 
     const {scene} = useGLTF(MESH_URL);
     const instance = useMemo(() => scene.clone(true), [scene]);
 
+    const change_color = useCallback(
+        (color: number) => {
+            instance.traverse((child) => {
+                if (child instanceof Mesh && child.material) {
+                    const cloned_material = child.material.clone();
+                    cloned_material.color.setHex(color);
+                    child.material = cloned_material;
+                }
+            });
+        },
+        [instance]
+    );
+    
     useEffect(() => {
         if (!props.color || props.color === DEFAULT_ALBEDO) {
             return;
         }
 
-        instance.traverse((child) => {
-            if (child instanceof Mesh && child.material) {
-                const cloned_material = child.material.clone();
-                cloned_material.color.setHex(props.color);
-                child.material = cloned_material;
+        change_color(props.color);
+    }, [props.color, change_color]);
+
+    const [locked_until_rest, setLockedUntilRest] = useState(false);
+    const [locks_out, setLocksOut] = useState(props.locks_out ?? true);
+
+    const [sdk_requested_lock, setSDKRequestedLock] = useState(false);
+    const locked = useMemo(() => (locked_until_rest && locks_out) || sdk_requested_lock, [locked_until_rest, sdk_requested_lock]);
+    useEffect(() => {
+        console.log(`GolfBall: locked=${locked} (locked_until_rest=${locked_until_rest}, locks_out=${locks_out}, sdk_requested_lock=${sdk_requested_lock})`);
+    }, [locked, locked_until_rest, locks_out, sdk_requested_lock]);
+
+    useEffect(() => {
+        if (!on_prefab_command) return;
+
+        const handle_command = async (command: string, args?: any) => {
+            switch (command) {
+                case "set_color":
+                    if (typeof args?.color === "number") {
+                        change_color(args.color);
+                    }
+                    break;
+                case "set_locks_out":
+                    if (typeof args?.locks_out === "boolean") {
+                        setLocksOut(args.locks_out);
+                    }
+                    props.locks_out = args.locks_out;
+                    break;
+                case "lock":
+                    setSDKRequestedLock(true);
+                    break;
+                case "unlock":
+                    if (args?.force) {
+                        setLockedUntilRest(false);
+                    }
+                    setSDKRequestedLock(false);
+                    break;
+                default:
+                    return {success: false, error: `Unknown command ${command}`};
             }
-        });
-    }, [instance, props.color]);
+
+            return {success: true};
+        }
+        
+        const unlisten = on_prefab_command(handle_command);
+        return () => unlisten();
+    }, []);
 
     // settled when rolling is false
     const rolling = useRef(false);
@@ -54,6 +109,8 @@ export const GolfBall = (props: PrefabProps<GolfBallPrefab>) => {
 
         const body = refs?.rigid_body.current;
         if (!body) return;
+
+        setLockedUntilRest(true);
 
         rolling.current = true;
         settle_frames.current = 0;
@@ -104,6 +161,8 @@ export const GolfBall = (props: PrefabProps<GolfBallPrefab>) => {
         settle_frames.current = 0;
         settle_anchor.current = null;
 
+        setLockedUntilRest(false);
+
         emit_report({
             kind: "golf-ball-prefab",
             payload: {
@@ -114,7 +173,7 @@ export const GolfBall = (props: PrefabProps<GolfBallPrefab>) => {
     });
 
     return (
-        <group userData={{tags: ["golf_ball"]}}>
+        <PrefabRoot tags={["golf_ball"]} {...props}>
             <ObjectPhysics
                 physics={{
                     report_collisions: false,
@@ -127,13 +186,13 @@ export const GolfBall = (props: PrefabProps<GolfBallPrefab>) => {
                         angular_damping: 1.0,
                         ccd: true,
                         collider: {type: "sphere", radius: 0.03},
-                        collision_filter: {players: false}
+                        collision_filter: {players: false, tags: {golf_putter: !locked}}
                     }
                 }}
                 on_collision_enter={on_collision_enter}
             >
                 <primitive object={instance} />
             </ObjectPhysics>
-        </group>
+        </PrefabRoot>
     );
 };

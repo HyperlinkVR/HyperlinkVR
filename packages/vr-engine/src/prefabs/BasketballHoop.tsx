@@ -1,12 +1,18 @@
-import {ObjectPhysics} from "../engine/ObjectPhysics";
-import {PositionalAudio, useGLTF} from "@react-three/drei";
+import { BasketballHoopPrefab, CylinderCollider } from "@hyperlinkvr/vr-engine-schemas";
+import { PositionalAudio, useGLTF } from "@react-three/drei";
+import { ParticleSystemRef } from "quarks.r3f";
+import { useRef } from "react";
 import type { PositionalAudio as PositionalAudioType } from "three";
-import {resolve_interacted, TriggerVolume} from "../interaction/TriggerVolume";
-import {useRef} from "react";
-import {useObjectBinding} from "../hooks/useObjectBinding";
-import {BindingConfig, CylinderCollider} from "@hyperlinkvr/vr-engine-schemas";
-import {ParticleEmitter} from "../interaction/ParticleEmitter";
-import {ParticleSystemRef} from "quarks.r3f";
+
+
+
+import { ObjectPhysics } from "../engine/ObjectPhysics";
+import { useObjectBinding } from "../hooks/useObjectBinding";
+import { ParticleEmitter } from "../interaction/ParticleEmitter";
+import { resolve_interacted, TriggerVolume } from "../interaction/TriggerVolume";
+import { PrefabProps } from "../types";
+import { PrefabRoot } from "./PrefabRoot";
+
 
 const MESH_URL = new URL("../../assets/prefabs/basketball_hoop/basketball_hoop.glb", import.meta.url).href;
 const DING_DING_URL = new URL("../../assets/sfx/dingding.opus", import.meta.url).href;
@@ -27,35 +33,41 @@ const BOTTOM_COLLIDER = {
 
 const TOP_TO_BOTTOM_TIME = 5000;
 
-export const BasketballHoop = ({enable_sfx, enable_particles, binding}: {enable_sfx?: boolean, enable_particles?: boolean, binding?: BindingConfig}) => {
-    const {scene} = useGLTF(MESH_URL);
+export const BasketballHoop = ({
+    enable_sfx,
+    enable_particles,
+    binding,
+    ...rest
+}: PrefabProps<BasketballHoopPrefab>) => {
+    const { scene } = useGLTF(MESH_URL);
     const instance = scene.clone(true);
 
     const audio_ref = useRef<PositionalAudioType>(null);
     const particles_ref = useRef<ParticleSystemRef>(null);
 
-    const {emit_report} = useObjectBinding(binding);
+    const { emit_report } = useObjectBinding(binding);
 
     const entered_top = useRef(new Map<string, number>());
 
-    // TODO: confetti emitter, either rolled with instancedmesh or look at something like r3f-vfx
+    // TODO: confetti emitter using particleemitter
 
     return (
-        <>
-            <ObjectPhysics physics={{
-                rigid_body: {
-                    type: "fixed",
+        <PrefabRoot {...rest}>
+            <ObjectPhysics
+                physics={{
+                    rigid_body: {
+                        type: "fixed",
 
-                    collider: {
-                        type: "auto",
-                        approximation: "trimesh"
-                    },
+                        collider: {
+                            type: "auto",
+                            approximation: "trimesh"
+                        },
 
-                    restitution: 0.4,
-                    friction: 0.5,
-                }
-            }}>
-                <primitive object={instance}/>
+                        restitution: 0.4,
+                        friction: 0.5
+                    }
+                }}>
+                <primitive object={instance} />
             </ObjectPhysics>
 
             <TriggerVolume
@@ -83,7 +95,10 @@ export const BasketballHoop = ({enable_sfx, enable_particles, binding}: {enable_
 
                     // travelling down means the ball is going through the hoop from above
                     if (linvel.y < 0) {
-                        entered_top.current.set(interacted.object_id, performance.now());
+                        entered_top.current.set(
+                            interacted.object_id,
+                            performance.now()
+                        );
                         setTimeout(() => {
                             entered_top.current.delete(interacted.object_id);
                         }, TOP_TO_BOTTOM_TIME);
@@ -105,7 +120,9 @@ export const BasketballHoop = ({enable_sfx, enable_particles, binding}: {enable_
 
                     if (!interacted || interacted.type !== "object") return;
 
-                    const entered_time = entered_top.current.get(interacted.object_id);
+                    const entered_time = entered_top.current.get(
+                        interacted.object_id
+                    );
                     if (!entered_time) return;
 
                     if (performance.now() - entered_time > TOP_TO_BOTTOM_TIME) {
@@ -123,7 +140,10 @@ export const BasketballHoop = ({enable_sfx, enable_particles, binding}: {enable_
                             kind: "basketball-hoop-prefab",
                             payload: {
                                 type: "scored",
-                                object_id: interacted.type === "object" ? interacted.object_id : undefined
+                                object_id:
+                                    interacted.type === "object"
+                                        ? interacted.object_id
+                                        : undefined
                             }
                         });
 
@@ -163,7 +183,7 @@ export const BasketballHoop = ({enable_sfx, enable_particles, binding}: {enable_
 
                     duration: 0.5,
                     lifetime: 2.5,
-                    speed: {min: 3, max: 5},
+                    speed: { min: 3, max: 5 },
                     per_second: 50,
                     emitter_shape: {
                         type: "cone",
@@ -175,22 +195,22 @@ export const BasketballHoop = ({enable_sfx, enable_particles, binding}: {enable_
                     visual: {
                         type: "quad",
                         width: 0.06,
-                        height: 0.12,
+                        height: 0.12
                     },
 
                     behaviors: [
                         {
-                            type: "gravity",
+                            type: "gravity"
                         }
                         // TODO: fade over life to fade out smoothly (once implemented)
                     ],
 
                     color: [
-                        {color: 0xff0000, alpha: 0.75},
-                        {color: 0xffff00, alpha: 0.75},
-                        {color: 0x00ff00, alpha: 0.75},
-                        {color: 0x0000ff, alpha: 0.75},
-                        {color: 0xff00ff, alpha: 0.75},
+                        { color: 0xff0000, alpha: 0.75 },
+                        { color: 0xffff00, alpha: 0.75 },
+                        { color: 0x00ff00, alpha: 0.75 },
+                        { color: 0x0000ff, alpha: 0.75 },
+                        { color: 0xff00ff, alpha: 0.75 }
                     ],
 
                     world_space: true,
@@ -198,6 +218,6 @@ export const BasketballHoop = ({enable_sfx, enable_particles, binding}: {enable_
                     rotation: [55, 0, 0]
                 }}
             />
-        </>
-    )
-}
+        </PrefabRoot>
+    );
+};

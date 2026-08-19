@@ -9,6 +9,7 @@ import {Reflector} from "three/examples/jsm/objects/Reflector";
 import {compute_layer_mask, Layer} from "../render";
 import {get_head_cameras} from "../util/get_head_cameras";
 import {PrefabProps} from "../types";
+import { PrefabRoot } from "./PrefabRoot";
 
 
 const DEFAULT_RESOLUTION = 2048;
@@ -64,5 +65,9 @@ export const ReflectiveMirror = ({
         }
     });
 
-    return <primitive object={reflector} {...rest} />;
+    return (
+        <PrefabRoot {...props}>
+            <primitive object={reflector} {...rest} />
+        </PrefabRoot>
+    );
 };

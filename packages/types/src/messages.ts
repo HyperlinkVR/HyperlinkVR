@@ -1,9 +1,4 @@
-import type {
-    CreatedAnimation,
-    CreatedEngineObject, CreatedHUDElement,
-    EngineObjectDispatch, EngineObjectModification, HUDDispatch, HUDElementModification, PlayerMonitor,
-    ReportEvent, Tween, WorldEnv
-} from "@hyperlinkvr/vr-engine-schemas";
+import type { CreatedAnimation, CreatedEngineObject, CreatedHUDElement, EngineObjectDispatch, EngineObjectModification, HUDDispatch, HUDElementModification, PlayerMonitor, ReportEvent, Tween, WorldEnv } from "@hyperlinkvr/vr-engine-schemas";
 
 
 
@@ -127,6 +122,13 @@ interface WebSDKInteractionCommandAction extends BaseWebSDKActionMessage {
     args?: any;
 }
 
+interface WebSDKPrefabCommandAction extends BaseWebSDKActionMessage {
+    action: "HVRSDK_PREFAB_COMMAND";
+    object_id: string;
+    command: string;
+    args?: any;
+}
+
 interface WebSDKCreateAnimationAction extends BaseWebSDKActionMessage {
     action: "HVRSDK_CREATE_ANIMATION";
     animation: Animation;
@@ -229,6 +231,7 @@ export type WebSDKActionMessage =
     | WebSDKModifyEngineObjectAction
     | WebSDKRefreshEngineObjectAction
     | WebSDKInteractionCommandAction
+    | WebSDKPrefabCommandAction
     | WebSDKCreateAnimationAction
     | WebSDKDestroyAnimationAction
     | WebSDKAnimationCommandAction
@@ -363,6 +366,12 @@ interface WebSDKInteractionCommandReplyMessage extends BaseWebSDKReplyMessage {
     response?: any;
 }
 
+interface WebSDKPrefabCommandReplyMessage extends BaseWebSDKReplyMessage {
+    for: "HVRSDK_PREFAB_COMMAND";
+    object_id: string;
+    response?: any;
+}
+
 interface WebSDKAnimationCreatedReplyMessage extends BaseWebSDKReplyMessage {
     for: "HVRSDK_CREATE_ANIMATION";
     animation: CreatedAnimation;
@@ -453,6 +462,7 @@ export type WebSDKReplyMessage =
     | WebSDKObjectModifiedReplyMessage
     | WebSDKObjectRefreshReplyMessage
     | WebSDKInteractionCommandReplyMessage
+    | WebSDKPrefabCommandReplyMessage
     | WebSDKAnimationCreatedReplyMessage
     | WebSDKAnimationDestroyedReplyMessage
     | WebSDKAnimationCommandReplyMessage

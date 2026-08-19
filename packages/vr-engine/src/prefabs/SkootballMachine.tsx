@@ -7,6 +7,8 @@ import {create_object_refs, ObjectRefsContextType, ObjectRefsProvider} from "../
 import {Group, Vector3, PositionalAudio as PositionalAudioType} from "three";
 import {IntersectionEnterPayload, IntersectionExitPayload} from "@react-three/rapier";
 import {Collider} from "@hyperlinkvr/vr-engine-schemas";
+import { PrefabProps } from "../types";
+import { PrefabRoot } from "./PrefabRoot";
 
 const MACHINE_URL = new URL("../../assets/prefabs/skootball/machine.glb", import.meta.url).href;
 const BALL_URL = new URL("../../assets/prefabs/skootball/ball.glb", import.meta.url).href;
@@ -149,7 +151,7 @@ const POINT_COLLIDERS = {
 
 const POINT_ORDER = [10, 20, 30, 40, 50, 100] as const;
 
-export const SkootballMachine = () => {
+export const SkootballMachine = (props: PrefabProps) => {
     const {scene} = useGLTF(MACHINE_URL);
     const instance = scene.clone(true);
 
@@ -310,7 +312,7 @@ export const SkootballMachine = () => {
     }, [is_our_ball]);
 
     return (
-        <group ref={machine_ref}>
+        <PrefabRoot ref={machine_ref} {...props}>
             {/* clickable start text TODO improve this */}
             {!playing && (
                 <Text
@@ -430,7 +432,7 @@ export const SkootballMachine = () => {
                     ball_scored(ball_id, ball_score);
                 }}
             />
-        </group>
+        </PrefabRoot>
     );
 }
 

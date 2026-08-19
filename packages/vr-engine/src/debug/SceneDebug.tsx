@@ -90,29 +90,48 @@ const LightHelpers = () => {
 const LABEL_SCALE = 0.00025;
 const LABEL_OPACITY = 0.4;
 const EMPTY_LABEL_OPACITY = 0.025;
-const make_label = (text?: string): Sprite => {
+const make_label = (text?: string, subtext?: string): Sprite => {
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d")!;
 
-    const font_size = 48;
+    const font_size_text = 48;
+    const font_size_subtext = 32;
     const padding = 16;
-    ctx.font = `${font_size}px sans-serif`;
 
     const text_was_empty = !text || text.trim() === "";
     text = text || "(unnamed)";
-    const text_width = ctx.measureText(text).width;
-    canvas.width = text_width + padding * 2;
-    canvas.height = font_size + padding * 2;
 
-    // re-apply after resize (resizing clears the context)
-    ctx.font = `${font_size}px sans-serif`;
-    ctx.textBaseline = "middle";
+    // measure text
+    ctx.font = `${font_size_text}px sans-serif`;
+    const text_width = ctx.measureText(text).width;
+
+    // measure subtext if provided
+    let subtext_width = 0;
+    if (subtext) {
+        ctx.font = `${font_size_subtext}px sans-serif`;
+        subtext_width = ctx.measureText(subtext).width;
+    }
+
+    canvas.width = Math.max(text_width, subtext_width) + padding * 2;
+    canvas.height = font_size_text + (subtext ? font_size_subtext : 0) + padding * 2;
 
     ctx.fillStyle = `rgba(0, 0, 0, ${text_was_empty ? EMPTY_LABEL_OPACITY : LABEL_OPACITY})`;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    // re-apply after resize (resizing clears the context)
+    ctx.font = `${font_size_text}px sans-serif`;
+    ctx.textBaseline = "middle";
+
+    // draw main text
     ctx.fillStyle = text_was_empty ? "#aaaaaa" : "#00ffff";
-    ctx.fillText(text, padding, canvas.height / 2);
+    ctx.fillText(text, padding, padding + font_size_text / 2);
+
+    // draw subtext if provided
+    if (subtext) {
+        ctx.font = `${font_size_subtext}px sans-serif`;
+        ctx.fillStyle = "#aaaaaa";
+        ctx.fillText(subtext, padding, padding + font_size_text + font_size_subtext / 2);
+    }
 
     const texture = new CanvasTexture(canvas);
     const material = new SpriteMaterial({
@@ -148,7 +167,7 @@ const GroupHelpers = () => {
                         const box = new BoxHelper(group, new Color(0x00ffff));
                         (box as any).__debugHelper = true;
 
-                        const label = make_label(group.name);
+                        const label = make_label(group.name, JSON.stringify(group.userData));
                         (label as any).__debugHelper = true;
 
                         scene.add(box);
@@ -159,7 +178,7 @@ const GroupHelpers = () => {
                         console.error("Failed to create debug helper for group", group, e);
 
                         // fallback to just a label
-                        const label = make_label(group.name ? `${group.name} (no box)` : "(unnamed) (no box)");
+                        const label = make_label(group.name ? `${group.name} (no box)` : "(unnamed) (no box)", JSON.stringify(group.userData));
                         (label as any).__debugHelper = true;
                         scene.add(label);
                         entry = { box: null, label };

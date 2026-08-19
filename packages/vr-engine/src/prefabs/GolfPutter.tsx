@@ -1,10 +1,15 @@
-import {useGLTF} from "@react-three/drei";
-import {ObjectPhysics} from "../engine/ObjectPhysics";
-import {Grabbable} from "../interaction";
-import {PrefabProps} from "../types";
-import {GolfPutterPrefab} from "@hyperlinkvr/vr-engine-schemas";
-import {useEffect, useMemo} from "react";
-import {Mesh} from "three";
+import { GolfPutterPrefab } from "@hyperlinkvr/vr-engine-schemas";
+import { useGLTF } from "@react-three/drei";
+import { useEffect, useMemo } from "react";
+import { Mesh } from "three";
+
+
+
+import { ObjectPhysics } from "../engine/ObjectPhysics";
+import { Grabbable } from "../interaction";
+import { PrefabProps } from "../types";
+import { PrefabRoot } from "./PrefabRoot";
+
 
 const HANDLE_URL = new URL("../../assets/prefabs/golf_putter/handle.glb", import.meta.url).href;
 const BODY_URL = new URL("../../assets/prefabs/golf_putter/body.glb", import.meta.url).href;
@@ -26,7 +31,11 @@ export const GolfPutter = (props: PrefabProps<GolfPutterPrefab>) => {
 
         body_instance.traverse((child) => {
             if (!(child instanceof Mesh)) return;
-            if (!child.material || child.material.name !== PLASTIC_MATERIAL_NAME) return;
+            if (
+                !child.material ||
+                child.material.name !== PLASTIC_MATERIAL_NAME
+            )
+                return;
 
             // cloned instances still share materials
             const plastic_material = child.material.clone();
@@ -37,7 +46,7 @@ export const GolfPutter = (props: PrefabProps<GolfPutterPrefab>) => {
     }, [body_instance, props.color]);
 
     return (
-        <group userData={{tags: ["golf_putter"]}}>
+        <PrefabRoot tags={["golf_putter"]} {...props}>
             <ObjectPhysics physics={{
                 rigid_body: {
                     type: "dynamic",
@@ -54,7 +63,7 @@ export const GolfPutter = (props: PrefabProps<GolfPutterPrefab>) => {
                     <primitive object={handle_instance} />
                 </Grabbable>
             </ObjectPhysics>
-        </group>
+        </PrefabRoot>
     );
 };
 

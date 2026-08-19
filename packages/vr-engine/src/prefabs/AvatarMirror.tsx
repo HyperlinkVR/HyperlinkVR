@@ -4,20 +4,20 @@ import { ReflectiveMirror } from "./ReflectiveMirror";
 import { useAvatar } from "../contexts/AvatarContext";
 import { ComponentProps } from "react";
 import { useSetting } from "@hyperlinkvr/react";
+import { PrefabRoot } from "./PrefabRoot";
+import { PrefabProps } from "../types";
 
-interface AvatarMirrorProps extends Omit<ComponentProps<"group">, "position"> {
+type Bases = Omit<ComponentProps<"group">, "position"> & PrefabProps;
+interface AvatarMirrorProps extends Omit<Bases, "position"> {
     x_z_offset?: [number, number];
 }
 
 export const AvatarMirror = ({x_z_offset = [0, 0], ...props}: AvatarMirrorProps) => {
-    // extract object id from props, as it'll crash if we assign it to the group element
-    const {id, ...rest} = props;
-
     const [avatar, setAvatar] = useAvatar();
     const [player_height_cm] = useSetting("player_height_cm");
 
     return (
-        <group position={[x_z_offset[0], (player_height_cm / 100) / 4, x_z_offset[1]]} {...rest}>
+        <PrefabRoot position={[x_z_offset[0], (player_height_cm / 100) / 4, x_z_offset[1]]}>
             <SkinPalette box_size={0.075} spacing={0.05} position={[0, 1.75, 0]}  />
             <ReflectiveMirror width={0.75} height={1.25} position={[0, 1, 0]} />
             <ColorPicker position={[2, 0.5, 0]} scale={[2, 2, 2]} color={avatar.hair_hex} on_color_change={(color) => {
@@ -28,6 +28,6 @@ export const AvatarMirror = ({x_z_offset = [0, 0], ...props}: AvatarMirrorProps)
             }} />
 
             <pointLight position={[0, 2, 0]} intensity={2} color={0xffffff} />
-        </group>
+        </PrefabRoot>
     );
 }

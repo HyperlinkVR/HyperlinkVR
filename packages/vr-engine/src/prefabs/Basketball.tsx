@@ -1,9 +1,15 @@
-import {get_collision_info, ObjectPhysics} from "../engine/ObjectPhysics";
-import {Grabbable} from "../interaction";
-import {PositionalAudio, useGLTF} from "@react-three/drei";
-import type {PositionalAudio as PositionalAudioType} from "three";
-import {useCallback, useRef} from "react";
-import {CollisionEnterPayload, useRapier} from "@react-three/rapier";
+import { PositionalAudio, useGLTF } from "@react-three/drei";
+import { CollisionEnterPayload, useRapier } from "@react-three/rapier";
+import { useCallback, useRef } from "react";
+import type { PositionalAudio as PositionalAudioType } from "three";
+
+
+
+import { get_collision_info, ObjectPhysics } from "../engine/ObjectPhysics";
+import { Grabbable } from "../interaction";
+import { PrefabProps } from "../types";
+import { PrefabRoot } from "./PrefabRoot";
+
 
 const MESH_URL = new URL("../../assets/prefabs/basketball/basketball.glb", import.meta.url).href;
 
@@ -45,7 +51,7 @@ const compute_audio_weights = (force_magnitude: number) => {
     };
 }
 
-export const Basketball = ({id}: { id: string }) => {
+export const Basketball = (props: PrefabProps) => {
     const {scene} = useGLTF(MESH_URL);
     const instance = scene.clone(true);
 
@@ -97,7 +103,7 @@ export const Basketball = ({id}: { id: string }) => {
     );
 
     return (
-        <group userData={{object_id: id, tags: ["basketball"]}}>
+        <PrefabRoot tags={["basketball"]} {...props}>
             <ObjectPhysics
                 physics={{
                     rigid_body: {
@@ -144,6 +150,6 @@ export const Basketball = ({id}: { id: string }) => {
                     autoplay={false}
                 />
             </ObjectPhysics>
-        </group>
+        </PrefabRoot>
     )
 }

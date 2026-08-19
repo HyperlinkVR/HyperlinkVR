@@ -7,11 +7,20 @@ export enum Eye {
     Right = 1
 }
 
-export type RendererComponentProps<T extends CreatedEngineObject["object"]> = Omit<T, "type"> & {
+export interface RootProps {
     root_ref: React.RefObject<Group | null>;
     user_data_ref: React.RefObject<CreatedEngineObject["user_data"]>;
     id: CreatedEngineObject["id"];
+}
+
+interface RendererComponentPropsAdditional extends RootProps {
     transform: CreatedEngineObject["transform"];
 }
 
-export type PrefabProps<T extends {type: "prefab", name: string}> = Omit<T, "type" | "name">;
+export type RendererComponentProps<T extends CreatedEngineObject["object"]> = Omit<T, "type"> & RendererComponentPropsAdditional;
+
+
+export type PrefabProps<T extends { type: "prefab"; name: string } = any> = Omit<
+    T,
+    "type" | "name" | "transform"
+> & Partial<RootProps>;
