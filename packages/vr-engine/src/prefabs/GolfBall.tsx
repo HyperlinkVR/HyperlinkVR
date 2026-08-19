@@ -105,6 +105,9 @@ export const GolfBall = (props: PrefabProps<GolfBallPrefab>) => {
 
     // any putter contact is a stroke, however soft, so there's no gentle nudge loophole
     const on_collision_enter = (payload: CollisionEnterPayload) => {
+        // don't start a new stroke if still rolling
+        if (rolling.current) return;
+
         if (!has_tag_in_object_tree(payload.other.rigidBodyObject ?? null, "golf_putter")) return;
 
         const body = refs?.rigid_body.current;
