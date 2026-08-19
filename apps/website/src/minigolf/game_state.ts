@@ -112,7 +112,7 @@ export const get_owner_of_ball = (ball_object_id: string) => {
     return undefined;
 }
 
-export const scored_on_hole = (username: string | null) => {
+export const scored_on_hole = async (username: string | null) => {
     if (current_hole === 0) {
         return;
     }
@@ -120,6 +120,10 @@ export const scored_on_hole = (username: string | null) => {
     const state = players.get(username);
     if (!state) {
         throw new Error(`Player ${username} not found`);
+    }
+
+    if (state.finished_this_hole) {
+        return;
     }
 
     state.finished_this_hole = true;
@@ -133,7 +137,13 @@ export const scored_on_hole = (username: string | null) => {
     console.log(`Player ${username} scored on hole ${current_hole} with ${state.strokes_this_hole} strokes`);
 
     const par = (start_marker.properties.par ?? 3) as number; // default par to 3 if not specified
-    show_result(username, state.strokes_this_hole, par);
+    await show_result(username, state.strokes_this_hole, par);
+
+    // after the result shown, if all players have finished, move to the next hole
+    const all_finished = Array.from(players.values()).every((s) => s.finished_this_hole);
+    if (all_finished) {
+        next_hole();
+    }
 }
 
 export const take_stroke = (username: string | null) => {
@@ -144,6 +154,10 @@ export const take_stroke = (username: string | null) => {
     const state = players.get(username);
     if (!state) {
         throw new Error(`Player ${username} not found`);
+    }
+
+    if (state.finished_this_hole) {
+        return;
     }
 
     state.strokes_this_hole++;

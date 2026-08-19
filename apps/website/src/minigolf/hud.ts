@@ -26,19 +26,18 @@ interface HoleExtraDetails {
     par?: number;
 }
 
-const hole_huds = new Map<number, typeof h.HUDTextHandle>();
-const par_huds = new Map<number, typeof h.HUDTextHandle>();
+let hole_hud: typeof h.HUDTextHandle | null = null;
+let par_hud: typeof h.HUDTextHandle | null = null;
 
 export const show_hole = async (hole_number: number, details: HoleExtraDetails = {}) => {
-    if (!hole_huds.has(hole_number)) {
+    if (!hole_hud) {
         const hole_text = await h.hud_text("hole", details.nickname ? `Hole ${hole_number}: ${details.nickname}` : `Hole ${hole_number}`)
             .set_slot("top-center")
             .set_font_size(36)
             .create();
 
-        hole_huds.set(hole_number, hole_text);
+        hole_hud = hole_text;
     } else {
-        const hole_hud = hole_huds.get(hole_number)!;
         hole_hud.set_text(details.nickname ? `Hole ${hole_number}: ${details.nickname}` : `Hole ${hole_number}`);
     }
 
@@ -46,15 +45,14 @@ export const show_hole = async (hole_number: number, details: HoleExtraDetails =
         details.par = 3; // default par if not provided
     }
 
-    if (!par_huds.has(hole_number)) {
+    if (!par_hud) {
         const par_text = await h.hud_text("par", `Par ${details.par}`)
             .set_slot("top-right")
             .set_font_size(36)
             .create();
 
-        par_huds.set(hole_number, par_text);
+        par_hud = par_text;
     } else {
-        const par_hud = par_huds.get(hole_number)!;
         par_hud.set_text(`Par ${details.par}`);
     }
 }

@@ -2,7 +2,7 @@ import { add_player, get_owner_of_ball, load_start_markers, next_hole, scored_on
 import { countdown_to_start } from "./hud";
 
 
-const COURSE_POS = [0, 1, 0] as [number, number, number];
+const COURSE_POS = [0, 0, -10] as [number, number, number];
 
 let starting = false;
 const start_game = async () => {
@@ -44,7 +44,7 @@ hyperlinkvr.on_ready(async () => {
 
     // dispatch course first and await to ensure colliders catch putters and balls
     await new h.EngineObjectDispatchBuilder(course)
-        .set_position(0, 1, 0)
+        .set_position(COURSE_POS)
         .create()
 
     const trigger_dummy = new h.CustomObjectBuilder()
@@ -100,7 +100,7 @@ hyperlinkvr.on_ready(async () => {
         .build();
 
     const creatable_start_button = new h.EngineObjectDispatchBuilder(start_button)
-        .set_position(COURSE_POS[0], COURSE_POS[1] + 0.75, COURSE_POS[2] - 3)
+        .set_position(0, 1.5, -3)
         .on("start_button", async (e) => {
             if (e.kind !== "button-prefab") return;
             if (e.payload.type === "press") {
@@ -120,6 +120,6 @@ hyperlinkvr.on_ready(async () => {
 });
 
 hyperlinkvr.players.on_spawn((p) => {
-    p.teleport_to([COURSE_POS[0], COURSE_POS[1] + 0.5, COURSE_POS[2]]);
+    p.teleport_to([0, 0, 0], 0);
     add_player(p);
 });
