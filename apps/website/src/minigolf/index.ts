@@ -1,4 +1,4 @@
-import { add_player, load_start_markers, next_hole } from "./game_state";
+import { add_player, get_owner_of_ball, load_start_markers, next_hole, scored_on_hole} from "./game_state";
 import { countdown_to_start } from "./hud";
 
 
@@ -73,7 +73,22 @@ hyperlinkvr.on_ready(async () => {
 
         promises.push(
             new h.EngineObjectDispatchBuilder(trigger_dummy)
-                .on("trigger", () => console.log(`scored on hole ${marker.name}`))
+                .on("trigger", (e) => {
+                    if (e.kind !== "trigger-volume") return;
+                    if (e.payload.type !== "enter") return;
+
+                    const interacted = e.payload.interacted;
+                    if (!interacted || interacted.type !== "object") return;
+
+                    const object_id = interacted.object_id;
+                    const owner = get_owner_of_ball(object_id);
+                    if (owner === undefined) {
+                        console.warn(`No owner found for ball ${object_id}`);
+                        return;
+                    }
+
+                    scored_on_hole(owner);
+                })
                 .set_transform(marker.transform)
                 .create()
         )

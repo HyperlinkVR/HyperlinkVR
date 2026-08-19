@@ -59,7 +59,7 @@ export const GolfPutter = (props: PrefabProps<GolfPutterPrefab>) => {
             }}>
                 <primitive object={body_instance} />
 
-                <Grabbable grab_offset={[0, 0, 0.1]} grab_rotation={[Math.PI/4, 0, 0]}>
+                <Grabbable grab_offset={[0, 0, 0.1]} grab_rotation={[Math.PI/4, 0, 0]} sticky={true}>
                     <primitive object={handle_instance} />
                 </Grabbable>
             </ObjectPhysics>

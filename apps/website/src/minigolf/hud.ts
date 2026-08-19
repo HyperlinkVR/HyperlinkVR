@@ -21,25 +21,94 @@ export const countdown_to_start = async () => {
     });
 }
 
-export const show_hole = async (hole_number: number) => {
-    const hole_text = await h.hud_text("hole", `Hole ${hole_number}`)
-        .set_slot("top-center")
-        .set_font_size(36)
-        .create();
-
-    setTimeout(() => {
-        hole_text.destroy();
-    }, 3000);
+interface HoleExtraDetails {
+    nickname?: string;
+    par?: number;
 }
 
+const hole_huds = new Map<number, typeof h.HUDTextHandle>();
+const par_huds = new Map<number, typeof h.HUDTextHandle>();
+
+export const show_hole = async (hole_number: number, details: HoleExtraDetails = {}) => {
+    if (!hole_huds.has(hole_number)) {
+        const hole_text = await h.hud_text("hole", details.nickname ? `Hole ${hole_number}: ${details.nickname}` : `Hole ${hole_number}`)
+            .set_slot("top-center")
+            .set_font_size(36)
+            .create();
+
+        hole_huds.set(hole_number, hole_text);
+    } else {
+        const hole_hud = hole_huds.get(hole_number)!;
+        hole_hud.set_text(details.nickname ? `Hole ${hole_number}: ${details.nickname}` : `Hole ${hole_number}`);
+    }
+
+    if (!details.par) {
+        details.par = 3; // default par if not provided
+    }
+
+    if (!par_huds.has(hole_number)) {
+        const par_text = await h.hud_text("par", `Par ${details.par}`)
+            .set_slot("top-right")
+            .set_font_size(36)
+            .create();
+
+        par_huds.set(hole_number, par_text);
+    } else {
+        const par_hud = par_huds.get(hole_number)!;
+        par_hud.set_text(`Par ${details.par}`);
+    }
+}
+
+const player_stroke_huds = new Map<string | null, typeof h.HUDTextHandle>();
+
 export const show_stroke = async (stroke_number: number, username: string | null) => {
-    const stroke_text = await h.hud_text("stroke", `Stroke ${stroke_number}`)
+    if (!player_stroke_huds.has(username)) {
+        const stroke_text = await h.hud_text("stroke", `Stroke ${stroke_number}`)
+            .set_slot("top-left")
+            .set_font_size(36)
+            .player(username)
+            .create();
+
+        player_stroke_huds.set(username, stroke_text);
+        return;
+    }
+
+    const stroke_hud = player_stroke_huds.get(username)!;
+    stroke_hud.set_text(`Stroke ${stroke_number}`);
+}
+
+const PAR_DIFFS = {
+    "-2": "Eagle",
+    "-1": "Birdie",
+    "0": "Par",
+    "1": "Bogey",
+    "2": "Double Bogey",
+    "3": "Triple Bogey",
+    // past this just show the score
+} as const;
+
+const get_result_text = (strokes: number, par: number) => {
+    if (strokes === 1) {
+        return "Hole-in-one!";
+    }
+
+    const diff = strokes - par;
+    if (diff in PAR_DIFFS) {
+        return PAR_DIFFS[diff as unknown as keyof typeof PAR_DIFFS];
+    }
+
+    return `${strokes} strokes`;
+}
+
+export const show_result = async (username: string | null, strokes: number, par: number) => {
+    const result_text = get_result_text(strokes, par);
+    const result_hud = await h.hud_text("result", result_text)
         .set_slot("middle-center")
-        .set_font_size(36)
+        .set_font_size(48)
         .player(username)
         .create();
 
     setTimeout(() => {
-        stroke_text.destroy();
-    }, 2000);
+        result_hud.destroy();
+    }, 4000);
 }
