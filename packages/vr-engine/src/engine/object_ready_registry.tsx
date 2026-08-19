@@ -81,13 +81,14 @@ const ObjectReadyPoll = ({
     on_ready: () => void;
 }) => {
     useFrame(() => {
-        if (has_physics) {
-            // wait for the first frame where the rigid body has colliders (assumes all or most are loaded at once, typically the case with rapier)
-            const body = refs?.rigid_body.current;
-            if (!body || body.numColliders() === 0) return;
-        }
+        const body = refs?.rigid_body.current;
 
-        // without physics, this falls straight through to ready on the first frame, which was the previous behaviour and fine for non-physics objects
+        // custom objects declare physics up front with has_physics, so wait even before the body has mounted
+        // prefabs don't declare it but their ObjectPhysics populates refs.rigid_body on mount, so a present body means we should wait on its colliders
+        if (has_physics && !body) return;
+        if (body && body.numColliders() === 0) return;
+
+        // no physics body expected or present so ready on the first frame, as before
         on_ready();
     });
 
