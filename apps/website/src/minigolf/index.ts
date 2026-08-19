@@ -1,4 +1,19 @@
+import { add_player, next_hole } from "./game_state";
+import { countdown_to_start } from "./hud";
+
+
 const COURSE_POS = [0, 1, 0] as [number, number, number];
+
+let starting = false;
+const start_game = async () => {
+    if (starting) return;
+
+    starting = true;
+    await countdown_to_start();
+
+    // go to first hole
+    next_hole();
+};
 
 hyperlinkvr.on_ready(async () => {
     await hyperlinkvr.connect();
@@ -6,7 +21,7 @@ hyperlinkvr.on_ready(async () => {
 
     const h = hyperlinkvr.builders;
 
-    const promises = [];
+    const promises: Promise<typeof h.EngineObjectCreationResult>[] = [];
 
     const course = new h.CustomObjectBuilder()
         .set_mesh("./course.glb")
@@ -27,8 +42,7 @@ hyperlinkvr.on_ready(async () => {
         .build();
 
     // dispatch course first and await to ensure colliders catch putters and balls
-    await new h.EngineObjectDispatchBuilder()
-        .set_object(course)
+    await new h.EngineObjectDispatchBuilder(course)
         .set_position(0, 1, 0)
         .create()
 
@@ -50,44 +64,38 @@ hyperlinkvr.on_ready(async () => {
             position: COURSE_POS
         }
     });
+
     markers.forEach((marker) => {
         // create trigger volume at the marker
         // could add these all to the course mesh, but easier to just make separate dummies
 
-        new h.EngineObjectDispatchBuilder()
-            .set_object(trigger_dummy)
-            .on("trigger", () => console.log(`scored on hole ${marker.name}`))
-            .set_transform(marker.transform)
-            .create();
+        promises.push(
+            new h.EngineObjectDispatchBuilder(trigger_dummy)
+                .on("trigger", () => console.log(`scored on hole ${marker.name}`))
+                .set_transform(marker.transform)
+                .create()
+        )
     });
 
-    for (let i = 0; i < 5; i++) {
-        const x = i - 2.5;
+    const start_button = new h.ButtonPrefabBuilder()
+        .named("start_button")
+        .set_label("Start")
+        .build();
 
-        // random neon putter color, and the ball automatically matches just like real mini golf :)
-        const putter = new h.GolfPutterPrefabBuilder().random_color().build();
-        const ball = new h.GolfBallPrefabBuilder()
-            .named("ball")
-            .set_color(putter.color)
-            .build();
+    const creatable_start_button = new h.EngineObjectDispatchBuilder(start_button)
+        .set_position(COURSE_POS[0], COURSE_POS[1] + 0.75, COURSE_POS[2] - 3)
+        .on("start_button", async (e) => {
+            if (e.kind !== "button-prefab") return;
+            if (e.payload.type === "press") {
+                start_game();
 
-        promises.push(
-            new h.EngineObjectDispatchBuilder()
-                .set_object(putter)
-                .set_position(x, 3, -1)
-                .create()
-        );
+                // guaranteed to exist but need to unwrap promise with await
+                (await creatable_start_button).destroy();
+            }
+        })
+        .create()
 
-        promises.push(
-            new h.EngineObjectDispatchBuilder()
-                .set_object(ball)
-                .set_position(x, 2.5, -2)
-                .on("ball", async (event) => {
-                    console.log(`Ball ${i}`, event);
-                })
-                .create()
-        );
-    }
+    promises.push(creatable_start_button);
 
     await Promise.all(promises);
 
@@ -96,4 +104,5 @@ hyperlinkvr.on_ready(async () => {
 
 hyperlinkvr.players.on_spawn((p) => {
     p.teleport_to([COURSE_POS[0], COURSE_POS[1] + 0.5, COURSE_POS[2]]);
+    add_player(p);
 });

@@ -39,18 +39,24 @@ export class Player {
         this.#selected_username = username;
     }
 
-    get_selected_username(): string | null {
+    get_stored_username(): string | null {
         return this.#selected_username;
     }
 
-    async get_username(): Promise<string> {
+    async get_username(): Promise<string  | null> {
         if (this.#selected_username !== null) {
+            // a null here means local player was passed, not necessarily that the player isn't logged in
             return this.#selected_username;
         }
 
         const res = await whoami();
-        if (!res || !res.info || !res.info.identity) {
+        if (!res) {
             throw new Error("Failed to get player identity");
+        }
+
+        if (res.info === null) {
+            // guest mode
+            return null;
         }
 
         const {identity} = res.info;

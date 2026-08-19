@@ -28,8 +28,7 @@ const sword = new CustomObjectBuilder()
     )
     .build();
 
-const created_sword = await new EngineObjectDispatchBuilder()
-    .set_object(sword)
+const created_sword = await new EngineObjectDispatchBuilder(sword)
     .set_position(0, 1, -2)
     .add_monitor(
         // we also recieve an event when being swung faster than 5 rads/s in any direction
@@ -60,8 +59,7 @@ const button = new ButtonPrefabBuilder()
     .set_color(0xff0000)
     .build();
 
-const created_button = await new EngineObjectDispatchBuilder()
-    .set_object(button)
+const created_button = await new EngineObjectDispatchBuilder(button)
     .set_position(1, 1, -2)
     .on("my_button", (event) => console.log("button event:", event))
     .create();

@@ -21,16 +21,31 @@ import {subscribe_report} from "../event_bus";
 import {send_via_rtc} from "../messenger";
 import {_INTERACTION_API_MAKERS} from "./interactions";
 import type {BindingMap} from "./triggers";
+import { _PREFAB_API_MAKERS } from "./prefabs";
 
-export interface EngineObjectCreationResult {
+interface EngineObjectCreationResultBase {
     object: CreatedEngineObject;
-    interactions: Record<string, Function>; // interaction apis
     bindings: BindingMap; // map of binding names to their ids for automatic trigger resolution
     channels: string[]; // list of animation channels on this object (which can be used for keyframing)
     destroy: () => Promise<void>;
     modify: () => EngineObjectModificationBuilder;
     refresh: () => Promise<void>;
 }
+
+export interface EngineCustomObjectCreationResult extends EngineObjectCreationResultBase {
+    interactions: Record<string, Function>; // interaction apis
+    object: CreatedEngineObject & { type: "custom" }; // override type to custom
+}
+
+export interface EnginePrefabObjectCreationResult extends EngineObjectCreationResultBase {
+    prefab: Record<string, Function>; // prefab api
+    object: CreatedEngineObject & { type: "prefab" }; // override type to prefab
+}
+
+export type EngineObjectCreationResult<Type extends "custom" | "prefab" = "custom" | "prefab"> =
+    Type extends "custom" ? EngineCustomObjectCreationResult :
+    Type extends "prefab" ? EnginePrefabObjectCreationResult :
+    never;
 
 // triggers are authored against binding names, but the engine only ever routes on the id
 // the map is built once at create time and carried forward so later modifications can resolve the same names without the engine having to store them
@@ -394,16 +409,12 @@ class EngineObjectModificationBuilder extends BaseBuilder<EngineObjectModificati
     }
 }
 
-export class EngineObjectDispatchBuilder extends BaseBuilder<EngineObjectDispatchInput> {
+export class EngineObjectDispatchBuilder<T extends EngineObject = EngineObject> extends BaseBuilder<EngineObjectDispatchInput> {
     #callbacks = new Map<string, (event: ReportEvent) => void>();
 
-    constructor() {
-        super({} as EngineObjectDispatchInput);
-    }
-
-    set_object(object: EngineObject) {
-        this._internal.object = object;
-        return this;
+    // capture concrete type of object to narrow create() return type
+    constructor(object: T) {
+        super({object} as EngineObjectDispatchInput);
     }
 
     set_position(x_or_vect: number, y?: number, z?: number) {
@@ -652,23 +663,34 @@ export class EngineObjectDispatchBuilder extends BaseBuilder<EngineObjectDispatc
             }
         }
 
-        const bind_interaction_apis = (object_id: string) => {
-            const apis: Record<string, Function> = {};
+        const bind_apis = (object_id: string) => {
+            const interaction_apis: Record<string, Function> = {};
+            let prefab_api: Record<string, Function> = {};
 
             // finalise binding of every api with the object id
             for (const api of Object.entries(partially_bound_interaction_apis)) {
-                apis[api[0]] = api[1](object_id);
+                interaction_apis[api[0]] = api[1](object_id);
             }
 
-            return apis;
+            // if this is a prefab, bind its api if it has one to bind
+            if (dispatch.object.type === "prefab" && dispatch.object.name in _PREFAB_API_MAKERS) {
+                // binding id not actually needed for prefabs as they're exclusive
+                const make_api = _PREFAB_API_MAKERS[dispatch.object.name];
+                prefab_api = make_api(object_id);
+            }
+
+            return {
+                interactions: interaction_apis,
+                prefab: prefab_api
+            }
         }
 
-        return {unsubscribes, bind_interaction_apis, binding_ids};
+        return {unsubscribes, bind_apis, binding_ids};
     }
 
-    async create(): Promise<EngineObjectCreationResult> {
+    async create(): Promise<EngineObjectCreationResult<T["type"]>> {
         const built_object = this.build();
-        const {unsubscribes, bind_interaction_apis, binding_ids} = this.#bind_callbacks(built_object);
+        const {unsubscribes, bind_apis, binding_ids} = this.#bind_callbacks(built_object);
 
         try {
             const created = (await send_via_rtc({
@@ -677,10 +699,13 @@ export class EngineObjectDispatchBuilder extends BaseBuilder<EngineObjectDispatc
             }));
             // TODO: handle timeouts and errors
 
+            const apis = bind_apis(created.object.id);
+
             let burned = false;
             const ret_val = {
                 object: Object.freeze(created.object),
-                interactions: bind_interaction_apis(created.object.id),
+                interactions: apis.interactions,
+                prefab: apis.prefab,
                 bindings: new Map(binding_ids), // clone so the caller can't mutate the internal map
                 channels: created.channels || [],
                 destroy: async () => {
@@ -718,9 +743,10 @@ export class EngineObjectDispatchBuilder extends BaseBuilder<EngineObjectDispatc
 
                     ret_val.object = Object.freeze(refreshed.object);
                 }
-            } satisfies EngineObjectCreationResult;
+            };
 
-            return ret_val;
+            // narrow the reply by the passed in object type, as the engine is going to respond with the same type as was sent, but the type system doesn't know that
+            return ret_val as unknown as EngineObjectCreationResult<T["type"]>;
         } catch (e) {
             for (const unsubscribe of unsubscribes) {
                 unsubscribe();

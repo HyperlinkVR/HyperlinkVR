@@ -1,21 +1,11 @@
-import {BaseBuilder} from "./base";
-import {
-    BasketballHoopPrefab,
-    BasketballHoopPrefabInput, BasketballHoopPrefabSchema,
-    ButtonPrefab,
-    ButtonPrefabInput,
-    ButtonPrefabSchema, FloatingText2DPrefab, FloatingText2DPrefabSchema, FloatingText3DPrefab,
-    FloatingText3DPrefabSchema,
-    GolfBallPrefab, GolfBallPrefabInput,
-    GolfBallPrefabSchema, GolfPutterPrefab, GolfPutterPrefabInput, GolfPutterPrefabSchema,
-    HexColor, HexColorSchema,
-    HexNumericalColor,
-    HexNumericalColorSchema, ReflectiveMirrorPrefab, ReflectiveMirrorPrefabInput, ReflectiveMirrorPrefabSchema,
-    StandardPrefab, StandardPrefabInput, StandardPrefabName,
-    StandardPrefabSchema, TextPrefabBaseInput, TextSignPrefab, TextSignPrefabSchema
-} from "@hyperlinkvr/vr-engine-schemas";
-import {HSVHueBagRandomiser, to_hex} from "../color";
+import { BasketballHoopPrefab, BasketballHoopPrefabInput, BasketballHoopPrefabSchema, ButtonPrefab, ButtonPrefabInput, ButtonPrefabSchema, FloatingText2DPrefab, FloatingText2DPrefabSchema, FloatingText3DPrefab, FloatingText3DPrefabSchema, GolfBallPrefab, GolfBallPrefabInput, GolfBallPrefabSchema, GolfPutterPrefab, GolfPutterPrefabInput, GolfPutterPrefabSchema, HexColor, HexColorSchema, HexNumericalColor, HexNumericalColorSchema, ReflectiveMirrorPrefab, ReflectiveMirrorPrefabInput, ReflectiveMirrorPrefabSchema, StandardPrefab, StandardPrefabInput, StandardPrefabName, StandardPrefabSchema, TextPrefabBaseInput, TextSignPrefab, TextSignPrefabSchema } from "@hyperlinkvr/vr-engine-schemas";
+
+
+
+import { HSVHueBagRandomiser, to_hex } from "../color";
 import { send_via_rtc } from "../messenger";
+import { BaseBuilder } from "./base";
+
 
 const prefab_command = async (object_id: string, command: string, args?: any) => {
     try {
@@ -286,3 +276,8 @@ export class GolfPutterPrefabBuilder extends BaseBuilder<GolfPutterPrefabInput> 
         return GolfPutterPrefabSchema.parse(this._internal);
     }
 }
+
+
+export const _PREFAB_API_MAKERS = {
+    "golf_ball": GolfBallPrefabBuilder._make_api
+} as Record<string, (object_id: string) => any>;

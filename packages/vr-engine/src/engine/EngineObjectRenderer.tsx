@@ -136,8 +136,7 @@ const button = new h.ButtonPrefabBuilder()
     .set_color(0xff0000)
     .build();
 
-const created_button = await new h.EngineObjectDispatchBuilder()
-    .set_object(button)
+const created_button = await new h.EngineObjectDispatchBuilder(button)
     .set_position(1, 1, -2)
     .create();
 
@@ -160,8 +159,7 @@ const duck = new h.CustomObjectBuilder()
     )
     .build();
 
-const created_duck = await new h.EngineObjectDispatchBuilder()
-    .set_object(duck)
+const created_duck = await new h.EngineObjectDispatchBuilder(duck)
     .set_position(0, 1, -2)
     .create();
 

@@ -38,8 +38,7 @@ const TARGET_MESH = "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-
 
 const targets = await Promise.all(
     [-1.5, 0, 1.5].map((x, index) =>
-        new h.EngineObjectDispatchBuilder()
-            .set_object(new h.CustomObjectBuilder()
+        new h.EngineObjectDispatchBuilder(new h.CustomObjectBuilder()
                 .set_mesh(TARGET_MESH)
                 .set_physics(new h.PhysicsSystemBuilder()
                     .set_rigid_body(new h.FixedRigidBodyBuilder()
@@ -91,8 +90,7 @@ const pistol = new h.CustomObjectBuilder()
     )
     .build();
 
-const created_pistol = await new h.EngineObjectDispatchBuilder()
-    .set_object(pistol)
+const created_pistol = await new h.EngineObjectDispatchBuilder(pistol)
     .set_position(0, 1.1, -1)
     // fires in the same frame as the press, so the ray leaves the muzzle where the muzzle actually was rather than a round trip later
     .add_trigger(new h.TriggerBuilder("grip")

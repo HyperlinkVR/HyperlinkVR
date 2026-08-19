@@ -364,8 +364,7 @@ const platform = new h.CustomObjectBuilder()
     )
     .build();
 
-const created_lift = await new h.EngineObjectDispatchBuilder()
-    .set_object(platform)
+const created_lift = await new h.EngineObjectDispatchBuilder(platform)
     .set_position(0, 0.2, -4)
     .create();
 
@@ -378,8 +377,7 @@ const lamp = new h.CustomObjectBuilder()
         .build())
     .build();
 
-const created_lamp = await new h.EngineObjectDispatchBuilder()
-    .set_object(lamp)
+const created_lamp = await new h.EngineObjectDispatchBuilder(lamp)
     .set_position(0, 3, -4)
     .create();
 
@@ -419,8 +417,7 @@ const button = new h.ButtonPrefabBuilder()
     .set_body_color(0xff0000)
     .build();
 
-await new h.EngineObjectDispatchBuilder()
-    .set_object(button)
+await new h.EngineObjectDispatchBuilder(button)
     .set_position(1, 1, -2)
     .add_trigger(new h.TriggerBuilder("pulse_button")
         .add_target(new h.TriggerTargetBuilder(

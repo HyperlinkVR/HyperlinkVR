@@ -31,8 +31,7 @@
         )
         .build();
 
-        const created_duck = await new h.EngineObjectDispatchBuilder()
-            .set_object(duck)
+        const created_duck = await new h.EngineObjectDispatchBuilder(duck)
             .set_position(0, 10, -2)
             .on("squeak", async () => {
                 await created_duck.interactions.sound.seek(0);
