@@ -180,3 +180,51 @@ export const stroke_at_rest = (username: string | null) => {
 
     show_stroke(state.strokes_this_hole + 1, username);
 }
+
+
+const dev_cheats = {
+    skip_to_hole: (hole_number: number) => {
+        if (!start_markers) {
+            throw new Error("Start markers not loaded yet");
+        }
+
+        const start_marker = start_markers.get(hole_number.toString());
+        if (!start_marker) {
+            throw new Error(`Start marker for hole ${hole_number} not found`);
+        }
+
+        current_hole = hole_number;
+
+        for (const [username, state] of players.entries()) {
+            state.strokes_this_hole = 0;
+            state.finished_this_hole = false;
+
+            // teleport ball to hole start point defined by marker
+            state.ball.modify().set_position(start_marker.transform.position).apply();
+
+            show_stroke(1, username);
+        }
+
+        show_hole(current_hole, start_marker.properties);
+    },
+
+    tp_to_start: (hole_number: number) => {
+        if (!start_markers) {
+            throw new Error("Start markers not loaded yet");
+        }
+
+        const start_marker = start_markers.get(hole_number.toString());
+        if (!start_marker) {
+            throw new Error(`Start marker for hole ${hole_number} not found`);
+        }
+
+        for (const [username, state] of players.entries()) {
+            const player = new hyperlinkvr.players.Player(username);
+            player.teleport_to(start_marker.transform.position, 0);
+        }
+    }
+};
+
+if (process.env.NODE_ENV === "development") {
+    (window as any).dev_cheats = dev_cheats;
+}
