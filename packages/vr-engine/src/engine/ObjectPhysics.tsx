@@ -348,6 +348,11 @@ export const ObjectPhysics = ({
 
     const rb = physics.rigid_body ?? { type: "fixed" as const };
 
+    // kinematic-pos objects are posed by their owning group (refs.root) and driven each frame by
+    // useKinematicPosition, so applying the dispatch transform to the body too would double it.
+    // body-owned types (fixed/dynamic/kinematic-vel) place the body directly from the transform.
+    const body_transform = rb.type === "kinematic-pos" ? undefined : transform;
+
     const local_ref = useRef<RapierRigidBody>(null);
     const rb_ref = refs?.rigid_body || local_ref;
 
@@ -477,8 +482,8 @@ export const ObjectPhysics = ({
                 ref={rb_ref}
                 name={body_name}
                 type={RB_TYPE[rb.type]}
-                position={transform?.position}
-                quaternion={transform ? rotation_to_quaternion_array(transform.rotation) : undefined}
+                position={body_transform?.position}
+                quaternion={body_transform ? rotation_to_quaternion_array(body_transform.rotation) : undefined}
                 colliders={auto_strategy}
 
                 {...collision_group_props}

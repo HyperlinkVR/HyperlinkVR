@@ -278,3 +278,16 @@ export const load_markers = async (url: string | URL, options: Partial<LoadMarke
 }
 
 // TODO: more natural api for translating markers to an object, maybe even track motion
+
+export const subset = (markers: Map<string, Marker>, name_regex: RegExp, remove_regex_match = true): Map<string, Marker> => {
+    const subset: Map<string, Marker> = new Map();
+
+    markers.forEach((marker, name) => {
+        if (name_regex.test(name)) {
+            const resolved_name = remove_regex_match ? name.replace(name_regex, "") : name;
+            subset.set(resolved_name, marker);
+        }
+    });
+
+    return subset;
+}

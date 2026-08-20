@@ -1,5 +1,6 @@
-import { add_player, get_owner_of_ball, load_start_markers, next_hole, scored_on_hole} from "./game_state";
+import { add_player, get_owner_of_ball, next_hole, scored_on_hole} from "./game_state";
 import { countdown_to_start } from "./hud";
+import { get_hole_markers, get_marker, load_all_markers } from "./markers";
 
 
 const COURSE_POS = [0, 0, -10] as [number, number, number];
@@ -9,7 +10,6 @@ const start_game = async () => {
     if (starting) return;
 
     starting = true;
-    await load_start_markers(COURSE_POS);
     await countdown_to_start();
 
     // go to first hole
@@ -60,12 +60,9 @@ hyperlinkvr.on_ready(async () => {
         )
         .build();
 
-    const hole_markers = await hyperlinkvr.markers.load("./course.glb", {
-        transform_offset: {
-            position: COURSE_POS
-        },
-        name_regex: /^marker_hole_/i,
-    });
+    await load_all_markers(COURSE_POS);
+
+    const hole_markers = get_hole_markers();
 
     hole_markers.forEach((marker) => {
         // create trigger volume at the marker
@@ -115,6 +112,45 @@ hyperlinkvr.on_ready(async () => {
     promises.push(creatable_start_button);
 
     await Promise.all(promises);
+
+    const waterwheel = new h.CustomObjectBuilder()
+        .set_mesh("./waterwheel_vis.glb")
+        .set_physics(
+            new h.PhysicsSystemBuilder()
+                .set_rigid_body(
+                    new h.KinematicPosRigidBodyBuilder()
+                        .set_collider(
+                            new h.ColliderBuilder()
+                                .custom_mesh("./waterwheel_vis.glb", "trimesh")
+                                .build()
+                        )
+                        .build()
+                )
+                .build()
+        )
+        .build();
+
+    const waterwheel_marker = get_marker("waterwheel");
+
+    const created_waterwheel = await new h.EngineObjectDispatchBuilder(waterwheel)
+        .set_transform(waterwheel_marker.transform)
+        .create();
+
+    // 3 rpm rotation (20 seconds per rotation)
+    const SINE_45 = 0.7071;
+    await new h.AnimationBuilder()
+        .add_track(
+            h.KeyframeTrackBuilder.rotation(created_waterwheel)
+                .add_keyframe(0,     [0,        0, 0, 1])         // 0
+                .add_keyframe(5000,  [-SINE_45, 0, 0, SINE_45])   // 90
+                .add_keyframe(10000, [-1,       0, 0, 0])         // 180
+                .add_keyframe(15000, [-SINE_45, 0, 0, -SINE_45])  // 270
+                .add_keyframe(20000, [0,        0, 0, -1])        // 360
+                .build()
+        )
+        .loops()
+        .autoplay()
+        .create();
 
     hyperlinkvr.finished_loading();
 });

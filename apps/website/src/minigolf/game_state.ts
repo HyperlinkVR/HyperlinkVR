@@ -1,7 +1,7 @@
-import type { Marker } from "@hyperlinkvr/web-sdk/src/markers";
-
 import { show_hole, show_result, show_stroke } from "./hud";
+import { get_start_markers } from "./markers";
 import type { Player } from "./types";
+
 
 const h = hyperlinkvr.builders;
 
@@ -66,21 +66,8 @@ let current_hole = 0;
 
 export const get_current_hole = () => current_hole;
 
-let start_markers: Map<string, Marker>;
-
-export const load_start_markers = async (offset_pos?: [number, number, number]) => {
-    start_markers = await hyperlinkvr.markers.load("./course.glb", {
-        transform_offset: {
-            position: offset_pos || [0, 0, 0]
-        },
-        name_regex: /^marker_start_/i,
-    });
-}
-
 export const next_hole = () => {
-    if (!start_markers) {
-        throw new Error("Start markers not loaded yet");
-    }
+    const start_markers = get_start_markers();
 
     current_hole++;
 
@@ -128,6 +115,8 @@ export const scored_on_hole = async (username: string | null) => {
 
     state.finished_this_hole = true;
     show_stroke(state.strokes_this_hole, username);
+
+    const start_markers = get_start_markers();
 
     const start_marker = start_markers.get(current_hole.toString());
     if (!start_marker) {
@@ -184,9 +173,7 @@ export const stroke_at_rest = (username: string | null) => {
 
 const dev_cheats = {
     skip_to_hole: (hole_number: number) => {
-        if (!start_markers) {
-            throw new Error("Start markers not loaded yet");
-        }
+        const start_markers = get_start_markers();
 
         const start_marker = start_markers.get(hole_number.toString());
         if (!start_marker) {
@@ -209,10 +196,7 @@ const dev_cheats = {
     },
 
     tp_to_start: (hole_number: number) => {
-        if (!start_markers) {
-            throw new Error("Start markers not loaded yet");
-        }
-
+        const start_markers = get_start_markers();
         const start_marker = start_markers.get(hole_number.toString());
         if (!start_marker) {
             throw new Error(`Start marker for hole ${hole_number} not found`);

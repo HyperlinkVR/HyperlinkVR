@@ -78,16 +78,19 @@ export const EngineObjectRenderer = ({ data }: { data: CreatedEngineObject }) =>
         });
     }, [data.id]);
 
-    // a physics object's pose is owned by its rigid body so the outer group must stay at identity or the mesh double-transforms
-    // a non-physics object's pose is owned by this group
+    // a body-owned pose (fixed/dynamic/kinematic-vel) lives on the rigid body, so the outer group must
+    // stay at identity or the mesh double-transforms. a kinematic-pos or non-physics object is posed by
+    // this group instead — matching body_owns_pose_for, which the animation channel writes rely on.
     const has_physics = data.object.type === "custom" && !!data.object.physics;
+    const rb_type = data.object.type === "custom" ? data.object.physics?.rigid_body?.type : undefined;
+    const body_owns_pose = has_physics && rb_type !== "kinematic-pos";
     // TODO: what about prefabs? or do they not need considering here as they can fully own their pose. but this also affects ready marker now
 
     useLayoutEffect(() => {
         const group = refs.current.root.current as Group | null;
         if (!group) return;
 
-        if (has_physics) {
+        if (body_owns_pose) {
             group.position.set(0, 0, 0);
             group.quaternion.identity();
             group.scale.set(1, 1, 1);
@@ -104,7 +107,7 @@ export const EngineObjectRenderer = ({ data }: { data: CreatedEngineObject }) =>
                 data.transform.scale[2]
             );
         }
-    }, [has_physics, data.transform]);
+    }, [body_owns_pose, data.transform]);
 
     return (
         <ObjectRefsProvider value={refs.current}>
