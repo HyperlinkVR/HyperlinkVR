@@ -375,6 +375,11 @@ export const ObjectPhysics = ({
 
     const { auto_strategy, ColliderComponent } = useCollider(collider);
 
+    // a kinematic-pos body's pose is owned by its tracked group, and rapier writes the body pose back onto the RigidBody's object
+    // if the visual sits inside the RigidBody while the tracked group (refs.root, via container_ref) is also animated, it gets rotated twice
+    // render the visual outside the RigidBody in this case, so it only gets animated by the tracked group
+    const decouple_visual = rb.type === "kinematic-pos" && !kinematic_pos_tracking_ref && !!ColliderComponent;
+
     const { world } = useRapier();
 
     // TODO: this is somewhat arbitrary, allow it to be overridden (maybe some fixed objects are indeed to be treated as props). otherwise could be lazy and rename the group to fixed and dynamic or something
@@ -493,8 +498,9 @@ export const ObjectPhysics = ({
                 onCollisionExit={report_collision_exit}
             >
                 {ColliderComponent && <ColliderComponent position={collider.offset} rotation={collider_rot_euler} />}
-                {children}
+                {!decouple_visual && children}
             </RigidBody>
+            {decouple_visual && children}
         </group>
     );
 };
