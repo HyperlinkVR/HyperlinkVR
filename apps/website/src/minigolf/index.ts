@@ -3,7 +3,7 @@ import {
     get_ball_of_player,
     get_owner_of_ball,
     next_hole,
-    scored_on_hole,
+    scored_on_hole, stroke_at_rest,
     take_stroke
 } from "./game_state";
 import { countdown_to_start } from "./hud";
@@ -369,6 +369,7 @@ hyperlinkvr.on_ready(async () => {
 
             // firing counts as a stroke
             take_stroke(e.payload.username);
+            stroke_at_rest(e.payload.username);
             ball.prefab.unlock();
 
             // animate the cannon
