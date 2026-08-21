@@ -250,7 +250,7 @@ hyperlinkvr.on_ready(async () => {
             "trigger",
             new h.TriggerVolumeInteractionBuilder()
                 .set_collider(
-                    new h.ColliderBuilder().box([1, 1, 1]).build()
+                    new h.ColliderBuilder().box([1.1, 1.1, 1.1]).build()
                 )
                 .include_objects(["golf_ball"])
                 .exclude_players()
@@ -306,7 +306,11 @@ hyperlinkvr.on_ready(async () => {
         target.transform.position
     );
 
-    const anim_vector = normalise_vector(velocity);
+    const anim_vector = normalise_vector([
+        target.transform.position[0] - cannon_marker.transform.position[0],
+        target.transform.position[1] - cannon_marker.transform.position[1],
+        target.transform.position[2] - cannon_marker.transform.position[2]
+    ]);
 
     // the cannon shoots back quickly against the vector, then returns to its original position
     const fire_animation = await new h.AnimationBuilder()
@@ -368,6 +372,7 @@ hyperlinkvr.on_ready(async () => {
             ball.prefab.unlock();
 
             // animate the cannon
+            await fire_animation.seek(0);
             fire_animation.play();
         })
         .create();

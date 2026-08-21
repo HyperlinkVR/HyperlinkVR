@@ -23,6 +23,7 @@ const find_handler_owner = (
     return null;
 };
 
+// TODO: limit distance (with devtools bypass? but need to ensure not used in multiplayer to avoid easy cheats)
 export const FlatClickRaycaster = () => {
     const { gl, camera, scene, events } = useThree();
 

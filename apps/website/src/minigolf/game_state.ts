@@ -236,6 +236,17 @@ const dev_cheats = {
         await state.ball.refresh();
         const ball_obj = state.ball.object;
         player.teleport_to(ball_obj.transform.position, ball_obj.transform.rotation[1]);
+    },
+
+    tp_ball_to_me: async (username: string | null = null) => {
+        const state = players.get(username);
+        if (!state) {
+            throw new Error(`Player ${username} not found`);
+        }
+
+        const player = new hyperlinkvr.players.Player(username);
+        const player_pos = await player.get_position();
+        state.ball.modify().set_position(player_pos.position).apply();
     }
 };
 
