@@ -32,3 +32,9 @@ export const calculate_launch_velocity = (
 
     return [[vx, vy, vz], t];
 }
+
+export const normalise_vector = (v: Vector3): Vector3 => {
+    const length = Math.sqrt(v[0] ** 2 + v[1] ** 2 + v[2] ** 2);
+    if (length === 0) return [0, 0, 0];
+    return [v[0] / length, v[1] / length, v[2] / length];
+}

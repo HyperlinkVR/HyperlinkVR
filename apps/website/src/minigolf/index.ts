@@ -8,7 +8,7 @@ import {
 } from "./game_state";
 import { countdown_to_start } from "./hud";
 import { get_custom_marker_subset, get_hole_markers, get_marker, load_all_markers } from "./markers";
-import { calculate_launch_velocity } from "./util";
+import { calculate_launch_velocity, normalise_vector } from "./util";
 
 
 const COURSE_POS = [0, 0, -10] as [number, number, number];
@@ -259,7 +259,7 @@ hyperlinkvr.on_ready(async () => {
         .build();
 
     const loaded_ball_ids = new Set<string>();
-    await new h.EngineObjectDispatchBuilder(cannon)
+    const created_cannon = await new h.EngineObjectDispatchBuilder(cannon)
         .on("trigger", (e) => {
             if (e.kind !== "trigger-volume") return;
 
@@ -297,14 +297,37 @@ hyperlinkvr.on_ready(async () => {
         .set_transform(cannon_marker.transform)
         .create();
 
+    const apex = get_marker("fire_apex");
+    const target = get_marker("fire_target");
+
+    const vector_to_apex = normalise_vector([
+        apex.transform.position[0] - cannon_marker.transform.position[0],
+        apex.transform.position[1] - cannon_marker.transform.position[1],
+        apex.transform.position[2] - cannon_marker.transform.position[2]
+    ]);
+
+    // the cannon shoots back quickly against the vector, then returns to its original position
+    const fire_animation = await new h.AnimationBuilder()
+        .named("fire_anim")
+        .add_track(
+            h.KeyframeTrackBuilder.position(created_cannon)
+                .add_keyframe(0, cannon_marker.transform.position)
+                .add_keyframe(100, [
+                    cannon_marker.transform.position[0] - vector_to_apex[0] * 0.5,
+                    cannon_marker.transform.position[1] - vector_to_apex[1] * 0.5,
+                    cannon_marker.transform.position[2] - vector_to_apex[2] * 0.5
+                ])
+                .add_keyframe(300, cannon_marker.transform.position)
+                .build()
+        )
+        .set_duration(500)
+        .create();
+
     const fire_button = new h.ButtonPrefabBuilder()
         .named("fire")
         .set_label("Fire!")
         .set_body_color(0xFF0000)
         .build();
-
-    const apex = get_marker("fire_apex");
-    const target = get_marker("fire_target");
 
     const fire_button_marker = get_marker("fire_button");
 
@@ -346,6 +369,9 @@ hyperlinkvr.on_ready(async () => {
             // firing counts as a stroke
             take_stroke(e.payload.username);
             ball.prefab.unlock();
+
+            // animate the cannon
+            fire_animation.play();
         })
         .create();
 
