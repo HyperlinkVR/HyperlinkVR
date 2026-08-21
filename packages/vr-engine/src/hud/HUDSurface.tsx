@@ -134,7 +134,7 @@ export const HUDSurface = ({
     }, [elements, username, anchor]);
 
     return (
-        <Container width={width} height={height} flexDirection="column" pixelSize={pixel_size} pointerEvents="none">
+        <Container width={width} height={height} flexDirection="column" pixelSize={pixel_size} pointerEvents="none" depthTest={false} depthWrite={false}>
             {VERTICALS.map((vertical) => (
                 <Container key={vertical} flexGrow={1} flexBasis={0} flexDirection="row">
                     {HORIZONTALS.map((horizontal) => (
