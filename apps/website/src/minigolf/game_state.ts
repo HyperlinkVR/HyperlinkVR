@@ -110,7 +110,7 @@ export const get_ball_of_player = (username: string | null) => {
 
 export const get_ball_by_object_id = (ball_object_id: string) => {
     const owner = get_owner_of_ball(ball_object_id);
-    if (!owner) {
+    if (owner === undefined) {
         throw new Error(`Ball with object ID ${ball_object_id} not found`);
     }
 
