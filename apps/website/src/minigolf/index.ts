@@ -152,6 +152,49 @@ hyperlinkvr.on_ready(async () => {
         .autoplay()
         .create();
 
+    // trigger hud message when they putt the ball through the volcano
+    const volcano_marker = get_marker("volcano");
+    const volcano_trigger_dummy = new h.CustomObjectBuilder()
+        .add_interaction(
+            "trigger",
+            new h.TriggerVolumeInteractionBuilder()
+                .set_collider(
+                    new h.ColliderBuilder().cylinder(1.5, 0.1).build()
+                )
+                .include_objects(["golf_ball"])
+                .exclude_players()
+                .build()
+        )
+        .build();
+
+    await new h.EngineObjectDispatchBuilder(volcano_trigger_dummy)
+        .on("trigger", async (e) => {
+            if (e.kind !== "trigger-volume") return;
+            if (e.payload.type !== "exit") return;
+
+            const interacted = e.payload.interacted;
+            if (!interacted || interacted.type !== "object") return;
+
+            const object_id = interacted.object_id;
+            const owner = get_owner_of_ball(object_id);
+            if (owner === undefined) {
+                console.warn(`No owner found for ball ${object_id}`);
+                return;
+            }
+
+            const hud = await h.hud_text("volcano", "Best jump in and follow it...")
+                .set_slot("middle-center")
+                .set_font_size(48)
+                .player(owner)
+                .create();
+
+            setTimeout(() => {
+                hud.destroy();
+            }, 3000);
+        })
+        .set_transform(volcano_marker.transform)
+        .create();
+
     hyperlinkvr.finished_loading();
 });
 
