@@ -1,6 +1,14 @@
-import { add_player, get_owner_of_ball, next_hole, scored_on_hole} from "./game_state";
+import {
+    add_player, get_ball_by_object_id,
+    get_ball_of_player,
+    get_owner_of_ball,
+    next_hole,
+    scored_on_hole,
+    take_stroke
+} from "./game_state";
 import { countdown_to_start } from "./hud";
-import { get_hole_markers, get_marker, get_custom_marker_subset, load_all_markers } from "./markers";
+import { get_custom_marker_subset, get_hole_markers, get_marker, load_all_markers } from "./markers";
+import { calculate_launch_velocity } from "./util";
 
 
 const COURSE_POS = [0, 0, -10] as [number, number, number];
@@ -222,7 +230,6 @@ hyperlinkvr.on_ready(async () => {
 
             const random_index = Math.floor(Math.random() * random_output_markers.length);
             const random_output_marker = random_output_markers[random_index]!;
-            console.log(random_output_marker);
 
             // teleport to random marker and apply impulse to simulate output speed
             // TODO: match output velocity to inbound speed
@@ -233,6 +240,112 @@ hyperlinkvr.on_ready(async () => {
                 .apply();
         })
         .set_transform(random_input_marker.transform)
+        .create();
+
+    // marker to capture and freeze ball at cannon
+    const cannon_marker = get_marker("cannon");
+    const cannon_trigger_dummy = new h.CustomObjectBuilder()
+        .add_interaction(
+            "trigger",
+            new h.TriggerVolumeInteractionBuilder()
+                .set_collider(
+                    new h.ColliderBuilder().box([1, 1, 1]).build()
+                )
+                .include_objects(["golf_ball"])
+                .exclude_players()
+                .build()
+        )
+        .build();
+
+    const loaded_ball_ids = new Set<string>();
+    await new h.EngineObjectDispatchBuilder(cannon_trigger_dummy)
+        .on("trigger", (e) => {
+            if (e.kind !== "trigger-volume") return;
+
+            const interacted = e.payload.interacted;
+            if (!interacted || interacted.type !== "object") return;
+
+            const object_id = interacted.object_id;
+
+            if (e.payload.type === "exit") {
+                loaded_ball_ids.delete(object_id);
+                return;
+            }
+
+            if (loaded_ball_ids.has(object_id)) {
+                return;
+            }
+
+            loaded_ball_ids.add(object_id);
+
+            new h.EngineObjectModificationBuilder(object_id)
+                .set_transform(cannon_marker.transform)
+                .set_velocity([0, 0, 0])
+                .set_angular_velocity([0, 0, 0])
+                .apply();
+
+            // disable interaction
+            const ball = get_ball_by_object_id(object_id);
+            if (!ball) {
+                console.warn(`No ball found for object ${object_id}`);
+                return;
+            }
+
+            ball.prefab.lock();
+        })
+        .set_transform(cannon_marker.transform)
+        .create();
+
+    const fire_button = new h.ButtonPrefabBuilder()
+        .named("fire")
+        .set_label("Fire!")
+        .set_body_color(0xFF0000)
+        .build();
+
+    const apex = get_marker("fire_apex");
+    const target = get_marker("fire_target");
+
+    const fire_button_marker = get_marker("fire_button");
+
+    await new h.EngineObjectDispatchBuilder(fire_button)
+        .set_transform(fire_button_marker.transform)
+        .on("fire", async (e) => {
+            if (e.kind !== "button-prefab") return;
+            if (e.payload.type !== "press") return;
+
+            const ball = get_ball_of_player(e.payload.username);
+            if (!ball) {
+                console.warn(`No ball found for player ${e.payload.username}`);
+                return;
+            }
+
+            if (!loaded_ball_ids.has(ball.object.id)) {
+                console.warn(`Ball ${ball.object.id} not loaded in cannon for player ${e.payload.username}`);
+                return;
+            }
+
+            // fire the ball at the computed velocity to follow the launch curve
+            const [velocity, time_s] = calculate_launch_velocity(
+                cannon_marker.transform.position,
+                apex.transform.position,
+                target.transform.position
+            );
+
+            // disable damping as our formula doesn't account for it, then re-enable after the flight time
+            await ball.prefab.set_damping_enabled(false);
+
+            await ball.modify()
+                .set_velocity(velocity)
+                .apply();
+
+            setTimeout(async () => {
+                await ball.prefab.set_damping_enabled(true);
+            }, time_s * 1000 + 100); // small buffer to ensure it makes it
+
+            // firing counts as a stroke
+            take_stroke(e.payload.username);
+            ball.prefab.unlock();
+        })
         .create();
 
     hyperlinkvr.finished_loading();

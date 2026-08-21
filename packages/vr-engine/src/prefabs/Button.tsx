@@ -168,13 +168,21 @@ export const Button = (props: ButtonProps) => {
 
     const emit_press_report = useCallback(() => {
         if (props.report_press) {
-            emit_report({kind: "button-prefab", payload: {type: "press"}});
+            // assumes local player for now
+            emit_report({
+                kind: "button-prefab",
+                payload: { type: "press", username: null }
+            });
         }
     }, [emit_report, props.report_press]);
 
     const emit_release_report = useCallback(() => {
         if (props.report_release) {
-            emit_report({kind: "button-prefab", payload: {type: "release"}});
+            // assumes local player for now
+            emit_report({
+                kind: "button-prefab",
+                payload: { type: "release", username: null }
+            });
         }
     }, [emit_report, props.report_release]);
 

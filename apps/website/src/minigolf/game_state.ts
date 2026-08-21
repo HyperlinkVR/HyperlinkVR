@@ -99,6 +99,24 @@ export const get_owner_of_ball = (ball_object_id: string) => {
     return undefined;
 }
 
+export const get_ball_of_player = (username: string | null) => {
+    const state = players.get(username);
+    if (!state) {
+        throw new Error(`Player ${username} not found`);
+    }
+
+    return state.ball;
+}
+
+export const get_ball_by_object_id = (ball_object_id: string) => {
+    const owner = get_owner_of_ball(ball_object_id);
+    if (!owner) {
+        throw new Error(`Ball with object ID ${ball_object_id} not found`);
+    }
+
+    return get_ball_of_player(owner);
+}
+
 export const scored_on_hole = async (username: string | null) => {
     if (current_hole === 0) {
         return;

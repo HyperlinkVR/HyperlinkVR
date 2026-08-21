@@ -118,6 +118,7 @@ export interface BasketballHoopPrefabPayload {
 
 export interface ButtonPrefabPayload {
     type: "press" | "release";
+    username: string | null;
 }
 
 interface GolfBallPrefabStruckPayload {

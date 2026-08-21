@@ -223,6 +223,11 @@ export class GolfBallPrefabBuilder extends BaseBuilder<GolfBallPrefabInput> {
         return this;
     }
 
+    set_damping_enabled(enabled: boolean) {
+        this._internal.damping = enabled;
+        return this;
+    }
+
     build(): GolfBallPrefab {
         return GolfBallPrefabSchema.parse(this._internal);
     }
@@ -237,7 +242,9 @@ export class GolfBallPrefabBuilder extends BaseBuilder<GolfBallPrefabInput> {
 
             // by default, this only clears the lock requested by the lock() command
             // in force mode, it will also clear the lock imposed by the ball itself (via locks_out, which prevents the ball from being putt until it comes to rest)
-            unlock: (force = false) => prefab_command(object_id, "unlock", {force})
+            unlock: (force = false) => prefab_command(object_id, "unlock", {force}),
+
+            set_damping_enabled: (enabled: boolean) => prefab_command(object_id, "set_damping_enabled", {enabled})
         };
     }
 }

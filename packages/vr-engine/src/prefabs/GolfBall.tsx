@@ -24,6 +24,9 @@ const REST_RADIUS = 0.02; // m, must stay within this window to count as settled
 const REST_FRAMES = 20; // consecutive qualifying frames before we call it
 const MAX_ROLL_MS = 8000; // hard cap so a ball that never fully stops can't hang the turn
 
+const LINEAR_DAMPING = 2.0;
+const ANGULAR_DAMPING = 1.0;
+
 export const GolfBall = (props: PrefabProps<GolfBallPrefab>) => {
     const {emit_report, on_prefab_command} = useObjectBinding(props.binding);
     const refs = useObjectRefsOptional();
@@ -82,6 +85,15 @@ export const GolfBall = (props: PrefabProps<GolfBallPrefab>) => {
                         setLockedUntilRest(false);
                     }
                     setSDKRequestedLock(false);
+                    break;
+                case "set_damping_enabled":
+                    if (typeof args?.enabled === "boolean") {
+                        const body = refs?.rigid_body.current;
+                        if (body) {
+                            body.setLinearDamping(args.enabled ? LINEAR_DAMPING : 0.0);
+                            body.setAngularDamping(args.enabled ? ANGULAR_DAMPING : 0.0);
+                        }
+                    }
                     break;
                 default:
                     return {success: false, error: `Unknown command ${command}`};
@@ -182,8 +194,8 @@ export const GolfBall = (props: PrefabProps<GolfBallPrefab>) => {
                         mass: 0.045,
                         restitution: 0.35,
                         friction: 0.5,
-                        linear_damping: 2.0,
-                        angular_damping: 1.0,
+                        linear_damping: props.damping ? LINEAR_DAMPING : 0.0,
+                        angular_damping: props.damping ? ANGULAR_DAMPING : 0.0,
                         ccd: true,
                         collider: {type: "sphere", radius: 0.03},
                         collision_filter: {players: false, tags: {golf_putter: !locked}}
