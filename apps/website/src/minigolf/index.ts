@@ -244,7 +244,8 @@ hyperlinkvr.on_ready(async () => {
 
     // marker to capture and freeze ball at cannon
     const cannon_marker = get_marker("cannon");
-    const cannon_trigger_dummy = new h.CustomObjectBuilder()
+    const cannon = new h.CustomObjectBuilder()
+        .set_mesh("./cannon.glb")
         .add_interaction(
             "trigger",
             new h.TriggerVolumeInteractionBuilder()
@@ -258,7 +259,7 @@ hyperlinkvr.on_ready(async () => {
         .build();
 
     const loaded_ball_ids = new Set<string>();
-    await new h.EngineObjectDispatchBuilder(cannon_trigger_dummy)
+    await new h.EngineObjectDispatchBuilder(cannon)
         .on("trigger", (e) => {
             if (e.kind !== "trigger-volume") return;
 
