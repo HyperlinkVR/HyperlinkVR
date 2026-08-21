@@ -1,6 +1,6 @@
 import {z} from "zod";
 
-import {PartialTransformSchema, TransformSchema} from "./transforms";
+import {PartialTransformSchema, TransformSchema, Vector3Schema } from "./transforms";
 import {ObjectMonitorSchema} from "./object_monitors";
 import {EngineObjectSchema} from "./objects";
 import {TriggerSchema} from "./triggers";
@@ -32,7 +32,13 @@ export const EngineObjectModificationSchema = z.object({
     user_data: z.record(z.string(), z.any()).optional(),
     monitors: z.array(ObjectMonitorSchema).optional(),
     triggers: z.array(TriggerSchema).optional(),
-    tags: z.array(z.string()).optional()
+    tags: z.array(z.string()).optional(),
+    physics: z.object({
+        velocity: Vector3Schema.optional(),
+        angular_velocity: Vector3Schema.optional(),
+        impulse: Vector3Schema.optional(),
+        torque_impulse: Vector3Schema.optional()
+    }).optional()
 });
 export type EngineObjectModification = z.infer<typeof EngineObjectModificationSchema>;
 export type EngineObjectModificationInput = z.input<typeof EngineObjectModificationSchema>;

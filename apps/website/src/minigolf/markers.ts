@@ -51,3 +51,11 @@ export const get_marker = (name: string) => {
 
     return marker;
 }
+
+export const get_custom_marker_subset = (name_regex: RegExp, remove_regex_match = true) => {
+    if (!all_markers) {
+        throw new Error("Markers not loaded yet");
+    }
+
+    return hyperlinkvr.markers.subset(all_markers, name_regex, remove_regex_match);
+}

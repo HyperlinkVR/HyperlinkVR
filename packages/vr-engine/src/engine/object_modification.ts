@@ -110,8 +110,8 @@ export const apply_modification = (
     refs: ObjectRefsContextType | null
 ): CreatedEngineObject => {
     const body = refs?.rigid_body.current ?? null;
-    const rb_type = rigid_body_type(stored);
-    const body_authority = body_owns_pose(body, rb_type);
+    const declared_rb_type = rigid_body_type(stored);
+    const body_authority = body_owns_pose(body, declared_rb_type);
 
     if (changes.transform && body_authority && body) {
         teleport_body(body, changes.transform);
@@ -123,6 +123,72 @@ export const apply_modification = (
                 changes.transform.scale[1],
                 changes.transform.scale[2]
             );
+        }
+    }
+
+    if (changes.physics && body_authority && body) {
+        // resolve actual body type from rapier to include prefabs (as they don't delcare an rb_type)
+        const is_dynamic = body.bodyType() === 0;
+        const is_kinematic_vel = body.bodyType() === 3;
+
+        if (changes.physics.velocity) {
+            if (is_dynamic || is_kinematic_vel) {
+                body.setLinvel(
+                    {
+                        x: changes.physics.velocity[0],
+                        y: changes.physics.velocity[1],
+                        z: changes.physics.velocity[2]
+                    },
+                    true
+                );
+            } else {
+                console.warn("Ignoring velocity change for object that is not dynamic or kinematic-vel");
+            }
+        }
+
+        if (changes.physics.angular_velocity) {
+            if (is_dynamic || is_kinematic_vel) {
+                body.setAngvel(
+                    {
+                        x: changes.physics.angular_velocity[0],
+                        y: changes.physics.angular_velocity[1],
+                        z: changes.physics.angular_velocity[2]
+                    },
+                    true
+                );
+            } else {
+                console.warn("Ignoring angular velocity change for object that is not dynamic or kinematic-vel");
+            }
+        }
+
+        if (changes.physics.impulse) {
+            if (is_dynamic) {
+                body.applyImpulse(
+                    {
+                        x: changes.physics.impulse[0],
+                        y: changes.physics.impulse[1],
+                        z: changes.physics.impulse[2]
+                    },
+                    true
+                );
+            } else {
+                console.warn("Ignoring impulse for object that is not dynamic");
+            }
+        }
+
+        if (changes.physics.torque_impulse) {
+            if (is_dynamic) {
+                body.applyTorqueImpulse(
+                    {
+                        x: changes.physics.torque_impulse[0],
+                        y: changes.physics.torque_impulse[1],
+                        z: changes.physics.torque_impulse[2]
+                    },
+                    true
+                );
+            } else {
+                console.warn("Ignoring torque impulse for object that is not dynamic");
+            }
         }
     }
 

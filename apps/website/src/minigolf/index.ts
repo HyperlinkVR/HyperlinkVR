@@ -1,6 +1,6 @@
 import { add_player, get_owner_of_ball, next_hole, scored_on_hole} from "./game_state";
 import { countdown_to_start } from "./hud";
-import { get_hole_markers, get_marker, load_all_markers } from "./markers";
+import { get_hole_markers, get_marker, get_custom_marker_subset, load_all_markers } from "./markers";
 
 
 const COURSE_POS = [0, 0, -10] as [number, number, number];
@@ -193,6 +193,46 @@ hyperlinkvr.on_ready(async () => {
             }, 3000);
         })
         .set_transform(volcano_marker.transform)
+        .create();
+
+    // connect up randomisation trigger volume to send to a random output tube
+    const random_input_marker = get_marker("random_in");
+    const random_trigger_dummy = new h.CustomObjectBuilder()
+        .add_interaction(
+            "trigger",
+            new h.TriggerVolumeInteractionBuilder()
+                .set_collider(
+                    new h.ColliderBuilder().box([0.5, 0.1, 2]).build()
+                )
+                .include_objects(["golf_ball"])
+                .exclude_players()
+                .build()
+        )
+        .build();
+
+    const random_output_markers = Array.from(get_custom_marker_subset(/^random_out_/i).values());
+
+    await new h.EngineObjectDispatchBuilder(random_trigger_dummy)
+        .on("trigger", (e) => {
+            if (e.kind !== "trigger-volume") return;
+            if (e.payload.type !== "enter") return;
+
+            const interacted = e.payload.interacted;
+            if (!interacted || interacted.type !== "object") return;
+
+            const random_index = Math.floor(Math.random() * random_output_markers.length);
+            const random_output_marker = random_output_markers[random_index]!;
+            console.log(random_output_marker);
+
+            // teleport to random marker and apply impulse to simulate output speed
+            // TODO: match output velocity to inbound speed
+            const object_id = interacted.object_id;
+            new h.EngineObjectModificationBuilder(object_id)
+                .set_transform(random_output_marker.transform)
+                .apply_impulse([-0.001, 0, 0])
+                .apply();
+        })
+        .set_transform(random_input_marker.transform)
         .create();
 
     hyperlinkvr.finished_loading();

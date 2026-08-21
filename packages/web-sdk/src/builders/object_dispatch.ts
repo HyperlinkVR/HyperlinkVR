@@ -79,7 +79,7 @@ const resolve_trigger_bindings = (triggers: Trigger[], binding_ids: Map<string, 
     }
 };
 
-class EngineObjectModificationBuilder extends BaseBuilder<EngineObjectModificationInput> {
+export class EngineObjectModificationBuilder extends BaseBuilder<EngineObjectModificationInput> {
     //#source: EngineObjectCreationResult;
     #burned = false;
 
@@ -330,6 +330,60 @@ class EngineObjectModificationBuilder extends BaseBuilder<EngineObjectModificati
         return this._internal.tags?.includes(tag) ?? false;
     }
 
+    // TODO: filter body type so they cant attempt to set velocity on a kinematic-pos/fixed body etc
+
+    set_velocity(velocity: Vector3) {
+        if (this.#burned) {
+            throw new Error("This modification builder has already been applied.");
+        }
+
+        if (!this._internal.physics) {
+            this._internal.physics = {};
+        }
+
+        this._internal.physics.velocity = Vector3Schema.parse(velocity);
+        return this;
+    }
+
+    set_angular_velocity(angular_velocity: Vector3) {
+        if (this.#burned) {
+            throw new Error("This modification builder has already been applied.");
+        }
+
+        if (!this._internal.physics) {
+            this._internal.physics = {};
+        }
+
+        this._internal.physics.angular_velocity = Vector3Schema.parse(angular_velocity);
+        return this;
+    }
+
+    apply_impulse(impulse: Vector3) {
+        if (this.#burned) {
+            throw new Error("This modification builder has already been applied.");
+        }
+
+        if (!this._internal.physics) {
+            this._internal.physics = {};
+        }
+
+        this._internal.physics.impulse = Vector3Schema.parse(impulse);
+        return this;
+    }
+
+    apply_torque_impulse(torque_impulse: Vector3) {
+        if (this.#burned) {
+            throw new Error("This modification builder has already been applied.");
+        }
+
+        if (!this._internal.physics) {
+            this._internal.physics = {};
+        }
+
+        this._internal.physics.torque_impulse = Vector3Schema.parse(torque_impulse);
+        return this;
+    }
+
     // TODO: way to check if source object has tag, need to pull in its state
 
     build(): EngineObjectModification {
@@ -376,6 +430,8 @@ class EngineObjectModificationBuilder extends BaseBuilder<EngineObjectModificati
 
         if (this._internal.user_data || this._internal.monitors || this._internal.triggers) {
             throw new Error("Only transform changes may be tweened");
+            // TODO: tween velocity changes
+            // TODO: just port to the animation channel system, allowing any continuous property to be tweened
         }
 
         const built_modification = this.build();
