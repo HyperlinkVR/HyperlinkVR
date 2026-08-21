@@ -300,11 +300,13 @@ hyperlinkvr.on_ready(async () => {
     const apex = get_marker("fire_apex");
     const target = get_marker("fire_target");
 
-    const vector_to_apex = normalise_vector([
-        apex.transform.position[0] - cannon_marker.transform.position[0],
-        apex.transform.position[1] - cannon_marker.transform.position[1],
-        apex.transform.position[2] - cannon_marker.transform.position[2]
-    ]);
+    const [velocity, time_s] = calculate_launch_velocity(
+        cannon_marker.transform.position,
+        apex.transform.position,
+        target.transform.position
+    );
+
+    const anim_vector = normalise_vector(velocity);
 
     // the cannon shoots back quickly against the vector, then returns to its original position
     const fire_animation = await new h.AnimationBuilder()
@@ -313,9 +315,9 @@ hyperlinkvr.on_ready(async () => {
             h.KeyframeTrackBuilder.position(created_cannon)
                 .add_keyframe(0, cannon_marker.transform.position)
                 .add_keyframe(100, [
-                    cannon_marker.transform.position[0] - vector_to_apex[0] * 0.5,
-                    cannon_marker.transform.position[1] - vector_to_apex[1] * 0.5,
-                    cannon_marker.transform.position[2] - vector_to_apex[2] * 0.5
+                    cannon_marker.transform.position[0] - anim_vector[0] * 0.5,
+                    cannon_marker.transform.position[1] - anim_vector[1] * 0.5,
+                    cannon_marker.transform.position[2] - anim_vector[2] * 0.5
                 ])
                 .add_keyframe(300, cannon_marker.transform.position)
                 .build()
@@ -348,16 +350,11 @@ hyperlinkvr.on_ready(async () => {
                 return;
             }
 
-            // fire the ball at the computed velocity to follow the launch curve
-            const [velocity, time_s] = calculate_launch_velocity(
-                cannon_marker.transform.position,
-                apex.transform.position,
-                target.transform.position
-            );
 
             // disable damping as our formula doesn't account for it, then re-enable after the flight time
             await ball.prefab.set_damping_enabled(false);
 
+            // fire the ball at the computed velocity to follow the launch curve
             await ball.modify()
                 .set_velocity(velocity)
                 .apply();
