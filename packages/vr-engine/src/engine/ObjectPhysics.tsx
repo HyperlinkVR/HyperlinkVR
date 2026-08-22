@@ -382,13 +382,14 @@ export const ObjectPhysics = ({
 
     const { world } = useRapier();
 
-    // TODO: this is somewhat arbitrary, allow it to be overridden (maybe some fixed objects are indeed to be treated as props). otherwise could be lazy and rename the group to fixed and dynamic or something
+    // TODO: this is somewhat arbitrary, allow it to be overridden from sdk (maybe some fixed objects are indeed to be treated as props). otherwise could be lazy and rename the group to fixed and dynamic or something
+    // an explicit collision group should win over the default assignment, which fixes hands being treated as props!
     const collision_group_props = useMemo(() => ({
-        collisionGroups: build_collision_groups(
+        collisionGroups: collision_groups ?? build_collision_groups(
             rb.type === "fixed" ? GROUP_WORLD : GROUP_PROP,
             rb.collision_filter || {},
         )
-    }), [rb.type, rb.collision_filter]);
+    }), [collision_groups, rb.type, rb.collision_filter]);
 
    // wait for colliders to actually be created before registering collision info, otherwise colliders can be missed, or be without tags
     const [colliders_ready, setCollidersReady] = useState(false);
