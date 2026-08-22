@@ -1,17 +1,11 @@
-import {
-    add_player, get_ball_by_object_id,
-    get_ball_of_player,
-    get_owner_of_ball,
-    next_hole,
-    scored_on_hole, stroke_at_rest,
-    take_stroke
-} from "./game_state";
+import { add_player, get_ball_by_object_id, get_ball_of_player, get_owner_of_ball, next_hole, scored_on_hole, stroke_at_rest, take_stroke } from "./game_state";
 import { countdown_to_start } from "./hud";
 import { get_custom_marker_subset, get_hole_markers, get_marker, load_all_markers } from "./markers";
 import { calculate_launch_velocity, normalise_vector } from "./util";
 
 
-const COURSE_POS = [0, 0, -10] as [number, number, number];
+// offset not used anymore, but may as well keep the constant to ensure markers are always aligned
+const COURSE_POS = [0, 0, 0] as [number, number, number];
 
 let starting = false;
 const start_game = async () => {
@@ -22,6 +16,22 @@ const start_game = async () => {
 
     // go to first hole
     next_hole();
+};
+
+let spawn_marker: h.Marker | null = null;
+
+const load_spawn_marker = async () => {
+    // spawn marker stored in terrain, not course
+    const markers = await hyperlinkvr.markers.load("./terrain_vis.glb", {
+        transform_offset: {
+            position: COURSE_POS
+        }
+    });
+
+    spawn_marker = markers.get("spawn");
+    if (!spawn_marker) {
+        throw new Error("Spawn marker not found in terrain_vis.glb");
+    }
 };
 
 hyperlinkvr.on_ready(async () => {
@@ -50,10 +60,34 @@ hyperlinkvr.on_ready(async () => {
         )
         .build();
 
-    // dispatch course first and await to ensure colliders catch putters and balls
-    await new h.EngineObjectDispatchBuilder(course)
+    // dispatch course + terrain first and await to ensure colliders catch putters and balls
+    const promise_course = new h.EngineObjectDispatchBuilder(course)
         .set_position(COURSE_POS)
-        .create()
+        .create();
+
+    const terrain = new h.CustomObjectBuilder()
+        .set_mesh("./terrain_vis.glb")
+        .set_physics(
+            new h.PhysicsSystemBuilder()
+                .set_rigid_body(
+                    new h.FixedRigidBodyBuilder()
+                        .set_collider(
+                            new h.ColliderBuilder()
+                                .custom_mesh("./terrain_vis.glb", "trimesh")
+                                .build()
+                        )
+                        .set_friction(0.6)
+                        .build()
+                )
+                .build()
+        )
+        .build();
+
+    const promise_terrain = new h.EngineObjectDispatchBuilder(terrain)
+        .set_position(COURSE_POS)
+        .create();
+
+    promises.push(promise_course, promise_terrain);
 
     const trigger_dummy = new h.CustomObjectBuilder()
         .add_interaction(
@@ -96,16 +130,29 @@ hyperlinkvr.on_ready(async () => {
                 })
                 .set_transform(marker.transform)
                 .create()
-        )
+        );
     });
+
+    if (!spawn_marker) {
+        await load_spawn_marker();
+    }
+
+    const spawn_pos = spawn_marker.transform.position;
+    const button_pos = [
+        spawn_pos[0],
+        spawn_pos[1] + 1,
+        spawn_pos[2] - 3
+    ] as [number, number, number];
 
     const start_button = new h.ButtonPrefabBuilder()
         .named("start_button")
         .set_label("Start")
         .build();
 
-    const creatable_start_button = new h.EngineObjectDispatchBuilder(start_button)
-        .set_position(0, 1.5, -3)
+    const creatable_start_button = new h.EngineObjectDispatchBuilder(
+        start_button
+    )
+        .set_position(button_pos)
         .on("start_button", async (e) => {
             if (e.kind !== "button-prefab") return;
             if (e.payload.type === "press") {
@@ -115,7 +162,7 @@ hyperlinkvr.on_ready(async () => {
                 (await creatable_start_button).destroy();
             }
         })
-        .create()
+        .create();
 
     promises.push(creatable_start_button);
 
@@ -140,7 +187,9 @@ hyperlinkvr.on_ready(async () => {
 
     const waterwheel_marker = get_marker("waterwheel");
 
-    const created_waterwheel = await new h.EngineObjectDispatchBuilder(waterwheel)
+    const created_waterwheel = await new h.EngineObjectDispatchBuilder(
+        waterwheel
+    )
         .set_transform(waterwheel_marker.transform)
         .create();
 
@@ -149,11 +198,11 @@ hyperlinkvr.on_ready(async () => {
     await new h.AnimationBuilder()
         .add_track(
             h.KeyframeTrackBuilder.rotation(created_waterwheel)
-                .add_keyframe(0,     [0,        0, 0, 1])         // 0
-                .add_keyframe(5000,  [-SINE_45, 0, 0, SINE_45])   // 90
-                .add_keyframe(10000, [-1,       0, 0, 0])         // 180
-                .add_keyframe(15000, [-SINE_45, 0, 0, -SINE_45])  // 270
-                .add_keyframe(20000, [0,        0, 0, -1])        // 360
+                .add_keyframe(0, [0, 0, 0, 1]) // 0
+                .add_keyframe(5000, [-SINE_45, 0, 0, SINE_45]) // 90
+                .add_keyframe(10000, [-1, 0, 0, 0]) // 180
+                .add_keyframe(15000, [-SINE_45, 0, 0, -SINE_45]) // 270
+                .add_keyframe(20000, [0, 0, 0, -1]) // 360
                 .build()
         )
         .loops()
@@ -167,7 +216,7 @@ hyperlinkvr.on_ready(async () => {
             "trigger",
             new h.TriggerVolumeInteractionBuilder()
                 .set_collider(
-                    new h.ColliderBuilder().cylinder(1.5, 0.1).build()
+                    new h.ColliderBuilder().cylinder(0.75, 0.1).build()
                 )
                 .include_objects(["golf_ball"])
                 .exclude_players()
@@ -190,7 +239,8 @@ hyperlinkvr.on_ready(async () => {
                 return;
             }
 
-            const hud = await h.hud_text("volcano", "Best jump in and follow it...")
+            const hud = await h
+                .hud_text("volcano", "Best jump in and follow it...")
                 .set_slot("middle-center")
                 .set_font_size(48)
                 .player(owner)
@@ -218,7 +268,9 @@ hyperlinkvr.on_ready(async () => {
         )
         .build();
 
-    const random_output_markers = Array.from(get_custom_marker_subset(/^random_out_/i).values());
+    const random_output_markers = Array.from(
+        get_custom_marker_subset(/^random_out_/i).values()
+    );
 
     await new h.EngineObjectDispatchBuilder(random_trigger_dummy)
         .on("trigger", (e) => {
@@ -228,7 +280,9 @@ hyperlinkvr.on_ready(async () => {
             const interacted = e.payload.interacted;
             if (!interacted || interacted.type !== "object") return;
 
-            const random_index = Math.floor(Math.random() * random_output_markers.length);
+            const random_index = Math.floor(
+                Math.random() * random_output_markers.length
+            );
             const random_output_marker = random_output_markers[random_index]!;
 
             // teleport to random marker and apply impulse to simulate output speed
@@ -332,7 +386,7 @@ hyperlinkvr.on_ready(async () => {
     const fire_button = new h.ButtonPrefabBuilder()
         .named("fire")
         .set_label("Fire!")
-        .set_body_color(0xFF0000)
+        .set_body_color(0xff0000)
         .build();
 
     const fire_button_marker = get_marker("fire_button");
@@ -350,22 +404,24 @@ hyperlinkvr.on_ready(async () => {
             }
 
             if (!loaded_ball_ids.has(ball.object.id)) {
-                console.warn(`Ball ${ball.object.id} not loaded in cannon for player ${e.payload.username}`);
+                console.warn(
+                    `Ball ${ball.object.id} not loaded in cannon for player ${e.payload.username}`
+                );
                 return;
             }
-
 
             // disable damping as our formula doesn't account for it, then re-enable after the flight time
             await ball.prefab.set_damping_enabled(false);
 
             // fire the ball at the computed velocity to follow the launch curve
-            await ball.modify()
-                .set_velocity(velocity)
-                .apply();
+            await ball.modify().set_velocity(velocity).apply();
 
-            setTimeout(async () => {
-                await ball.prefab.set_damping_enabled(true);
-            }, time_s * 1000 + 100); // small buffer to ensure it makes it
+            setTimeout(
+                async () => {
+                    await ball.prefab.set_damping_enabled(true);
+                },
+                time_s * 1000 + 100
+            ); // small buffer to ensure it makes it
 
             // firing counts as a stroke
             take_stroke(e.payload.username);
@@ -381,7 +437,12 @@ hyperlinkvr.on_ready(async () => {
     hyperlinkvr.finished_loading();
 });
 
-hyperlinkvr.players.on_spawn((p) => {
-    p.teleport_to([0, 0, 0], 0);
-    add_player(p);
+
+hyperlinkvr.players.on_spawn(async (p) => {
+    if (!spawn_marker) {
+        await load_spawn_marker();
+    }
+
+    p.teleport_to(spawn_marker.transform.position, spawn_marker.transform.rotation[1]);
+    add_player(p, spawn_marker.transform.position);
 });

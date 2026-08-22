@@ -28,7 +28,7 @@ const create_player_state = (
 
 const players = new Map<string | null, PlayerState>();
 
-export const add_player = async (player: Player) => {
+export const add_player = async (player: Player, spawn_pos: [number, number, number] = [0, 0, 0]) => {
     const username = await player.get_username();
     if (players.has(username)) {
         console.warn(`Player ${username} already exists`);
@@ -42,12 +42,15 @@ export const add_player = async (player: Player) => {
         .set_color(putter.color)
         .build();
 
+    const putter_pos = [spawn_pos[0], spawn_pos[1] + 3, spawn_pos[2] - 1] as [number, number, number];
+    const ball_pos = [spawn_pos[0], spawn_pos[1] + 2.5, spawn_pos[2] - 2] as [number, number, number];
+
     const created_putter = await new h.EngineObjectDispatchBuilder(putter)
-        .set_position(0, 3, -1)
+        .set_position(putter_pos)
         .create();
 
     const created_ball = await new h.EngineObjectDispatchBuilder(ball)
-        .set_position(0, 2.5, -2)
+        .set_position(ball_pos)
         .on("ball", (e) => {
             if (e.kind !== "golf-ball-prefab") return;
 
