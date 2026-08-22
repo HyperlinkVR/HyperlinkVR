@@ -419,6 +419,11 @@ hyperlinkvr.on_ready(async () => {
             setTimeout(
                 async () => {
                     await ball.prefab.set_damping_enabled(true);
+
+                    // teleport player to the top after delay
+                    // TODO: i think this will be temporary, the zipline idea is cool (once movement for it is implemented)
+                    const player = new hyperlinkvr.players.Player(e.payload.username);
+                    player.teleport_to(target.transform.position);
                 },
                 time_s * 1000 + 100
             ); // small buffer to ensure it makes it
@@ -521,3 +526,10 @@ hyperlinkvr.players.on_spawn(async (p) => {
     p.teleport_to(spawn_marker.transform.position, spawn_marker.transform.rotation[1]);
     add_player(p, spawn_marker.transform.position);
 });
+
+// TODO: oob detection
+// TODO: make room for multiplayer support
+// TODO: mercy rule
+// TODO: pay a stroke to reset ball/move it
+// TODO: sound effects, realism enhancements etc
+// TODO: halo around your own ball? perhaps when far away or occluded
