@@ -33,12 +33,12 @@ interface EngineObjectCreationResultBase {
 }
 
 export interface EngineCustomObjectCreationResult extends EngineObjectCreationResultBase {
-    interactions: Record<string, Function>; // interaction apis
+    interactions: Record<string, Record<string, Function>>; // interaction apis (binding name -> function name -> function)
     object: CreatedEngineObject & { type: "custom" }; // override type to custom
 }
 
 export interface EnginePrefabObjectCreationResult extends EngineObjectCreationResultBase {
-    prefab: Record<string, Function>; // prefab api
+    prefab: Record<string, Function>; // prefab api (function name -> function)
     object: CreatedEngineObject & { type: "prefab" }; // override type to prefab
 }
 

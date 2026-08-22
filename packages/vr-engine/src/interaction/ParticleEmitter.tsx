@@ -1,23 +1,52 @@
-import {useCallback, useMemo} from "react";
-import {
-    HexColor, ParticleEmitterBehavior,
-    ParticleEmitterColor, ParticleEmitterInteraction,
-    ParticleEmitterRandomisableValue,
-    ParticleEmitterShape, ParticleEmitterVisual
-} from "@hyperlinkvr/vr-engine-schemas";
-import {FlexibleColor, ParticleSystem, ParticleSystemRef} from "quarks.r3f";
-import {ColorGenerator, ConeEmitter, PointEmitter, SphereEmitter, EmitterMode, GravityForce, ApplyForce, Vector3, ConstantValue, RenderMode} from "three.quarks";
-import {
-    BufferGeometry,
-    DoubleSide,
-    Euler,
-    Material,
-    MeshBasicMaterial,
-    PlaneGeometry,
-    TextureLoader
-} from "three";
-import {rotation_to_euler} from "../util/rotation";
-import {useAssetURL} from "../hooks/useAssetURL";
+import { HexColor, ParticleEmitterBehavior, ParticleEmitterColor, ParticleEmitterInteraction, ParticleEmitterRandomisableValue, ParticleEmitterShape, ParticleEmitterVisual } from "@hyperlinkvr/vr-engine-schemas";
+import { FlexibleColor, ParticleSystem, ParticleSystemRef } from "quarks.r3f";
+import { useCallback, useMemo } from "react";
+import { BufferGeometry, DoubleSide, Euler, Material, MeshBasicMaterial, PlaneGeometry, SRGBColorSpace, TextureLoader } from "three";
+import { ApplyForce, ColorGenerator, ColorOverLife, ConeEmitter, ConstantValue, EmitterMode, FunctionColorGenerator, FunctionJSON, GeneratorMemory, GravityForce, PointEmitter, Vector4 as QuarksVector4, RenderMode, SphereEmitter, Vector3 } from "three.quarks";
+
+
+
+import { useAssetURL } from "../hooks/useAssetURL";
+import { rotation_to_euler } from "../util/rotation";
+
+
+export class FadeColorGenerator implements FunctionColorGenerator {
+    type: "function" = "function";
+
+    // fade ratios given as 0-1 of the total lifetime
+    constructor(public fade_in_ratio: number, public fade_out_ratio: number) {}
+
+    startGen(memory: GeneratorMemory): void {}
+
+    genColor(memory: GeneratorMemory, color: QuarksVector4, t: number): QuarksVector4 {
+        let alpha = 1;
+
+        if (t < this.fade_in_ratio) {
+            // fade in
+            alpha = this.fade_in_ratio > 0 ? t / this.fade_in_ratio : 1;
+        } else if (t > 1 - this.fade_out_ratio) {
+            // fade out
+            alpha = this.fade_out_ratio > 0 ? (1 - t) / this.fade_out_ratio : 1;
+        }
+
+        // the particle's base colour and texture is applied afterwards, so just set a white colour with the alpha applied
+        color.set(1, 1, 1, alpha);
+
+        return color;
+    }
+
+    toJSON(): FunctionJSON {
+        return {
+            type: "FadeColorGenerator",
+            fadeIn: this.fade_in_ratio,
+            fadeOut: this.fade_out_ratio,
+        } as any;
+    }
+
+    clone(): FunctionColorGenerator {
+        return new FadeColorGenerator(this.fade_in_ratio, this.fade_out_ratio);
+    }
+}
 
 export const ParticleEmitter = ({config, ref = null}: {config: Omit<ParticleEmitterInteraction, "type">, ref?: React.Ref<ParticleSystemRef | null>}) => {
     const convert_randomisable_value = useCallback(
@@ -154,11 +183,16 @@ export const ParticleEmitter = ({config, ref = null}: {config: Omit<ParticleEmit
                     }
 
                     const texture = new TextureLoader().load(maybe_particle_image_url);
+                    texture.colorSpace = SRGBColorSpace;
                     return {
                         material: new MeshBasicMaterial({
                             map: texture,
-                            transparent: visual.alpha !== 1,
-                            opacity: visual.alpha
+                            // always transparent so the texture's own alpha channel is respected
+                            // opacity is a separate global multiplier on top (defaults to 1)
+                            transparent: true,
+                            opacity: visual.alpha,
+                            // overlapping soft particles should blend, not z-cull each other
+                            depthWrite: false
                         }),
                         render_mode: RenderMode.BillBoard
                     };
@@ -198,6 +232,10 @@ export const ParticleEmitter = ({config, ref = null}: {config: Omit<ParticleEmit
                         // no origin is plain downward gravity
                         return new ApplyForce(new Vector3(0, -1, 0), new ConstantValue(behavior.magnitude ?? 9.81));
                     }
+
+                    case "fade-over-life": {
+                        return new ColorOverLife(new FadeColorGenerator(behavior.fade_in_ratio ?? 0, behavior.fade_out_ratio ?? 0));
+                    }
                 }
             });
         },
@@ -234,6 +272,8 @@ export const ParticleEmitter = ({config, ref = null}: {config: Omit<ParticleEmit
 
     return (
         <ParticleSystem
+                // three.quarks bakes the material into its batch on mount and won't hot-swap it, so remount once the (async) texture url resolves to rebuild with the real material
+                key={maybe_particle_image_url ?? "no-image"}
                 ref={ref}
                 duration={config.duration}
                 looping={config.loop}

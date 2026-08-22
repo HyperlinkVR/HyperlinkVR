@@ -655,6 +655,11 @@ export class ParticleEmitterInteractionBuilder extends BaseBuilder<ParticleEmitt
         return this;
     }
 
+    set_world_space(world_space: boolean) {
+        this._internal.world_space = world_space;
+        return this;
+    }
+
     build(): ParticleEmitterInteraction {
         return ParticleEmitterInteractionSchema.parse(this._internal);
     }
@@ -668,8 +673,8 @@ export class ParticleEmitterInteractionBuilder extends BaseBuilder<ParticleEmitt
             pause: async () => {
                 return await interaction_command(object_id, interaction_id, "pause");
             },
-            stop: async () => {
-                return await interaction_command(object_id, interaction_id, "stop");
+            stop: async (hard = false) => {
+                return await interaction_command(object_id, interaction_id, "stop", {hard});
             },
             restart: async () => {
                 return await interaction_command(object_id, interaction_id, "restart");

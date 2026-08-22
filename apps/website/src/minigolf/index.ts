@@ -60,7 +60,6 @@ hyperlinkvr.on_ready(async () => {
         )
         .build();
 
-    // dispatch course + terrain first and await to ensure colliders catch putters and balls
     const promise_course = new h.EngineObjectDispatchBuilder(course)
         .set_position(COURSE_POS)
         .create();
@@ -87,7 +86,8 @@ hyperlinkvr.on_ready(async () => {
         .set_position(COURSE_POS)
         .create();
 
-    promises.push(promise_course, promise_terrain);
+    // ensure course and terrain are loaded before anything else, as they may be used for collision detection
+    await Promise.all([promise_course, promise_terrain]);
 
     const trigger_dummy = new h.CustomObjectBuilder()
         .add_interaction(
@@ -433,6 +433,81 @@ hyperlinkvr.on_ready(async () => {
             fire_animation.play();
         })
         .create();
+
+    // geyser particles and trigger to intercept the ball
+    const geyser_marker = get_marker("geyser");
+    const geyser_height = apex.transform.position[1] - geyser_marker.transform.position[1];
+    const geyser_dummy = new h.CustomObjectBuilder()
+        .add_interaction("particles",
+            new h.ParticleEmitterInteractionBuilder()
+                .set_emitter_shape({type: "cone", radius: 0.3, angle: 0.10, mode: "random"})
+                .set_speed({min: 25, max: 30})
+                .set_behaviors([
+                    {type: "gravity"},
+                    {type: "fade-over-life", fade_out_ratio: 0.33}
+                ])
+                .set_lifetime({min: 3, max: 5})
+                .set_per_second(300)
+                .set_particle_size({min: 0.6, max: 1})
+                .set_particle_rotation({min: 0, max: Math.PI * 2})
+                .set_color([
+                    { color: 0xffffff, weight: 2 },
+                    { color: 0x9fd4ff, weight: 3 },
+                ])
+                .set_visual({type: "image", url: "./smoke_04_edit.png"})
+                .set_rotation([-Math.PI/2, 0, 0])
+                .loop()
+                .autoplay()
+                .build()
+            )
+        .add_interaction("trigger",
+            new h.TriggerVolumeInteractionBuilder()
+                .set_collider(
+                    new h.ColliderBuilder().cylinder(2, geyser_height * 1.5).set_offset([0, geyser_height / 2, 0]).build()
+                )
+                .include_objects(["golf_ball"])
+                .exclude_players()
+                .build()
+        )
+        .build();
+
+    // TODO: why havent i parallelised these promises lol
+
+    let geyser_on = true;
+
+    const created_geyser = await new h.EngineObjectDispatchBuilder(geyser_dummy)
+        .set_transform(geyser_marker.transform)
+        .on("trigger", (e) => {
+            if (e.kind !== "trigger-volume") return;
+            if (e.payload.type !== "enter") return;
+
+            const interacted = e.payload.interacted;
+            if (!interacted || interacted.type !== "object") return;
+
+            // if a ball enters while the geyser is on, launch it away!
+            if (!geyser_on) return;
+
+            const object_id = interacted.object_id;
+            const ball = get_ball_by_object_id(object_id);
+            if (!ball) {
+                console.warn(`No ball found for object ${object_id}`);
+                return;
+            }
+
+            ball.modify().apply_impulse([-0.001, 0.003, 0]).apply();
+        })
+        .create();
+
+    // toggle on and off on a cycle (TODO: add animation channel to particles)
+    setInterval(() => {
+        geyser_on = !geyser_on;
+
+        if (!geyser_on) {
+            created_geyser.interactions.particles!.stop!();
+        } else {
+            created_geyser.interactions.particles!.restart!();
+        }
+    }, 5000);
 
     hyperlinkvr.finished_loading();
 });

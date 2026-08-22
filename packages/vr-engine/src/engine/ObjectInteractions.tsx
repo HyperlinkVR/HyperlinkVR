@@ -1,39 +1,28 @@
-import {
-    DirectionalLightInteraction,
-    FollowPlayerInteraction, GlobalAudioInteraction, GrabbableInteraction, Interaction,
-    ParticleEmitterInteraction, PointLightInteraction,
-    PositionalAudioInteraction, SeatInteraction, SpotLightInteraction, TriggerVolumeInteraction, RaycastInteraction
-} from "@hyperlinkvr/vr-engine-schemas";
-import {useEffect, useMemo, useRef} from "react";
+import { useSetting } from "@hyperlinkvr/react";
+import { DirectionalLightInteraction, FollowPlayerInteraction, GlobalAudioInteraction, GrabbableInteraction, Interaction, ParticleEmitterInteraction, PointLightInteraction, PositionalAudioInteraction, RaycastInteraction, SeatInteraction, SpotLightInteraction, TriggerVolumeInteraction } from "@hyperlinkvr/vr-engine-schemas";
+import { PositionalAudio } from "@react-three/drei";
+import { useFrame } from "@react-three/fiber";
+import { useXRInputSourceState } from "@react-three/xr";
+import type { ParticleSystemRef } from "quarks.r3f";
+import { useEffect, useMemo, useRef } from "react";
+import { Audio, AudioLoader, DirectionalLight, Euler, Group, MathUtils, Object3D, PointLight, SpotLight, Vector3 } from "three";
+import type { PositionalAudio as PositionalAudioType } from "three";
 
-import { useObjectRefs } from "../contexts/ObjectRefsContext";
+
+
 import { useAudioListener } from "../contexts/AudioListenerContext";
+import { useObjectRefs } from "../contexts/ObjectRefsContext";
+import { useSessionMode } from "../contexts/SessionModeContext";
 import { useObjectBinding } from "../hooks/useObjectBinding";
+import { useFlatFrameInput } from "../input/impl/flat/bindings";
 import { Grabbable } from "../interaction";
 import { FollowPlayer } from "../interaction/FollowPlayer";
-import {detect_trigger_direction, resolve_interacted, TriggerVolume} from "../interaction/TriggerVolume";
+import { ParticleEmitter } from "../interaction/ParticleEmitter";
 import { Raycast, RaycastHandle } from "../interaction/Raycast";
-import {
-    Audio,
-    AudioLoader,
-    DirectionalLight,
-    Euler,
-    Group, MathUtils, Object3D,
-    PointLight,
-    SpotLight, Vector3,
-} from "three";
-import {PositionalAudio} from "@react-three/drei";
-import type { PositionalAudio as PositionalAudioType } from "three";
-import {rotation_to_euler} from "../util/rotation";
-import type {ParticleSystemRef} from "quarks.r3f";
-import {ParticleEmitter} from "../interaction/ParticleEmitter";
-import {is_seated_on, sit_on, stand_up} from "../player/seating";
-import {get_capsule_world_position} from "../player/motion";
-import {useSetting} from "@hyperlinkvr/react";
-import {useXRInputSourceState} from "@react-three/xr";
-import {useFrame} from "@react-three/fiber";
-import {useFlatFrameInput} from "../input/impl/flat/bindings";
-import {useSessionMode} from "../contexts/SessionModeContext";
+import { detect_trigger_direction, resolve_interacted, TriggerVolume } from "../interaction/TriggerVolume";
+import { get_capsule_world_position } from "../player/motion";
+import { is_seated_on, sit_on, stand_up } from "../player/seating";
+import { rotation_to_euler } from "../util/rotation";
 
 
 interface InteractionWrapperProps<I extends Interaction = Interaction> {
@@ -725,7 +714,13 @@ const ParticleEmitterWrapper = ({interaction, children}: InteractionWrapperProps
                     system.restart();
                     break;
                 case "stop":
-                    system.stop();
+                    if (args.hard) {
+                        // call stop, which also deletes any existing particles
+                        system.stop();
+                    } else {
+                        // stop emitting new particles, but let existing ones finish their lifetime
+                        system.system.endEmit();
+                    }
                     break;
                 default:
                     return {success: false, error: `Unknown command ${command}`};

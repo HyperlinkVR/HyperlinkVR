@@ -218,16 +218,24 @@ export const ParticleEmitterGravityBehaviorSchema = z.object({
 });
 export type ParticleEmitterGravityBehavior = z.infer<typeof ParticleEmitterGravityBehaviorSchema>;
 export type ParticleEmitterGravityBehaviorInput = z.input<typeof ParticleEmitterGravityBehaviorSchema>;
+
+export const ParticleEmitterFadeOverLifeBehaviorSchema = z.object({
+    type: z.literal("fade-over-life"),
+    fade_in_ratio: z.number().gte(0).lte(1).default(0).optional(),
+    fade_out_ratio: z.number().gte(0).lte(1).default(0).optional(),
+});
+
 export const ParticleEmitterBehaviorSchema = z.discriminatedUnion("type", [
-    ParticleEmitterGravityBehaviorSchema
+    ParticleEmitterGravityBehaviorSchema,
+    ParticleEmitterFadeOverLifeBehaviorSchema
 ]);
 export type ParticleEmitterBehavior = z.infer<typeof ParticleEmitterBehaviorSchema>;
 export type ParticleEmitterBehaviorInput = z.input<typeof ParticleEmitterBehaviorSchema>;
 export const ParticleEmitterRandomisableValueSchema = z.union([
-    z.number().positive(),
+    z.number().nonnegative(),
     z.object({
-        min: z.number().positive(),
-        max: z.number().positive()
+        min: z.number().nonnegative(),
+        max: z.number().nonnegative()
     })
 ]);
 export type ParticleEmitterRandomisableValue = z.infer<typeof ParticleEmitterRandomisableValueSchema>;
