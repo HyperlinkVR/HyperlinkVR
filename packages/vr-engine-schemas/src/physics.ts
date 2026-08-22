@@ -1,9 +1,11 @@
-import {z} from "zod";
+import { z } from "zod";
 
-import {RotationSchema, Vector3Schema} from "./transforms";
 
-import {bindable} from "./binding";
-import {AbsoluteAssetURLSchema} from "./assets";
+
+import { AbsoluteAssetURLSchema } from "./assets";
+import { bindable } from "./binding";
+import { RotationSchema, Vector3Schema } from "./transforms";
+
 
 // TODO: collider combo?
 
@@ -53,16 +55,34 @@ export const AutoColliderSchema = BaseColliderSchema.extend({
 export type AutoCollider = z.infer<
     typeof AutoColliderSchema
 >;
-export const ColliderSchema = z.discriminatedUnion("type", [
+
+export const CollectableColliderSchema = z.discriminatedUnion("type", [
     BoxColliderSchema,
     SphereColliderSchema,
     CapsuleColliderSchema,
     CylinderColliderSchema,
     CustomMeshColliderSchema,
+]);
+export type CollectableCollider = z.infer<typeof CollectableColliderSchema>;
+export type CollectableColliderInput = z.input<typeof CollectableColliderSchema>;
+
+export const ColliderSchema = z.discriminatedUnion("type", [
+    CollectableColliderSchema,
     AutoColliderSchema
 ]);
 export type Collider = z.infer<typeof ColliderSchema>;
 export type ColliderInput = z.input<typeof ColliderSchema>;
+
+export const ColliderCollectionSchema = BaseColliderSchema.extend({
+    type: z.literal("collection"),
+    colliders: z.array(CollectableColliderSchema).min(1)
+});
+export type ColliderCollection = z.infer<typeof ColliderCollectionSchema>;
+export type ColliderCollectionInput = z.input<typeof ColliderCollectionSchema>;
+
+export const ColliderOrCollectionSchema = z.union([ColliderSchema, ColliderCollectionSchema]);
+export type ColliderOrCollection = z.infer<typeof ColliderOrCollectionSchema>;
+export type ColliderOrCollectionInput = z.input<typeof ColliderOrCollectionSchema>;
 
 const AxisLockSchema = z.object({
     x: z.boolean().default(false),
@@ -118,7 +138,7 @@ const BaseRigidBodySchema = z.object({
     linear_damping: z.number().optional(),
     angular_damping: z.number().optional(),
     collision_filter: CollisionFilterSchema.default({} as CollisionFilter).optional(),
-    collider: ColliderSchema.optional()
+    collider: ColliderOrCollectionSchema.optional()
 });
 export const FixedRigidBodySchema = BaseRigidBodySchema.extend({
     type: z.literal("fixed")

@@ -1,11 +1,11 @@
-import {z} from "zod";
+import { z } from "zod";
 
-import {BoxColliderSchema, CapsuleColliderSchema, ColliderSchema, SphereColliderSchema} from "./physics";
-import {bindable} from "./binding";
-import {RotationSchema} from "./transforms";
+import { AbsoluteAssetURLSchema } from "./assets";
+import { bindable } from "./binding";
+import { HexColorSchema } from "./colors";
+import { BoxColliderSchema, CapsuleColliderSchema, ColliderOrCollectionSchema, SphereColliderSchema } from "./physics";
+import { RotationSchema } from "./transforms";
 
-import {HexColorSchema} from "./colors";
-import {AbsoluteAssetURLSchema} from "./assets";
 
 export const GrabOffsetSpaceSchema = z.enum(["grip", "aim"]);
 export type GrabOffsetSpace = z.infer<typeof GrabOffsetSpaceSchema>;
@@ -40,6 +40,7 @@ export const GrabColliderSchema = z.discriminatedUnion("type", [
     BoxColliderSchema,
     SphereColliderSchema,
     CapsuleColliderSchema
+    // TODO: should this support collider collections?
 ]);
 export type GrabCollider = z.infer<typeof GrabColliderSchema>;
 export const GrabbableInteractionSchema = bindable({
@@ -77,7 +78,7 @@ const TriggerVolumeObjectsSchema = z.union([
 ]);
 export const TriggerVolumeInteractionSchema = bindable({
     type: z.literal("trigger-volume"),
-    collider: ColliderSchema,
+    collider: ColliderOrCollectionSchema,
     report_enter: z.boolean().default(true),
     report_exit: z.boolean().default(true),
     ignore_hands: z.boolean().default(false),
@@ -472,4 +473,3 @@ export type BindableInteraction =
     | DirectionalLightInteraction
     | ParticleEmitterInteraction
     | SeatInteraction;
-

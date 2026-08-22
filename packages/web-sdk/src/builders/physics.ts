@@ -1,9 +1,19 @@
-import {BaseBuilder} from "./base";
 import {
-    AxisLockInput, BodyConstraintInput, BodyConstraintSchema,
-    Collider, ColliderInput,
+    AxisLockInput,
+    BodyConstraintInput,
+    BodyConstraintSchema,
+    CollectableCollider,
+    Collider,
+    ColliderCollection,
+    ColliderCollectionInput,
+    ColliderCollectionSchema,
+    ColliderInput,
+    ColliderOrCollectionInput,
     ColliderSchema,
-    CustomMeshApproximation, DynamicRigidBodyInput, FixedRigidBodyInput, KinematicPositionRigidBodyInput,
+    CustomMeshApproximation,
+    DynamicRigidBodyInput,
+    FixedRigidBodyInput,
+    KinematicPositionRigidBodyInput,
     KinematicVelocityRigidBodyInput,
     MeshApproximation,
     PhysicsSystem,
@@ -12,9 +22,12 @@ import {
     RigidBody,
     RigidBodyInput,
     RigidBodySchema,
-    RigidBodyType, Rotation
+    RigidBodyType,
+    Rotation
 } from "@hyperlinkvr/vr-engine-schemas";
-import {asset_url} from "../assets";
+
+import { asset_url } from "../assets";
+import { BaseBuilder } from "./base";
 
 export class PhysicsSystemBuilder extends BaseBuilder<PhysicsSystemInput> {
     constructor() {
@@ -43,7 +56,7 @@ class RigidBodyBuilder<RB extends RigidBodyInput> extends BaseBuilder<RB> {
         super({type} as RB);
     }
 
-    set_collider(collider: ColliderInput) {
+    set_collider(collider: ColliderOrCollectionInput) {
         this._internal.collider = collider;
         return this;
     }
@@ -285,5 +298,30 @@ export class ColliderBuilder extends BaseBuilder<ColliderInput> {
 
     build(): Collider {
         return ColliderSchema.parse(this._internal);
+    }
+}
+
+export class ColliderCollectionBuilder extends BaseBuilder<ColliderCollectionInput> {
+    constructor(colliders: CollectableCollider[]) {
+        super({type: "collection", colliders});
+    }
+
+    add_collider(collider: CollectableCollider) {
+        this._internal.colliders.push(collider);
+        return this;
+    }
+
+    set_offset(offset: [number, number, number]) {
+        this._internal.offset = offset;
+        return this;
+    }
+
+    set_rotation(rotation: Rotation) {
+        this._internal.rotation = rotation;
+        return this;
+    }
+
+    build(): ColliderCollection {
+        return ColliderCollectionSchema.parse(this._internal);
     }
 }

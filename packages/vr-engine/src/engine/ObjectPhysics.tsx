@@ -1,4 +1,11 @@
-import { AssetRef, Collider, PhysicsSystem, RigidBody as RigidBodyConfig, Transform } from "@hyperlinkvr/vr-engine-schemas";
+import {
+    AssetRef,
+    Collider,
+    ColliderOrCollection,
+    PhysicsSystem,
+    RigidBody as RigidBodyConfig,
+    Transform
+} from "@hyperlinkvr/vr-engine-schemas";
 import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { BallCollider, CapsuleCollider, CollisionEnterPayload, CollisionPayload, CuboidCollider, CylinderCollider, MeshCollider, RapierRigidBody, RigidBody, RigidBodyAutoCollider, useRapier } from "@react-three/rapier";
@@ -147,7 +154,7 @@ const arrays_equal = (left: readonly unknown[], right: readonly unknown[]): bool
     return true;
 };
 
-const colliders_equal = (left: Collider, right: Collider): boolean => {
+const colliders_equal = (left: ColliderOrCollection, right: ColliderOrCollection): boolean => {
     const left_keys = Object.keys(left);
     if (left_keys.length !== Object.keys(right).length) return false;
 
@@ -166,7 +173,7 @@ const colliders_equal = (left: Collider, right: Collider): boolean => {
     return true;
 };
 
-const useStableCollider = (collider: Collider): Collider => {
+const useStableCollider = (collider: ColliderOrCollection): ColliderOrCollection => {
     const stable = useRef(collider);
 
     if (stable.current !== collider && !colliders_equal(stable.current, collider)) {
@@ -176,7 +183,7 @@ const useStableCollider = (collider: Collider): Collider => {
     return stable.current;
 };
 
-export const useCollider = (collider: Collider): {auto_strategy: RigidBodyAutoCollider | false, ColliderComponent: React.ComponentType<ColliderProps> | null} => {
+export const useCollider = (collider: ColliderOrCollection): {auto_strategy: RigidBodyAutoCollider | false, ColliderComponent: React.ComponentType<ColliderProps> | null} => {
     const stable_collider = useStableCollider(collider);
     const auto_strategy = stable_collider.type === "auto" ? (stable_collider.approximation as any) : false;
 
@@ -189,6 +196,12 @@ export const useCollider = (collider: Collider): {auto_strategy: RigidBodyAutoCo
             case "capsule":
             case "cylinder":
                 return (props: ColliderProps) => <PrimitiveCollider collider={stable_collider} {...props} />;
+            case "collection":
+                return (props: ColliderProps) => (<>
+                    {stable_collider.colliders.map((collider, index) => (
+                        <PrimitiveCollider key={index} collider={collider} {...props} />
+                    ))}
+                </>);
             default:
                 return null;
         }
@@ -358,7 +371,7 @@ export const ObjectPhysics = ({
 
     const container_ref = useRef<Group>(null);
 
-    const collider: Collider = rb.collider ?? {
+    const collider: ColliderOrCollection = rb.collider ?? {
         type: "auto",
         approximation: rb.type === "fixed" ? "trimesh" : "hull"
     };

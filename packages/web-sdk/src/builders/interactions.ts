@@ -1,6 +1,5 @@
-import {BaseBuilder} from "./base";
 import {
-    Collider,
+    ColliderOrCollection,
     DirectionalLightInteraction,
     DirectionalLightInteractionInput,
     DirectionalLightInteractionSchema,
@@ -13,23 +12,48 @@ import {
     GrabbableInteractionInput,
     GrabbableInteractionSchema,
     GrabCollider,
-    GrabOffsetInput, ParticleEmitterBehaviorInput, ParticleEmitterBehaviorSchema,
-    ParticleEmitterColorInput, ParticleEmitterColorSchema, ParticleEmitterInteraction,
-    ParticleEmitterInteractionInput, ParticleEmitterInteractionSchema,
+    GrabOffsetInput,
+    ParticleEmitterBehaviorInput,
+    ParticleEmitterBehaviorSchema,
+    ParticleEmitterColorInput,
+    ParticleEmitterColorSchema,
+    ParticleEmitterInteraction,
+    ParticleEmitterInteractionInput,
+    ParticleEmitterInteractionSchema,
     ParticleEmitterRandomisableValueInput,
-    ParticleEmitterRandomisableValueSchema, ParticleEmitterShapeInput,
-    ParticleEmitterShapeSchema, ParticleEmitterVisualInput, ParticleEmitterVisualSchema,
+    ParticleEmitterRandomisableValueSchema,
+    ParticleEmitterShapeInput,
+    ParticleEmitterShapeSchema,
+    ParticleEmitterVisualInput,
+    ParticleEmitterVisualSchema,
     PointLightInteraction,
     PointLightInteractionInput,
     PointLightInteractionSchema,
     PositionalAudioInteraction,
     PositionalAudioInteractionInput,
     PositionalAudioInteractionSchema,
-    RaycastAim, RaycastAimInput, RaycastAimSchema, RaycastInteraction, RaycastInteractionInput,
-    RaycastInteractionSchema, RaycastRays,
-    RaycastRaysInput, RaycastRaysSchema, RaycastResult, RaycastSpace, RaycastTargets,
-    RaycastTargetsInput, RaycastTargetsSchema, RaycastTrigger, RaycastTriggerInput, RaycastTriggerSchema,
-    Rotation, RotationSchema, SeatInteraction, SeatInteractionInput, SeatInteractionSchema,
+    RaycastAim,
+    RaycastAimInput,
+    RaycastAimSchema,
+    RaycastInteraction,
+    RaycastInteractionInput,
+    RaycastInteractionSchema,
+    RaycastRays,
+    RaycastRaysInput,
+    RaycastRaysSchema,
+    RaycastResult,
+    RaycastSpace,
+    RaycastTargets,
+    RaycastTargetsInput,
+    RaycastTargetsSchema,
+    RaycastTrigger,
+    RaycastTriggerInput,
+    RaycastTriggerSchema,
+    Rotation,
+    RotationSchema,
+    SeatInteraction,
+    SeatInteractionInput,
+    SeatInteractionSchema,
     SpotLightInteraction,
     SpotLightInteractionInput,
     SpotLightInteractionSchema,
@@ -38,9 +62,12 @@ import {
     TriggerVolumeInteractionSchema,
     TweenEasing
 } from "@hyperlinkvr/vr-engine-schemas";
-import {send_via_rtc} from "../messenger";
-import {Player} from "../players";
-import {asset_url} from "../assets";
+
+import { asset_url } from "../assets";
+import { send_via_rtc } from "../messenger";
+import { Player } from "../players";
+import { BaseBuilder } from "./base";
+
 
 const interaction_command = async (object_id: string, interaction_id: string, command: string, args?: any) => {
     try {
@@ -156,7 +183,7 @@ export class TriggerVolumeInteractionBuilder extends BaseBuilder<TriggerVolumeIn
         super({type: "trigger-volume"} as TriggerVolumeInteractionInput);
     }
 
-    set_collider(collider: Collider) {
+    set_collider(collider: ColliderOrCollection) {
         this._internal.collider = collider;
         return this;
     }
