@@ -156,6 +156,15 @@ class TextPrefabBuilderBase extends BaseBuilder<TextPrefabBaseInput & {depth?: n
         this._internal.color = HexNumericalColorSchema.parse(color);
         return this;
     }
+
+
+    static _make_api(object_id: string) {
+        return {
+            set_text: (text: string) => prefab_command(object_id, "set_text", {text}),
+            set_font_size: (size: number) => prefab_command(object_id, "set_font_size", {size}),
+            set_color: (color: HexNumericalColor) => prefab_command(object_id, "set_color", {color})
+        };
+    }
 }
 
 export class FloatingText2DPrefabBuilder extends TextPrefabBuilderBase {
@@ -181,6 +190,14 @@ export class FloatingText3DPrefabBuilder extends TextPrefabBuilderBase {
     build(): FloatingText3DPrefab {
         return FloatingText3DPrefabSchema.parse(this._internal);
     }
+
+
+    static _make_api(object_id: string) {
+        return {
+            ...super._make_api(object_id),
+            set_depth: (depth: number) => prefab_command(object_id, "set_depth", {depth})
+        };
+    }
 }
 
 export class TextSignPrefabBuilder extends TextPrefabBuilderBase {
@@ -200,6 +217,15 @@ export class TextSignPrefabBuilder extends TextPrefabBuilderBase {
 
     build(): TextSignPrefab {
         return TextSignPrefabSchema.parse(this._internal);
+    }
+
+
+    static _make_api(object_id: string) {
+        return {
+            ...super._make_api(object_id),
+            set_style: (style: "default" | "wooden" | "nameplate") => prefab_command(object_id, "set_style", {style}),
+            set_style_parameters: (params: Record<string, any>) => prefab_command(object_id, "set_style_parameters", {params})
+        };
     }
 }
 
@@ -286,5 +312,8 @@ export class GolfPutterPrefabBuilder extends BaseBuilder<GolfPutterPrefabInput> 
 
 
 export const _PREFAB_API_MAKERS = {
+    "floating_text_2d": FloatingText2DPrefabBuilder._make_api,
+    "floating_text_3d": FloatingText3DPrefabBuilder._make_api,
+    "text_sign": TextSignPrefabBuilder._make_api,
     "golf_ball": GolfBallPrefabBuilder._make_api
 } as Record<string, (object_id: string) => any>;

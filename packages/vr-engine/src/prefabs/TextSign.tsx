@@ -1,8 +1,9 @@
 import { TextSignPrefab } from "@hyperlinkvr/vr-engine-schemas";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 
 
+import { useObjectBinding } from "../hooks/useObjectBinding";
 import { PrefabProps } from "../types";
 import { FloatingText2D } from "./FloatingText2D";
 import { PrefabRoot } from "./PrefabRoot";
@@ -52,9 +53,59 @@ const TextSignInternal = (props: PrefabProps<TextSignPrefab>) => {
 }
 
 export const TextSign = (props: PrefabProps<TextSignPrefab>) => {
+    const [text, setText] = useState(props.text);
+    const [color, setColor] = useState(props.color);
+    const [font_size, setFontSize] = useState(props.font_size);
+    const [style, setStyle] = useState(props.style);
+    const [style_parameters, setStyleParameters] = useState(props.style_parameters);
+
+    const state_props = useMemo(() => ({
+        ...props,
+        text,
+        color,
+        font_size,
+        style,
+        style_parameters
+    }), [props, text, color, font_size, style, style_parameters]);
+
+    const { on_prefab_command } = useObjectBinding(props.binding);
+
+    useEffect(() => {
+        const unlisten = on_prefab_command(async (command, args) => {
+            switch (command) {
+                case "set_text":
+                    setText(args.text);
+                    break;
+                case "set_color":
+                    setColor(args.color);
+                    break;
+                case "set_font_size":
+                    setFontSize(args.font_size);
+                    break;
+                case "set_style":
+                    setStyle(args.style);
+                    break;
+                case "set_style_parameters":
+                    setStyleParameters(args.style_parameters);
+                    break;
+                default:
+                    return {
+                        success: false,
+                        error: `Unknown command ${command}`
+                    };
+            }
+
+            return { success: true };
+        });
+
+        return () => {
+            unlisten();
+        };
+    }, []);
+
     return (
         <PrefabRoot {...props}>
-            <TextSignInternal {...props} />
+            <TextSignInternal {...state_props} />
         </PrefabRoot>
     );
 };

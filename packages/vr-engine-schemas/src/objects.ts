@@ -82,7 +82,7 @@ export const ReflectiveMirrorPrefabSchema = z.object({
 export type ReflectiveMirrorPrefab = z.infer<typeof ReflectiveMirrorPrefabSchema>;
 export type ReflectiveMirrorPrefabInput = z.input<typeof ReflectiveMirrorPrefabSchema>;
 
-const TextPrefabBaseSchema = z.object({
+const TextPrefabBaseSchema = bindable({
     type: z.literal("prefab"),
     text: z.string(),
     font_size: z.number().positive().default(0.1),

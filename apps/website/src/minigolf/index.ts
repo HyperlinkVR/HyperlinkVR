@@ -313,6 +313,7 @@ hyperlinkvr.on_ready(async () => {
         .build();
 
     const loaded_ball_ids = new Set<string>();
+    let on_ball_load_count_change: ((count: number) => void) | null = null;
     const created_cannon = await new h.EngineObjectDispatchBuilder(cannon)
         .on("trigger", (e) => {
             if (e.kind !== "trigger-volume") return;
@@ -324,6 +325,7 @@ hyperlinkvr.on_ready(async () => {
 
             if (e.payload.type === "exit") {
                 loaded_ball_ids.delete(object_id);
+                on_ball_load_count_change?.(loaded_ball_ids.size);
                 return;
             }
 
@@ -332,6 +334,7 @@ hyperlinkvr.on_ready(async () => {
             }
 
             loaded_ball_ids.add(object_id);
+            on_ball_load_count_change?.(loaded_ball_ids.size);
 
             new h.EngineObjectModificationBuilder(object_id)
                 .set_transform(cannon_marker.transform)
@@ -438,6 +441,30 @@ hyperlinkvr.on_ready(async () => {
             fire_animation.play();
         })
         .create();
+
+    const loaded_balls_sign = new h.TextSignPrefabBuilder()
+        .set_text("Balls loaded: 0")
+        .set_style("default")
+        .set_font_size(0.1)
+        .build();
+
+    const sign_pos = [
+        fire_button_marker.transform.position[0],
+        fire_button_marker.transform.position[1] + 0.5,
+        fire_button_marker.transform.position[2]
+    ] as [number, number, number];
+
+    const created_sign = await new h.EngineObjectDispatchBuilder(loaded_balls_sign)
+        .set_transform({
+            position: sign_pos,
+            rotation: fire_button_marker.transform.rotation,
+            scale: [1, 1, 1]
+        })
+        .create();
+
+    on_ball_load_count_change = (count: number) => {
+        created_sign.prefab!.set_text!(`Balls loaded: ${count}`);
+    }
 
     // geyser particles and trigger to intercept the ball
     const geyser_marker = get_marker("geyser");
