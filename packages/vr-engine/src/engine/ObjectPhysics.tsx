@@ -1,11 +1,4 @@
-import {
-    AssetRef,
-    Collider,
-    ColliderOrCollection,
-    PhysicsSystem,
-    RigidBody as RigidBodyConfig,
-    Transform
-} from "@hyperlinkvr/vr-engine-schemas";
+import { AssetRef, Collider, ColliderOrCollection, PhysicsSystem, RigidBody as RigidBodyConfig, Rotation, Transform } from "@hyperlinkvr/vr-engine-schemas";
 import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { BallCollider, CapsuleCollider, CollisionEnterPayload, CollisionPayload, CuboidCollider, CylinderCollider, MeshCollider, RapierRigidBody, RigidBody, RigidBodyAutoCollider, useRapier } from "@react-three/rapier";
@@ -15,6 +8,7 @@ import { clone } from "three/examples/jsm/utils/SkeletonUtils";
 
 
 
+import { EULER_ORDER } from "../consts";
 import { useObjectRefsOptional } from "../contexts/ObjectRefsContext";
 import { useAssetURL } from "../hooks/useAssetURL";
 import { useObjectBinding } from "../hooks/useObjectBinding";
@@ -22,7 +16,11 @@ import { resolve_object_node } from "../interaction/util/target_resolution";
 import { build_collision_groups, GROUP_PROP, GROUP_WORLD } from "../physics/collision_groups";
 import { register_collider_collision_info } from "../physics/collision_hooks";
 import { useWorldHinge } from "../physics/physics_constraints";
-import { rotation_to_euler, rotation_to_quaternion_array } from "../util/rotation";
+import {
+    rotation_to_euler,
+    rotation_to_quaternion,
+    rotation_to_quaternion_array
+} from "../util/rotation";
 
 
 const RB_TYPE = {
@@ -183,29 +181,74 @@ const useStableCollider = (collider: ColliderOrCollection): ColliderOrCollection
     return stable.current;
 };
 
-export const useCollider = (collider: ColliderOrCollection): {auto_strategy: RigidBodyAutoCollider | false, ColliderComponent: React.ComponentType<ColliderProps> | null} => {
-    const stable_collider = useStableCollider(collider);
-    const auto_strategy = stable_collider.type === "auto" ? (stable_collider.approximation as any) : false;
+type SingleColliderComponentProps = Omit<ColliderProps, "rotation"> & { collider: Collider, rotation?: Rotation, offset_base?: [number, number, number], rotation_base?: Rotation };
+
+const SingleColliderComponent = ({ collider, position, rotation, rotation_base, offset_base, ...rest }: SingleColliderComponentProps) => {
+    const euler_rot = useMemo(() => {
+        const q_base = new Quaternion();
+        if (rotation_base) rotation_to_quaternion(rotation_base, q_base);
+
+        const q_local = new Quaternion();
+        if (rotation) rotation_to_quaternion(rotation, q_local);
+
+        const composed = q_base.multiply(q_local);
+        const euler = new Euler().setFromQuaternion(composed, EULER_ORDER);
+        return [euler.x, euler.y, euler.z, euler.order] as [
+            number,
+            number,
+            number,
+            EulerOrder
+        ];
+    }, [rotation, rotation_base]);
+
+    const offset = useMemo(() => {
+        const base_offset = offset_base ?? [0, 0, 0];
+        const pos_offset = position ?? [0, 0, 0];
+
+        return [
+            base_offset[0] + pos_offset[0],
+            base_offset[1] + pos_offset[1],
+            base_offset[2] + pos_offset[2]
+        ] as [number, number, number];
+    }, [position, offset_base]);
+
+    switch (collider.type) {
+        case "custom-mesh":
+            return <URLMeshCollider asset_ref={collider.mesh} approximation={collider.approximation || "hull"} {...rest} position={offset} rotation={euler_rot} />;
+        case "box":
+        case "sphere":
+        case "capsule":
+        case "cylinder":
+            return <PrimitiveCollider collider={collider} {...rest} position={offset} rotation={euler_rot} />;
+        default:
+            return null;
+    }
+}
+
+type ColliderComponentProps = Omit<SingleColliderComponentProps, "collider" | "position" | "rotation">;
+
+export const useCollider = (collider: ColliderOrCollection): {auto_strategy: RigidBodyAutoCollider | false, ColliderComponent: React.ComponentType<ColliderComponentProps> | null} => {
+    const base_collider = useStableCollider(collider);
+    const auto_strategy = base_collider.type === "auto" ? (base_collider.approximation as any) : false;
 
     const ColliderComponent = useMemo(() => {
-        switch (stable_collider.type) {
+        switch (base_collider.type) {
             case "custom-mesh":
-                return (props: ColliderProps) => <URLMeshCollider asset_ref={stable_collider.mesh} approximation={stable_collider.approximation || "hull"} {...props} />;
             case "box":
             case "sphere":
             case "capsule":
             case "cylinder":
-                return (props: ColliderProps) => <PrimitiveCollider collider={stable_collider} {...props} />;
+                return (props: ColliderComponentProps) => <SingleColliderComponent {...props} collider={base_collider} />;
             case "collection":
-                return (props: ColliderProps) => (<>
-                    {stable_collider.colliders.map((collider, index) => (
-                        <PrimitiveCollider key={index} collider={collider} {...props} />
+                return (props: ColliderComponentProps) => (<>
+                    {base_collider.colliders.map((this_collider, index) => (
+                        <SingleColliderComponent {...props} key={index} collider={this_collider} position={this_collider.offset} rotation={this_collider.rotation} offset_base={base_collider.offset} rotation_base={base_collider.rotation} />
                     ))}
                 </>);
             default:
                 return null;
         }
-    }, [stable_collider]);
+    }, [base_collider]);
 
     return { auto_strategy, ColliderComponent };
 }
@@ -447,14 +490,6 @@ export const ObjectPhysics = ({
     ); // TODO: unified useContsraints hook that automatically handles all constraint types
     // usePhysicsReporting(rbRef, physics, monitors, id); // TODO: implement
 
-    const collider_rot_euler = useMemo(() => {
-        if (!collider.rotation) return [0, 0, 0] as [number, number, number];
-
-        const euler = new Euler();
-        rotation_to_euler(collider.rotation, euler);
-        return [euler.x, euler.y, euler.z, euler.order] as [number, number, number, EulerOrder];
-    }, [collider.rotation]);
-
     const report_collision_enter = useCallback(
         (payload: CollisionEnterPayload) => {
             if (!physics.report_collisions) {
@@ -511,7 +546,7 @@ export const ObjectPhysics = ({
                 onCollisionEnter={report_collision_enter}
                 onCollisionExit={report_collision_exit}
             >
-                {ColliderComponent && <ColliderComponent position={collider.offset} rotation={collider_rot_euler} />}
+                {ColliderComponent && <ColliderComponent position={collider.offset} rotation={collider.rotation} />}
                 {!decouple_visual && children}
             </RigidBody>
             {decouple_visual && children}

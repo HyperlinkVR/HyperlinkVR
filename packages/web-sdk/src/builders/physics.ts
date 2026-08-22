@@ -7,8 +7,9 @@ import {
     ColliderCollection,
     ColliderCollectionInput,
     ColliderCollectionSchema,
-    ColliderInput,
+    ColliderOrCollection,
     ColliderOrCollectionInput,
+    ColliderOrCollectionSchema,
     ColliderSchema,
     CustomMeshApproximation,
     DynamicRigidBodyInput,
@@ -251,7 +252,32 @@ export class FixedRigidBodyBuilder extends RigidBodyBuilder<FixedRigidBodyInput>
     }
 }
 
-export class ColliderBuilder extends BaseBuilder<ColliderInput> {
+export class ColliderCollectionBuilder extends BaseBuilder<ColliderCollectionInput> {
+    constructor(colliders: CollectableCollider[]) {
+        super({type: "collection", colliders});
+    }
+
+    add_collider(collider: CollectableCollider) {
+        this._internal.colliders.push(collider);
+        return this;
+    }
+
+    set_offset(offset: [number, number, number]) {
+        this._internal.offset = offset;
+        return this;
+    }
+
+    set_rotation(rotation: Rotation) {
+        this._internal.rotation = rotation;
+        return this;
+    }
+
+    build(): ColliderCollection {
+        return ColliderCollectionSchema.parse(this._internal);
+    }
+}
+
+export class ColliderBuilder extends BaseBuilder<ColliderOrCollectionInput> {
     constructor() {
         super({type: "auto"});
     }
@@ -286,28 +312,8 @@ export class ColliderBuilder extends BaseBuilder<ColliderInput> {
         return this;
     }
 
-    set_offset(offset: [number, number, number]) {
-        this._internal.offset = offset;
-        return this;
-    }
-
-    set_rotation(rotation: Rotation) {
-        this._internal.rotation = rotation;
-        return this;
-    }
-
-    build(): Collider {
-        return ColliderSchema.parse(this._internal);
-    }
-}
-
-export class ColliderCollectionBuilder extends BaseBuilder<ColliderCollectionInput> {
-    constructor(colliders: CollectableCollider[]) {
-        super({type: "collection", colliders});
-    }
-
-    add_collider(collider: CollectableCollider) {
-        this._internal.colliders.push(collider);
+    collection(colliders: CollectableCollider[], offset?: [number, number, number], rotation?: Rotation) {
+        this._internal = {type: "collection", colliders, offset, rotation};
         return this;
     }
 
@@ -321,7 +327,7 @@ export class ColliderCollectionBuilder extends BaseBuilder<ColliderCollectionInp
         return this;
     }
 
-    build(): ColliderCollection {
-        return ColliderCollectionSchema.parse(this._internal);
+    build(): ColliderOrCollection {
+        return ColliderOrCollectionSchema.parse(this._internal);
     }
 }

@@ -1,5 +1,9 @@
-import {glMatrix, mat4, quat, vec3} from "gl-matrix";
-import {Transform} from "@hyperlinkvr/vr-engine-schemas";
+import { Transform } from "@hyperlinkvr/vr-engine-schemas";
+import { glMatrix, mat4, quat, vec3 } from "gl-matrix";
+
+
+
+
 
 glMatrix.setMatrixArrayType(Array);
 
@@ -51,7 +55,12 @@ const local_matrix = (node: GLTFNode) => {
 }
 
 // collect the global transform by recursing tree
-const resolve_world = (node_idx: number, nodes: GLTFNode[], parent_map: Map<number, number>, cache: Map<number, mat4>) => {
+const resolve_world = (
+    node_idx: number,
+    nodes: GLTFNode[],
+    parent_map: Map<number, number>,
+    cache: Map<number, mat4>
+) => {
     const cached = cache.get(node_idx);
     if (cached) {
         return cached;
@@ -65,25 +74,41 @@ const resolve_world = (node_idx: number, nodes: GLTFNode[], parent_map: Map<numb
         mat4.copy(world, local);
     } else {
         // parent (dot) local
-        mat4.multiply(world, resolve_world(parent, nodes, parent_map, cache), local);
+        mat4.multiply(
+            world,
+            resolve_world(parent, nodes, parent_map, cache),
+            local
+        );
     }
 
     cache.set(node_idx, world);
     return world;
-}
+};
 
 const decompose = (mat: mat4): Transform => {
     const position = vec3.create();
-    const rotation = quat.create();
     const scale = vec3.create();
     mat4.getTranslation(position, mat);
-    mat4.getRotation(rotation, mat);
-    quat.normalize(rotation, rotation);   // getRotation doesn't divide scale out
     mat4.getScaling(scale, mat);
+
+    // strip scale so the 3x3 is a pure rotation before extraction
+    // (gl-matrix getRotation assumes uniform scale and is wrong otherwise)
+    const rot_only = mat4.clone(mat);
+    for (let axis = 0; axis < 3; axis++) {
+        const s = scale[axis] || 1;
+        rot_only[axis * 4 + 0] /= s;
+        rot_only[axis * 4 + 1] /= s;
+        rot_only[axis * 4 + 2] /= s;
+    }
+
+    const rotation = quat.create();
+    mat4.getRotation(rotation, rot_only);
+    quat.normalize(rotation, rotation);
+
     return {
         position: position as [number, number, number],
         rotation: rotation as [number, number, number, number],
-        scale: scale as [number, number, number],
+        scale: scale as [number, number, number]
     };
 };
 

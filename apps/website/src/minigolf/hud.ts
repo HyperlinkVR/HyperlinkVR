@@ -111,3 +111,16 @@ export const show_result = async (username: string | null, strokes: number, par:
         result_hud.destroy();
     }, 4000);
 }
+
+export const show_oob = async (username: string | null) => {
+    const oob_hud = await h.hud_text("oob", "Out of bounds!")
+        .set_slot("middle-center")
+        .set_font_size(64)
+        .set_vr_anchor("head")
+        .player(username)
+        .create();
+
+    setTimeout(() => {
+        oob_hud.destroy();
+    }, 2000);
+}

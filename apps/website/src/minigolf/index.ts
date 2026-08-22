@@ -1,4 +1,4 @@
-import { add_player, get_ball_by_object_id, get_ball_of_player, get_owner_of_ball, next_hole, scored_on_hole, stroke_at_rest, take_stroke } from "./game_state";
+import { add_player, get_ball_by_object_id, get_ball_of_player, get_owner_of_ball, next_hole, out_of_bounds, scored_on_hole, stroke_at_rest, take_stroke } from "./game_state";
 import { countdown_to_start } from "./hud";
 import { get_custom_marker_subset, get_hole_markers, get_marker, load_all_markers } from "./markers";
 import { calculate_launch_velocity, normalise_vector } from "./util";
@@ -41,6 +41,8 @@ hyperlinkvr.on_ready(async () => {
     const h = hyperlinkvr.builders;
 
     const promises: Promise<typeof h.EngineObjectCreationResult>[] = [];
+
+    await load_all_markers(COURSE_POS);
 
     const course = new h.CustomObjectBuilder()
         .set_mesh("./course.glb")
@@ -86,6 +88,45 @@ hyperlinkvr.on_ready(async () => {
         .set_position(COURSE_POS)
         .create();
 
+    // markers have rotation and scale defined to set their bounds, as well as transform
+    // this can be used to construct a collection of box colliders (offset from the origin)
+    const course_bound_markers = get_custom_marker_subset(/^bounds_/i);
+    let colliders: h.CollectableCollider[] = [];
+    course_bound_markers.forEach((marker) => {
+        const collider = new h.ColliderBuilder()
+            .box([marker.transform.scale[0] * 2, marker.transform.scale[1] * 2, marker.transform.scale[2] * 2])
+            .set_offset(marker.transform.position)
+            .set_rotation(marker.transform.rotation)
+            .build();
+        colliders.push(collider);
+    });
+
+    const course_bounds_dummy = new h.CustomObjectBuilder()
+        .add_interaction("trigger",
+            new h.TriggerVolumeInteractionBuilder()
+                .set_collider(
+                    new h.ColliderBuilder().collection(colliders).build()
+                )
+                .include_objects(["golf_ball"])
+                .exclude_players()
+                .build()
+        )
+        .build();
+
+    const promise_course_bounds = new h.EngineObjectDispatchBuilder(course_bounds_dummy)
+        .set_position(COURSE_POS)
+        .on("trigger", (e) => {
+            if (e.kind !== "trigger-volume") return;
+            if (e.payload.type !== "exit") return;
+
+            const interacted = e.payload.interacted;
+            if (!interacted || interacted.type !== "object") return;
+
+            const object_id = interacted.object_id;
+            out_of_bounds(object_id);
+        })
+        .create();
+
     // ensure course and terrain are loaded before anything else, as they may be used for collision detection
     await Promise.all([promise_course, promise_terrain]);
 
@@ -108,8 +149,6 @@ hyperlinkvr.on_ready(async () => {
                 .build()
         )
         .build();
-
-    await load_all_markers(COURSE_POS);
 
     const hole_markers = get_hole_markers();
 

@@ -1,4 +1,4 @@
-import { show_hole, show_result, show_stroke } from "./hud";
+import { show_hole, show_oob, show_result, show_stroke } from "./hud";
 import { get_start_markers } from "./markers";
 import type { Player } from "./types";
 
@@ -11,6 +11,7 @@ interface PlayerState {
     finished_this_hole: boolean;
     ball: typeof h.EnginePrefabObjectCreationResult;
     putter: typeof h.EnginePrefabObjectCreationResult;
+    last_pos: [number, number, number] | null;
 }
 
 const create_player_state = (
@@ -22,7 +23,8 @@ const create_player_state = (
         strokes_this_hole: 0,
         finished_this_hole: false,
         ball,
-        putter
+        putter,
+        last_pos: null
     };
 };
 
@@ -82,14 +84,47 @@ export const next_hole = () => {
     for (const [username, state] of players.entries()) {
         state.strokes_this_hole = 0;
         state.finished_this_hole = false;
+        state.last_pos = null;
 
         // teleport ball to hole start point defined by marker
-        state.ball.modify().set_position(start_marker.transform.position).apply();
+        state.ball
+            .modify()
+            .set_position(start_marker.transform.position)
+            .apply();
 
         show_stroke(1, username);
     }
 
     show_hole(current_hole, start_marker.properties);
+}
+
+export const out_of_bounds = (ball_object_id: string) => {
+    const owner = get_owner_of_ball(ball_object_id);
+    if (owner === undefined) {
+        throw new Error(`Ball with object ID ${ball_object_id} not found`);
+    }
+
+    const state = players.get(owner);
+    if (!state) {
+        throw new Error(`Player ${owner} not found`);
+    }
+
+    let pos = state.last_pos;
+    if (!pos) {
+        // fall back to the start of the hole if we don't have a last position
+        const start_markers = get_start_markers();
+        const start_marker = start_markers.get(current_hole.toString());
+        if (!start_marker) {
+            throw new Error(`Start marker for hole ${current_hole} not found`);
+        }
+
+        pos = start_marker.transform.position;
+    }
+
+    // teleport ball to last position
+    state.ball.modify().set_position(pos).apply();
+
+    show_oob(owner);
 }
 
 export const get_owner_of_ball = (ball_object_id: string) => {
@@ -184,6 +219,11 @@ export const stroke_at_rest = (username: string | null) => {
         throw new Error(`Player ${username} not found`);
     }
 
+    // record where the stroke ended up as an easy way to recover from oob (doesnt catch all cases ofc but better than start)
+    state.ball.refresh().then(() => {
+        state.last_pos = state.ball.object.transform.position;
+    });
+
     if (state.finished_this_hole) {
         return;
     }
@@ -249,7 +289,10 @@ const dev_cheats = {
 
         const player = new hyperlinkvr.players.Player(username);
         const player_pos = await player.get_position();
-        state.ball.modify().set_position(player_pos.position).apply();
+        state.ball
+            .modify()
+            .set_position(player_pos.position)
+            .apply();
     }
 };
 
