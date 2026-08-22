@@ -17,6 +17,7 @@ export const DefaultTextSign = (props: PrefabProps<TextSignPrefab>) => {
     const box_color = useMemo(() => props.style_parameters?.box_color || 0x111111, [props.style_parameters]);
     const bg_color = useMemo(() => props.style_parameters?.background_color || 0xffffff, [props.style_parameters]);
 
+    // TODO: font size is a no-op for this
     return (
         <group>
             <mesh>

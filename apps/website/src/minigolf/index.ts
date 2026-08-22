@@ -89,7 +89,7 @@ hyperlinkvr.on_ready(async () => {
     // ensure course and terrain are loaded before anything else, as they may be used for collision detection
     await Promise.all([promise_course, promise_terrain]);
 
-    const trigger_dummy = new h.CustomObjectBuilder()
+    const hole_dummy = new h.CustomObjectBuilder()
         .add_interaction(
             "trigger",
             new h.TriggerVolumeInteractionBuilder()
@@ -98,6 +98,13 @@ hyperlinkvr.on_ready(async () => {
                 )
                 .include_objects(["golf_ball"])
                 .exclude_players()
+                .build()
+        )
+        .add_interaction(
+            "sfx",
+            new h.PositionalAudioInteractionBuilder()
+                .set_url("./hole.opus")
+                .set_max_distance(1)
                 .build()
         )
         .build();
@@ -111,7 +118,9 @@ hyperlinkvr.on_ready(async () => {
         // could add these all to the course mesh, but easier to just make separate dummies
 
         promises.push(
-            new h.EngineObjectDispatchBuilder(trigger_dummy)
+            new h.EngineObjectDispatchBuilder(hole_dummy)
+                .set_transform(marker.transform)
+                // register scoring when an owned ball enters the hole trigger volume
                 .on("trigger", (e) => {
                     if (e.kind !== "trigger-volume") return;
                     if (e.payload.type !== "enter") return;
@@ -128,7 +137,14 @@ hyperlinkvr.on_ready(async () => {
 
                     scored_on_hole(owner);
                 })
-                .set_transform(marker.transform)
+                // play sound effect when any ball enters hole
+                .add_trigger(new h.TriggerBuilder("trigger")
+                    .set_targets([
+                        new h.TriggerTargetBuilder("sfx", "play").build()
+                    ])
+                    .set_event_filter({"type": "enter"})
+                    .build()
+                )
                 .create()
         );
     });
@@ -310,11 +326,26 @@ hyperlinkvr.on_ready(async () => {
                 .exclude_players()
                 .build()
         )
+        .add_interaction(
+            "load_sfx",
+            new h.PositionalAudioInteractionBuilder()
+                .set_url("./cannon_load.opus")
+                .set_max_distance(0.5)
+                .build()
+        )
+        .add_interaction(
+            "fire_sfx",
+            new h.PositionalAudioInteractionBuilder()
+                .set_url("./cannon_fire.opus")
+                .set_max_distance(2)
+                .build()
+        )
         .build();
 
     const loaded_ball_ids = new Set<string>();
     let on_ball_load_count_change: ((count: number) => void) | null = null;
     const created_cannon = await new h.EngineObjectDispatchBuilder(cannon)
+        .set_transform(cannon_marker.transform)
         .on("trigger", (e) => {
             if (e.kind !== "trigger-volume") return;
 
@@ -351,7 +382,15 @@ hyperlinkvr.on_ready(async () => {
 
             ball.prefab.lock();
         })
-        .set_transform(cannon_marker.transform)
+        // play the load/cock sound effect when a ball enters the cannon trigger volume
+        .add_trigger(
+            new h.TriggerBuilder("trigger")
+                .set_targets([
+                    new h.TriggerTargetBuilder("load_sfx", "play").build()
+                ])
+                .set_event_filter({"type": "enter"})
+                .build()
+        )
         .create();
 
     const apex = get_marker("fire_apex");
@@ -440,12 +479,20 @@ hyperlinkvr.on_ready(async () => {
             await fire_animation.seek(0);
             fire_animation.play();
         })
+        // play the firing sound effect on the cannon using a targeted trigger :)
+        .add_trigger(
+            new h.TriggerBuilder("fire")
+                .set_targets([
+                    new h.TriggerTargetBuilder({target: created_cannon, name: "fire_sfx"}, "play").build()
+                ])
+                .set_event_filter({"type": "press"})
+                .build()
+        )
         .create();
 
     const loaded_balls_sign = new h.TextSignPrefabBuilder()
         .set_text("Balls loaded: 0")
         .set_style("default")
-        .set_font_size(0.1)
         .build();
 
     const sign_pos = [
@@ -489,7 +536,6 @@ hyperlinkvr.on_ready(async () => {
                 .set_visual({type: "image", url: "./smoke_04_edit.png"})
                 .set_rotation([-Math.PI/2, 0, 0])
                 .loop()
-                .autoplay()
                 .build()
             )
         .add_interaction("trigger",
@@ -501,10 +547,23 @@ hyperlinkvr.on_ready(async () => {
                 .exclude_players()
                 .build()
         )
+        .add_interaction("rumble_sfx",
+            new h.PositionalAudioInteractionBuilder()
+                .set_url("./rumble.opus")
+                .set_max_distance(5)
+                .build()
+        )
+        .add_interaction("geyser_sfx",
+            new h.PositionalAudioInteractionBuilder()
+                .set_url("./geyser.opus")
+                .set_max_distance(5)
+                .build()
+        )
         .build();
 
     // TODO: why havent i parallelised these promises lol
 
+    // becomes false immediately as the timeout cycle begins so state matches
     let geyser_on = true;
 
     const created_geyser = await new h.EngineObjectDispatchBuilder(geyser_dummy)
@@ -531,15 +590,29 @@ hyperlinkvr.on_ready(async () => {
         .create();
 
     // toggle on and off on a cycle (TODO: add animation channel to particles)
-    setInterval(() => {
+    const toggle_geyser = () => {
         geyser_on = !geyser_on;
 
         if (!geyser_on) {
             created_geyser.interactions.particles!.stop!();
+
+            // generate a random break time between 7 and 15 seconds, to make it less predictable
+            const break_time = Math.random() * 8000 + 7000;
+            setTimeout(toggle_geyser, break_time);
+
+            // on the falling edge, it means next time the geyser will turn on, so schedule the rumble sound effect to play just before the geyser turns on
+            setTimeout(() => {
+                created_geyser.interactions.rumble_sfx!.play!();
+            }, break_time - 1500);
         } else {
             created_geyser.interactions.particles!.restart!();
+            created_geyser.interactions.geyser_sfx!.play!();
+
+            // stays on for 5 seconds
+            setTimeout(toggle_geyser, 5000);
         }
-    }, 5000);
+    }
+    toggle_geyser();
 
     hyperlinkvr.finished_loading();
 });
@@ -558,5 +631,6 @@ hyperlinkvr.players.on_spawn(async (p) => {
 // TODO: make room for multiplayer support
 // TODO: mercy rule
 // TODO: pay a stroke to reset ball/move it
-// TODO: sound effects, realism enhancements etc
+// TODO: ambient sound, realism enhancements etc
+// TODO: music? or not? might be good to have volume settings for players that are separated into music and sfx etc. need a way for audio interactions to declare themself as either
 // TODO: halo around your own ball? perhaps when far away or occluded

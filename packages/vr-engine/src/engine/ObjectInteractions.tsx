@@ -13,6 +13,7 @@ import type { PositionalAudio as PositionalAudioType } from "three";
 import { useAudioListener } from "../contexts/AudioListenerContext";
 import { useObjectRefs } from "../contexts/ObjectRefsContext";
 import { useSessionMode } from "../contexts/SessionModeContext";
+import { useAssetURL } from "../hooks/useAssetURL";
 import { useObjectBinding } from "../hooks/useObjectBinding";
 import { useFlatFrameInput } from "../input/impl/flat/bindings";
 import { Grabbable } from "../interaction";
@@ -240,11 +241,17 @@ const PositionalAudioWrapper = ({interaction, children}: InteractionWrapperProps
         }
     }), [register_channels, interaction]);
 
+    const audio_url = useAssetURL(interaction.url);
+
+    if (!audio_url) {
+        return <>{children}</>;
+    }
+
     return (
         <>
             <PositionalAudio
                 ref={audio_ref}
-                url={interaction.url}
+                url={audio_url}
                 loop={interaction.loop}
                 autoplay={interaction.autoplay}
                 distance={interaction.max_distance}
@@ -261,10 +268,14 @@ const GlobalAudioWrapper = ({interaction, children}: InteractionWrapperProps<Glo
     const audio_listener = useAudioListener();
     const audio = useMemo(() => new Audio(audio_listener), [audio_listener]);
 
+    const audio_url = useAssetURL(interaction.url);
+
     // TODO: split into per dep effects
     useEffect(() => {
+        if (!audio_url) return;
+
         const loader = new AudioLoader();
-        loader.load(interaction.url, (buffer) => {
+        loader.load(audio_url, (buffer) => {
             audio.setBuffer(buffer);
             audio.setLoop(interaction.loop);
             audio.setVolume(interaction.volume ?? 1.0);
@@ -277,7 +288,7 @@ const GlobalAudioWrapper = ({interaction, children}: InteractionWrapperProps<Glo
             audio.stop();
             audio.disconnect();
         };
-    }, [interaction.url, interaction.loop, interaction.autoplay, interaction.volume]);
+    }, [audio_url, interaction.loop, interaction.autoplay, interaction.volume]);
 
     useEffect(() => {
         const handle_command = async (command: string, args?: any) => {

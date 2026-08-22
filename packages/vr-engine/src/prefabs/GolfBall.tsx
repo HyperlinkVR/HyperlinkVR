@@ -1,9 +1,9 @@
 import { GolfBallPrefab } from "@hyperlinkvr/vr-engine-schemas";
-import { useGLTF } from "@react-three/drei";
+import { PositionalAudio, useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { CollisionEnterPayload } from "@react-three/rapier";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Mesh } from "three";
+import { Mesh, PositionalAudio as PositionalAudioType } from "three";
 
 import { useObjectRefsOptional } from "../contexts/ObjectRefsContext";
 import { ObjectPhysics } from "../engine/ObjectPhysics";
@@ -14,6 +14,8 @@ import { PrefabRoot } from "./PrefabRoot";
 
 
 const MESH_URL = new URL("../../assets/prefabs/golf_ball/golf_ball.glb", import.meta.url).href;
+// @ts-ignore
+const PUTT_SOUNDS = import.meta.glob("../../assets/prefabs/golf_ball/sfx/putt_*.opus", {eager: true, as: "url"});
 
 // the material has this colour baked in, so no work required if the user doesn't specify a colour
 const DEFAULT_ALBEDO = 0xd9d9d9;
@@ -112,12 +114,29 @@ export const GolfBall = (props: PrefabProps<GolfBallPrefab>) => {
     const roll_started_at = useRef(0);
     const settle_anchor = useRef<{x: number; y: number; z: number} | null>(null);
 
+    const sfx_refs = useRef<PositionalAudioType[]>([]);
+
+    const play_putt_sound = useCallback(() => {
+        const sfx = sfx_refs.current;
+        if (sfx.length === 0) return;
+
+        const index = Math.floor(Math.random() * sfx.length);
+        const audio = sfx[index];
+        if (!audio) return;
+
+        audio.stop();
+        audio.offset = 0;
+        audio.play();
+    }, []);
+
     // any putter contact is a stroke, however soft, so there's no gentle nudge loophole
     const on_collision_enter = (payload: CollisionEnterPayload) => {
         // don't start a new stroke if still rolling
         if (rolling.current) return;
 
         if (!has_tag_in_object_tree(payload.other.rigidBodyObject ?? null, "golf_putter")) return;
+
+        play_putt_sound();
 
         const body = refs?.rigid_body.current;
         if (!body) return;
@@ -204,7 +223,26 @@ export const GolfBall = (props: PrefabProps<GolfBallPrefab>) => {
                 on_collision_enter={on_collision_enter}
             >
                 <primitive object={instance} />
+
+                {/* is this the best way? don't want there to be loading delay, but perhaps theres a neater way that doesn't make a bunch of audio sources */}
+                {Object.values(PUTT_SOUNDS).map((url, index) => (
+                    <PositionalAudio
+                        key={index}
+                        ref={(ref) => {
+                            if (ref) {
+                                sfx_refs.current[index] = ref;
+                            }
+                        }}
+                        url={url as string}
+                        distance={1}
+                        loop={false}
+                        autoplay={false}
+                    />
+                ))}
             </ObjectPhysics>
         </PrefabRoot>
     );
 };
+
+// TODO: sound effect for general collision, not just putts
+// TODO: vary putt sound based on strength, not just random
