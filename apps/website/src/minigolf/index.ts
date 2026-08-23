@@ -40,6 +40,33 @@ hyperlinkvr.on_ready(async () => {
 
     const h = hyperlinkvr.builders;
 
+    await new h.WorldEnvBuilder()
+        .set_sky(
+            new h.WorldSkyBuilder()
+                .set_sky_zenith_color(0x2f6fb0)
+                .set_sky_horizon_color(0xccd8dc)
+                .set_ground_horizon_color(0xc07d42)
+                .set_ground_nadir_color(0x5a3620)
+                .set_sun_direction([0.55, 0.5, 0.35])
+                .set_sun_color(0xffe4ad)
+                .set_sun_intensity(1.15)
+                .set_sun_size(2)
+                .set_sun_glow(10)
+                .set_cast_light(true)
+                .set_light_intensity(1.15)
+                .set_light_distance(120)
+                .set_sky_light_intensity(0.6)
+                .build()
+        )
+        .set_fog(
+            new h.WorldFogBuilder()
+                .set_color(0xd9b58a)
+                .set_near(40)
+                .set_far(260)
+                .build()
+        )
+        .apply();
+
     const promises: Promise<typeof h.EngineObjectCreationResult>[] = [];
 
     await load_all_markers(COURSE_POS);
