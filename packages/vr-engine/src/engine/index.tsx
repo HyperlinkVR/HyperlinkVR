@@ -191,6 +191,12 @@ const SceneContents = ({
     const spawning_enabled = resolved_meta !== "disable";
     const show_loader = resolved_meta === "supported" && !world_ready;
 
+    useEffect(() => {
+        if (meta === "defer" || meta === "disable") {
+            setWorldEnv(WORLD_ENV_GRAYSPACE);
+        }
+    }, [meta, setWorldEnv]);
+
     // reset world env and player position/rotation on new document load
     useEffect(() => {
         if (meta_generation === 0) {

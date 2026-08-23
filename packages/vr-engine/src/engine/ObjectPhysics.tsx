@@ -17,7 +17,6 @@ import { build_collision_groups, GROUP_PROP, GROUP_WORLD } from "../physics/coll
 import { register_collider_collision_info } from "../physics/collision_hooks";
 import { useWorldHinge } from "../physics/physics_constraints";
 import {
-    rotation_to_euler,
     rotation_to_quaternion,
     rotation_to_quaternion_array
 } from "../util/rotation";
@@ -72,24 +71,40 @@ interface ColliderProps {
     rotation?: [number, number, number] | [number, number, number, EulerOrder];
 }
 
+const is_positive_finite = (value: number) => Number.isFinite(value) && value > 0;
+
 export const PrimitiveCollider = ({ collider, ...rest }: ColliderProps & { collider: Collider }) => {
     switch (collider.type) {
-        case "box":
+        case "box": {
+            const [sx, sy, sz] = collider.size;
+            if (!is_positive_finite(sx) || !is_positive_finite(sy) || !is_positive_finite(sz)) {
+                console.error("skipping degenerate box collider (a non-positive/non-finite size crashes the physics world)", collider.size);
+                return null;
+            }
             return (
                 <CuboidCollider
-                    args={[
-                        collider.size[0] / 2,
-                        collider.size[1] / 2,
-                        collider.size[2] / 2
-                    ]}
+                    args={[sx / 2, sy / 2, sz / 2]}
                     {...rest}
                 />
             );
+        }
         case "sphere":
+            if (!is_positive_finite(collider.radius)) {
+                console.error("skipping degenerate sphere collider (a non-positive/non-finite radius crashes the physics world)", collider.radius);
+                return null;
+            }
             return <BallCollider args={[collider.radius]} {...rest} />;
         case "capsule":
+            if (!is_positive_finite(collider.height) || !is_positive_finite(collider.radius)) {
+                console.error("skipping degenerate capsule collider (a non-positive/non-finite dimension crashes the physics world)", { height: collider.height, radius: collider.radius });
+                return null;
+            }
             return <CapsuleCollider args={[collider.height / 2, collider.radius]} {...rest} />;
         case "cylinder":
+            if (!is_positive_finite(collider.height) || !is_positive_finite(collider.radius)) {
+                console.error("skipping degenerate cylinder collider (a non-positive/non-finite dimension crashes the physics world)", { height: collider.height, radius: collider.radius });
+                return null;
+            }
             return <CylinderCollider args={[collider.height / 2, collider.radius]} {...rest} />;
         default:
             return null;
@@ -193,6 +208,13 @@ const SingleColliderComponent = ({ collider, position, rotation, rotation_base, 
 
         const composed = q_base.multiply(q_local);
         const euler = new Euler().setFromQuaternion(composed, EULER_ORDER);
+
+        // a non-finite rotation (e.g. a malformed rotation value) would give the collider a NaN world matrix, from which rapier decomposes a NaN scale and crashes
+        if (!Number.isFinite(euler.x) || !Number.isFinite(euler.y) || !Number.isFinite(euler.z)) {
+            console.error("collider has a non-finite rotation; falling back to identity", { rotation, rotation_base });
+            return [0, 0, 0, EULER_ORDER] as [number, number, number, EulerOrder];
+        }
+
         return [euler.x, euler.y, euler.z, euler.order] as [
             number,
             number,
@@ -225,7 +247,8 @@ const SingleColliderComponent = ({ collider, position, rotation, rotation_base, 
     }
 }
 
-type ColliderComponentProps = Omit<SingleColliderComponentProps, "collider" | "position" | "rotation">;
+// now only accepting offset and rotation on collider, not on the collidercomponent itself
+type ColliderComponentProps = Omit<SingleColliderComponentProps, "collider">;
 
 export const useCollider = (collider: ColliderOrCollection): {auto_strategy: RigidBodyAutoCollider | false, ColliderComponent: React.ComponentType<ColliderComponentProps> | null} => {
     const base_collider = useStableCollider(collider);

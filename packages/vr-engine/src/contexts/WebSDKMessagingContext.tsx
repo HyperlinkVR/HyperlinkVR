@@ -4,6 +4,10 @@ import { NamedAction, NamedReply, WebSDKActionMessage, WebSDKActionName, WebSDKE
 import { builtin_handlers, Handler } from "@hyperlinkvr/web-sdk-handlers";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 
+import { useEngineObjectStore } from "../stores/EngineObjectStore";
+import { useWorldLoadingStateStore } from "../stores/WorldLoadingStateStore";
+import { clear_collider_collision_info } from "../physics/collision_hooks";
+
 
 
 
@@ -80,6 +84,14 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
                 // single-session in the background guarantees this request is for
                 // our tab, so there's no url/tab gate needed here.
                 // TODO: re-add a tab-id gate if multi-session ever returns
+
+                // first load, page navigation, or the host hot-reloading in dev
+                // wipe the previous session's world state now, while the data channel is still torn down, so it happens before the game starts spawning again
+                // (fixes stuck state after hmr)
+                useEngineObjectStore.getState().clear_all_objects();
+                useWorldLoadingStateStore.getState().reset_for_new_document();
+                clear_collider_collision_info();
+
                 if (data_channel_ref.current) {
                     data_channel_ref.current.removeEventListener("message", handle_data_channel_message);
                     data_channel_ref.current.close();

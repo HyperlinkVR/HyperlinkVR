@@ -281,6 +281,9 @@ interface MetaUpdateEvent extends BaseEventMessage {
     type: "HVR_META_UPDATE";
     tab: number; // TODO sbr
     content: "supported" | "defer" | "disable";
+    // true when this is a cached-meta replay to a newly connected tab-session port, not a new document
+    // tells the engine to not reset the world when this is the case
+    replay?: boolean;
 }
 
 interface TabClosedEvent extends BaseEventMessage { // TODO: rename to sessionclosed

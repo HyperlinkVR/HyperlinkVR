@@ -60,7 +60,14 @@ export const TabSessionProvider = ({children}: { children: React.ReactNode; }) =
 
             if (msg.type === "HVR_META_UPDATE") {
                 setMeta(msg.content);
-                setMetaGeneration((previous) => previous + 1);
+                // a replay is the background re-sending the cached meta to a
+                // newly connected window (hydration). the meta value still needs
+                // to update, but it is not a new document, so don't bump the
+                // generation - otherwise it would clobber a world env the game
+                // already customised (see WorldEnvironment reset effect).
+                if (!msg.replay) {
+                    setMetaGeneration((previous) => previous + 1);
+                }
             }
         });
 

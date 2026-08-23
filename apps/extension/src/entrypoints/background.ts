@@ -257,7 +257,9 @@ export default defineBackground(() => {
                     port.postMessage({
                         type: "HVR_META_UPDATE",
                         tab: tab_id,
-                        content: cached_meta
+                        content: cached_meta,
+                        // hydration for a newly connected window, not a new document
+                        replay: true
                     });
                 }
             });
@@ -501,8 +503,10 @@ export default defineBackground(() => {
 
     // alert the vr host of changes in url
     chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-        if (changeInfo.status === "loading") {
-            tabs_ready_notified.delete(tabId);
+        if (changeInfo.status === "loading" && active_session?.tab_id === tabId) {
+            // the tab is loading a new document (navigation or reload)
+            // allow HVRSDK_READY to be sent again so the content script is notified
+            active_session.ready_notified = false;
         }
 
         if (changeInfo.url) {

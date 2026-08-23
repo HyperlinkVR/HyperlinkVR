@@ -4,11 +4,10 @@ import {
     RapierRigidBody,
     RigidBody,
 } from "@react-three/rapier";
-import {ComponentProps, useMemo, useRef} from "react";
-import {Euler, EulerOrder, Group, Quaternion, Vector3} from "three";
+import {ComponentProps, useRef} from "react";
+import {Group, Quaternion, Vector3} from "three";
 
 import {get_collider_extents, useCollider, useKinematicPosition} from "../engine/ObjectPhysics";
-import {rotation_to_euler} from "../util/rotation";
 import {resolve_object_node} from "./util/target_resolution";
 import {collect_tags} from "../util/tags";
 
@@ -29,19 +28,10 @@ export const TriggerVolume = ({collider, on_enter, on_exit, anchor_ref, children
 
     useKinematicPosition(rb_ref, { type: "kinematic-pos" }, anchor_ref || container_ref);
 
-    const collider_rot_euler = useMemo(() => {
-        if (!collider.rotation) return [0, 0, 0] as [number, number, number];
-
-        const euler = new Euler();
-        rotation_to_euler(collider.rotation, euler);
-        return [euler.x, euler.y, euler.z, euler.order] as [number, number, number, EulerOrder];
-    }, [collider.rotation]);
-
     return (
         <group {...rest}>
             <RigidBody
                 ref={rb_ref}
-                // @ts-ignore
                 type="kinematicPosition"
                 sensor
                 onIntersectionEnter={on_enter}
@@ -49,7 +39,7 @@ export const TriggerVolume = ({collider, on_enter, on_exit, anchor_ref, children
                 activeCollisionTypes={ALL_COLLISIONS}
                 colliders={auto_strategy}
             >
-                {ColliderComponent && <ColliderComponent position={collider.offset} rotation={collider_rot_euler} />}
+                {ColliderComponent && <ColliderComponent position={collider.offset} rotation={collider.rotation} />}
                 {children}
             </RigidBody>
         </group>
