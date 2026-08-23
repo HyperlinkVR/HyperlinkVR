@@ -109,6 +109,11 @@ export const out_of_bounds = (ball_object_id: string) => {
         throw new Error(`Player ${owner} not found`);
     }
 
+    if (state.finished_this_hole) {
+        return;
+    }
+    // TODO: fix this race so we dont pop the oob message when you score
+
     let pos = state.last_pos;
     if (!pos) {
         // fall back to the start of the hole if we don't have a last position

@@ -1,19 +1,17 @@
-import type {Collider, TriggerVolumeInteractionPayload} from "@hyperlinkvr/vr-engine-schemas";
-import {
-    IntersectionEnterPayload, IntersectionExitPayload,
-    RapierRigidBody,
-    RigidBody,
-} from "@react-three/rapier";
-import {ComponentProps, useRef} from "react";
-import {Group, Quaternion, Vector3} from "three";
+import type { Collider, ColliderOrCollection, TriggerVolumeInteractionPayload } from "@hyperlinkvr/vr-engine-schemas";
+import { IntersectionEnterPayload, IntersectionExitPayload, RapierRigidBody, RigidBody } from "@react-three/rapier";
+import { ComponentProps, useCallback, useMemo, useRef } from "react";
+import { Group, Quaternion, Vector3 } from "three";
 
-import {get_collider_extents, useCollider, useKinematicPosition} from "../engine/ObjectPhysics";
-import {resolve_object_node} from "./util/target_resolution";
-import {collect_tags} from "../util/tags";
+
+
+import { get_collider_extents, useCollider, useKinematicPosition } from "../engine/ObjectPhysics";
+import { collect_tags } from "../util/tags";
+import { resolve_object_node } from "./util/target_resolution";
 
 
 interface TriggerVolumeProps extends ComponentProps<"group"> {
-    collider: Collider;
+    collider: ColliderOrCollection;
     on_enter?: (payload: IntersectionEnterPayload) => void;
     on_exit?: (payload: IntersectionExitPayload) => void;
     anchor_ref?: React.RefObject<Group | null>;
@@ -28,14 +26,87 @@ export const TriggerVolume = ({collider, on_enter, on_exit, anchor_ref, children
 
     useKinematicPosition(rb_ref, { type: "kinematic-pos" }, anchor_ref || container_ref);
 
+    // use ref counting for collider collections in order to treat whole collection as one shared volume
+    // the map is keyed by rigid body handle, and the value is the count of how many colliders in the collection are currently intersecting with that rigid body
+    const using_count = useMemo(() => collider.type === "collection", [collider.type]);
+    const counts = useRef<Map<number, number>>(new Map());
+
+    // exits are batched and deferred until the end of the current microtask to avoid triggering an exit when teleporting between 2 disjoint colliders
+    const pending_exits = useRef<Map<number, IntersectionExitPayload>>(new Map());
+    const flush_scheduled = useRef(false);
+
+    const schedule_flush = useCallback(() => {
+        if (flush_scheduled.current) return;
+        flush_scheduled.current = true;
+
+        queueMicrotask(() => {
+            flush_scheduled.current = false;
+
+            pending_exits.current.forEach((payload) => on_exit?.(payload));
+            pending_exits.current.clear();
+        });
+    }, [on_exit]);
+
+    const handle_enter = useCallback(
+        (payload: IntersectionEnterPayload) => {
+            if (!using_count) {
+                on_enter?.(payload);
+                return;
+            }
+
+            const key = payload.other.rigidBody?.handle;
+            if (key == null) return;
+
+            // re-entered before its deferred exit flushed, so it never actually left
+            if (pending_exits.current.delete(key)) {
+                counts.current.set(key, 1);
+                return;
+            }
+
+            const n = counts.current.get(key) ?? 0;
+
+            if (n === 0) {
+                on_enter?.(payload);
+            }
+
+            counts.current.set(key, n + 1);
+        },
+        [on_enter, using_count]
+    );
+
+    const handle_exit = useCallback(
+        (payload: IntersectionExitPayload) => {
+            if (!using_count) {
+                on_exit?.(payload);
+                return;
+            }
+
+            const key = payload.other.rigidBody?.handle;
+            if (key == null) return;
+
+            const n = (counts.current.get(key) ?? 0) - 1;
+
+            if (n > 0) {
+                counts.current.set(key, n);
+                return;
+            }
+
+            // count hit zero but defer the real exit until the batch is fully drained
+            counts.current.delete(key);
+            pending_exits.current.set(key, payload);
+            schedule_flush();
+        },
+        [on_exit, using_count]
+    );
+
     return (
         <group {...rest}>
             <RigidBody
                 ref={rb_ref}
                 type="kinematicPosition"
                 sensor
-                onIntersectionEnter={on_enter}
-                onIntersectionExit={on_exit}
+                onIntersectionEnter={handle_enter}
+                onIntersectionExit={handle_exit}
                 activeCollisionTypes={ALL_COLLISIONS}
                 colliders={auto_strategy}
             >
