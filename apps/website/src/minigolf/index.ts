@@ -666,7 +666,6 @@ hyperlinkvr.players.on_spawn(async (p) => {
     add_player(p, spawn_marker.transform.position);
 });
 
-// TODO: oob detection
 // TODO: make room for multiplayer support
 // TODO: mercy rule
 // TODO: pay a stroke to reset ball/move it
