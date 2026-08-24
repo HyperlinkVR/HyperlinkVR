@@ -2,7 +2,7 @@ import { useSetting } from "@hyperlinkvr/react";
 import { WATCH_UI_HEIGHT, WATCH_UI_WIDTH, WatchUI } from "@hyperlinkvr/watch-ui";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Container } from "@react-three/uikit";
-import { useMemo, useRef, useState } from "react";
+import { Suspense, useMemo, useRef, useState } from "react";
 import { Group, MathUtils, Matrix4, Quaternion, Vector3 } from "three";
 
 import { useSessionMode } from "../contexts/SessionModeContext";
@@ -277,7 +277,9 @@ const WatchUIPresentation = ({
                         pixelSize={0.3 / WATCH_UI_HEIGHT}
                         flexDirection="column"
                     >
-                        <WatchUI on_request_close={on_request_close} detached={mode === "detached"} set_detach={set_detach} detachable={detachable} />
+                        <Suspense fallback={null}> {/* TODO: little backup loading panel */}
+                            <WatchUI on_request_close={on_request_close} detached={mode === "detached"} set_detach={set_detach} detachable={detachable} />
+                        </Suspense>
                     </Container>
                 </group>
             </group>

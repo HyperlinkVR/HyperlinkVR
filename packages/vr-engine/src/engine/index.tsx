@@ -4,7 +4,7 @@ import { Canvas, RootState } from "@react-three/fiber";
 import type { DefaultGLProps } from "@react-three/fiber/dist/declarations/src/core/renderer";
 import {Physics, useFilterContactPair} from "@react-three/rapier";
 import { createXRStore, XR } from "@react-three/xr";
-import {memo, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState} from "react";
+import {memo, Suspense, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState} from "react";
 import { ErrorBoundary, getErrorMessage, type FallbackProps } from "react-error-boundary";
 import {ACESFilmicToneMapping, Group, NeutralToneMapping, WebGLRenderer} from "three";
 import { configureTextBuilder } from "troika-three-text";
@@ -448,7 +448,9 @@ const EngineHostInternal = memo(
                                                                             <SceneContents
                                                                                 player_ref={player_ref}
                                                                                 extra_in_origin={
-                                                                                    <SpectatorCamera />
+                                                                                    <Suspense fallback={null}>
+                                                                                        <SpectatorCamera />
+                                                                                    </Suspense>
                                                                                 }
                                                                             />
                                                                         </ErrorBoundary>

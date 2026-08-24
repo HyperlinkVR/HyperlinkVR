@@ -2,7 +2,7 @@ import { useSetting } from "@hyperlinkvr/react";
 import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import {useTouchPointer, useXRInputSourceStateContext} from "@react-three/xr";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef } from "react";
 import { ArrowHelper, Group, Mesh, MeshBasicMaterial, Object3D, Quaternion, SphereGeometry, Vector3 } from "three";
 
 
@@ -324,36 +324,39 @@ export const XRAvatarHand = () => {
         hands.find((candidate) => candidate.handedness === handedness) ?? null;
 
     return (
-        <AvatarHandModel
-            hand={hand}
-            handedness={handedness}
-            touch_origin_ref={touch_origin_ref}
-            on_touch_glue={glue_touch_origin}
-            auto_position={false} // handled by controller positioning
-        >
-            {debug_touch && (
-                <>
-                    <primitive object={glue.debug_arrow} />
-                    <primitive object={glue.debug_hover_sphere} />
-                    <primitive object={glue.debug_down_sphere} />
-                </>
-            )}
+        <Suspense fallback={null}>  {/* TODO: can have a little fallback avatar while it loads, just a gray or translucent placeholder akin to vrchat */}
+            <AvatarHandModel
+                hand={hand}
+                handedness={handedness}
+                touch_origin_ref={touch_origin_ref}
+                on_touch_glue={glue_touch_origin}
+                auto_position={false} // handled by controller positioning
+            >
+                {debug_touch && (
+                    <>
+                        <primitive object={glue.debug_arrow} />
+                        <primitive object={glue.debug_hover_sphere} />
+                        <primitive object={glue.debug_down_sphere} />
+                    </>
+                )}
 
-            {locomotion === "teleport" && handedness === locomotion_hand && (
-                <XRTeleportControl input_source_state={input_source_state} enabled />
-            )}
+                {/* TODO: move this outside the suspense boundary but dont break the alignment */}
+                {locomotion === "teleport" && handedness === locomotion_hand && (
+                    <XRTeleportControl input_source_state={input_source_state} enabled />
+                )}
 
-            <ObjectPhysics
-                body_name={`avatar_hand_rb-${handedness}`}
-                collision_groups={PLAYER_COLLISION_GROUPS}
-                physics={{
-                    rigid_body: {
-                        type: "kinematic-pos",
-                        collider: { type: "sphere", radius: 0.05 }
-                    }
-                }}
-            />
-        </AvatarHandModel>
+                <ObjectPhysics
+                    body_name={`avatar_hand_rb-${handedness}`}
+                    collision_groups={PLAYER_COLLISION_GROUPS}
+                    physics={{
+                        rigid_body: {
+                            type: "kinematic-pos",
+                            collider: { type: "sphere", radius: 0.05 }
+                        }
+                    }}
+                />
+            </AvatarHandModel>
+        </Suspense>
     );
 };
 
@@ -362,22 +365,24 @@ export const FlatAvatarHands = () => {
     return (
         <>
             {hands.map((hand) => (
-                <AvatarHandModel
-                    key={hand.handedness}
-                    hand={hand}
-                    handedness={hand.handedness}
-                >
-                    <ObjectPhysics
-                        body_name={`avatar_hand_rb-${hand.handedness}`}
-                        collision_groups={PLAYER_COLLISION_GROUPS}
-                        physics={{
-                            rigid_body: {
-                                type: "kinematic-pos",
-                                collider: { type: "sphere", radius: 0.05 }
-                            }
-                        }}
-                    />
-                </AvatarHandModel>
+                <Suspense fallback={null}>  {/* TODO: can have a little fallback avatar while it loads, just a gray or translucent placeholder akin to vrchat */}
+                    <AvatarHandModel
+                        key={hand.handedness}
+                        hand={hand}
+                        handedness={hand.handedness}
+                    >
+                        <ObjectPhysics
+                            body_name={`avatar_hand_rb-${hand.handedness}`}
+                            collision_groups={PLAYER_COLLISION_GROUPS}
+                            physics={{
+                                rigid_body: {
+                                    type: "kinematic-pos",
+                                    collider: { type: "sphere", radius: 0.05 }
+                                }
+                            }}
+                        />
+                    </AvatarHandModel>
+                </Suspense>
             ))}
         </>
     );

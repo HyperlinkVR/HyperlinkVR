@@ -1,34 +1,33 @@
-import {useMessageEngine, useSetting, useTabSession} from "@hyperlinkvr/react";
+import { useMessageEngine, useSetting, useTabSession } from "@hyperlinkvr/react";
+import { PlayerMonitorSchema } from "@hyperlinkvr/vr-engine-schemas";
 import { Text } from "@react-three/drei";
 import { XROrigin } from "@react-three/xr";
-import {useEffect, useImperativeHandle, useRef} from "react";
+import { Suspense, useEffect, useImperativeHandle, useRef } from "react";
 import { Group } from "three";
 
-import {
-    ExpressionMouth,
-    PlayerExpressionProvider,
-    usePlayerExpression
-} from "../contexts/PlayerExpressionContext";
+
+
+import { useWebSDKMessaging } from "../contexts";
+import { ExpressionMouth, PlayerExpressionProvider, usePlayerExpression } from "../contexts/PlayerExpressionContext";
 import { useSessionMode } from "../contexts/SessionModeContext";
+import { BodyHUD } from "../hud/BodyHUD";
+import { FlatHUD } from "../hud/FlatHUD";
+import { HeadHUD } from "../hud/HeadHUD";
+import { OriginHUD } from "../hud/OriginHUD";
+import { FlatHandsPublisher } from "../input/impl/flat/hands";
 import { FlatLocomotion } from "../input/impl/flat/locomotion";
+import { XRHandsPublisher } from "../input/impl/xr/hands";
 import { XRLocomotion } from "../input/impl/xr/locomotion";
+import { register_input_monitor, unregister_input_monitor } from "../monitors/input_monitor_registry";
+import { useWorldLoadingStateStore } from "../stores/WorldLoadingStateStore";
 import { Avatar } from "./Avatar";
 import { FlatCameraRig } from "./FlatCameraRig";
+import { PlayerKinematics } from "./PlayerKinematics";
+import { useIsSeated } from "./seating";
+import { LOCAL_PLAYER_SUBJECT } from "./subject";
+import { Vignette } from "./Vignette";
 import { WristWatch } from "./WristWatch";
-import { XRHandsPublisher } from "../input/impl/xr/hands";
-import { FlatHandsPublisher } from "../input/impl/flat/hands";
-import {Vignette} from "./Vignette";
-import {PlayerKinematics} from "./PlayerKinematics";
-import {useWebSDKMessaging} from "../contexts";
-import {useWorldLoadingStateStore} from "../stores/WorldLoadingStateStore";
-import {useIsSeated} from "./seating";
-import {register_input_monitor, unregister_input_monitor} from "../monitors/input_monitor_registry";
-import {PlayerMonitorSchema} from "@hyperlinkvr/vr-engine-schemas";
-import {LOCAL_PLAYER_SUBJECT} from "./subject";
-import {FlatHUD} from "../hud/FlatHUD";
-import {OriginHUD} from "../hud/OriginHUD";
-import {BodyHUD} from "../hud/BodyHUD";
-import {HeadHUD} from "../hud/HeadHUD";
+
 
 const MouthTest = ({
     mouth_name,
@@ -268,7 +267,10 @@ export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>
     return (
         <group name="Player">
             <PlayerExpressionProvider>
-                <Avatar />
+                <Suspense fallback={null}> {/* TODO: can have a little fallback avatar while it loads, just a gray or translucent placeholder akin to vrchat */}
+                    <Avatar />
+                </Suspense>
+
                 <WristWatch />
 
                 <PlayerKinematics />

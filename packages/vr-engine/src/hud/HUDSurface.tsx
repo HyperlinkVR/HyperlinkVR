@@ -1,4 +1,4 @@
-import {useEffect, useMemo} from "react";
+import { Suspense, useEffect, useMemo} from "react";
 import {Container, Text} from "@react-three/uikit";
 import {
     HUDSlot,
@@ -134,18 +134,20 @@ export const HUDSurface = ({
     }, [elements, username, anchor]);
 
     return (
-        <Container width={width} height={height} flexDirection="column" pixelSize={pixel_size} pointerEvents="none" depthTest={false} depthWrite={false}>
-            {VERTICALS.map((vertical) => (
-                <Container key={vertical} flexGrow={1} flexBasis={0} flexDirection="row">
-                    {HORIZONTALS.map((horizontal) => (
-                        <HUDSlotView
-                            key={horizontal}
-                            slot={{vertical, horizontal}}
-                            elements={by_slot.get(`${vertical}-${horizontal}`) ?? []}
-                        />
-                    ))}
-                </Container>
-            ))}
-        </Container>
+        <Suspense fallback={null}>
+            <Container width={width} height={height} flexDirection="column" pixelSize={pixel_size} pointerEvents="none" depthTest={false} depthWrite={false}>
+                {VERTICALS.map((vertical) => (
+                    <Container key={vertical} flexGrow={1} flexBasis={0} flexDirection="row">
+                        {HORIZONTALS.map((horizontal) => (
+                            <HUDSlotView
+                                key={horizontal}
+                                slot={{vertical, horizontal}}
+                                elements={by_slot.get(`${vertical}-${horizontal}`) ?? []}
+                            />
+                        ))}
+                    </Container>
+                ))}
+            </Container>
+        </Suspense>
     );
 };
