@@ -21,8 +21,8 @@ const start_game = async () => {
 let spawn_marker: h.Marker | null = null;
 
 const load_spawn_marker = async () => {
-    // spawn marker stored in terrain, not course
-    const markers = await hyperlinkvr.markers.load("./terrain_vis.glb", {
+    // spawn marker stored in terrain, not course (available in both col and vis, so load col as its smaller)
+    const markers = await hyperlinkvr.markers.load("./terrain_col.glb", {
         transform_offset: {
             position: COURSE_POS
         }
@@ -30,7 +30,7 @@ const load_spawn_marker = async () => {
 
     spawn_marker = markers.get("spawn");
     if (!spawn_marker) {
-        throw new Error("Spawn marker not found in terrain_vis.glb");
+        throw new Error("Spawn marker not found in terrain_col.glb");
     }
 };
 
