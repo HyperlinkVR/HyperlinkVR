@@ -101,7 +101,7 @@ hyperlinkvr.on_ready(async () => {
                     new h.FixedRigidBodyBuilder()
                         .set_collider(
                             new h.ColliderBuilder()
-                                .custom_mesh("./terrain_vis.glb", "trimesh")
+                                .custom_mesh("./terrain_col.glb", "trimesh")
                                 .build()
                         )
                         .set_friction(0.6)
