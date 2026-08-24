@@ -37,6 +37,11 @@ export const useKinematicPosition = (
     const target_pos = useMemo(() => new Vector3(), []);
     const target_quat = useMemo(() => new Quaternion(), []);
 
+    // skip redundant writes to the rigid body if the transform hasn't changed since the last write
+    const written = useRef(false);
+    const last_pos = useMemo(() => new Vector3(), []);
+    const last_quat = useMemo(() => new Quaternion(), []);
+
     useFrame(() => {
         if (rb.type !== "kinematic-pos" || !rb_ref.current || !container_ref.current) {
             return;
@@ -48,8 +53,22 @@ export const useKinematicPosition = (
         container_ref.current.getWorldPosition(target_pos);
         container_ref.current.getWorldQuaternion(target_quat);
 
+        // compare against the last written transform, not the last frame's, so sub-epsilon drift can't accumulate silently while the body sits idle
+        const POS_EPS_SQ = 1e-12; // (1e-6 m)^2
+        const QUAT_EPS = 1e-6;
+        const still =
+            written.current &&
+            last_pos.distanceToSquared(target_pos) < POS_EPS_SQ &&
+            Math.abs(last_quat.dot(target_quat)) > 1 - QUAT_EPS;
+
+        if (still) return;
+
         rb_ref.current.setNextKinematicTranslation(target_pos);
         rb_ref.current.setNextKinematicRotation(target_quat);
+
+        last_pos.copy(target_pos);
+        last_quat.copy(target_quat);
+        written.current = true;
     }, -1);
 };
 
