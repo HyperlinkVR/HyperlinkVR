@@ -1,5 +1,5 @@
 import type { CreatedEngineObject } from "@hyperlinkvr/vr-engine-schemas";
-import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { Suspense, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 
 import type { RendererComponentProps } from "../types";
 import { create_object_refs, ObjectRefsProvider } from "../contexts/ObjectRefsContext";
@@ -117,13 +117,15 @@ export const EngineObjectRenderer = ({ data }: { data: CreatedEngineObject }) =>
                 scale={data.transform.scale}
                 userData={refs.current.user_data}
             >
-                <RendererComponent
-                    root_ref={refs.current.root}
-                    user_data_ref={user_data_ref}
-                    id={data.id}
-                    transform={data.transform}
-                    {...obj_rest}
-                />
+                <Suspense fallback={null}>
+                    <RendererComponent
+                        root_ref={refs.current.root}
+                        user_data_ref={user_data_ref}
+                        id={data.id}
+                        transform={data.transform}
+                        {...obj_rest}
+                    />
+                </Suspense>
                 <ObjectReadyMarker object_id={data.id} has_physics={has_physics} />
             </group>
         </ObjectRefsProvider>
