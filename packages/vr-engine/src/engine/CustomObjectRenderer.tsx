@@ -9,6 +9,7 @@ import { ObjectPhysics } from "./ObjectPhysics";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils";
 import {useMemo} from "react";
 import {useMaterialPatternDisruptor} from "../hooks/useMaterialPatternDisruption";
+import {useMaterialScroller} from "../hooks/useMaterialScroll";
 import {useAssetURL} from "../hooks/useAssetURL";
 
 const GLTFRenderer = ({url}: {url: string}) => {
@@ -17,6 +18,9 @@ const GLTFRenderer = ({url}: {url: string}) => {
     // apply material disrupt shader if material userData specifies it
     // since the material and the props will always be the same (baked in), its fine to apply globally here
     useMaterialPatternDisruptor(materials);
+
+    // scroll texture offset for flowing surfaces (water, lava) if material userData specifies it
+    useMaterialScroller(materials);
 
     // useGLTF caches the scene by url, so need to clone to render multiple instances of the same model
     const instance = useMemo(() => clone(scene), [scene]);
