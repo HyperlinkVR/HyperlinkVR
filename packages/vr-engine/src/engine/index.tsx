@@ -1,5 +1,5 @@
 import {TabSessionProvider, useMessageEngine, useSetting, useStorage, useTabSession} from "@hyperlinkvr/react";
-import {Stats, Text} from "@react-three/drei";
+import { SoftShadows, Stats, Text} from "@react-three/drei";
 import { Canvas, RootState } from "@react-three/fiber";
 import type { DefaultGLProps } from "@react-three/fiber/dist/declarations/src/core/renderer";
 import {Physics, useFilterContactPair} from "@react-three/rapier";
@@ -375,6 +375,29 @@ const EngineHostInternal = memo(
         const loading = useWorldLoadingStateStore((store) => store.loading);
 
         const [show_fps] = useSetting("show_fps");
+        const [shadows] = useSetting("shadows_mode");
+
+        const soft_shadows_props = useMemo(() => {
+            if (shadows === "off" || shadows === "basic") {
+                return {
+                    size: 0,
+                    samples: 0,
+                    focus: 0
+                };
+            }
+
+            return ({
+                samples: shadows === "soft_low" ? 4 : shadows === "soft_medium" ? 8 : 16,
+                size: shadows === "soft_low" ? 8 : shadows === "soft_medium" ? 16 : 25,
+                focus: 0
+            });
+        }, [shadows]);
+
+        const shadow_mode = useMemo(() => {
+            if (shadows === "off") return false;
+            if (shadows === "basic") return "basic";
+            return "soft";
+        }, [shadows]);
 
         return (
             <SessionModeProvider value={mode}>
@@ -420,9 +443,12 @@ const EngineHostInternal = memo(
                                         <Canvas
                                             gl={make_xr_compatible_renderer}
                                             onCreated={handle_created}
+                                            shadows={shadow_mode}
                                         >
                                             <HintDevicePublisher />
                                             {show_fps && <Stats />}
+
+                                            <SoftShadows size={soft_shadows_props.size} samples={soft_shadows_props.samples} focus={soft_shadows_props.focus} />
 
                                             <AudioListenerProvider>
                                                 <QuarksProvider>

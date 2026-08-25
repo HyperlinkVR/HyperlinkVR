@@ -252,6 +252,19 @@ export const Sky = ({
                     position={[sun_pos.x, sun_pos.y, sun_pos.z]}
                     color={sun_color}
                     intensity={light_intensity}
+
+                    castShadow
+                    shadow-mapSize={2048}
+                    shadow-camera-top={50}
+                    shadow-camera-bottom={-50}
+                    shadow-camera-left={-50}
+                    shadow-camera-right={50}
+
+                    shadow-camera-near={10}
+                    shadow-camera-far={light_distance + 50}
+
+                    shadow-normalBias={0.02}
+                    shadow-bias={-0.001}
                 />
             )}
 

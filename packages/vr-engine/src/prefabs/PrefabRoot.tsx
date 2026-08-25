@@ -28,7 +28,7 @@ export const PrefabRoot = ({ ref, children, tags, ...rest }: PrefabRootProps) =>
     }
 
     return (
-        <group ref={ref} {...group_props}>
+        <group ref={ref} castShadow {...group_props}>
             {children}
         </group>
     );

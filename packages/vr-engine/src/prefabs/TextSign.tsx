@@ -105,7 +105,7 @@ export const TextSign = (props: PrefabProps<TextSignPrefab>) => {
     }, []);
 
     return (
-        <PrefabRoot {...props}>
+        <PrefabRoot recieveShadow {...props}>
             <TextSignInternal {...state_props} />
         </PrefabRoot>
     );

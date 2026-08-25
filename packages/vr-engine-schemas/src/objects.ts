@@ -25,12 +25,20 @@ import {AbsoluteAssetURLSchema} from "./assets";
 // export type MaterialAlbedo = z.infer<typeof MaterialAlbedoSchema>;
 // TODO: material override definition that takes value or texture for pbr fields. for now their mesh should include embedded material
 
+export const ObjectShadowsSchema = z.object({
+    cast: z.boolean().default(true), // defaults to true on everything
+    receive: z.boolean().optional() // defaults to true on fixed/no physics objects, false on dynamic/physics objects
+});
+export type ObjectShadows = z.infer<typeof ObjectShadowsSchema>;
+export type ObjectShadowsInput = z.input<typeof ObjectShadowsSchema>;
+
 export const CustomObjectSchema = z.object({
     type: z.literal("custom"),
     mesh: AbsoluteAssetURLSchema.optional(),
     // material_override: MaterialSchema.optional(),
     physics: PhysicsSystemSchema.optional(),
-    interactions: z.array(InteractionSchema).optional()
+    interactions: z.array(InteractionSchema).optional(),
+    shadows: ObjectShadowsSchema.optional()
 });
 export type CustomObject = z.infer<typeof CustomObjectSchema>;
 export type CustomObjectInput = z.input<typeof CustomObjectSchema>;

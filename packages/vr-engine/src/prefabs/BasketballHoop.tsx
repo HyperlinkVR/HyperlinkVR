@@ -50,7 +50,7 @@ export const BasketballHoop = ({
     const entered_top = useRef(new Map<string, number>());
 
     return (
-        <PrefabRoot {...rest}>
+        <PrefabRoot recieveShadow {...rest}>
             <ObjectPhysics
                 physics={{
                     rigid_body: {

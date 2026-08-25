@@ -5,7 +5,7 @@ import {
     CustomObjectInput,
     CustomObjectSchema,
     FollowPlayerInteraction,
-    Interaction,
+    Interaction, ObjectShadows,
     PhysicsSystem,
 } from "@hyperlinkvr/vr-engine-schemas";
 import {asset_url} from "../assets";
@@ -22,6 +22,11 @@ export class CustomObjectBuilder extends BaseBuilder<CustomObjectInput> {
 
     set_physics(physics: PhysicsSystem) {
         this._internal.physics = physics;
+        return this;
+    }
+
+    set_shadow_override(shadows: ObjectShadows) {
+        this._internal.shadows = shadows;
         return this;
     }
 

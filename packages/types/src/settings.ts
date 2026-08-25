@@ -343,6 +343,27 @@ export const settings_def = build_settings({
         }
     },
 
+    shadows_mode: {
+        default_value: "soft_medium" as "off" | "basic" | "soft_low" | "soft_medium" | "soft_high",
+        ui: {
+            common: {
+                label: "Shadows",
+                description: "Soft shadows make the world look more realistic, but can be expensive to render",
+                widget: {
+                    type: "select",
+                    options: [
+                        {label: "Off", value: "off"},
+                        {label: "Basic", value: "basic"},
+                        {label: "Soft (Low)", value: "soft_low"},
+                        {label: "Soft (Medium)", value: "soft_medium"},
+                        {label: "Soft (High)", value: "soft_high"}
+                    ]
+                },
+                breadcrumbs: ["Graphics"]
+            }
+        }
+    },
+
     show_fps: {
         default_value: false,
         local_only: true,

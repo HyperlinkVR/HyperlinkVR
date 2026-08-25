@@ -75,6 +75,11 @@ const AvatarHandModel = ({
                 node.userData.initialQuaternion = node.quaternion.clone();
                 node.userData.initialPosition = node.position.clone();
             }
+
+            // enable shadow casting for the hand mesh
+            if (node.isMesh) {
+                node.castShadow = true;
+            }
         });
         const chains: Record<string, ChainLink[]> = {};
         FINGER_NAMES.forEach((finger) => {

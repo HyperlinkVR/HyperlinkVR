@@ -1,14 +1,18 @@
-import {ObjectPhysics} from "../engine/ObjectPhysics";
-import {PositionalAudio, Text, useGLTF} from "@react-three/drei";
-import {Grabbable} from "../interaction";
-import {RefObject, useCallback, useEffect, useImperativeHandle, useRef, useState} from "react";
-import {detect_trigger_direction, resolve_interacted, TriggerVolume} from "../interaction/TriggerVolume";
-import {create_object_refs, ObjectRefsContextType, ObjectRefsProvider} from "../contexts";
-import {Group, Vector3, PositionalAudio as PositionalAudioType} from "three";
-import {IntersectionEnterPayload, IntersectionExitPayload} from "@react-three/rapier";
-import {Collider} from "@hyperlinkvr/vr-engine-schemas";
+import { Collider } from "@hyperlinkvr/vr-engine-schemas";
+import { PositionalAudio, Text, useGLTF } from "@react-three/drei";
+import { IntersectionEnterPayload, IntersectionExitPayload } from "@react-three/rapier";
+import { RefObject, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { Group, PositionalAudio as PositionalAudioType, Vector3 } from "three";
+
+
+
+import { create_object_refs, ObjectRefsContextType, ObjectRefsProvider } from "../contexts";
+import { ObjectPhysics } from "../engine/ObjectPhysics";
+import { Grabbable } from "../interaction";
+import { detect_trigger_direction, resolve_interacted, TriggerVolume } from "../interaction/TriggerVolume";
 import { PrefabProps } from "../types";
 import { PrefabRoot } from "./PrefabRoot";
+
 
 const MACHINE_URL = new URL("../../assets/prefabs/skootball/machine.glb", import.meta.url).href;
 const BALL_URL = new URL("../../assets/prefabs/skootball/ball.glb", import.meta.url).href;
@@ -312,7 +316,7 @@ export const SkootballMachine = (props: PrefabProps) => {
     }, [is_our_ball]);
 
     return (
-        <PrefabRoot ref={machine_ref} {...props}>
+        <PrefabRoot ref={machine_ref} castShadow recieveShadow {...props}>
             {/* clickable start text TODO improve this */}
             {!playing && (
                 <Text
