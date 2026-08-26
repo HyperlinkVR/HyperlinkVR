@@ -1,0 +1,98 @@
+diff --git a/build/index.cjs b/build/index.cjs
+index 4d5a9082b0f5256b0744f285b072a9c88a5ccb73..28fb19756ea5654e03821e2c6142868f546f14cf 100644
+--- a/build/index.cjs
++++ b/build/index.cjs
+@@ -1403,6 +1403,24 @@ var EffectComposer = class {
+       this.timer.update();
+       deltaTime = this.timer.getDelta();
+     }
++    // --- WebXR support (patched) ---
++    const xr = renderer.xr;
++    const xrPresenting = xr !== void 0 && xr !== null && xr.isPresenting === true;
++    let xrRenderTarget = null;
++    let xrLastPass = null;
++    let xrLastPassRenderToScreen = false;
++    if (xrPresenting) {
++      xrRenderTarget = renderer.getRenderTarget();
++      for (let i = this.passes.length - 1; i >= 0; --i) {
++        if (this.passes[i].enabled) {
++          xrLastPass = this.passes[i];
++          xrLastPassRenderToScreen = xrLastPass.renderToScreen;
++          xrLastPass.renderToScreen = false;
++          break;
++        }
++      }
++    }
++    // --- /WebXR ---
+     for (const pass of this.passes) {
+       if (!pass.enabled) {
+         continue;
+@@ -1432,6 +1450,16 @@ var EffectComposer = class {
+         stencilTest = false;
+       }
+     }
++    // --- WebXR: copy the finished side-by-side image into the XR target ---
++    if (xrPresenting) {
++      if (xrLastPass !== null) {
++        xrLastPass.renderToScreen = xrLastPassRenderToScreen;
++      }
++      copyPass.renderToScreen = false;
++      copyPass.render(renderer, inputBuffer, xrRenderTarget, deltaTime, false);
++      renderer.setRenderTarget(xrRenderTarget);
++    }
++    // --- /WebXR ---
+   }
+   /**
+    * Sets the size of the buffers, passes and the renderer.
+diff --git a/build/index.js b/build/index.js
+index 0dd9772003d46f640680cf24eb6b5e0fea21685e..c5a72932c40b0b82d510b7fe08fba2d3ed456322 100644
+--- a/build/index.js
++++ b/build/index.js
+@@ -1273,6 +1273,30 @@ var EffectComposer = class {
+       this.timer.update();
+       deltaTime = this.timer.getDelta();
+     }
++    // --- WebXR support (patched) ---
++    // In an XR session three binds a stereo (both-eyes, side-by-side) render
++    // target for the frame; the default framebuffer (null) is not presented.
++    // So we (a) stop the final pass from rendering to null, run the chain into
++    // the offscreen buffers, then (b) blit the result into the XR target.
++    // Only per-pixel effects are correct this way; depth/projection effects
++    // (SSAO/N8AO/DoF) use a single-camera projection and will be wrong in XR.
++    const xr = renderer.xr;
++    const xrPresenting = xr !== void 0 && xr !== null && xr.isPresenting === true;
++    let xrRenderTarget = null;
++    let xrLastPass = null;
++    let xrLastPassRenderToScreen = false;
++    if (xrPresenting) {
++      xrRenderTarget = renderer.getRenderTarget();
++      for (let i = this.passes.length - 1; i >= 0; --i) {
++        if (this.passes[i].enabled) {
++          xrLastPass = this.passes[i];
++          xrLastPassRenderToScreen = xrLastPass.renderToScreen;
++          xrLastPass.renderToScreen = false;
++          break;
++        }
++      }
++    }
++    // --- /WebXR ---
+     for (const pass of this.passes) {
+       if (!pass.enabled) {
+         continue;
+@@ -1302,6 +1326,16 @@ var EffectComposer = class {
+         stencilTest = false;
+       }
+     }
++    // --- WebXR: copy the finished side-by-side image into the XR target ---
++    if (xrPresenting) {
++      if (xrLastPass !== null) {
++        xrLastPass.renderToScreen = xrLastPassRenderToScreen;
++      }
++      copyPass.renderToScreen = false;
++      copyPass.render(renderer, inputBuffer, xrRenderTarget, deltaTime, false);
++      renderer.setRenderTarget(xrRenderTarget);
++    }
++    // --- /WebXR ---
+   }
+   /**
+    * Sets the size of the buffers, passes and the renderer.
