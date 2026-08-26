@@ -1,4 +1,4 @@
-import type { CreatedAnimation, CreatedEngineObject, CreatedHUDElement, EngineObjectDispatch, EngineObjectModification, HUDDispatch, HUDElementModification, PlayerMonitor, ReportEvent, Tween, WorldEnv } from "@hyperlinkvr/vr-engine-schemas";
+import type { CreatedAnimation, CreatedEngineObject, CreatedHUDElement, EngineObjectDispatch, EngineObjectModification, HUDDispatch, HUDElementModification, PlayerMonitor, ReportEvent, Tween, VFXStack, WorldEnv } from "@hyperlinkvr/vr-engine-schemas";
 
 
 
@@ -184,6 +184,19 @@ interface WebSDKResetWorldEnvironmentAction extends BaseWebSDKActionMessage {
     type?: "default" | "grayspace";
 }
 
+interface WebSDKSetVFXAction extends BaseWebSDKActionMessage {
+    action: "HVRSDK_SET_VFX";
+    // replaced fully each time
+    stack: VFXStack;
+}
+
+interface WebSDKVFXCommandAction extends BaseWebSDKActionMessage {
+    action: "HVRSDK_VFX_COMMAND";
+    binding_id: string;
+    command: string;
+    args?: Record<string, unknown>;
+}
+
 interface WebSDKPlayerAddMonitorAction extends BaseWebSDKActionMessage {
     action: "HVRSDK_PLAYER_ADD_MONITOR";
     target_username: string | null;
@@ -242,6 +255,8 @@ export type WebSDKActionMessage =
     | WebSDKLoadingFinishedAction
     | WebSDKUpdateWorldEnvironmentAction
     | WebSDKResetWorldEnvironmentAction
+    | WebSDKSetVFXAction
+    | WebSDKVFXCommandAction
     | WebSDKPlayerAddMonitorAction
     | WebSDKPlayerRemoveMonitorAction
     | WebSDKCreateHUDElementAction
@@ -422,6 +437,19 @@ interface WebSDKLoadingFinishedReplyMessage extends BaseWebSDKReplyMessage {
     success: true;
 }
 
+interface WebSDKSetVFXReplyMessage extends BaseWebSDKReplyMessage {
+    for: "HVRSDK_SET_VFX";
+    success: boolean;
+    error?: string;
+}
+
+interface WebSDKVFXCommandReplyMessage extends BaseWebSDKReplyMessage {
+    for: "HVRSDK_VFX_COMMAND";
+    success: boolean;
+    error?: string;
+    response?: unknown;
+}
+
 interface WebSDKPlayerAddMonitorReplyMessage extends BaseWebSDKReplyMessage {
     for: "HVRSDK_PLAYER_ADD_MONITOR";
     success: true;
@@ -474,6 +502,8 @@ export type WebSDKReplyMessage =
     | WebSDKPlayerTeleportToReplyMessage
     | WebSDKUpdateWorldEnvironmentReplyMessage
     | WebSDKResetWorldEnvironmentReplyMessage
+    | WebSDKSetVFXReplyMessage
+    | WebSDKVFXCommandReplyMessage
     | WebSDKLoadingFinishedReplyMessage
     | WebSDKPlayerAddMonitorReplyMessage
     | WebSDKPlayerRemoveMonitorReplyMessage

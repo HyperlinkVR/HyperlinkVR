@@ -129,7 +129,7 @@ Interchangeable with Epic B.
 ### Effects
 - [ ] SDK audio effects (all audio, or specific audio sources)
 - [ ] If multiplayer has voice chat, extend audio effects to apply to player voices too
-- [ ] SDK visual effects (b&w, sepia, bloom, etc). Beware react-three/postprocessing limitations
+- [x] SDK visual effects (b&w, sepia, bloom, etc). Beware react-three/postprocessing limitations
   with XR; may need vignette-layer shaders)
 - [ ] SDK can set time-scale changes (if possible)
 

@@ -6,6 +6,7 @@ export * from "./prefabs";
 export * from "./custom";
 export * from "./object_dispatch";
 export * from "./world_env";
+export * from "./vfx";
 export * from "./triggers";
 export * from "./animation";
 export * from "./hud";

@@ -52,6 +52,7 @@ import { LocalAssetWarningBanner } from "../security/LocalAssetWarningBanner";
 import { useEngineObjectStore } from "../stores/EngineObjectStore";
 import { useWorldLoadingStateStore } from "../stores/WorldLoadingStateStore";
 import { VFXPasses } from "../vfx/VFXPasses";
+import { VFXSync } from "../vfx/VFXSync";
 import { FloorCollider } from "../world/FloorCollider";
 import { Sky } from "../world/Sky";
 import { SDKWorldEnvironmentProvider, useWorldEnvironment, WORLD_ENV_DEFAULT, WORLD_ENV_GRAYSPACE } from "../world/WorldEnvironmentContext";
@@ -416,6 +417,7 @@ const EngineHostInternal = memo(
                             <EngineObjectSync />
                             <AnimationSync />
                             <HUDSync />
+                            <VFXSync />
 
                             <LocalAssetWarningBanner />
 

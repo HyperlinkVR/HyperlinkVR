@@ -11,6 +11,7 @@ export * from "./physics";
 export * from "./transforms";
 export * from "./tween";
 export * from "./world_env";
+export * from "./vfx";
 export * from "./triggers";
 export * from "./animation";
 export * from "./hud";

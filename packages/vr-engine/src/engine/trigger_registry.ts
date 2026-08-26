@@ -13,6 +13,16 @@ export const register_command_handler = (binding_id: string, handler: CommandHan
     };
 };
 
+// invoke a registered command handler directly by binding id
+export const run_command = (binding_id: string, command: string, args?: any) => {
+    const handler = command_handlers.get(binding_id);
+    if (!handler) {
+        console.warn(`No command handler registered for binding "${binding_id}" (command "${command}").`);
+        return null;
+    }
+    return handler(command, args);
+};
+
 const triggers_by_source = new Map<string, Trigger[]>();
 
 export const register_triggers = (triggers: Trigger[] | undefined) => {

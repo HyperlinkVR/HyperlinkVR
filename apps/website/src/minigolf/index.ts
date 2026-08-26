@@ -377,6 +377,10 @@ hyperlinkvr.on_ready(async () => {
         .set_transform(random_input_marker.transform)
         .create();
 
+    const vfx = await new h.VFXStackBuilder()
+        .screen_shake("shake")
+        .apply();
+
     // marker to capture and freeze ball at cannon
     const cannon_marker = get_marker("cannon");
     const cannon = new h.CustomObjectBuilder()
@@ -451,7 +455,7 @@ hyperlinkvr.on_ready(async () => {
         .add_trigger(
             new h.TriggerBuilder("trigger")
                 .set_targets([
-                    new h.TriggerTargetBuilder("load_sfx", "play").build()
+                    new h.TriggerTargetBuilder("load_sfx", "play").build(),
                 ])
                 .set_event_filter({"type": "enter"})
                 .build()
@@ -545,10 +549,20 @@ hyperlinkvr.on_ready(async () => {
             fire_animation.play();
         })
         // play the firing sound effect on the cannon using a targeted trigger :)
+        // TODO: these need to be conditional actually
         .add_trigger(
             new h.TriggerBuilder("fire")
                 .set_targets([
                     new h.TriggerTargetBuilder({target: created_cannon, name: "fire_sfx"}, "play").build()
+                ])
+                .set_event_filter({"type": "press"})
+                .build()
+        )
+        // screen shake on fire
+        .add_trigger(
+            new h.TriggerBuilder("fire")
+                .set_targets([
+                    new h.TriggerTargetBuilder({target: vfx, name: "shake"}, "pulse").build()
                 ])
                 .set_event_filter({"type": "press"})
                 .build()
