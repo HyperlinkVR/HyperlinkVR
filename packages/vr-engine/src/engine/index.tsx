@@ -1,59 +1,64 @@
-import {TabSessionProvider, useMessageEngine, useSetting, useStorage, useTabSession} from "@hyperlinkvr/react";
-import { SoftShadows, Stats, Text} from "@react-three/drei";
+import { TabSessionProvider, useSetting, useStorage, useTabSession } from "@hyperlinkvr/react";
+import { SoftShadows, Stats, Text } from "@react-three/drei";
 import { Canvas, RootState } from "@react-three/fiber";
 import type { DefaultGLProps } from "@react-three/fiber/dist/declarations/src/core/renderer";
-import {Physics, useFilterContactPair} from "@react-three/rapier";
+import { Physics, useFilterContactPair } from "@react-three/rapier";
 import { createXRStore, XR } from "@react-three/xr";
-import {memo, Suspense, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState} from "react";
+import { QuarksProvider } from "quarks.r3f";
+import { memo, Suspense, useCallback, useEffect, useImperativeHandle, useMemo, useRef } from "react";
 import { ErrorBoundary, getErrorMessage, type FallbackProps } from "react-error-boundary";
-import {ACESFilmicToneMapping, Group, NeutralToneMapping, WebGLRenderer} from "three";
+import {
+    ACESFilmicToneMapping,
+    Group,
+    HalfFloatType,
+    WebGLRenderer
+} from "three";
 import { configureTextBuilder } from "troika-three-text";
 
 
 
+import { AnimationRunner } from "../animation/AnimationRunner";
+import { AnimationSync } from "../animation/AnimationSync";
+import { TweenRunner } from "../animation/TweenRunner";
 import { DOMMirror } from "../browser/DOMMirror";
 import { URLBar } from "../browser/URLBar";
-import {AvatarProvider, PlayerOriginProvider, useWebSDKMessaging} from "../contexts";
+import { AvatarProvider, PlayerOriginProvider, useWebSDKMessaging } from "../contexts";
+import { AudioListenerProvider } from "../contexts/AudioListenerContext";
 import { SessionModeProvider } from "../contexts/SessionModeContext";
 import { WebSDKMessagingProvider } from "../contexts/WebSDKMessagingContext";
 import { SceneDebug } from "../debug/SceneDebug";
+import { HUDSync } from "../hud/HUDSync";
 import { HandsProvider } from "../input/hands";
 import { FlatInputProvider } from "../input/impl/flat/bindings";
 import { Crosshair } from "../input/impl/flat/Crosshair";
 import { FlatClickRaycaster } from "../input/impl/flat/FlatClickRaycaster";
+import { AutoHintGlyphs, HintDevicePublisher, HintStateProvider } from "../input/impl/flat/hints";
 import { SpectatorCamera } from "../misc";
-import { AvatarMirror } from "../prefabs/AvatarMirror";
 import { LogoOverlay } from "../misc/LogoOverlay";
+import { InputMonitorRunner } from "../monitors/InputMonitorRunner";
+import { ObjectMonitorRunner } from "../monitors/ObjectMonitorRunner";
+import { clear_collider_collision_info, filter_contact_pair } from "../physics/collision_hooks";
 import { FlatAvatarHands, XRAvatarHand } from "../player/AvatarHand";
 import { Player } from "../player/Player";
+import { AvatarMirror } from "../prefabs/AvatarMirror";
+import { SceneRenderPass, SRGBOutputPass } from "../render/BasePasses";
 import { CameraSetup } from "../render/CameraSetup";
 import { CanvasResizer } from "../render/CanvasResizer";
+import { GraphicsPipeline } from "../render/GraphicsPipeline";
+import { QualityPasses } from "../render/QualityPasses";
+import { ShadowUpdater } from "../render/ShadowUpdater";
+import { SSAO } from "../render/SSAO";
+import { LocalAssetWarningBanner } from "../security/LocalAssetWarningBanner";
+import { useEngineObjectStore } from "../stores/EngineObjectStore";
+import { useWorldLoadingStateStore } from "../stores/WorldLoadingStateStore";
+import { VFXPasses } from "../vfx/VFXPasses";
 import { FloorCollider } from "../world/FloorCollider";
 import { Sky } from "../world/Sky";
+import { SDKWorldEnvironmentProvider, useWorldEnvironment, WORLD_ENV_DEFAULT, WORLD_ENV_GRAYSPACE } from "../world/WorldEnvironmentContext";
 import { EngineObjectSpawner } from "./EngineObjectSpawner";
 import { EngineObjectSync } from "./EngineObjectSync";
-import {TweenRunner} from "../animation/TweenRunner";
-import {AudioListenerProvider} from "../contexts/AudioListenerContext";
-import {
-    SDKWorldEnvironmentProvider,
-    useWorldEnvironment,
-    WORLD_ENV_DEFAULT,
-    WORLD_ENV_GRAYSPACE
-} from "../world/WorldEnvironmentContext";
-import {useEngineObjectStore} from "../stores/EngineObjectStore";
-import {useWorldLoadingStateStore} from "../stores/WorldLoadingStateStore";
-import {FlatLoadingScreen, VRLoadingScreen} from "./LoadingScreen";
-import {SSAO} from "../render/SSAO";
-import {QuarksProvider} from "quarks.r3f";
-import {AutoHintGlyphs, HintDevicePublisher, HintStateProvider} from "../input/impl/flat/hints";
-import {ObjectMonitorRunner} from "../monitors/ObjectMonitorRunner";
-import {InputMonitorRunner} from "../monitors/InputMonitorRunner";
-import {AnimationRunner} from "../animation/AnimationRunner";
-import {AnimationSync} from "../animation/AnimationSync";
-import {HUDSync} from "../hud/HUDSync";
-import {LocalAssetWarningBanner} from "../security/LocalAssetWarningBanner";
-import {clear_collider_collision_info, filter_contact_pair} from "../physics/collision_hooks";
-import { ShadowUpdater } from "../render/ShadowUpdater";
+import { FlatLoadingScreen, VRLoadingScreen } from "./LoadingScreen";
+
 
 configureTextBuilder({
     useWorker: false
@@ -89,7 +94,8 @@ const make_xr_compatible_renderer = ({ canvas }: DefaultGLProps) => {
 
     return new WebGLRenderer({
         canvas,
-        ...(context ? { context } : { alpha: false, antialias: false }) // fallback if webgl2 ctx creation somehow fails
+        ...(context ? { context } : { alpha: false, antialias: false }), // fallback if webgl2 ctx creation somehow fails
+        outputBufferType: HalfFloatType, // use xr aware post processing gl effects pipeline // TODO: not all that perf friendly. allow disabling the advanced graphics pipeline to support stuff like quest standalone. look at general optimisations and presets
     });
 };
 
@@ -448,6 +454,13 @@ const EngineHostInternal = memo(
                                         >
                                             <HintDevicePublisher />
                                             {show_fps && <Stats />}
+
+                                            <GraphicsPipeline>
+                                                <SceneRenderPass />
+                                                <VFXPasses />
+                                                <QualityPasses />
+                                                {/*<SRGBOutputPass />*/}
+                                            </GraphicsPipeline>
 
                                             <SoftShadows size={soft_shadows_props.size} samples={soft_shadows_props.samples} focus={soft_shadows_props.focus} />
                                             <ShadowUpdater />

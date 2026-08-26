@@ -5,6 +5,7 @@ import { CapsuleGeometry, Mesh, MeshBasicMaterial, OrthographicCamera, Perspecti
 
 
 import { usePlayerOrigin } from "../contexts";
+import { active_pipeline } from "./GraphicsPipeline";
 import { Layer } from "./layers";
 import { CameraControllerTransform, frame_transforms } from "./SpectatorCameraController";
 
@@ -284,6 +285,13 @@ export const MixedRealityCameraController = ({
         gl.setClearColor(0x000000, 0);
         gl.clear();
 
+        // get render pass so can later substitute our spectator cameras into the render pass to ensure it actually gets used for the render, not the headset arraycamera
+        const render_pass = active_pipeline.passes.find((p: any) => p.isRenderPass);
+        const prev_cam = (render_pass as any)?.camera;
+
+
+        if (render_pass) (render_pass as any).camera = third_person_camera;
+
         // pass 1: foreground slab, clipped at the player plane (+ capsule depth)
         gl.clippingPlanes = [clipping_plane];
         third_person_camera.layers.set(Layer.Default);
@@ -321,6 +329,8 @@ export const MixedRealityCameraController = ({
             gl.setViewport(x, y, draw_width / 2, draw_height / 2);
             gl.setScissor(x, y, draw_width / 2, draw_height / 2);
             gl.setScissorTest(true);
+            if (render_pass) (render_pass as any).camera = compositor_camera;
+            // TODO: composited tiles dont render correctly as of new graphics pipeline
             gl.render(compositor_scene, compositor_camera);
         };
 
@@ -334,6 +344,7 @@ export const MixedRealityCameraController = ({
             gl.setScissor(x, y, draw_width / 2, draw_height / 2);
             gl.setScissorTest(true);
             gl.clippingPlanes = clip ? [clip] : [];
+            if (render_pass) (render_pass as any).camera = cam;
             gl.render(scene, cam);
             gl.clippingPlanes = [];
         };
@@ -349,6 +360,7 @@ export const MixedRealityCameraController = ({
         draw_scene(first_person_camera, draw_width / 2, 0);
 
         // restore xr rendering state
+        if (render_pass) (render_pass as any).camera = prev_cam;
         gl.setScissorTest(false);
         gl.setViewport(0, 0, draw_width, draw_height);
         gl.setRenderTarget(render_target);

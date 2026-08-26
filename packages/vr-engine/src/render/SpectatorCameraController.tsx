@@ -1,19 +1,13 @@
-import {useFrame, useThree} from "@react-three/fiber";
-import {type RefObject, useEffect, useMemo} from "react";
-import {
-    Matrix4,
-    type Object3D,
-    PerspectiveCamera,
-    type Quaternion,
-    Vector3,
-    type WebGLRenderer,
-    type WebXRArrayCamera
-} from "three";
+import { useFrame, useThree } from "@react-three/fiber";
+import { useEffect, useMemo, type RefObject } from "react";
+import { Matrix4, PerspectiveCamera, Vector3, type Object3D, type Quaternion, type WebGLRenderer, type WebXRArrayCamera } from "three";
 
 
-import {PlayerOriginContextType, usePlayerOrigin} from "../contexts";
-import {Eye} from "../types";
-import {Layer} from "./layers";
+
+import { PlayerOriginContextType, usePlayerOrigin } from "../contexts";
+import { Eye } from "../types";
+import { active_pipeline } from "./GraphicsPipeline";
+import { Layer } from "./layers";
 
 
 // TODO: params kinda redundant (having current, as well as being able to mod in place) but will keep as is for consistency for now
@@ -137,8 +131,16 @@ export const SpectatorCameraController = ({config = camera_controller_configs.fi
         gl.setRenderTarget(null);
         gl.clear();
 
+        // substitute our spectator camera into the render pass to ensure it actually gets used for the render, not the headset arraycamera
+        const render_pass = active_pipeline.passes.find((p: any) => p.isRenderPass);
+        const prev_cam = (render_pass as any)?.camera;
+        if (render_pass) (render_pass as any).camera = spec_camera;
+
         // push the new frame to the render
         gl.render(scene, spec_camera);
+
+        // restore the previous camera to the render pass so that the headset view continues to render correctly
+        if (render_pass) (render_pass as any).camera = prev_cam;
 
         // restore old render target and xr state to continue rendering the headset view
         gl.setRenderTarget(render_target);
