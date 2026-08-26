@@ -9,6 +9,7 @@ import { get_collision_info, ObjectPhysics } from "../engine/ObjectPhysics";
 import { Grabbable } from "../interaction";
 import { PrefabProps } from "../types";
 import { PrefabRoot } from "./PrefabRoot";
+import { useObjectShadows } from "../hooks/useObjectShadows";
 
 
 const MESH_URL = new URL("../../assets/prefabs/basketball/basketball.glb", import.meta.url).href;
@@ -54,6 +55,8 @@ const compute_audio_weights = (force_magnitude: number) => {
 export const Basketball = (props: PrefabProps) => {
     const {scene} = useGLTF(MESH_URL);
     const instance = scene.clone(true);
+
+    useObjectShadows(instance, {cast: true, receive: false});
 
     const light_audio_ref = useRef<PositionalAudioType>(null);
     const medium_audio_ref = useRef<PositionalAudioType>(null);

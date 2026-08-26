@@ -8,6 +8,7 @@ import type { PositionalAudio as PositionalAudioType } from "three";
 
 import { ObjectPhysics } from "../engine/ObjectPhysics";
 import { useObjectBinding } from "../hooks/useObjectBinding";
+import { useObjectShadows } from "../hooks/useObjectShadows";
 import { ParticleEmitter } from "../interaction/ParticleEmitter";
 import { resolve_interacted, TriggerVolume } from "../interaction/TriggerVolume";
 import { PrefabProps } from "../types";
@@ -42,6 +43,8 @@ export const BasketballHoop = ({
     const { scene } = useGLTF(MESH_URL);
     const instance = scene.clone(true);
 
+    useObjectShadows(instance, { cast: true, receive: true });
+
     const audio_ref = useRef<PositionalAudioType>(null);
     const particles_ref = useRef<ParticleSystemRef>(null);
 
@@ -50,7 +53,7 @@ export const BasketballHoop = ({
     const entered_top = useRef(new Map<string, number>());
 
     return (
-        <PrefabRoot recieveShadow {...rest}>
+        <PrefabRoot {...rest}>
             <ObjectPhysics
                 physics={{
                     rigid_body: {

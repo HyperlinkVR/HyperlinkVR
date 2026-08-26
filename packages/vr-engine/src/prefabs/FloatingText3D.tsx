@@ -54,8 +54,8 @@ export const FloatingText3D = (props: PrefabProps<FloatingText3DPrefab>) => {
     // TODO: option to make it have physics
     // TODO: option to bevel
     return (
-        <PrefabRoot receiveShadow {...props}>
-            <Text3D font={Roboto} size={font_size} height={depth}>
+        <PrefabRoot {...props}>
+            <Text3D font={Roboto} size={font_size} height={depth} castShadow receiveShadow>
                 {text}
                 <meshStandardMaterial color={color} />
             </Text3D>

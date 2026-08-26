@@ -6,6 +6,7 @@ import { Mesh } from "three";
 
 
 import { ObjectPhysics } from "../engine/ObjectPhysics";
+import { useObjectShadows } from "../hooks/useObjectShadows";
 import { Grabbable } from "../interaction";
 import { PrefabProps } from "../types";
 import { PrefabRoot } from "./PrefabRoot";
@@ -23,6 +24,9 @@ export const GolfPutter = (props: PrefabProps<GolfPutterPrefab>) => {
     const handle_instance = useMemo(() => handle_scene.clone(true), [handle_scene]);
 
     const body_instance = useMemo(() => body_scene.clone(true), [body_scene]);
+
+    useObjectShadows(handle_instance, { cast: true, receive: false });
+    useObjectShadows(body_instance, { cast: true, receive: false });
 
     useEffect(() => {
         if (!props.color) {

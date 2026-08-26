@@ -12,6 +12,7 @@ import {useMaterialPatternDisruptor} from "../hooks/useMaterialPatternDisruption
 import {useMaterialScroller} from "../hooks/useMaterialScroll";
 import {useAssetURL} from "../hooks/useAssetURL";
 import { Mesh } from "three";
+import { useObjectShadows } from "../hooks/useObjectShadows";
 
 const GLTFRenderer = ({url, shadows}: {url: string, shadows: Required<ObjectShadows>}) => {
     const {scene, materials} = useGLTF(url);
@@ -26,28 +27,7 @@ const GLTFRenderer = ({url, shadows}: {url: string, shadows: Required<ObjectShad
     // useGLTF caches the scene by url, so need to clone to render multiple instances of the same model
     const instance = useMemo(() => clone(scene), [scene]);
 
-    // apply shadow preferences to all meshes in the scene
-    useMemo(() => {
-        instance.traverse((child: any) => {
-            if (child.isMesh && child.material) {
-                const author_override = child.material.userData?.cast_shadow;
-
-                // transmissives (e.g. glass) by default also don't want to cast shadows unless specified
-                const is_transmissive = child.material.transmission > 0;
-
-                if (author_override !== undefined) {
-                    child.castShadow = author_override;
-                } else if (is_transmissive) {
-                    child.castShadow = false;
-                } else {
-                    child.castShadow = shadows.cast;
-                }
-
-                child.receiveShadow = shadows.receive;
-                child.material.needsUpdate = true;
-            }
-        });
-    }, [instance, shadows]);
+    useObjectShadows(instance, shadows);
 
     return <primitive object={instance} />;
 }

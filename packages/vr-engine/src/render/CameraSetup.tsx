@@ -1,10 +1,12 @@
-import {useThree} from "@react-three/fiber";
-import {useEffect} from "react";
+import { useThree } from "@react-three/fiber";
+import { useEffect } from "react";
 
-import {compute_layer_mask, Layer} from "./layers";
-import {get_united_head_camera} from "../util/get_head_cameras";
-import {useAudioListener} from "../contexts/AudioListenerContext";
-import {useWorldLoadingStateStore} from "../stores/WorldLoadingStateStore";
+
+
+import { useAudioListener } from "../contexts/AudioListenerContext";
+import { useWorldLoadingStateStore } from "../stores/WorldLoadingStateStore";
+import { get_united_head_camera } from "../util/get_head_cameras";
+import { compute_layer_mask, Layer } from "./layers";
 
 
 const world_layer_mask = compute_layer_mask([
@@ -48,3 +50,10 @@ export const CameraSetup = () => {
 
     return null;
 }
+
+export const shadow_camera_layer_mask = compute_layer_mask([
+    Layer.Default,
+    Layer.PlayerModel_Head,
+    Layer.PlayerModel_TorsoAndHands,
+    Layer.ThirdPerson_ForceHide
+]);

@@ -45,6 +45,14 @@ export const AvatarTorso = () => {
         torso_scene.scale.setScalar(scale_factor);
     }, [scale_factor, torso_scene]);
 
+    // cast shadow
+    useEffect(() => {
+        torso_scene.traverse((child) => {
+            if (child instanceof Group) return;
+            child.castShadow = true;
+        });
+    }, [torso_scene]);
+
     useFrame(({ camera }, delta) => {
         if (!anchor_ref.current) return;
 

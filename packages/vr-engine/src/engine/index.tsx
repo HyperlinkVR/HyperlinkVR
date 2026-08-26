@@ -53,6 +53,7 @@ import {AnimationSync} from "../animation/AnimationSync";
 import {HUDSync} from "../hud/HUDSync";
 import {LocalAssetWarningBanner} from "../security/LocalAssetWarningBanner";
 import {clear_collider_collision_info, filter_contact_pair} from "../physics/collision_hooks";
+import { ShadowUpdater } from "../render/ShadowUpdater";
 
 configureTextBuilder({
     useWorker: false
@@ -449,6 +450,7 @@ const EngineHostInternal = memo(
                                             {show_fps && <Stats />}
 
                                             <SoftShadows size={soft_shadows_props.size} samples={soft_shadows_props.samples} focus={soft_shadows_props.focus} />
+                                            <ShadowUpdater />
 
                                             <AudioListenerProvider>
                                                 <QuarksProvider>

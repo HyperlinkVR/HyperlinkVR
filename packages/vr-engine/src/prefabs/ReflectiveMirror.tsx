@@ -6,6 +6,7 @@ import { Reflector } from "three/examples/jsm/objects/Reflector";
 
 
 
+import { useObjectShadows } from "../hooks/useObjectShadows";
 import { compute_layer_mask, Layer } from "../render";
 import { PrefabProps } from "../types";
 import { get_head_cameras } from "../util/get_head_cameras";
@@ -29,9 +30,11 @@ export const ReflectiveMirror = ({
         return new Reflector(geo, {
             textureWidth: resolution,
             textureHeight: resolution,
-            color: tint
+            color: tint,
         });
     }, [width, height, tint]);
+
+    useObjectShadows(reflector, { cast: true, receive: false });
 
     // dispose GPU resources when the reflector is replaced or unmounted
     useEffect(() => () => reflector.dispose(), [reflector]);

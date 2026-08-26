@@ -5,9 +5,12 @@ import { CollisionEnterPayload } from "@react-three/rapier";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Mesh, PositionalAudio as PositionalAudioType } from "three";
 
+
+
 import { useObjectRefsOptional } from "../contexts/ObjectRefsContext";
 import { ObjectPhysics } from "../engine/ObjectPhysics";
 import { useObjectBinding } from "../hooks/useObjectBinding";
+import { useObjectShadows } from "../hooks/useObjectShadows";
 import { PrefabProps } from "../types";
 import { has_tag_in_object_tree } from "../util/tags";
 import { PrefabRoot } from "./PrefabRoot";
@@ -35,6 +38,8 @@ export const GolfBall = (props: PrefabProps<GolfBallPrefab>) => {
 
     const {scene} = useGLTF(MESH_URL);
     const instance = useMemo(() => scene.clone(true), [scene]);
+
+    useObjectShadows(instance, { cast: true, receive: false });
 
     const change_color = useCallback(
         (color: number) => {

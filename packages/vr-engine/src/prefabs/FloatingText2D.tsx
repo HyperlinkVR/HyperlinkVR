@@ -43,7 +43,7 @@ export const FloatingText2D = (props: PrefabProps<FloatingText2DPrefab> & {offse
     // TODO: wire up more props like text style. maybe even have a rich text parser that splits it into subcomponents or something. also add a list of builtin typefaces they can pick
     return (
         <PrefabRoot {...props}>
-            <Text position={props.offset || [0, 0, 0]} color={color} fontSize={font_size}>
+            <Text position={props.offset || [0, 0, 0]} color={color} fontSize={font_size} castShadow>
                 {text}
             </Text>
         </PrefabRoot>

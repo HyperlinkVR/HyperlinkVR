@@ -20,14 +20,13 @@ export const DefaultTextSign = (props: PrefabProps<TextSignPrefab>) => {
     // TODO: font size is a no-op for this
     return (
         <group>
-            <mesh>
+            <mesh castShadow receiveShadow>
                 <boxGeometry args={[0.8, 0.2, 0.025]} />
                 <meshStandardMaterial color={box_color} />
             </mesh>
             <mesh position={[0, 0, 0.013]}>
                 <planeGeometry args={[0.75, 0.15]} />
                 <meshStandardMaterial color={bg_color} emissive={bg_color} />
-
             </mesh>
 
             <FloatingText2D offset={[0, 0, 0.015]} text={props.text} font_size={0.075} color={props.color} />
@@ -105,7 +104,7 @@ export const TextSign = (props: PrefabProps<TextSignPrefab>) => {
     }, []);
 
     return (
-        <PrefabRoot recieveShadow {...props}>
+        <PrefabRoot {...props}>
             <TextSignInternal {...state_props} />
         </PrefabRoot>
     );

@@ -289,7 +289,7 @@ export const Button = (props: ButtonProps) => {
 
     const body = (
         <group ref={housingRef}>
-            <mesh position={[0, 0, 0]} scale={[0.66, 0.66, 0.1]}>
+            <mesh position={[0, 0, 0]} scale={[0.66, 0.66, 0.1]} castShadow>
                 <RoundedBoxGeometry />
                 <meshStandardMaterial color="#aaaaaa" />
             </mesh>
@@ -298,7 +298,7 @@ export const Button = (props: ButtonProps) => {
                 ref={plungerRef}
                 position={[0, 0, REST_Z]}
                 onPointerDown={handleRayDown}>
-                <mesh geometry={geometry}>
+                <mesh geometry={geometry} castShadow>
                     <meshStandardMaterial color={props.body_color} />
                 </mesh>
                 <Text
@@ -307,7 +307,8 @@ export const Button = (props: ButtonProps) => {
                     color={props.label_color}
                     anchorX="center"
                     anchorY="middle"
-                    raycast={ignoreRaycast}>
+                    raycast={ignoreRaycast}
+                >
                     {props.label}
                 </Text>
             </group>

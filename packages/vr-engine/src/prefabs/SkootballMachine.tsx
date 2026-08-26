@@ -8,6 +8,7 @@ import { Group, PositionalAudio as PositionalAudioType, Vector3 } from "three";
 
 import { create_object_refs, ObjectRefsContextType, ObjectRefsProvider } from "../contexts";
 import { ObjectPhysics } from "../engine/ObjectPhysics";
+import { useObjectShadows } from "../hooks/useObjectShadows";
 import { Grabbable } from "../interaction";
 import { detect_trigger_direction, resolve_interacted, TriggerVolume } from "../interaction/TriggerVolume";
 import { PrefabProps } from "../types";
@@ -37,6 +38,8 @@ interface BallProps {
 const Ball = ({machine_id, machine_ref, id, initial_position, handle}: BallProps) => {
     const {scene} = useGLTF(BALL_URL);
     const instance = scene.clone(true);
+
+    useObjectShadows(instance, { cast: true, receive: false });
 
     const object_refs = useRef<ObjectRefsContextType>(create_object_refs(""));
 
@@ -158,6 +161,8 @@ const POINT_ORDER = [10, 20, 30, 40, 50, 100] as const;
 export const SkootballMachine = (props: PrefabProps) => {
     const {scene} = useGLTF(MACHINE_URL);
     const instance = scene.clone(true);
+
+    useObjectShadows(instance, { cast: true, receive: true });
 
     const [playing, setPlaying] = useState(false);
     const [balls_remaining, setBallsRemaining] = useState(9);
@@ -316,7 +321,7 @@ export const SkootballMachine = (props: PrefabProps) => {
     }, [is_our_ball]);
 
     return (
-        <PrefabRoot ref={machine_ref} castShadow recieveShadow {...props}>
+        <PrefabRoot ref={machine_ref} {...props}>
             {/* clickable start text TODO improve this */}
             {!playing && (
                 <Text

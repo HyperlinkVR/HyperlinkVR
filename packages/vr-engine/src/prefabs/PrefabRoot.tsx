@@ -2,6 +2,7 @@ import { ComponentProps } from "react";
 import { Group } from "three";
 
 import { usePublishObjectTags } from "../hooks/usePublishObjectTags";
+import { useObjectShadows } from "../hooks/useObjectShadows";
 
 
 type GroupProps = Pick<
@@ -28,7 +29,7 @@ export const PrefabRoot = ({ ref, children, tags, ...rest }: PrefabRootProps) =>
     }
 
     return (
-        <group ref={ref} castShadow {...group_props}>
+        <group ref={ref} {...group_props}>
             {children}
         </group>
     );

@@ -988,3 +988,5 @@ export const ObjectInteractions = ({interactions, children}: {interactions: Inte
 
     return <>{wrapped_children}</>;
 }
+
+// TODO: lights need to handle shadows
