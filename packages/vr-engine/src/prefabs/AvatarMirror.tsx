@@ -6,6 +6,7 @@ import { ComponentProps } from "react";
 import { useSetting } from "@hyperlinkvr/react";
 import { PrefabRoot } from "./PrefabRoot";
 import { PrefabProps } from "../types";
+import { ShadowPointLight } from "../render";
 
 type Bases = Omit<ComponentProps<"group">, "position"> & PrefabProps;
 interface AvatarMirrorProps extends Omit<Bases, "position"> {
@@ -27,7 +28,7 @@ export const AvatarMirror = ({x_z_offset = [0, 0], ...props}: AvatarMirrorProps)
                 }));
             }} />
 
-            <pointLight position={[0, 2, 0]} intensity={2} color={0xffffff} />
+            <ShadowPointLight position={[0, 2, 0]} intensity={2} color={0xffffff} />
         </PrefabRoot>
     );
 }

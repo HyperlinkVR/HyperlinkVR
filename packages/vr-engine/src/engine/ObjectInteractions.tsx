@@ -21,6 +21,7 @@ import { FollowPlayer } from "../interaction/FollowPlayer";
 import { ParticleEmitter } from "../interaction/ParticleEmitter";
 import { Raycast, RaycastHandle } from "../interaction/Raycast";
 import { detect_trigger_direction, resolve_interacted, TriggerVolume } from "../interaction/TriggerVolume";
+import { ShadowDirectionalLight, ShadowPointLight, ShadowSpotLight } from "../render";
 import { get_capsule_world_position } from "../player/motion";
 import { is_seated_on, sit_on, stand_up } from "../player/seating";
 import { rotation_to_euler } from "../util/rotation";
@@ -451,13 +452,14 @@ const PointLightWrapper = ({interaction, children}: InteractionWrapperProps<Poin
 
     return (
         <>
-            <pointLight
+            <ShadowPointLight
                 ref={light_ref}
                 color={interaction.color}
                 intensity={interaction.intensity}
                 distance={interaction.distance}
                 decay={interaction.decay}
                 position={interaction.offset}
+                castShadow={interaction.cast_shadow}
             />
             {children}
         </>
@@ -544,12 +546,14 @@ const DirectionalLightWrapper = ({interaction, children}: InteractionWrapperProp
 
     return (
         <>
-            <directionalLight
+            <ShadowDirectionalLight
                 ref={light_ref}
                 color={interaction.color}
                 intensity={interaction.intensity}
                 position={interaction.offset}
                 rotation={euler_rotation}
+                castShadow={interaction.cast_shadow}
+                shadowArea={interaction.shadow_area}
             />
             {children}
         </>
@@ -686,7 +690,7 @@ const SpotLightWrapper = ({interaction, children}: InteractionWrapperProps<SpotL
 
     return (
         <>
-            <spotLight
+            <ShadowSpotLight
                 ref={light_ref}
                 color={interaction.color}
                 intensity={interaction.intensity}
@@ -696,6 +700,7 @@ const SpotLightWrapper = ({interaction, children}: InteractionWrapperProps<SpotL
                 penumbra={interaction.penumbra}
                 distance={interaction.distance}
                 decay={interaction.decay}
+                castShadow={interaction.cast_shadow}
             />
             {children}
         </>
@@ -988,5 +993,3 @@ export const ObjectInteractions = ({interactions, children}: {interactions: Inte
 
     return <>{wrapped_children}</>;
 }
-
-// TODO: lights need to handle shadows

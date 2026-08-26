@@ -1,8 +1,9 @@
-import { useSetting } from "@hyperlinkvr/react";
 import { WorldSky } from "@hyperlinkvr/vr-engine-schemas";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import { BackSide, Color, CubeCamera, Mesh, PMREMGenerator, Scene, ShaderMaterial, SphereGeometry, SRGBColorSpace, Vector3, WebGLCubeRenderTarget, type ColorRepresentation, type Texture, type WebGLRenderTarget } from "three";
+
+import { useShadowMapSize } from "../render";
 
 
 type Vec3Like = Vector3 | [number, number, number];
@@ -247,13 +248,7 @@ export const Sky = ({
         [sun_direction, light_distance]
     );
 
-    const [shadows] = useSetting("shadows_mode");
-    const map_size = useMemo(() => {
-        if (shadows === "soft_low" || shadows === "basic") return 1024;
-        if (shadows === "soft_medium") return 2048;
-        if (shadows === "soft_high") return 4096;
-        return undefined;
-    }, [shadows]);
+    const map_size = useShadowMapSize();
 
     // TODO: compute bounds of scene to set shadow camera bounds dynamically, instead of hardcoding to 50m (which has quality sacrifice)
 

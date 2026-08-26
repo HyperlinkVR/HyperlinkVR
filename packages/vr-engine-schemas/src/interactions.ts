@@ -125,6 +125,10 @@ export const PointLightInteractionSchema = bindable({
     distance: z.number().nonnegative().default(0),
     decay: z.number().nonnegative().default(2),
     offset: z.tuple([z.number(), z.number(), z.number()]).default([0, 0, 0]),
+    // shadows are opt-in per light: casting is comparatively expensive and only a
+    // handful of lights should realistically do it. everything else (map size, bias,
+    // shadow-camera range) is tuned automatically.
+    cast_shadow: z.boolean().default(true),
 });
 export type PointLightInteraction = z.infer<typeof PointLightInteractionSchema>;
 export type PointLightInteractionInput = z.input<typeof PointLightInteractionSchema>;
@@ -138,6 +142,7 @@ export const SpotLightInteractionSchema = bindable({
     penumbra: z.number().min(0).max(1).default(0),
     offset: z.tuple([z.number(), z.number(), z.number()]).default([0, 0, 0]),
     rotation: RotationSchema.default([0, 0, 0]),
+    cast_shadow: z.boolean().default(true),
 });
 export type SpotLightInteraction = z.infer<typeof SpotLightInteractionSchema>;
 export type SpotLightInteractionInput = z.input<typeof SpotLightInteractionSchema>;
@@ -147,6 +152,9 @@ export const DirectionalLightInteractionSchema = bindable({
     intensity: z.number().nonnegative().default(1),
     offset: z.tuple([z.number(), z.number(), z.number()]).default([0, 0, 0]),
     rotation: RotationSchema.default([0, 0, 0]),
+    cast_shadow: z.boolean().default(true),
+    // half-extent (metres) of the orthographic shadow frustum centred on the light
+    shadow_area: z.number().positive().default(30),
 });
 export type DirectionalLightInteraction = z.infer<typeof DirectionalLightInteractionSchema>;
 export type DirectionalLightInteractionInput = z.input<typeof DirectionalLightInteractionSchema>;

@@ -442,6 +442,11 @@ export class PointLightInteractionBuilder extends BaseBuilder<PointLightInteract
         return this;
     }
 
+    set_cast_shadow(cast_shadow: boolean) {
+        this._internal.cast_shadow = cast_shadow;
+        return this;
+    }
+
     build(): PointLightInteraction {
         return PointLightInteractionSchema.parse(this._internal);
     }
@@ -489,6 +494,17 @@ export class DirectionalLightInteractionBuilder extends BaseBuilder<DirectionalL
 
     set_rotation(rotation: Rotation) {
         this._internal.rotation = rotation;
+        return this;
+    }
+
+    set_cast_shadow(cast_shadow: boolean) {
+        this._internal.cast_shadow = cast_shadow;
+        return this;
+    }
+
+    // half-extent (metres) of the orthographic shadow frustum
+    set_shadow_area(shadow_area: number) {
+        this._internal.shadow_area = shadow_area;
         return this;
     }
 
@@ -552,6 +568,11 @@ export class SpotLightInteractionBuilder extends BaseBuilder<SpotLightInteractio
 
     set_rotation(rotation: Rotation) {
         this._internal.rotation = rotation;
+        return this;
+    }
+
+    set_cast_shadow(cast_shadow: boolean) {
+        this._internal.cast_shadow = cast_shadow;
         return this;
     }
 
