@@ -11,6 +11,7 @@ import {
 } from "@hyperlinkvr/vr-engine-schemas";
 import {send_via_rtc} from "../messenger";
 
+/** @group World Environment */
 export class WorldSkyBuilder extends BaseBuilder<WorldSky> {
     constructor() {
         super({});
@@ -106,6 +107,7 @@ export class WorldSkyBuilder extends BaseBuilder<WorldSky> {
     }
 }
 
+/** @group World Environment */
 export class WorldFogBuilder extends BaseBuilder<WorldFog> {
     constructor() {
         super({});
@@ -133,6 +135,7 @@ export class WorldFogBuilder extends BaseBuilder<WorldFog> {
 
 // note that all fields are optional and the env is applied differentially. use static reset to default and grayspace funcs to reset the env to a known state
 // (when your world starts, the env is automatically set to default)
+/** @group World Environment */
 export class WorldEnvBuilder extends BaseBuilder<WorldEnvInput> {
     constructor() {
         super({});

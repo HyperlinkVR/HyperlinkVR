@@ -17,6 +17,7 @@ const assert_source_unset = (already_assigned: boolean, builder_name: string) =>
     }
 };
 
+/** @group Input Monitors */
 export class ButtonInputMonitorBuilder extends BaseBuilder<ButtonInputMonitorInput> {
     #source_assigned = false;
 
@@ -93,6 +94,7 @@ export class ButtonInputMonitorBuilder extends BaseBuilder<ButtonInputMonitorInp
     }
 }
 
+/** @group Input Monitors */
 export class AxisInputMonitorBuilder extends BaseBuilder<AxisInputMonitorInput> {
     #source_assigned = false;
 

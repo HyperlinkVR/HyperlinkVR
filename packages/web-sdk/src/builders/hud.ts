@@ -1,26 +1,18 @@
-import {BaseBuilder} from "./base";
-import type {
-    CreatedHUDElement,
-    HUDComponentInput,
-    HUDDispatch,
-    HUDDispatchInput,
-    HUDElementModification,
-    HUDElementModificationInput,
-    HUDSlotOrShorthand,
-    HUDTextComponentInput,
-    HUDVRAnchor,
-    TweenEasingInput} from "@hyperlinkvr/vr-engine-schemas";
-import {
-    HUDDispatchSchema,
-    HUDElementModificationSchema,
-    TweenSchema
-} from "@hyperlinkvr/vr-engine-schemas";
-import {send_via_rtc} from "../messenger";
-import type {BindingMap} from "./triggers";
+import type { CreatedHUDElement, HUDComponentInput, HUDDispatch, HUDDispatchInput, HUDElementModification, HUDElementModificationInput, HUDSlotOrShorthand, HUDTextComponentInput, HUDVRAnchor, TweenEasingInput } from "@hyperlinkvr/vr-engine-schemas";
+import { HUDDispatchSchema, HUDElementModificationSchema, TweenSchema } from "@hyperlinkvr/vr-engine-schemas";
+
+
+
+import { send_via_rtc } from "../messenger";
+import { BaseBuilder } from "./base";
+import type { BindingMap } from "./triggers";
+
 
 // undefined writes the element's own scope, a value writes one player's override
+/** @group HUD */
 export type HUDUpdateTarget = string | null | undefined;
 
+/** @group HUD */
 export class HUDElementModificationBuilder<ComponentInput extends HUDComponentInput>
     extends BaseBuilder<HUDElementModificationInput> {
     #burned = false;
@@ -159,6 +151,7 @@ export class HUDElementModificationBuilder<ComponentInput extends HUDComponentIn
     }
 }
 
+/** @group HUD */
 export interface HUDElementHandleBase<ComponentInput extends HUDComponentInput> {
     readonly element: CreatedHUDElement;
     readonly bindings: BindingMap;
@@ -169,22 +162,26 @@ export interface HUDElementHandleBase<ComponentInput extends HUDComponentInput> 
     modify(): HUDElementModificationBuilder<ComponentInput>;
 }
 
+/** @group HUD */
 export type HUDHandleCore<ComponentInput extends HUDComponentInput, Handle> =
     HUDElementHandleBase<ComponentInput> & {
     for_player(username: string | null): Handle;
 };
 
+/** @group HUD */
 export interface HUDElementHandle<ComponentInput extends HUDComponentInput>
     extends HUDElementHandleBase<ComponentInput> {
     for_player(username: string | null): HUDElementHandle<ComponentInput>;
 }
 
+/** @group HUD */
 export interface HUDTextHandle extends HUDElementHandleBase<HUDTextComponentInput> {
     for_player(username: string | null): HUDTextHandle;
 
     set_text(text: string): Promise<void>;
 }
 
+/** @group HUD */
 export abstract class HUDElementBuilder<
     ComponentInput extends HUDComponentInput,
     Handle extends HUDElementHandleBase<ComponentInput> = HUDElementHandle<ComponentInput>
@@ -328,6 +325,7 @@ export abstract class HUDElementBuilder<
     }
 }
 
+/** @group HUD */
 export class HUDTextBuilder extends HUDElementBuilder<HUDTextComponentInput, HUDTextHandle> {
     constructor(name: string, text: string) {
         super(name, {type: "text", text});
@@ -354,6 +352,7 @@ export class HUDTextBuilder extends HUDElementBuilder<HUDTextComponentInput, HUD
     }
 }
 
+/** @group HUD */
 export const hud_text = (name: string, text: string) => new HUDTextBuilder(name, text);
 
 /*

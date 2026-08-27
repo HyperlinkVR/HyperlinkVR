@@ -48,24 +48,28 @@ class AxesBasedMonitorBuilder extends BaseBuilder<AxesBasedMonitorInput> {
     }
 }
 
+/** @group Object Monitors */
 export class PositionMonitorBuilder extends AxesBasedMonitorBuilder {
     constructor() {
         super("position");
     }
 }
 
+/** @group Object Monitors */
 export class RotationMonitorBuilder extends AxesBasedMonitorBuilder {
     constructor() {
         super("rotation");
     }
 }
 
+/** @group Object Monitors */
 export class LinearVelocityMonitorBuilder extends AxesBasedMonitorBuilder {
     constructor() {
         super("linear-velocity");
     }
 }
 
+/** @group Object Monitors */
 export class AngularVelocityMonitorBuilder extends AxesBasedMonitorBuilder {
     constructor() {
         super("angular-velocity");

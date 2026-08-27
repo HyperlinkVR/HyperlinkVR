@@ -1,4 +1,4 @@
-import type { BasketballHoopPrefab, BasketballHoopPrefabInput, ButtonPrefab, ButtonPrefabInput, FloatingText2DPrefab, FloatingText3DPrefab, GolfBallPrefab, GolfBallPrefabInput, GolfPutterPrefab, GolfPutterPrefabInput, HexColor, HexNumericalColor, ReflectiveMirrorPrefab, ReflectiveMirrorPrefabInput, StandardPrefab, StandardPrefabInput, StandardPrefabName, TextPrefabBaseInput, TextSignPrefab} from "@hyperlinkvr/vr-engine-schemas";
+import type { BasketballHoopPrefab, BasketballHoopPrefabInput, ButtonPrefab, ButtonPrefabInput, FloatingText2DPrefab, FloatingText3DPrefab, GolfBallPrefab, GolfBallPrefabInput, GolfPutterPrefab, GolfPutterPrefabInput, HexColor, HexNumericalColor, ReflectiveMirrorPrefab, ReflectiveMirrorPrefabInput, StandardPrefab, StandardPrefabInput, StandardPrefabName, TextPrefabBaseInput, TextSignPrefab } from "@hyperlinkvr/vr-engine-schemas";
 import { BasketballHoopPrefabSchema, ButtonPrefabSchema, FloatingText2DPrefabSchema, FloatingText3DPrefabSchema, GolfBallPrefabSchema, GolfPutterPrefabSchema, HexColorSchema, HexNumericalColorSchema, ReflectiveMirrorPrefabSchema, StandardPrefabSchema, TextSignPrefabSchema } from "@hyperlinkvr/vr-engine-schemas";
 
 
@@ -28,6 +28,7 @@ const prefab_command = async (object_id: string, command: string, args?: any) =>
     }
 }
 
+/** @group Prefabs */
 export class StandardPrefabBuilder extends BaseBuilder<StandardPrefabInput> {
     constructor(name: StandardPrefabName) {
         super({type: "prefab", name} as StandardPrefabInput);
@@ -38,6 +39,7 @@ export class StandardPrefabBuilder extends BaseBuilder<StandardPrefabInput> {
     }
 }
 
+/** @group Prefabs */
 export class ButtonPrefabBuilder extends BaseBuilder<ButtonPrefabInput> {
     constructor() {
         super({type: "prefab", name: "button"} as ButtonPrefabInput);
@@ -88,6 +90,7 @@ export class ButtonPrefabBuilder extends BaseBuilder<ButtonPrefabInput> {
     }
 }
 
+/** @group Prefabs */
 export class BasketballHoopPrefabBuilder extends BaseBuilder<BasketballHoopPrefabInput> {
     constructor() {
         super({type: "prefab", name: "basketball_hoop"} as BasketballHoopPrefabInput);
@@ -113,6 +116,7 @@ export class BasketballHoopPrefabBuilder extends BaseBuilder<BasketballHoopPrefa
     }
 }
 
+/** @group Prefabs */
 export class ReflectiveMirrorPrefabBuilder extends BaseBuilder<ReflectiveMirrorPrefabInput> {
     constructor() {
         super({type: "prefab", name: "reflective_mirror"} as ReflectiveMirrorPrefabInput);
@@ -159,6 +163,7 @@ class TextPrefabBuilderBase extends BaseBuilder<TextPrefabBaseInput & {depth?: n
     }
 
 
+    /** @internal */
     static _make_api(object_id: string) {
         return {
             set_text: (text: string) => prefab_command(object_id, "set_text", {text}),
@@ -168,6 +173,7 @@ class TextPrefabBuilderBase extends BaseBuilder<TextPrefabBaseInput & {depth?: n
     }
 }
 
+/** @group Prefabs */
 export class FloatingText2DPrefabBuilder extends TextPrefabBuilderBase {
     constructor() {
         super("floating_text_2d");
@@ -178,6 +184,7 @@ export class FloatingText2DPrefabBuilder extends TextPrefabBuilderBase {
     }
 }
 
+/** @group Prefabs */
 export class FloatingText3DPrefabBuilder extends TextPrefabBuilderBase {
     constructor() {
         super("floating_text_3d");
@@ -193,6 +200,7 @@ export class FloatingText3DPrefabBuilder extends TextPrefabBuilderBase {
     }
 
 
+    /** @internal */
     static override _make_api(object_id: string) {
         return {
             ...super._make_api(object_id),
@@ -201,6 +209,7 @@ export class FloatingText3DPrefabBuilder extends TextPrefabBuilderBase {
     }
 }
 
+/** @group Prefabs */
 export class TextSignPrefabBuilder extends TextPrefabBuilderBase {
     constructor() {
         super("text_sign");
@@ -221,6 +230,7 @@ export class TextSignPrefabBuilder extends TextPrefabBuilderBase {
     }
 
 
+    /** @internal */
     static override _make_api(object_id: string) {
         return {
             ...super._make_api(object_id),
@@ -230,6 +240,7 @@ export class TextSignPrefabBuilder extends TextPrefabBuilderBase {
     }
 }
 
+/** @group Prefabs */
 export class GolfBallPrefabBuilder extends BaseBuilder<GolfBallPrefabInput> {
     constructor() {
         super({type: "prefab", name: "golf_ball"} as GolfBallPrefabInput);
@@ -260,6 +271,7 @@ export class GolfBallPrefabBuilder extends BaseBuilder<GolfBallPrefabInput> {
     }
 
 
+    /** @internal */
     static _make_api(object_id: string) {
         return {
             set_color: (color: HexColor) => prefab_command(object_id, "set_color", {color}),
@@ -291,6 +303,7 @@ const putter_color_randomiser = new HSVHueBagRandomiser(
     PUTTER_VALUE_PERCENT
 );
 
+/** @group Prefabs */
 export class GolfPutterPrefabBuilder extends BaseBuilder<GolfPutterPrefabInput> {
     constructor() {
         super({type: "prefab", name: "golf_putter"} as GolfPutterPrefabInput);
@@ -311,7 +324,7 @@ export class GolfPutterPrefabBuilder extends BaseBuilder<GolfPutterPrefabInput> 
     }
 }
 
-
+/** @internal **/
 export const _PREFAB_API_MAKERS = {
     "floating_text_2d": FloatingText2DPrefabBuilder._make_api,
     "floating_text_3d": FloatingText3DPrefabBuilder._make_api,

@@ -14,6 +14,7 @@ import { bind_rtc_event, facilitate_rtc, send_via_rtc } from "./messenger";
 import { _dispatch_spawn as dispatch_player_spawn } from "./players";
 
 const { load_markers, ...rest_markers_imp } = markers_imp;
+/** @namespace */
 export const markers = {
     load: load_markers,
     ...rest_markers_imp
@@ -23,6 +24,7 @@ export const markers = {
 import * as players_imp from "./players";
 
 const { _dispatch_spawn, ...rest_players_imp } = players_imp;
+/** @namespace */
 export const players = {
     ...rest_players_imp
 }

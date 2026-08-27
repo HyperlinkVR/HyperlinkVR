@@ -1,23 +1,24 @@
-import {BaseBuilder} from "./base";
-import type {
-    Trigger,
-    TriggerEventFilter,
-    TriggerInput,
-    TriggerTarget,
-    TriggerTargetInput} from "@hyperlinkvr/vr-engine-schemas";
-import { TriggerSchema,
-    TriggerTargetSchema
-} from "@hyperlinkvr/vr-engine-schemas";
+import type { Trigger, TriggerEventFilter, TriggerInput, TriggerTarget, TriggerTargetInput } from "@hyperlinkvr/vr-engine-schemas";
+import { TriggerSchema, TriggerTargetSchema } from "@hyperlinkvr/vr-engine-schemas";
 
+
+
+import { BaseBuilder } from "./base";
+
+
+/** @group Triggers */
 export type BindingMap = ReadonlyMap<string, string>;
 
+/** @group Triggers */
 export interface BindingHost {
     readonly bindings: BindingMap;
 }
 
 // string = a binding name within the same object, options object = ability to bind to other objects/classes
+/** @group Triggers */
 export type TriggerTargetBinding = string | {target?: BindingHost, name: string};
 
+/** @group Triggers */
 export class TriggerTargetBuilder extends BaseBuilder<TriggerTargetInput> {
     constructor(target_binding: TriggerTargetBinding, command: string) {
         if (!target_binding) {
@@ -73,6 +74,7 @@ export class TriggerTargetBuilder extends BaseBuilder<TriggerTargetInput> {
     }
 }
 
+/** @group Triggers */
 export class TriggerBuilder extends BaseBuilder<TriggerInput> {
     constructor(source_binding: string) {
         super({source: {name: source_binding}, targets: []});

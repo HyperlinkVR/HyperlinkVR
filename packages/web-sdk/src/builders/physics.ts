@@ -32,6 +32,7 @@ export type { CollectableCollider, ColliderOrCollection } from "@hyperlinkvr/vr-
 import { asset_url } from "../assets";
 import { BaseBuilder } from "./base";
 
+/** @group Physics */
 export class PhysicsSystemBuilder extends BaseBuilder<PhysicsSystemInput> {
     constructor() {
         super({});
@@ -120,6 +121,7 @@ class RigidBodyBuilder<RB extends RigidBodyInput> extends BaseBuilder<RB> {
     }
 }
 
+/** @group Rigid Bodies */
 export class DynamicRigidBodyBuilder extends RigidBodyBuilder<DynamicRigidBodyInput> {
     constructor() {
         super("dynamic");
@@ -226,12 +228,14 @@ export class DynamicRigidBodyBuilder extends RigidBodyBuilder<DynamicRigidBodyIn
     }
 }
 
+/** @group Rigid Bodies */
 export class KinematicPosRigidBodyBuilder extends RigidBodyBuilder<KinematicPositionRigidBodyInput> {
     constructor() {
         super("kinematic-pos");
     }
 }
 
+/** @group Rigid Bodies */
 export class KinematicVelRigidBodyBuilder extends RigidBodyBuilder<KinematicVelocityRigidBodyInput> {
     constructor() {
         super("kinematic-vel");
@@ -248,12 +252,14 @@ export class KinematicVelRigidBodyBuilder extends RigidBodyBuilder<KinematicVelo
     }
 }
 
+/** @group Rigid Bodies */
 export class FixedRigidBodyBuilder extends RigidBodyBuilder<FixedRigidBodyInput> {
     constructor() {
         super("fixed");
     }
 }
 
+/** @group Physics */
 export class ColliderCollectionBuilder extends BaseBuilder<ColliderCollectionInput> {
     constructor(colliders: CollectableCollider[]) {
         super({type: "collection", colliders});
@@ -279,6 +285,7 @@ export class ColliderCollectionBuilder extends BaseBuilder<ColliderCollectionInp
     }
 }
 
+/** @group Physics */
 export class ColliderBuilder extends BaseBuilder<ColliderOrCollectionInput> {
     constructor() {
         super({type: "auto"});

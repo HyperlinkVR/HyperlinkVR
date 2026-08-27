@@ -1,22 +1,15 @@
-import type {
-    Animation,
-    AnimationInput, CreatedAnimation,
-    HexColor,
-    InterpolationType,
-    KeyframeTrack,
-    KeyframeTrackSelector,
-    QuaternionInterpolationType
-} from "@hyperlinkvr/vr-engine-schemas";
-import {
-    AnimationSchema,
-    KeyframeTrackSchema
-} from "@hyperlinkvr/vr-engine-schemas";
-import {BaseBuilder} from "./base";
+import type { Animation, AnimationInput, CreatedAnimation, HexColor, InterpolationType, KeyframeTrack, KeyframeTrackSelector, QuaternionInterpolationType } from "@hyperlinkvr/vr-engine-schemas";
+import { AnimationSchema, KeyframeTrackSchema } from "@hyperlinkvr/vr-engine-schemas";
 
-import type {BindingMap} from "./triggers";
-import {send_via_rtc} from "../messenger";
+
+
+import { send_via_rtc } from "../messenger";
+import { BaseBuilder } from "./base";
+import type { BindingMap } from "./triggers";
+
 
 // loosely a created object dispatch, which is the only form that can resolve interaction binding names
+/** @group Animation */
 export interface AnimationTargetHost {
     readonly object: { readonly id: string };
     readonly bindings: BindingMap;
@@ -24,6 +17,7 @@ export interface AnimationTargetHost {
 }
 
 // a bare object reference or id resolves transform channels only
+/** @group Animation */
 export type AnimationTarget = string | { readonly id: string } | AnimationTargetHost;
 
 const is_host = (target: AnimationTarget): target is AnimationTargetHost =>
@@ -197,6 +191,7 @@ class ContinuousKeyframeTrackBuilder<
     }
 }
 
+/** @group Animation */
 export const KeyframeTrackBuilder = {
     boolean: (target: AnimationTarget, property: string | string[]) =>
         new DiscreteKeyframeTrackBuilder<boolean>("boolean", target, property),
@@ -248,6 +243,7 @@ const animation_command = async (animation_id: string, command: string, args?: a
         args
     });
 
+/** @group Animation */
 export interface AnimationCreationResult {
     animation: CreatedAnimation;
     bindings: BindingMap;
@@ -259,6 +255,7 @@ export interface AnimationCreationResult {
     seek: (time_ms: number) => Promise<any>;
 }
 
+/** @group Animation */
 export class AnimationBuilder extends BaseBuilder<AnimationInput> {
     constructor() {
         super({tracks: []} as AnimationInput);

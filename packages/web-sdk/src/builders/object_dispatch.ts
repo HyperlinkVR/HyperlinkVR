@@ -33,16 +33,19 @@ interface EngineObjectCreationResultBase {
     refresh: () => Promise<void>;
 }
 
+/** @group Objects */
 export interface EngineCustomObjectCreationResult extends EngineObjectCreationResultBase {
     interactions: Record<string, Record<string, Function>>; // interaction apis (binding name -> function name -> function)
     object: CreatedEngineObject & { type: "custom" }; // override type to custom
 }
 
+/** @group Objects */
 export interface EnginePrefabObjectCreationResult extends EngineObjectCreationResultBase {
     prefab: Record<string, Function>; // prefab api (function name -> function)
     object: CreatedEngineObject & { type: "prefab" }; // override type to prefab
 }
 
+/** @group Objects */
 export type EngineObjectCreationResult<Type extends "custom" | "prefab" = "custom" | "prefab"> =
     Type extends "custom" ? EngineCustomObjectCreationResult :
     Type extends "prefab" ? EnginePrefabObjectCreationResult :
@@ -80,6 +83,7 @@ const resolve_trigger_bindings = (triggers: Trigger[], binding_ids: Map<string, 
     }
 };
 
+/** @group Objects */
 export class EngineObjectModificationBuilder extends BaseBuilder<EngineObjectModificationInput> {
     //#source: EngineObjectCreationResult;
     #burned = false;
@@ -466,6 +470,7 @@ export class EngineObjectModificationBuilder extends BaseBuilder<EngineObjectMod
     }
 }
 
+/** @group Objects */
 export class EngineObjectDispatchBuilder<T extends EngineObject = EngineObject> extends BaseBuilder<EngineObjectDispatchInput> {
     #callbacks = new Map<string, (event: ReportEvent) => void>();
 

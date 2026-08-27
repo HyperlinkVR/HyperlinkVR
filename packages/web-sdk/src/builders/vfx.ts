@@ -1,17 +1,7 @@
-import {
-    VFX_SPECS,
-    VFXStackSchema
-} from "@hyperlinkvr/vr-engine-schemas";
-import type {
-    BadTVEffectInput,
-    FilmEffectInput,
-    GrayscaleEffectInput,
-    RGBShiftEffectInput,
-    ScreenShakeEffectInput,
-    StaticEffectInput,
-    VFXEffectInput,
-    VFXStack
-} from "@hyperlinkvr/vr-engine-schemas";
+import { VFX_SPECS, VFXStackSchema } from "@hyperlinkvr/vr-engine-schemas";
+import type { BadTVEffectInput, FilmEffectInput, GrayscaleEffectInput, RGBShiftEffectInput, ScreenShakeEffectInput, StaticEffectInput, VFXEffectInput, VFXStack } from "@hyperlinkvr/vr-engine-schemas";
+
+
 
 import { send_via_rtc } from "../messenger";
 import { BaseBuilder } from "./base";
@@ -34,11 +24,13 @@ const vfx_command = async (binding_id: string, command: string, args?: Record<st
 };
 
 // fire an impulse effect (e.g. a screen shake)
+/** @group VFX */
 export interface VFXImpulseControl {
     pulse(args?: { magnitude?: number } & Record<string, unknown>): Promise<void>;
 }
 
 // change a declarative effect live, without re-applying the whole stack
+/** @group VFX */
 export interface VFXDeclarativeControl {
     set(params: Record<string, number>): Promise<void>;
     enable(): Promise<void>;
@@ -46,6 +38,7 @@ export interface VFXDeclarativeControl {
     toggle(): Promise<void>;
 }
 
+/** @group VFX */
 export type VFXEffectControl = VFXImpulseControl | VFXDeclarativeControl;
 
 // the runtime handle returned by VFXStackBuilder.apply(). this is the ONLY place the
@@ -53,6 +46,7 @@ export type VFXEffectControl = VFXImpulseControl | VFXDeclarativeControl;
 // builder can be applied more than once (each apply mints fresh binding ids). mirrors
 // how EngineObjectDispatchBuilder.create() returns a handle rather than exposing
 // runtime ops on the builder itself.
+/** @group VFX */
 export interface AppliedVFXStack extends BindingHost {
     readonly stack: VFXStack;
     // named effects only, keyed by the name given at build time
@@ -73,6 +67,7 @@ const make_declarative_control = (binding_id: string): VFXDeclarativeControl => 
     toggle: () => vfx_command(binding_id, "toggle").then(() => undefined)
 });
 
+/** @group VFX */
 export class VFXStackBuilder extends BaseBuilder<VFXEffectInput[]> {
     constructor() {
         super([]);

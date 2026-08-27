@@ -11,6 +11,7 @@ import {
 } from "@hyperlinkvr/vr-engine-schemas";
 import {asset_url} from "../assets";
 
+/** @group Objects */
 export class CustomObjectBuilder extends BaseBuilder<CustomObjectInput> {
     constructor() {
         super({type: "custom"} as CustomObjectInput);

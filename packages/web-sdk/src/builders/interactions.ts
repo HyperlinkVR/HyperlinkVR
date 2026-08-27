@@ -92,8 +92,12 @@ const interaction_command = async (object_id: string, interaction_id: string, co
     }
 }
 
+/** @internal **/
 export type InteractionMakeAPIFunc = (object_id: string, interaction_id: string) => any;
 
+/**
+ * @group Interactions
+ */
 export class GrabbableInteractionBuilder extends BaseBuilder<GrabbableInteractionInput> {
     constructor() {
         super({
@@ -180,6 +184,7 @@ export class GrabbableInteractionBuilder extends BaseBuilder<GrabbableInteractio
     // TODO: set enabled/disabled, api to change that, api to change sticky/snaps to hand etc, api to eject
 }
 
+/** @group Interactions */
 export class TriggerVolumeInteractionBuilder extends BaseBuilder<TriggerVolumeInteractionInput> {
     constructor() {
         super({type: "trigger-volume"} as TriggerVolumeInteractionInput);
@@ -239,6 +244,7 @@ export class TriggerVolumeInteractionBuilder extends BaseBuilder<TriggerVolumeIn
     }
 }
 
+/** @group Interactions */
 export class FollowPlayerInteractionBuilder extends BaseBuilder<FollowPlayerInteractionInput> {
     constructor() {
         super({type: "follow-player"} as FollowPlayerInteractionInput);
@@ -260,6 +266,7 @@ export class FollowPlayerInteractionBuilder extends BaseBuilder<FollowPlayerInte
     }
 
 
+    /** @internal */
     static _make_api(object_id: string, interaction_id: string) {
         return {
             set_enabled: async (enabled: boolean) => {
@@ -269,6 +276,7 @@ export class FollowPlayerInteractionBuilder extends BaseBuilder<FollowPlayerInte
     }
 }
 
+/** @group Interactions */
 export class PositionalAudioInteractionBuilder extends BaseBuilder<PositionalAudioInteractionInput> {
     constructor() {
         super({type: "positional-audio"} as PositionalAudioInteractionInput);
@@ -304,6 +312,7 @@ export class PositionalAudioInteractionBuilder extends BaseBuilder<PositionalAud
     }
 
 
+    /** @internal */
     static _make_api(object_id: string, interaction_id: string) {
         return {
             play: async () => {
@@ -334,6 +343,7 @@ export class PositionalAudioInteractionBuilder extends BaseBuilder<PositionalAud
     }
 }
 
+/** @group Interactions */
 export class GlobalAudioInteractionBuilder extends BaseBuilder<GlobalAudioInteractionInput> {
     constructor() {
         super({type: "global-audio"} as GlobalAudioInteractionInput);
@@ -364,6 +374,7 @@ export class GlobalAudioInteractionBuilder extends BaseBuilder<GlobalAudioIntera
     }
 
 
+    /** @internal */
     static _make_api(object_id: string, interaction_id: string) {
         return {
             play: async () => {
@@ -414,6 +425,7 @@ const base_light_api = (object_id: string, interaction_id: string) => {
     }
 }
 
+/** @group Interactions */
 export class PointLightInteractionBuilder extends BaseBuilder<PointLightInteractionInput> {
     constructor() {
         super({type: "point-light"} as PointLightInteractionInput);
@@ -454,6 +466,7 @@ export class PointLightInteractionBuilder extends BaseBuilder<PointLightInteract
     }
 
 
+    /** @internal */
     static _make_api(object_id: string, interaction_id: string) {
         return {
             ...base_light_api(object_id, interaction_id),
@@ -473,6 +486,7 @@ export class PointLightInteractionBuilder extends BaseBuilder<PointLightInteract
     }
 }
 
+/** @group Interactions */
 export class DirectionalLightInteractionBuilder extends BaseBuilder<DirectionalLightInteractionInput> {
     constructor() {
         super({type: "directional-light"} as DirectionalLightInteractionInput);
@@ -515,6 +529,7 @@ export class DirectionalLightInteractionBuilder extends BaseBuilder<DirectionalL
     }
 
 
+    /** @internal */
     static _make_api(object_id: string, interaction_id: string) {
         return {
             ...base_light_api(object_id, interaction_id),
@@ -528,6 +543,7 @@ export class DirectionalLightInteractionBuilder extends BaseBuilder<DirectionalL
     }
 }
 
+/** @group Interactions */
 export class SpotLightInteractionBuilder extends BaseBuilder<SpotLightInteractionInput> {
     constructor() {
         super({type: "spot-light"} as SpotLightInteractionInput);
@@ -582,6 +598,7 @@ export class SpotLightInteractionBuilder extends BaseBuilder<SpotLightInteractio
         return SpotLightInteractionSchema.parse(this._internal);
     }
 
+    /** @internal */
     static _make_api(object_id: string, interaction_id: string) {
         return {
             ...(DirectionalLightInteractionBuilder._make_api(object_id, interaction_id)),
@@ -613,6 +630,7 @@ export class SpotLightInteractionBuilder extends BaseBuilder<SpotLightInteractio
     }
 }
 
+/** @group Interactions */
 export class ParticleEmitterInteractionBuilder extends BaseBuilder<ParticleEmitterInteractionInput> {
     constructor() {
         super({type: "particle-emitter"} as ParticleEmitterInteractionInput);
@@ -715,6 +733,7 @@ export class ParticleEmitterInteractionBuilder extends BaseBuilder<ParticleEmitt
     }
 
 
+    /** @internal */
     static _make_api(object_id: string, interaction_id: string) {
         return {
             play: async () => {
@@ -733,6 +752,7 @@ export class ParticleEmitterInteractionBuilder extends BaseBuilder<ParticleEmitt
     }
 }
 
+/** @group Interactions */
 export class SeatInteractionBuilder extends BaseBuilder<SeatInteractionInput> {
     constructor() {
         super({type: "seat"} as SeatInteractionInput);
@@ -768,6 +788,7 @@ export class SeatInteractionBuilder extends BaseBuilder<SeatInteractionInput> {
     }
 
 
+    /** @internal */
     static _make_api(object_id: string, interaction_id: string) {
         return {
             sit: async (player: Player) => {
@@ -781,6 +802,10 @@ export class SeatInteractionBuilder extends BaseBuilder<SeatInteractionInput> {
 }
 
 // mutually exclusive calls like collider has, rather than separate builders for each type
+/**
+ * @group Interactions
+ * @category Raycasts
+ */
 export class RaycastAimBuilder extends BaseBuilder<RaycastAimInput> {
     constructor() {
         super({type: "direction"} as RaycastAimInput);
@@ -822,6 +847,10 @@ export class RaycastAimBuilder extends BaseBuilder<RaycastAimInput> {
 
 // TODO: trigger volumes want most of this too (eg tag and object id exclusion), so maybe a shared base class for raycast and trigger volume targets
 
+/**
+ * @group Interactions
+ * @category Raycasts
+ */
 export class RaycastTargetsBuilder extends BaseBuilder<RaycastTargetsInput> {
     constructor() {
         super({});
@@ -898,6 +927,10 @@ export class RaycastTargetsBuilder extends BaseBuilder<RaycastTargetsInput> {
     }
 }
 
+/**
+ * @group Interactions
+ * @category Raycasts
+ */
 export class RaycastTriggerBuilder extends BaseBuilder<RaycastTriggerInput> {
     constructor() {
         super({type: "manual"} as RaycastTriggerInput);
@@ -929,6 +962,10 @@ export class RaycastTriggerBuilder extends BaseBuilder<RaycastTriggerInput> {
     }
 }
 
+/**
+ * @group Interactions
+ * @category Raycasts
+ */
 export class RaycastRaysBuilder extends BaseBuilder<RaycastRaysInput> {
     constructor() {
         super({});
@@ -962,6 +999,10 @@ export class RaycastRaysBuilder extends BaseBuilder<RaycastRaysInput> {
     }
 }
 
+/**
+ * @group Interactions
+ * @category Raycasts
+ */
 export class RaycastInteractionBuilder extends BaseBuilder<RaycastInteractionInput> {
     constructor() {
         super({type: "raycast"} as RaycastInteractionInput);
@@ -1050,6 +1091,8 @@ export class RaycastInteractionBuilder extends BaseBuilder<RaycastInteractionInp
         return built;
     }
 
+
+    /** @internal */
     static _make_api(object_id: string, interaction_id: string) {
         return {
             fire: async (options?: {extra_spread_deg?: number}): Promise<RaycastResult> => {
@@ -1077,6 +1120,7 @@ export class RaycastInteractionBuilder extends BaseBuilder<RaycastInteractionInp
     }
 }
 
+/** @internal **/
 export const _INTERACTION_API_MAKERS = {
     "follow-player": FollowPlayerInteractionBuilder._make_api,
     "positional-audio": PositionalAudioInteractionBuilder._make_api,

@@ -1,4 +1,5 @@
 export class BaseBuilder<InternalType> {
+    /** @internal */
     protected _internal: InternalType;
 
     constructor(initial: InternalType) {
