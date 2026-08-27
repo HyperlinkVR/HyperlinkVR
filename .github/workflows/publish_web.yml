@@ -1,4 +1,4 @@
-name: Deploy Website to gh-pages
+name: Deploy Website and Docs to gh-pages
 
 on:
   workflow_dispatch:
@@ -7,7 +7,9 @@ on:
       - main
     paths:
       - 'apps/website/**'
+      - 'apps/docs/**'
       - 'packages/web-sdk/**'
+      - 'packages/vr-engine-schemas/**'
 
 permissions:
   contents: write
@@ -32,10 +34,17 @@ jobs:
       - name: Build the website
         run: pnpm --filter @hyperlinkvr/website build
 
+      - name: Build the docs
+        run: pnpm --filter @hyperlinkvr/docs build
+
+      - name: Combine docs under /docs
+        run: |
+          mkdir -p apps/website/dist/docs
+          cp -r apps/docs/build/. apps/website/dist/docs/
+
       - name: Deploy to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./apps/website/dist
           cname: hyperlink.surf
-
