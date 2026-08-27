@@ -244,6 +244,7 @@ export const on_spawn = (callback: SpawnCallback): (() => void) => {
     };
 };
 
+/** @internal */
 export const _dispatch_spawn = (event: NamedWebSDKEvent<"HVRSDK_PLAYER_SPAWNED">) => {
     const player = new Player(event.username);
     for (const callback of spawn_callbacks) {
