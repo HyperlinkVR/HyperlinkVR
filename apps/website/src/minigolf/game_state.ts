@@ -2,7 +2,6 @@ import type * as hvr from "@hyperlinkvr/web-sdk";
 
 import { show_hole, show_oob, show_result, show_stroke } from "./hud";
 import { get_start_markers } from "./markers";
-import type { Player } from "./types";
 
 
 const h = hyperlinkvr.builders;
@@ -32,7 +31,7 @@ const create_player_state = (
 
 const players = new Map<string | null, PlayerState>();
 
-export const add_player = async (player: Player, spawn_pos: [number, number, number] = [0, 0, 0]) => {
+export const add_player = async (player: hvr.players.Player, spawn_pos: [number, number, number] = [0, 0, 0]) => {
     const username = await player.get_username();
     if (players.has(username)) {
         console.warn(`Player ${username} already exists`);

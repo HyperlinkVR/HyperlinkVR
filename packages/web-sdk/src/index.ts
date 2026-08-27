@@ -5,29 +5,11 @@ export {version} from "../package.json";
 export * as auth from "./auth";
 export * as builders from "./builders";
 export * as color from "./color";
+export * as markers from "./re-exports/markers";
+export * as players from "./re-exports/players";
 
-export type { Marker } from "./markers";
-
-// re-export markers api with loader name shortened
-import * as markers_imp from "./markers";
 import { bind_rtc_event, facilitate_rtc, send_via_rtc } from "./messenger";
 import { _dispatch_spawn as dispatch_player_spawn } from "./players";
-
-const { load_markers, ...rest_markers_imp } = markers_imp;
-/** @namespace */
-export const markers = {
-    load: load_markers,
-    ...rest_markers_imp
-}
-
-// re-export players api omitting the internal _dispatch_spawn function
-import * as players_imp from "./players";
-
-const { _dispatch_spawn, ...rest_players_imp } = players_imp;
-/** @namespace */
-export const players = {
-    ...rest_players_imp
-}
 
 let unbind_rtc_events: (() => void) | undefined;
 export const connect = async () => {

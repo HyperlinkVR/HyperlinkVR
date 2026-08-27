@@ -1,4 +1,6 @@
-import type { MarkerMap } from "./types";
+import type * as hvr from "@hyperlinkvr/web-sdk";
+
+type MarkerMap = Map<string, hvr.markers.Marker>;
 
 let all_markers: MarkerMap | null = null;
 

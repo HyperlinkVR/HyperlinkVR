@@ -20,7 +20,7 @@ const start_game = async () => {
     next_hole();
 };
 
-let spawn_marker: hvr.Marker | null = null;
+let spawn_marker: hvr.markers.Marker | null = null;
 
 const load_spawn_marker = async () => {
     // spawn marker stored in terrain, not course (available in both col and vis, so load col as its smaller)
