@@ -1,7 +1,7 @@
 import {EULER_ORDER} from "../consts";
 import {Euler, Quaternion} from "three";
 
-import {Rotation} from "@hyperlinkvr/vr-engine-schemas";
+import type {Rotation} from "@hyperlinkvr/vr-engine-schemas";
 
 const scratch_euler = new Euler();
 

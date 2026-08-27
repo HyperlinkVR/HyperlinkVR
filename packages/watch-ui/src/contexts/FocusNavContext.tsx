@@ -201,7 +201,7 @@ export const FocusNavProvider = ({
 
             // nothing focused so first nav lands on the first item in tree order
             if (!current) {
-                apply_focus(list[0].id);
+                apply_focus(list[0]!.id);
                 return;
             }
 
@@ -218,7 +218,7 @@ export const FocusNavProvider = ({
                 }
 
                 const index = list.indexOf(current);
-                apply_focus(list[(index + 1) % list.length].id);
+                apply_focus(list[(index + 1) % list.length]!.id);
                 return;
             }
 

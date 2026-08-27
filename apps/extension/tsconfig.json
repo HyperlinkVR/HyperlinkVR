@@ -5,9 +5,8 @@
     "compilerOptions": {
         "paths": {
             "~*": ["src/*"],
-            "@hyperlinkvr/asset-resolver": [
-                "../../packages/asset-resolver/asset-resolver.d.ts"
-            ]
+            "three/examples/jsm/*": ["node_modules/@types/three/examples/jsm/*"],
+            "three/addons/*": ["node_modules/@types/three/examples/jsm/*"]
         },
         "baseUrl": ".",
         "composite": false,

@@ -1,4 +1,4 @@
-import { ReportEvent } from "@hyperlinkvr/vr-engine-schemas";
+import type { ReportEvent } from "@hyperlinkvr/vr-engine-schemas";
 
 const report_subscriptions =  new Map<string, Set<(event: ReportEvent) => void>>();
 

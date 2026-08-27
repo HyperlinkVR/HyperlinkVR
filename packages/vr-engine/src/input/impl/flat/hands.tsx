@@ -1,6 +1,7 @@
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, type RefObject } from "react";
-import {Euler, Group, MathUtils, Matrix4, Object3D, Quaternion, Vector3} from "three";
+import type { Group, Object3D} from "three";
+import {Euler, MathUtils, Matrix4, Quaternion, Vector3} from "three";
 import {
     make_button_state,
     update_button_state,

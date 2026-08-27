@@ -1,3 +1,5 @@
+import type * as hvr from "@hyperlinkvr/web-sdk";
+
 import { add_player, get_ball_by_object_id, get_ball_of_player, get_owner_of_ball, next_hole, out_of_bounds, scored_on_hole, stroke_at_rest, take_stroke } from "./game_state";
 import { countdown_to_start } from "./hud";
 import { get_custom_marker_subset, get_hole_markers, get_marker, load_all_markers } from "./markers";
@@ -18,7 +20,7 @@ const start_game = async () => {
     next_hole();
 };
 
-let spawn_marker: h.Marker | null = null;
+let spawn_marker: hvr.Marker | null = null;
 
 const load_spawn_marker = async () => {
     // spawn marker stored in terrain, not course (available in both col and vis, so load col as its smaller)
@@ -28,7 +30,7 @@ const load_spawn_marker = async () => {
         }
     });
 
-    spawn_marker = markers.get("spawn");
+    spawn_marker = markers.get("spawn") ?? null;
     if (!spawn_marker) {
         throw new Error("Spawn marker not found in terrain_col.glb");
     }
@@ -66,7 +68,7 @@ hyperlinkvr.on_ready(async () => {
         )
         .apply();
 
-    const promises: Promise<typeof h.EngineObjectCreationResult>[] = [];
+    const promises: Promise<hvr.builders.EngineObjectCreationResult>[] = [];
 
     await load_all_markers(COURSE_POS);
 
@@ -89,7 +91,7 @@ hyperlinkvr.on_ready(async () => {
         .build();
 
     const promise_course = new h.EngineObjectDispatchBuilder(course)
-        .set_position(COURSE_POS)
+        .set_position(...COURSE_POS)
         .create();
 
     const terrain = new h.CustomObjectBuilder()
@@ -111,20 +113,20 @@ hyperlinkvr.on_ready(async () => {
         .build();
 
     const promise_terrain = new h.EngineObjectDispatchBuilder(terrain)
-        .set_position(COURSE_POS)
+        .set_position(...COURSE_POS)
         .create();
 
     // markers have rotation and scale defined to set their bounds, as well as transform
     // this can be used to construct a collection of box colliders (offset from the origin)
     const course_bound_markers = get_custom_marker_subset(/^bounds_/i);
-    let colliders: h.CollectableCollider[] = [];
+    const colliders: hvr.builders.CollectableCollider[] = [];
     course_bound_markers.forEach((marker) => {
         const collider = new h.ColliderBuilder()
             .box([marker.transform.scale[0] * 2, marker.transform.scale[1] * 2, marker.transform.scale[2] * 2])
             .set_offset(marker.transform.position)
             .set_rotation(marker.transform.rotation)
             .build();
-        colliders.push(collider);
+        colliders.push(collider as hvr.builders.CollectableCollider);
     });
 
     const course_bounds_dummy = new h.CustomObjectBuilder()
@@ -140,7 +142,7 @@ hyperlinkvr.on_ready(async () => {
         .build();
 
     const promise_course_bounds = new h.EngineObjectDispatchBuilder(course_bounds_dummy)
-        .set_position(COURSE_POS)
+        .set_position(...COURSE_POS)
         .on("trigger", (e) => {
             if (e.kind !== "trigger-volume") return;
             if (e.payload.type !== "exit") return;
@@ -218,7 +220,7 @@ hyperlinkvr.on_ready(async () => {
         await load_spawn_marker();
     }
 
-    const spawn_pos = spawn_marker.transform.position;
+    const spawn_pos = spawn_marker!.transform.position;
     const button_pos = [
         spawn_pos[0],
         spawn_pos[1] + 1,
@@ -233,7 +235,7 @@ hyperlinkvr.on_ready(async () => {
     const creatable_start_button = new h.EngineObjectDispatchBuilder(
         start_button
     )
-        .set_position(button_pos)
+        .set_position(...button_pos)
         .on("start_button", async (e) => {
             if (e.kind !== "button-prefab") return;
             if (e.payload.type === "press") {
@@ -449,7 +451,7 @@ hyperlinkvr.on_ready(async () => {
                 return;
             }
 
-            ball.prefab.lock();
+            ball.prefab.lock!();
         })
         // play the load/cock sound effect when a ball enters the cannon trigger volume
         .add_trigger(
@@ -522,14 +524,14 @@ hyperlinkvr.on_ready(async () => {
             }
 
             // disable damping as our formula doesn't account for it, then re-enable after the flight time
-            await ball.prefab.set_damping_enabled(false);
+            await ball.prefab.set_damping_enabled!(false);
 
             // fire the ball at the computed velocity to follow the launch curve
             await ball.modify().set_velocity(velocity).apply();
 
             setTimeout(
                 async () => {
-                    await ball.prefab.set_damping_enabled(true);
+                    await ball.prefab.set_damping_enabled!(true);
 
                     // teleport player to the top after delay
                     // TODO: i think this will be temporary, the zipline idea is cool (once movement for it is implemented)
@@ -542,7 +544,7 @@ hyperlinkvr.on_ready(async () => {
             // firing counts as a stroke
             take_stroke(e.payload.username);
             stroke_at_rest(e.payload.username);
-            ball.prefab.unlock();
+            ball.prefab.unlock!();
 
             // animate the cannon
             await fire_animation.seek(0);
@@ -702,8 +704,8 @@ hyperlinkvr.players.on_spawn(async (p) => {
         await load_spawn_marker();
     }
 
-    p.teleport_to(spawn_marker.transform.position, spawn_marker.transform.rotation[1]);
-    add_player(p, spawn_marker.transform.position);
+    p.teleport_to(spawn_marker!.transform.position, spawn_marker!.transform.rotation[1]);
+    add_player(p, spawn_marker!.transform.position);
 });
 
 // TODO: make room for multiplayer support

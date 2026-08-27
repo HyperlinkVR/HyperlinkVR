@@ -46,13 +46,13 @@ export const useImpulsePass = (
         if (magnitude.current > 0.001) {
             pass.enabled = true;
             if (impulse.time_uniform && pass.uniforms[impulse.time_uniform]) {
-                pass.uniforms[impulse.time_uniform].value = clock.getElapsedTime();
+                pass.uniforms[impulse.time_uniform]!.value = clock.getElapsedTime();
             }
-            pass.uniforms[impulse.uniform].value = magnitude.current;
+            pass.uniforms[impulse.uniform]!.value = magnitude.current;
             magnitude.current *= impulse.decay;
         } else if (pass.enabled) {
             magnitude.current = 0;
-            pass.uniforms[impulse.uniform].value = 0;
+            pass.uniforms[impulse.uniform]!.value = 0;
             pass.enabled = false;
         }
     });

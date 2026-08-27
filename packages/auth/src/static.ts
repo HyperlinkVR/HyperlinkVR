@@ -1,4 +1,5 @@
 import { type StorageEngine } from "@hyperlinkvr/core";
+//@ts-ignore
 import { long } from "@wordlist/english-eff/long";
 import { RandomWords } from "@wordlist/random";
 
@@ -6,7 +7,8 @@ import { RandomWords } from "@wordlist/random";
 
 import type { StoredKey } from "./core";
 import type { Identity } from "@hyperlinkvr/types";
-import { PasswordDerivAlgorithmName, StaticAuthRecordSchema, StaticIdentityRecordSchema, type StaticAuthRecord, type StaticIdentityRecord } from "./schema";
+import type { PasswordDerivAlgorithmName} from "./schema";
+import { StaticAuthRecordSchema, StaticIdentityRecordSchema, type StaticAuthRecord, type StaticIdentityRecord } from "./schema";
 
 
 interface SuccessfulRecordResolution {
@@ -118,7 +120,7 @@ export const encrypt_private_key = async (private_key: JsonWebKey, password: str
             const encoder = new TextEncoder();
             const key = await crypto.subtle.importKey(
                 "raw",
-                hash.hash,
+                hash.hash as BufferSource,
                 { name: "AES-GCM" },
                 false,
                 ["encrypt"]
@@ -168,7 +170,7 @@ export const decrypt_private_key = async (encrypted_private_key: EncryptedPrivat
 
             const key = await crypto.subtle.importKey(
                 "raw",
-                hash.hash,
+                hash.hash as BufferSource,
                 { name: "AES-GCM" },
                 false,
                 ["decrypt"]
@@ -262,7 +264,7 @@ export const signup_static = async (identity: Identity, local_storage: StorageEn
     return {static_record, password, public_key};
 }
 
-export const is_private_key_in_session = async (storage: StorageEngine<"local">): Promise<boolean> => {
+export const is_private_key_stored = async (storage: StorageEngine<"local">): Promise<boolean> => {
     const live_key = await storage.get<JsonWebKey | undefined>("auth_session_static_key");
     return !!live_key;
 }

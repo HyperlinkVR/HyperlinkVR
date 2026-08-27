@@ -1,4 +1,4 @@
-import { WindowArguments } from "@hyperlinkvr/types";
+import type { WindowArguments } from "@hyperlinkvr/types";
 
 export interface WindowArgumentsStrategy<S> {
     retrieve(): S;

@@ -1,16 +1,11 @@
-import {
+import type {
     AxisLockInput,
     BodyConstraintInput,
-    BodyConstraintSchema,
     CollectableCollider,
-    Collider,
     ColliderCollection,
     ColliderCollectionInput,
-    ColliderCollectionSchema,
     ColliderOrCollection,
     ColliderOrCollectionInput,
-    ColliderOrCollectionSchema,
-    ColliderSchema,
     CustomMeshApproximation,
     DynamicRigidBodyInput,
     FixedRigidBodyInput,
@@ -19,13 +14,20 @@ import {
     MeshApproximation,
     PhysicsSystem,
     PhysicsSystemInput,
-    PhysicsSystemSchema,
     RigidBody,
     RigidBodyInput,
-    RigidBodySchema,
     RigidBodyType,
     Rotation
 } from "@hyperlinkvr/vr-engine-schemas";
+import {
+    BodyConstraintSchema,
+    ColliderCollectionSchema,
+    ColliderOrCollectionSchema,
+    PhysicsSystemSchema,
+    RigidBodySchema
+} from "@hyperlinkvr/vr-engine-schemas";
+
+export type { CollectableCollider, ColliderOrCollection } from "@hyperlinkvr/vr-engine-schemas";
 
 import { asset_url } from "../assets";
 import { BaseBuilder } from "./base";

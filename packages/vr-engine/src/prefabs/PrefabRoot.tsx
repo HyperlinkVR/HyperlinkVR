@@ -1,8 +1,7 @@
-import { ComponentProps } from "react";
-import { Group } from "three";
+import type { ComponentProps } from "react";
+import type { Group } from "three";
 
 import { usePublishObjectTags } from "../hooks/usePublishObjectTags";
-import { useObjectShadows } from "../hooks/useObjectShadows";
 
 
 type GroupProps = Pick<

@@ -14,7 +14,7 @@ export const useActiveTab = (): chrome.tabs.Tab | null => {
             }
 
             if (tabs.length > 0) {
-                setTab(tabs[0]);
+                setTab(tabs[0]!);
             }
         });
     }, []);

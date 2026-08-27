@@ -1,10 +1,10 @@
-import { TextSignPrefab } from "@hyperlinkvr/vr-engine-schemas";
+import type { TextSignPrefab } from "@hyperlinkvr/vr-engine-schemas";
 import { useEffect, useMemo, useState } from "react";
 
 
 
 import { useObjectBinding } from "../hooks/useObjectBinding";
-import { PrefabProps } from "../types";
+import type { PrefabProps } from "../types";
 import { FloatingText2D } from "./FloatingText2D";
 import { PrefabRoot } from "./PrefabRoot";
 

@@ -1,4 +1,5 @@
-import {AnyColor, colord} from "colord";
+import type {AnyColor} from "colord";
+import { colord} from "colord";
 
 export class HSVHueBagRandomiser {
     #hue_step_bag: number[] = [];
@@ -37,7 +38,7 @@ export class HSVHueBagRandomiser {
 
         for (let index = this.#hue_step_bag.length - 1; index > 0; index--) {
             const swap_index = Math.floor(Math.random() * (index + 1));
-            [this.#hue_step_bag[index], this.#hue_step_bag[swap_index]] = [this.#hue_step_bag[swap_index], this.#hue_step_bag[index]];
+            [this.#hue_step_bag[index], this.#hue_step_bag[swap_index]] = [this.#hue_step_bag[swap_index]!, this.#hue_step_bag[index]!];
         }
     }
 

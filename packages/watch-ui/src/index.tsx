@@ -1,11 +1,13 @@
 import { Container } from "@react-three/uikit";
-import {ReactNode, useCallback, useMemo} from "react";
+import type {ReactNode} from "react";
+import { useCallback, useMemo} from "react";
 import { DoubleSide, MeshBasicMaterial } from "three";
 import { configureTextBuilder } from "troika-three-text";
 
 
 
-import { ScreenName, screens } from "./screens";
+import type { ScreenName} from "./screens";
+import { screens } from "./screens";
 import {NavStateProvider, useNavState} from "./contexts/NavStateContext";
 import {Crossfader, useCrossfadeOpacity} from "./animation/Crossfader";
 import {Maximize2, Minimize2, Settings} from "@react-three/uikit-lucide";

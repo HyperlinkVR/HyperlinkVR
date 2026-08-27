@@ -1,7 +1,8 @@
 import { useSetting } from "@hyperlinkvr/react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect } from "react";
-import { Box3, Box3Helper, Color, Object3D } from "three";
+import type { Object3D } from "three";
+import { Box3, Box3Helper, Color } from "three";
 
 import {flashes, set_scanning} from "./scanner";
 
@@ -69,8 +70,8 @@ const SceneScanRunner = () => {
             }
             // TODO: broken
 
-            ramp_color(entry.count, helper.material.color);
-            helper.material.opacity = 1 - age / FLASH_MS;
+            ramp_color(entry.count, (helper.material as any).color);
+            (helper.material as any).opacity = 1 - age / FLASH_MS;
         }
     });
 

@@ -1,6 +1,8 @@
 import { useFrame, useThree } from "@react-three/fiber";
-import { RefObject, useMemo } from "react";
-import { Group, Vector3 } from "three";
+import type { RefObject} from "react";
+import { useMemo } from "react";
+import type { Group} from "three";
+import { Vector3 } from "three";
 
 import { useFlatFrameInput } from "./bindings";
 import {SPRINT_SPEED, WALK_SPEED} from "../../values";

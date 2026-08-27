@@ -3,7 +3,8 @@ import type { Group } from "three";
 
 
 
-import { compute_layer_mask, Layer } from "./layers";
+import type { Layer } from "./layers";
+import { compute_layer_mask } from "./layers";
 
 
 interface LayerGroupProps extends Omit<React.ComponentPropsWithoutRef<"group">, "layers"> {
@@ -37,7 +38,7 @@ export const LayerGroup = ({
                 uuids += child.uuid;
             });
 
-            let state_hash = `${uuids}|${layer_mask}`;
+            const state_hash = `${uuids}|${layer_mask}`;
 
             if (state_hash !== previous_state_hash.current) {
                 previous_state_hash.current = state_hash;

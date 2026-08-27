@@ -1,10 +1,10 @@
 import { Container, Text } from "@react-three/uikit";
 import { useSettingsTree } from "@hyperlinkvr/react";
-import {ComponentRef, useEffect, useMemo, useRef, useState} from "react";
+import type {ComponentRef} from "react";
+import { useEffect, useMemo, useRef, useState} from "react";
 import type { SettingsTree, SettingKey } from "@hyperlinkvr/types";
 import { WatchSettingWidget } from "../settings/WatchSettingWidget";
-import { ScreenProps } from "./index";
-import {Header} from "../layout/Header";
+import type { ScreenProps } from "./index";
 import {Crossfader} from "../animation/Crossfader";
 import {useFocusable} from "../contexts/FocusNavContext";
 

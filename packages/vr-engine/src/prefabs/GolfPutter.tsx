@@ -1,4 +1,4 @@
-import { GolfPutterPrefab } from "@hyperlinkvr/vr-engine-schemas";
+import type { GolfPutterPrefab } from "@hyperlinkvr/vr-engine-schemas";
 import { useGLTF } from "@react-three/drei";
 import { useEffect, useMemo } from "react";
 import { Mesh } from "three";
@@ -8,7 +8,7 @@ import { Mesh } from "three";
 import { ObjectPhysics } from "../engine/ObjectPhysics";
 import { useObjectShadows } from "../hooks/useObjectShadows";
 import { Grabbable } from "../interaction";
-import { PrefabProps } from "../types";
+import type { PrefabProps } from "../types";
 import { PrefabRoot } from "./PrefabRoot";
 
 

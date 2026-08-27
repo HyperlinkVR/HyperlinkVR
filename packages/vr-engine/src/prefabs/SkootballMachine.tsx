@@ -1,17 +1,20 @@
-import { Collider } from "@hyperlinkvr/vr-engine-schemas";
+import type { Collider } from "@hyperlinkvr/vr-engine-schemas";
 import { PositionalAudio, Text, useGLTF } from "@react-three/drei";
-import { IntersectionEnterPayload, IntersectionExitPayload } from "@react-three/rapier";
-import { RefObject, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
-import { Group, PositionalAudio as PositionalAudioType, Vector3 } from "three";
+import type { IntersectionEnterPayload, IntersectionExitPayload } from "@react-three/rapier";
+import type { RefObject} from "react";
+import { useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
+import type { Group, PositionalAudio as PositionalAudioType} from "three";
+import { Vector3 } from "three";
 
 
 
-import { create_object_refs, ObjectRefsContextType, ObjectRefsProvider } from "../contexts";
+import type { ObjectRefsContextType} from "../contexts";
+import { create_object_refs, ObjectRefsProvider } from "../contexts";
 import { ObjectPhysics } from "../engine/ObjectPhysics";
 import { useObjectShadows } from "../hooks/useObjectShadows";
 import { Grabbable } from "../interaction";
 import { detect_trigger_direction, resolve_interacted, TriggerVolume } from "../interaction/TriggerVolume";
-import { PrefabProps } from "../types";
+import type { PrefabProps } from "../types";
 import { PrefabRoot } from "./PrefabRoot";
 
 
@@ -297,6 +300,11 @@ export const SkootballMachine = (props: PrefabProps) => {
 
     const PointCollider = useCallback(({value, side}: {value: number, side?: "left" | "right"}) => {
         const collider = side ? POINT_COLLIDERS[`${side}_${value}`] : POINT_COLLIDERS[`${value}`];
+
+        if (!collider) {
+            console.warn(`No collider found for point value ${value} and side ${side}`);
+            return null;
+        }
 
         return (
             <TriggerVolume

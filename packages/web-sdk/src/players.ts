@@ -1,6 +1,6 @@
 import {send_via_rtc} from "./messenger";
 import {whoami} from "./auth";
-import {PlayerMonitor, ReportEvent} from "@hyperlinkvr/vr-engine-schemas";
+import type {PlayerMonitor, ReportEvent} from "@hyperlinkvr/vr-engine-schemas";
 import {subscribe_report} from "./event_bus";
 import type {NamedWebSDKEvent} from "@hyperlinkvr/types";
 

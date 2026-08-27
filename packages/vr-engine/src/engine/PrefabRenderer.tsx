@@ -1,7 +1,7 @@
 import type { Prefab } from "@hyperlinkvr/vr-engine-schemas";
 import prefabs from "../prefabs";
 import { useMemo } from "react";
-import { RendererComponentProps } from "../types";
+import type { RendererComponentProps } from "../types";
 
 export const PrefabRenderer = (props: RendererComponentProps<Prefab>)=> {
     const { name, ...rest } = props;
@@ -12,5 +12,5 @@ export const PrefabRenderer = (props: RendererComponentProps<Prefab>)=> {
         return null;
     }
 
-    return <PrefabComponent {...rest} />;
+    return <PrefabComponent {...(rest as any)} />;
 }

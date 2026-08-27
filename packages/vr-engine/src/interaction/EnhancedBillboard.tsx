@@ -1,6 +1,8 @@
 import { useFrame } from "@react-three/fiber";
-import { ComponentProps, useImperativeHandle, useRef } from "react";
-import { Euler, Group, Vector3 } from "three";
+import type { ComponentProps} from "react";
+import { useImperativeHandle, useRef } from "react";
+import type { Group} from "three";
+import { Euler, Vector3 } from "three";
 
 
 const _cam = new Vector3();

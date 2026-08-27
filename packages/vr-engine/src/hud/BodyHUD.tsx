@@ -1,6 +1,7 @@
 import {useFrame, useThree} from "@react-three/fiber";
 import {useMemo, useRef} from "react";
-import {Group, MathUtils, Quaternion, Vector3} from "three";
+import type {Group} from "three";
+import { MathUtils, Quaternion, Vector3} from "three";
 
 import {HUDSurface, hud_vr_pixel_size, HUD_VR_DISTANCE} from "./HUDSurface";
 import {Layer, LayerGroup} from "../render";

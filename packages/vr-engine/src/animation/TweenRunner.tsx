@@ -5,7 +5,7 @@ import { get_object_refs } from "../engine/object_ref_registry";
 import { get_active_tweens, cancel_active_tween } from "./tween_registry";
 import { rotation_to_quaternion } from "../util/rotation";
 import { body_owns_pose_for } from "../engine/object_modification";
-import {TweenEasing} from "@hyperlinkvr/vr-engine-schemas";
+import type {TweenEasing} from "@hyperlinkvr/vr-engine-schemas";
 
 const from_pos = new Vector3();
 const to_pos = new Vector3();

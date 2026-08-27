@@ -1,13 +1,14 @@
-import { MessageEngine, WindowArgumentsStrategy } from "@hyperlinkvr/core";
+import type { MessageEngine, WindowArgumentsStrategy } from "@hyperlinkvr/core";
 import { URLParamsWindowArgumentsStrategy } from "@hyperlinkvr/platform-browser";
 import {
     ExtensionMessageEngine,
     ExtensionStorage
 } from "@hyperlinkvr/platform-extension";
+import type {
+    StorageEnginesContextType} from "@hyperlinkvr/react";
 import {
     AuthSessionProvider,
     MessageEngineProvider, SettingsProvider,
-    StorageEnginesContextType,
     StorageEnginesProvider,
     WindowArgumentsStrategyProvider
 } from "@hyperlinkvr/react";

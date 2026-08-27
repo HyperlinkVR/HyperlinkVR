@@ -1,5 +1,5 @@
 import {create} from "zustand";
-import {
+import type {
     CreatedHUDElement,
     HUDElementModification,
     HUDVRAnchor
@@ -104,7 +104,7 @@ export const useHUDStore = create<HUDStoreState>((set, get) => ({
 
         // undefined targets the element itself, so the change becomes the new shared default
         if (target_username === undefined) {
-            const {overrides, sequence, ...base} = stored;
+            const {overrides, sequence} = stored;
             const next = merge_override(stored, applied);
 
             return {

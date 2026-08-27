@@ -33,7 +33,7 @@ export const HUDSlotOrShorthandSchema = z.union([HUDSlotSchema, HUDSlotShorthand
             ? parse_hud_shorthand(slot_or_shorthand)
             : slot_or_shorthand
     );
-export type HUDSlotOrShorthand = z.infer<typeof HUDSlotOrShorthandSchema>;
+export type HUDSlotOrShorthand = z.input<typeof HUDSlotOrShorthandSchema>;
 
 const HUDComponentBaseSchema = bindable({
     type: z.string(),
@@ -43,7 +43,7 @@ export const HUDTextComponentSchema = HUDComponentBaseSchema.extend({
     type: z.literal("text"),
     text: z.string(),
     font_size: z.number().positive().optional().default(16),
-    color: HexColorSchema.optional().default("#FFFFFF"),
+    color: HexColorSchema.optional().default(0xffffff),
 });
 export type HUDTextComponent = z.infer<typeof HUDTextComponentSchema>;
 export type HUDTextComponentInput = z.input<typeof HUDTextComponentSchema>;

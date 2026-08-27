@@ -1,6 +1,9 @@
-import {useXRControllerLocomotion, useXRInputSourceState, XRControllerState, XRSpace} from "@react-three/xr";
-import {RefObject, useCallback, useMemo, useRef, useState} from "react";
-import {Group, Quaternion, Vector3} from "three";
+import type { XRControllerState} from "@react-three/xr";
+import {useXRControllerLocomotion, useXRInputSourceState, XRSpace} from "@react-three/xr";
+import type {RefObject} from "react";
+import { useCallback, useMemo, useRef, useState} from "react";
+import type {Group} from "three";
+import { Quaternion, Vector3} from "three";
 import {useSetting} from "@hyperlinkvr/react";
 import {usePlayerOrigin} from "../../../contexts";
 import {useRapier} from "@react-three/rapier";
@@ -56,7 +59,7 @@ export const XRLocomotion = ({ origin }: { origin: RefObject<Group | null> }) =>
             return;
         }
 
-        if (!thumbstick_just_reset.current && Math.abs(thumbstick.xAxis) < 0.05 && Math.abs(thumbstick.yAxis) < 0.05) {
+        if (!thumbstick_just_reset.current && Math.abs(thumbstick.xAxis!) < 0.05 && Math.abs(thumbstick.yAxis!) < 0.05) {
             thumbstick_just_reset.current = true;
 
             // end a sprint if the thumbstick is released
@@ -125,6 +128,7 @@ export const XRLocomotion = ({ origin }: { origin: RefObject<Group | null> }) =>
         {
             // in teleport mode, explictly disable the translation, but keep rotation
             // teleportation is handled by TeleportSurface, not this component
+            // @ts-ignore not sure why typescript believes this cant take boolean, the docs state it can
             speed: locomotion === "walk" ? speed : false
         },
         {

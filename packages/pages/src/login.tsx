@@ -1,4 +1,5 @@
-import { check_stored_private_key, is_private_key_in_session, parse_identity, resolve_identity, signup_static, store_auth_session, type ActionableMethods, type Identity, type IdentityResolutionData, type LoginAction, type LoginMethod } from "@hyperlinkvr/auth";
+import { check_stored_private_key, is_private_key_stored, parse_identity, resolve_identity, signup_static, store_auth_session, type ActionableMethods, type IdentityResolutionData, type LoginAction, type LoginMethod } from "@hyperlinkvr/auth";
+import {type Identity} from "@hyperlinkvr/types";
 import { useDebounce, useStorageEngine } from "@hyperlinkvr/react";
 import { CenteredLoadingSpinner } from "@hyperlinkvr/ui-dom";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -99,9 +100,9 @@ const LoginFormStatic = ({ username, resolved_identity }: FormProps) => {
         return parsed.identity;
     }, [username])!;
 
-    // on first launch, check if the user is already in a session state,a dn if so check and skip ahead
+    // on first launch, check if the user is already in a session state, and if so check and skip ahead
     useEffect(() => {
-        if (!is_private_key_in_session(session_storage)) {
+        if (!is_private_key_stored(local_storage)) {
             setShowPasswordInput(true);
             return;
         }
@@ -113,7 +114,7 @@ const LoginFormStatic = ({ username, resolved_identity }: FormProps) => {
 
         check_stored_private_key(identity, {
             local: local_storage,
-            session: session_storage
+            //session: session_storage
         }).then(async (success) => {
             if (success) {
                 if (!resolved_identity?.public_key) {
@@ -154,7 +155,10 @@ const LoginFormStatic = ({ username, resolved_identity }: FormProps) => {
 
         check_stored_private_key(
             identity,
-            { local: local_storage, session: session_storage },
+            {
+                local: local_storage,
+                //session: session_storage
+            },
             { password }
         ).then(async (success) => {
             if (success) {
@@ -472,7 +476,7 @@ export const LoginPage = () => {
 
             let local_method: LoginMethod | null = null;
             if (allowed_methods.length === 1) {
-                local_method = allowed_methods[0];
+                local_method = allowed_methods[0]!;
             } else {
                 local_method = null;
             }

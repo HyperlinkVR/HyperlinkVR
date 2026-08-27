@@ -1,10 +1,11 @@
 import {BaseBuilder} from "./base";
-import {
+import type {
     AxisAction,
     AxisInputMonitorInput,
     ButtonInputMonitorInput,
     InputAction,
-    PlayerMonitor,
+    PlayerMonitor} from "@hyperlinkvr/vr-engine-schemas";
+import {
     PlayerMonitorSchema
 } from "@hyperlinkvr/vr-engine-schemas";
 

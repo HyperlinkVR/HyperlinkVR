@@ -53,7 +53,7 @@ export const SchemaForm = ({
     // use fieldConfig to mark const fields as hidden
     const filtered_schema = useMemo(() => {
         const current_shape = schema.shape;
-        const modified_fields = {};
+        const modified_fields = {} as Record<string, z.ZodTypeAny>;
 
         const hidden = [
             ...Object.keys(const_fields).filter(

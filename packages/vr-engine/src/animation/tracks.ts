@@ -1,5 +1,8 @@
-import {
+import type {
     KeyframeTrack as ThreeKeyframeTrack,
+    Interpolant
+} from "three";
+import {
     BooleanKeyframeTrack,
     Color,
     ColorKeyframeTrack,
@@ -9,8 +12,7 @@ import {
     NumberKeyframeTrack,
     QuaternionKeyframeTrack,
     StringKeyframeTrack,
-    VectorKeyframeTrack,
-    Interpolant
+    VectorKeyframeTrack
 } from "three";
 import type {KeyframeTrack, KeyframeType} from "@hyperlinkvr/vr-engine-schemas";
 
@@ -84,7 +86,7 @@ const build_discrete_evaluator = (track: KeyframeTrack): (time_ms: number) => Ar
         while (low < high) {
             const middle = Math.ceil((low + high) / 2);
 
-            if (times[middle] <= time_ms) {
+            if (times[middle]! <= time_ms) {
                 low = middle;
             } else {
                 high = middle - 1;
@@ -114,6 +116,6 @@ export const compile_track = (track: KeyframeTrack): CompiledTrack => {
         evaluate,
         scalar: discrete || track.type === "number",
         // keyframes are sorted by the schema transform, so the last one is the end
-        end_time: track.keyframes[track.keyframes.length - 1].time
+        end_time: track.keyframes[track.keyframes.length - 1]!.time
     };
 };

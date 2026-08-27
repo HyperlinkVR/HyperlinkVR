@@ -1,6 +1,7 @@
 import { useDebounce, useStorage } from "@hyperlinkvr/react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { Mesh, MeshBasicMaterial, MeshStandardMaterial, Object3D } from "three";
+import type { Object3D } from "three";
+import { Mesh, MeshBasicMaterial, MeshStandardMaterial } from "three";
 
 
 

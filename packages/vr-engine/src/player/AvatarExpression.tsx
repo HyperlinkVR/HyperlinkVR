@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader";
-import { GLTF, GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
+import type { GLTF} from "three/examples/jsm/loaders/GLTFLoader";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 
 
 
 import { useAvatarMaterials } from "../contexts";
-import { expression_eyes_options, expression_mouth_options, ExpressionEyes, usePlayerExpression } from "../contexts/PlayerExpressionContext";
+import type { ExpressionEyes} from "../contexts/PlayerExpressionContext";
+import { expression_eyes_options, expression_mouth_options, usePlayerExpression } from "../contexts/PlayerExpressionContext";
 import { Layer, LayerGroup } from "../render";
 
 
@@ -25,7 +27,7 @@ const load_glbs = async (url_map: Record<string, string>, glb_names: readonly st
     return Promise.all(glb_promises).then((glbs) => {
         const glb_map: Record<string, GLTF> = {};
         for (let i = 0; i < glbs.length; i++) {
-            glb_map[glb_names[i]] = glbs[i];
+            glb_map[glb_names[i]!] = glbs[i]!;
         }
         return glb_map;
     });

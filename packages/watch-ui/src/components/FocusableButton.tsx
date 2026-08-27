@@ -1,6 +1,8 @@
-import {ComponentProps, ComponentRef, useImperativeHandle, useRef} from "react";
+import type {ComponentProps, ComponentRef} from "react";
+import { useImperativeHandle, useRef} from "react";
 import {Button} from "@react-three/uikit-default";
-import {useFocusable, UseFocusableNeighboursOptions} from "../contexts/FocusNavContext";
+import type { UseFocusableNeighboursOptions} from "../contexts/FocusNavContext";
+import {useFocusable} from "../contexts/FocusNavContext";
 
 type FocusableButtonProps = Omit<ComponentProps<typeof Button>, "onPointerDown" | "onClick"> & {
     neighbours?: UseFocusableNeighboursOptions;

@@ -165,7 +165,7 @@ Enable this option to use Chrome's debugger to inject raw inputs directly.`}
                             { label: "Right Hand", value: "right" }
                         ]}
                         value={watch_hand}
-                        on_change={setWatchHand}
+                        on_change={setWatchHand as (value: string) => void}
                         label="Watch hand"
                         tooltip="Which hand to wear the wristwatch on."
                     />

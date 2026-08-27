@@ -4,7 +4,8 @@ import { Matrix4, PerspectiveCamera, Vector3, type Object3D, type Quaternion, ty
 
 
 
-import { PlayerOriginContextType, usePlayerOrigin } from "../contexts";
+import type { PlayerOriginContextType} from "../contexts";
+import { usePlayerOrigin } from "../contexts";
 import { Eye } from "../types";
 import { active_pipeline } from "./GraphicsPipeline";
 import { Layer } from "./layers";
@@ -29,8 +30,7 @@ export interface CameraControllerConfiguration {
 const SCRATCH_MATRIX = new Matrix4();
 const SCRATCH_SCALE = new Vector3(1, 1, 1);
 
-// TODO: this loses type safety as key is string!
-export const frame_transforms: Record<string, (...args: any[]) => CameraControllerTransform> = {
+export const frame_transforms = {
     first_person: (preferred_eye: Eye = Eye.Left) => ({headset_cameras, spec_camera}) => {
         const eye_camera = headset_cameras.cameras[preferred_eye] || headset_cameras;
         spec_camera.position.setFromMatrixPosition(eye_camera.matrixWorld);
@@ -49,7 +49,7 @@ export const frame_transforms: Record<string, (...args: any[]) => CameraControll
         SCRATCH_MATRIX.decompose(spec_camera.position, spec_camera.quaternion, SCRATCH_SCALE);
     },
 
-    third_person_from_object: (object_ref: RefObject<Object3D>) => ({spec_camera}) => {
+    third_person_from_object: (object_ref: RefObject<Object3D | null>) => ({spec_camera}) => {
         if (!object_ref.current) {
             return;
         }
@@ -58,11 +58,11 @@ export const frame_transforms: Record<string, (...args: any[]) => CameraControll
         object_ref.current.getWorldPosition(spec_camera.position);
         object_ref.current.getWorldQuaternion(spec_camera.quaternion);
     }
-} as const;
+} satisfies Record<string, (...args: any[]) => CameraControllerTransform>;
 
 // TODO: ability to disable spectator cam (or maybe use lighterweight capture left eye and crop) to save performance
 
-export const camera_controller_configs: Record<string, (...args: any[]) => CameraControllerConfiguration> = {
+export const camera_controller_configs = {
     first_person: (preferred_eye: Eye = Eye.Left) => ({
         frame_transform: frame_transforms.first_person(preferred_eye),
         layers: [Layer.Default, Layer.PlayerModel_TorsoAndHands, Layer.ThirdPerson_ForceHide, Layer.HUD] // TODO: maybe add setting that puts the hud flat over the render or disables entirely for some cool cinematic footage
@@ -73,11 +73,11 @@ export const camera_controller_configs: Record<string, (...args: any[]) => Camer
         layers: [Layer.Default, Layer.PlayerModel_TorsoAndHands, Layer.PlayerModel_Head]
     }),
 
-    third_person_from_object: (object_ref: RefObject<Object3D>) => ({
+    third_person_from_object: (object_ref: RefObject<Object3D | null>) => ({
         frame_transform: frame_transforms.third_person_from_object(object_ref),
         layers: [Layer.Default, Layer.PlayerModel_TorsoAndHands, Layer.PlayerModel_Head]
     })
-} as const;
+} satisfies Record<string, (...args: any[]) => CameraControllerConfiguration>;
 
 export const SpectatorCameraController = ({config = camera_controller_configs.first_person(), horizontal_fov = 50}: {config?: CameraControllerConfiguration, horizontal_fov?: number}) => {
     const { size, scene } = useThree();

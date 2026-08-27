@@ -7,8 +7,9 @@ import { Euler, Quaternion, Vector3 } from "three";
 import type { ObjectRefsContextType } from "../contexts/ObjectRefsContext";
 import { useWebSDKMessaging } from "../contexts/WebSDKMessagingContext";
 import { get_object_refs } from "../engine/object_ref_registry";
+import type {
+    CompiledMonitor} from "./object_monitor_registry";
 import {
-    CompiledMonitor,
     get_monitor_entries,
     mask_is_inside,
     mask_to_axes,

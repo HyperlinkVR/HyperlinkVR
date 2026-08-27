@@ -1,4 +1,4 @@
-import { ThreeElements } from "@react-three/fiber";
+import type { ThreeElements } from "@react-three/fiber";
 
 import { useShadowMapSize } from "./useShadowMapSize";
 

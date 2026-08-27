@@ -2,7 +2,8 @@ import { Label, Switch } from "@react-three/uikit-default";
 import { Container, Text } from "@react-three/uikit";
 import {useCrossfadeOpacity} from "../animation/Crossfader";
 import {useFocusable} from "../contexts/FocusNavContext";
-import {ComponentRef, useRef} from "react";
+import type {ComponentRef} from "react";
+import { useRef} from "react";
 
 export const ToggleSwitch = ({value, on_change, label}: {value: boolean; on_change: (value: boolean) => void; label: string}) => {
     const ref = useRef<ComponentRef<typeof Container>>(null);

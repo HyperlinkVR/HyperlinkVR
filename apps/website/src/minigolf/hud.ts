@@ -1,3 +1,5 @@
+import type * as hvr from "@hyperlinkvr/web-sdk";
+
 const h = hyperlinkvr.builders;
 
 export const countdown_to_start = async () => {
@@ -26,8 +28,8 @@ interface HoleExtraDetails {
     par?: number;
 }
 
-let hole_hud: typeof h.HUDTextHandle | null = null;
-let par_hud: typeof h.HUDTextHandle | null = null;
+let hole_hud: hvr.builders.HUDTextHandle | null = null;
+let par_hud: hvr.builders.HUDTextHandle | null = null;
 
 export const show_hole = async (hole_number: number, details: HoleExtraDetails = {}) => {
     if (!hole_hud) {
@@ -57,7 +59,7 @@ export const show_hole = async (hole_number: number, details: HoleExtraDetails =
     }
 }
 
-const player_stroke_huds = new Map<string | null, typeof h.HUDTextHandle>();
+const player_stroke_huds = new Map<string | null, hvr.builders.HUDTextHandle>();
 
 export const show_stroke = async (stroke_number: number, username: string | null) => {
     if (!player_stroke_huds.has(username)) {

@@ -1,11 +1,11 @@
-import { FloatingText3DPrefab } from "@hyperlinkvr/vr-engine-schemas";
+import type { FloatingText3DPrefab } from "@hyperlinkvr/vr-engine-schemas";
 import { Text3D } from "@react-three/drei";
 import { useEffect, useState } from "react";
 
 
 
 import { useObjectBinding } from "../hooks/useObjectBinding";
-import { PrefabProps } from "../types";
+import type { PrefabProps } from "../types";
 import { PrefabRoot } from "./PrefabRoot";
 
 

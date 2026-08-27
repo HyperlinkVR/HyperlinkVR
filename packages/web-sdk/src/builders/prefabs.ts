@@ -1,4 +1,5 @@
-import { BasketballHoopPrefab, BasketballHoopPrefabInput, BasketballHoopPrefabSchema, ButtonPrefab, ButtonPrefabInput, ButtonPrefabSchema, FloatingText2DPrefab, FloatingText2DPrefabSchema, FloatingText3DPrefab, FloatingText3DPrefabSchema, GolfBallPrefab, GolfBallPrefabInput, GolfBallPrefabSchema, GolfPutterPrefab, GolfPutterPrefabInput, GolfPutterPrefabSchema, HexColor, HexColorSchema, HexNumericalColor, HexNumericalColorSchema, ReflectiveMirrorPrefab, ReflectiveMirrorPrefabInput, ReflectiveMirrorPrefabSchema, StandardPrefab, StandardPrefabInput, StandardPrefabName, StandardPrefabSchema, TextPrefabBaseInput, TextSignPrefab, TextSignPrefabSchema } from "@hyperlinkvr/vr-engine-schemas";
+import type { BasketballHoopPrefab, BasketballHoopPrefabInput, ButtonPrefab, ButtonPrefabInput, FloatingText2DPrefab, FloatingText3DPrefab, GolfBallPrefab, GolfBallPrefabInput, GolfPutterPrefab, GolfPutterPrefabInput, HexColor, HexNumericalColor, ReflectiveMirrorPrefab, ReflectiveMirrorPrefabInput, StandardPrefab, StandardPrefabInput, StandardPrefabName, TextPrefabBaseInput, TextSignPrefab} from "@hyperlinkvr/vr-engine-schemas";
+import { BasketballHoopPrefabSchema, ButtonPrefabSchema, FloatingText2DPrefabSchema, FloatingText3DPrefabSchema, GolfBallPrefabSchema, GolfPutterPrefabSchema, HexColorSchema, HexNumericalColorSchema, ReflectiveMirrorPrefabSchema, StandardPrefabSchema, TextSignPrefabSchema } from "@hyperlinkvr/vr-engine-schemas";
 
 
 
@@ -192,7 +193,7 @@ export class FloatingText3DPrefabBuilder extends TextPrefabBuilderBase {
     }
 
 
-    static _make_api(object_id: string) {
+    static override _make_api(object_id: string) {
         return {
             ...super._make_api(object_id),
             set_depth: (depth: number) => prefab_command(object_id, "set_depth", {depth})
@@ -220,7 +221,7 @@ export class TextSignPrefabBuilder extends TextPrefabBuilderBase {
     }
 
 
-    static _make_api(object_id: string) {
+    static override _make_api(object_id: string) {
         return {
             ...super._make_api(object_id),
             set_style: (style: "default" | "wooden" | "nameplate") => prefab_command(object_id, "set_style", {style}),

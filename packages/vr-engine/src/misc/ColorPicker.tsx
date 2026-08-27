@@ -1,5 +1,6 @@
-import { ThreeEvent } from "@react-three/fiber";
-import { ComponentProps, useCallback, useEffect, useState } from "react";
+import type { ThreeEvent } from "@react-three/fiber";
+import type { ComponentProps} from "react";
+import { useCallback, useEffect, useState } from "react";
 import { CanvasTexture, Color, DoubleSide, SRGBColorSpace } from "three";
 
 

@@ -1,5 +1,6 @@
 import { build_breadcrumb_settings_tree } from "@hyperlinkvr/core";
-import { SettingKey, settings_def } from "@hyperlinkvr/types";
+import type { SettingKey} from "@hyperlinkvr/types";
+import { settings_def } from "@hyperlinkvr/types";
 import { useMemo } from "react";
 
 export const useSettingsTree = (platform: "flat" | "watch") => {

@@ -1,6 +1,6 @@
 import {useFrame, useThree} from "@react-three/fiber";
 import {useRef} from "react";
-import {Group} from "three";
+import type {Group} from "three";
 
 import {HUDSurface, hud_vr_head_pixel_size, HUD_VR_HEAD_DISTANCE} from "./HUDSurface";
 import {Layer, LayerGroup} from "../render";

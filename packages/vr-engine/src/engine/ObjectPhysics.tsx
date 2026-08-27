@@ -1,9 +1,12 @@
-import { AssetRef, Collider, ColliderOrCollection, PhysicsSystem, RigidBody as RigidBodyConfig, Rotation, Transform } from "@hyperlinkvr/vr-engine-schemas";
+import type { AssetRef, Collider, ColliderOrCollection, PhysicsSystem, RigidBody as RigidBodyConfig, Rotation, Transform } from "@hyperlinkvr/vr-engine-schemas";
 import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import { BallCollider, CapsuleCollider, CollisionEnterPayload, CollisionPayload, CuboidCollider, CylinderCollider, MeshCollider, RapierRigidBody, RigidBody, RigidBodyAutoCollider, useRapier } from "@react-three/rapier";
-import { ComponentProps, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Euler, EulerOrder, Group, Mesh, MeshBasicMaterial, Quaternion, Vector3 } from "three";
+import type { CollisionEnterPayload, CollisionPayload, RapierRigidBody, RigidBodyAutoCollider} from "@react-three/rapier";
+import { BallCollider, CapsuleCollider, CuboidCollider, CylinderCollider, MeshCollider, RigidBody, useRapier } from "@react-three/rapier";
+import type { ComponentProps} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { EulerOrder, Group, Mesh} from "three";
+import { Euler, MeshBasicMaterial, Quaternion, Vector3 } from "three";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils";
 
 
@@ -295,7 +298,7 @@ export const useCollider = (collider: ColliderOrCollection): {auto_strategy: Rig
     return { auto_strategy, ColliderComponent };
 }
 
-export const get_collider_extents = (collider: Collider): {x: number, y: number, z: number} | undefined => {
+export const get_collider_extents = (collider: ColliderOrCollection): {x: number, y: number, z: number} | undefined => {
     switch (collider.type) {
         case "box":
             return { x: collider.size[0], y: collider.size[1], z: collider.size[2] };

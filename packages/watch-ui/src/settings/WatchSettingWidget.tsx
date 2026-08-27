@@ -1,4 +1,5 @@
-import { type SettingKey, SettingValueType, WidgetArguments, WidgetType } from "@hyperlinkvr/types";
+import type { SettingValueType, WidgetArguments, WidgetType } from "@hyperlinkvr/types";
+import { type SettingKey } from "@hyperlinkvr/types";
 import { useSetting, useSettingUIDefinition } from "@hyperlinkvr/react";
 import { useMemo } from "react";
 import { ToggleSwitch } from "./ToggleSwitch";

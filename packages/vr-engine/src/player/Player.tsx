@@ -3,12 +3,13 @@ import { PlayerMonitorSchema } from "@hyperlinkvr/vr-engine-schemas";
 import { Text } from "@react-three/drei";
 import { XROrigin } from "@react-three/xr";
 import { Suspense, useEffect, useImperativeHandle, useRef } from "react";
-import { Group } from "three";
+import type { Group } from "three";
 
 
 
 import { useWebSDKMessaging } from "../contexts";
-import { ExpressionMouth, PlayerExpressionProvider, usePlayerExpression } from "../contexts/PlayerExpressionContext";
+import type { ExpressionMouth} from "../contexts/PlayerExpressionContext";
+import { PlayerExpressionProvider, usePlayerExpression } from "../contexts/PlayerExpressionContext";
 import { useSessionMode } from "../contexts/SessionModeContext";
 import { BodyHUD } from "../hud/BodyHUD";
 import { FlatHUD } from "../hud/FlatHUD";
@@ -136,7 +137,6 @@ export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>
             if (!origin_ref.current) {
                 reply({
                     for: "HVRSDK_PLAYER_GET_POSITION",
-                    // TODO: error envelope!
                     error: "Player origin not available"
                 });
                 return;
@@ -220,7 +220,6 @@ export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>
                 console.error("Failed to parse player monitor", message.monitor);
                 reply({
                     for: "HVRSDK_PLAYER_ADD_MONITOR",
-                    success: false,
                     error: "Failed to parse player monitor"
                 });
                 return;
@@ -230,7 +229,6 @@ export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>
             if (!registered) {
                 reply({
                     for: "HVRSDK_PLAYER_ADD_MONITOR",
-                    success: false,
                     error: "Monitor was rejected: it has no binding id or reports nothing"
                 });
                 return;

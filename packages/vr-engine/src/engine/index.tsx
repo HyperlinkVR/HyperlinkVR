@@ -1,16 +1,20 @@
 import { TabSessionProvider, useSetting, useStorage, useTabSession } from "@hyperlinkvr/react";
 import { SoftShadows, Stats, Text } from "@react-three/drei";
-import { Canvas, RootState } from "@react-three/fiber";
+import type { RootState } from "@react-three/fiber";
+import { Canvas } from "@react-three/fiber";
 import type { DefaultGLProps } from "@react-three/fiber/dist/declarations/src/core/renderer";
 import { Physics, useFilterContactPair } from "@react-three/rapier";
 import { createXRStore, XR } from "@react-three/xr";
 import { QuarksProvider } from "quarks.r3f";
 import { memo, Suspense, useCallback, useEffect, useImperativeHandle, useMemo, useRef } from "react";
 import { ErrorBoundary, getErrorMessage, type FallbackProps } from "react-error-boundary";
+import type {
+    Group} from "three";
 import {
     ACESFilmicToneMapping,
-    Group,
     HalfFloatType,
+    Mesh,
+    MeshBasicMaterial,
     WebGLRenderer
 } from "three";
 import { configureTextBuilder } from "troika-three-text";
@@ -41,7 +45,7 @@ import { clear_collider_collision_info, filter_contact_pair } from "../physics/c
 import { FlatAvatarHands, XRAvatarHand } from "../player/AvatarHand";
 import { Player } from "../player/Player";
 import { AvatarMirror } from "../prefabs/AvatarMirror";
-import { SceneRenderPass, SRGBOutputPass } from "../render/BasePasses";
+import { SceneRenderPass } from "../render/BasePasses";
 import { CameraSetup } from "../render/CameraSetup";
 import { CanvasResizer } from "../render/CanvasResizer";
 import { GraphicsPipeline } from "../render/GraphicsPipeline";
@@ -131,8 +135,8 @@ const VRErrorFallback = ({ error, resetErrorBoundary }: FallbackProps) => (
         <mesh
             position={[0, -0.35, 0.01]}
             onClick={resetErrorBoundary} // Your XR PointerEvents will trigger this!
-            onPointerOver={(e) => e.object.material.color.set("white")} // Hover effect
-            onPointerOut={(e) => e.object.material.color.set("#cccccc")}>
+            onPointerOver={(e) => ((e.object as Mesh).material as MeshBasicMaterial).color.set("white")} // Hover effect
+            onPointerOut={(e) => ((e.object as Mesh).material as MeshBasicMaterial).color.set("#cccccc")}>
             <planeGeometry args={[0.8, 0.25]} />
             <meshBasicMaterial color="#cccccc" />
 

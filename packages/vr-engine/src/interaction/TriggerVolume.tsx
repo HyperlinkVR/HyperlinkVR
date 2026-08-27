@@ -1,7 +1,10 @@
-import type { Collider, ColliderOrCollection, TriggerVolumeInteractionPayload } from "@hyperlinkvr/vr-engine-schemas";
-import { IntersectionEnterPayload, IntersectionExitPayload, RapierRigidBody, RigidBody } from "@react-three/rapier";
-import { ComponentProps, useCallback, useMemo, useRef } from "react";
-import { Group, Quaternion, Vector3 } from "three";
+import type { ColliderOrCollection, TriggerVolumeInteractionPayload } from "@hyperlinkvr/vr-engine-schemas";
+import type { IntersectionEnterPayload, IntersectionExitPayload, RapierRigidBody} from "@react-three/rapier";
+import { RigidBody } from "@react-three/rapier";
+import type { ComponentProps} from "react";
+import { useCallback, useMemo, useRef } from "react";
+import type { Group} from "three";
+import { Quaternion, Vector3 } from "three";
 
 
 
@@ -187,7 +190,7 @@ export const resolve_interacted = (payload: IntersectionPayload, config: MiniInt
 }
 
 // detects the rough direction/face the trigger volume was entered from
-export const detect_trigger_direction = (payload: IntersectionEnterPayload, source_collider: Collider): {direction: "top" | "bottom" | "side", local_offset: Vector3} | null => {
+export const detect_trigger_direction = (payload: IntersectionEnterPayload, source_collider: ColliderOrCollection): {direction: "top" | "bottom" | "side", local_offset: Vector3} | null => {
     const trigger_volume = payload.target.rigidBody;
     const entering_body = payload.other.rigidBody;
 

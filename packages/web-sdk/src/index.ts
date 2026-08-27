@@ -6,6 +6,8 @@ export * as auth from "./auth";
 export * as builders from "./builders";
 export * as color from "./color";
 
+export type { Marker } from "./markers";
+
 // re-export markers api with loader name shortened
 import * as markers_imp from "./markers";
 import { bind_rtc_event, facilitate_rtc, send_via_rtc } from "./messenger";

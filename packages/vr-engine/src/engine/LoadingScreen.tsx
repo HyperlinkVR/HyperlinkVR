@@ -1,6 +1,7 @@
 import {useFrame, useThree} from "@react-three/fiber";
 import {useRef} from "react";
-import {BackSide, Group} from "three";
+import type { Group} from "three";
+import {BackSide} from "three";
 import {get_united_head_camera} from "../util/get_head_cameras";
 import {Layer, LayerGroup} from "../render";
 import {useTabSession} from "@hyperlinkvr/react";

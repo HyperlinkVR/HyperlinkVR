@@ -1,4 +1,4 @@
-import { WorldSky } from "@hyperlinkvr/vr-engine-schemas";
+import type { WorldSky } from "@hyperlinkvr/vr-engine-schemas";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import { BackSide, Color, CubeCamera, Mesh, PMREMGenerator, Scene, ShaderMaterial, SphereGeometry, SRGBColorSpace, Vector3, WebGLCubeRenderTarget, type ColorRepresentation, type Texture, type WebGLRenderTarget } from "three";

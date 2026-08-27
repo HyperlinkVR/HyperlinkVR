@@ -1,6 +1,8 @@
 import {useFrame, useThree} from "@react-three/fiber";
-import {RapierCollider, useRapier} from "@react-three/rapier";
-import {RefObject, useCallback, useEffect, useMemo, useRef} from "react";
+import type {RapierCollider} from "@react-three/rapier";
+import { useRapier} from "@react-three/rapier";
+import type {RefObject} from "react";
+import { useCallback, useEffect, useMemo, useRef} from "react";
 import {Euler, Quaternion, Vector3} from "three";
 import {usePlayerOrigin} from "../contexts";
 import {useSetting} from "@hyperlinkvr/react";

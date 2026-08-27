@@ -1,6 +1,7 @@
 import {useFrame, useThree} from "@react-three/fiber";
-import {useEffect, useMemo, useRef} from "react";
-import {Group, PerspectiveCamera, Vector3} from "three";
+import {useMemo, useRef} from "react";
+import type {Group, PerspectiveCamera} from "three";
+import { Vector3} from "three";
 
 import {HUDSurface, HUD_CANVAS_WIDTH, HUD_CANVAS_HEIGHT} from "./HUDSurface";
 import {Layer, LayerGroup} from "../render";

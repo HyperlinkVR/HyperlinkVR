@@ -1,4 +1,4 @@
-import {ScreenName} from "../screens";
+import type {ScreenName} from "../screens";
 import {createContext, useCallback, useContext, useState} from "react";
 
 interface NavStateContextType {
@@ -45,7 +45,7 @@ export const NavStateProvider = ({ children, options }: { children: React.ReactN
             return;
         }
 
-        const new_current = backwards[backwards.length - 1];
+        const new_current = backwards[backwards.length - 1]!;
         setBackwards((prev) => (prev ? prev.slice(0, -1) : []));
         setForwards((prev) => (prev ? [...prev, current!] : [current!]));
         setCurrent(new_current);
@@ -56,7 +56,7 @@ export const NavStateProvider = ({ children, options }: { children: React.ReactN
             return;
         }
 
-        const new_current = forwards[forwards.length - 1];
+        const new_current = forwards[forwards.length - 1]!;
         setForwards((prev) => (prev ? prev.slice(0, -1) : []));
         setBackwards((prev) => (prev ? [...prev, current!] : [current!]));
         setCurrent(new_current);

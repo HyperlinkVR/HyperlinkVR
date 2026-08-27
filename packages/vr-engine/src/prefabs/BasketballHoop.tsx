@@ -1,6 +1,6 @@
-import { BasketballHoopPrefab, CylinderCollider } from "@hyperlinkvr/vr-engine-schemas";
+import type { BasketballHoopPrefab, CylinderCollider } from "@hyperlinkvr/vr-engine-schemas";
 import { PositionalAudio, useGLTF } from "@react-three/drei";
-import { ParticleSystemRef } from "quarks.r3f";
+import type { ParticleSystemRef } from "quarks.r3f";
 import { useRef } from "react";
 import type { PositionalAudio as PositionalAudioType } from "three";
 
@@ -11,7 +11,7 @@ import { useObjectBinding } from "../hooks/useObjectBinding";
 import { useObjectShadows } from "../hooks/useObjectShadows";
 import { ParticleEmitter } from "../interaction/ParticleEmitter";
 import { resolve_interacted, TriggerVolume } from "../interaction/TriggerVolume";
-import { PrefabProps } from "../types";
+import type { PrefabProps } from "../types";
 import { PrefabRoot } from "./PrefabRoot";
 
 

@@ -2,10 +2,10 @@ import { ColorPicker } from "../misc/ColorPicker";
 import { SkinPalette } from "../misc/SkinPalette";
 import { ReflectiveMirror } from "./ReflectiveMirror";
 import { useAvatar } from "../contexts/AvatarContext";
-import { ComponentProps } from "react";
+import type { ComponentProps } from "react";
 import { useSetting } from "@hyperlinkvr/react";
 import { PrefabRoot } from "./PrefabRoot";
-import { PrefabProps } from "../types";
+import type { PrefabProps } from "../types";
 import { ShadowPointLight } from "../render";
 
 type Bases = Omit<ComponentProps<"group">, "position"> & PrefabProps;

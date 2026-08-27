@@ -24,7 +24,7 @@ export const register_animation_channels = (object_id: string, channels: Record<
     const names = Object.keys(channels);
 
     for (const name of names) {
-        entry.set(name, channels[name]);
+        entry.set(name, channels[name]!);
     }
 
     return () => {

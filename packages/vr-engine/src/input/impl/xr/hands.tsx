@@ -2,7 +2,8 @@ import { useSetting } from "@hyperlinkvr/react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { PointerCursorModel, PointerRayModel, useRayPointer, useXRInputSourceState, XRSpace } from "@react-three/xr";
 import { useEffect, useMemo, useRef, type RefObject } from "react";
-import { Group, Object3D, Quaternion, Raycaster, Vector3 } from "three";
+import type { Group, Object3D} from "three";
+import { Quaternion, Raycaster, Vector3 } from "three";
 
 
 

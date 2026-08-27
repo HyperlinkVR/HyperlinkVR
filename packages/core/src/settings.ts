@@ -1,8 +1,9 @@
-import { SeparateUIDefinition, Setting, SettingKey, settings_def, SettingsTree, UISubdefinition } from "@hyperlinkvr/types";
+import type { SeparateUIDefinition, Setting, SettingKey, SettingsTree, UISubdefinition } from "@hyperlinkvr/types";
+import { settings_def } from "@hyperlinkvr/types";
 
 
 
-import { StorageEngine } from "./storage";
+import type { StorageEngine } from "./storage";
 
 
 interface SettingsStorageEngines {
@@ -72,7 +73,7 @@ export const build_breadcrumb_settings_tree = (
 ): SettingsTree => {
     const result: SettingsTree = { subtrees: {}, settings: [] };
 
-    for (const [key, setting] of Object.entries(settings_obj)) {
+    for (const setting of Object.values(settings_obj)) {
         const ui_def = setting.ui;
         if (!ui_def) continue;
 

@@ -3,7 +3,8 @@ import { WATCH_UI_HEIGHT, WATCH_UI_WIDTH, WatchUI } from "@hyperlinkvr/watch-ui"
 import { useFrame, useThree } from "@react-three/fiber";
 import { Container } from "@react-three/uikit";
 import { Suspense, useMemo, useRef, useState } from "react";
-import { Group, MathUtils, Matrix4, Quaternion, Vector3 } from "three";
+import type { Group} from "three";
+import { MathUtils, Matrix4, Quaternion, Vector3 } from "three";
 
 import { useSessionMode } from "../contexts/SessionModeContext";
 import { useHands } from "../input/hands";

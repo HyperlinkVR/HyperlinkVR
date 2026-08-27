@@ -1,9 +1,10 @@
-import { GolfBallPrefab } from "@hyperlinkvr/vr-engine-schemas";
+import type { GolfBallPrefab } from "@hyperlinkvr/vr-engine-schemas";
 import { PositionalAudio, useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import { CollisionEnterPayload } from "@react-three/rapier";
+import type { CollisionEnterPayload } from "@react-three/rapier";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Mesh, PositionalAudio as PositionalAudioType } from "three";
+import type { PositionalAudio as PositionalAudioType } from "three";
+import { Mesh } from "three";
 
 
 
@@ -11,7 +12,7 @@ import { useObjectRefsOptional } from "../contexts/ObjectRefsContext";
 import { ObjectPhysics } from "../engine/ObjectPhysics";
 import { useObjectBinding } from "../hooks/useObjectBinding";
 import { useObjectShadows } from "../hooks/useObjectShadows";
-import { PrefabProps } from "../types";
+import type { PrefabProps } from "../types";
 import { has_tag_in_object_tree } from "../util/tags";
 import { PrefabRoot } from "./PrefabRoot";
 

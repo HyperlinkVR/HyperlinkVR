@@ -1,4 +1,5 @@
-import { Material, RepeatWrapping, Texture } from "three";
+import type { Material, Texture } from "three";
+import { RepeatWrapping } from "three";
 import { useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
 

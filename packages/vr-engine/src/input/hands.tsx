@@ -1,6 +1,7 @@
 import { useFrame } from "@react-three/fiber";
 import { PointerCursorModel, PointerRayModel, useRayPointer } from "@react-three/xr";
-import {createContext, useContext, useState, type ReactNode, type RefObject, Dispatch, SetStateAction} from "react";
+import type { Dispatch, SetStateAction} from "react";
+import {createContext, useContext, useState, type ReactNode, type RefObject} from "react";
 import type { Object3D } from "three";
 
 export interface ButtonState {

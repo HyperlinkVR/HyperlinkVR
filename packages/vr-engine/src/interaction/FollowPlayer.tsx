@@ -1,6 +1,8 @@
 import { useFrame } from "@react-three/fiber";
-import { ComponentProps, useImperativeHandle, useRef } from "react";
-import { Group, Matrix4, Object3D } from "three";
+import type { ComponentProps} from "react";
+import { useImperativeHandle, useRef } from "react";
+import type { Group, Object3D } from "three";
+import { Matrix4 } from "three";
 
 import { usePlayerOrigin } from "../contexts";
 

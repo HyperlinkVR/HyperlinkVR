@@ -1,7 +1,8 @@
 import type { MessageChannel } from "@hyperlinkvr/core";
 import { useMessageEngine, useStorageEngines, useTabSession } from "@hyperlinkvr/react";
-import { NamedAction, NamedReply, WebSDKActionMessage, WebSDKActionName, WebSDKEventMessage } from "@hyperlinkvr/types";
-import { builtin_handlers, Handler } from "@hyperlinkvr/web-sdk-handlers";
+import type { NamedAction, NamedReply, WebSDKActionMessage, WebSDKActionName, WebSDKErrorReply, WebSDKEventMessage } from "@hyperlinkvr/types";
+import type { HandlerData } from "@hyperlinkvr/web-sdk-handlers";
+import { builtin_handlers, handle_web_sdk } from "@hyperlinkvr/web-sdk-handlers";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 
 import { useEngineObjectStore } from "../stores/EngineObjectStore";
@@ -15,10 +16,10 @@ import { clear_collider_collision_info } from "../physics/collision_hooks";
 interface WebSDKMessagingContextType {
     wait_for_action: <M extends WebSDKActionName>(action_filter: M) => Promise<{
         message: NamedAction<M>;
-        reply: (message: NamedReply<M>) => void;
+        reply: (message: NamedReply<M> | WebSDKErrorReply<M>) => void;
     }>;
 
-    on_action: <M extends WebSDKActionName>(action_filter: M, callback: (message: NamedAction<M>, reply: (message: NamedReply<M>) => void) => void) => () => void;
+    on_action: <M extends WebSDKActionName>(action_filter: M, callback: (message: NamedAction<M>, reply: (message: NamedReply<M> | WebSDKErrorReply<M>) => void) => void) => () => void;
     emit_event: (message: WebSDKEventMessage) => void;
 
     connected: boolean;
@@ -40,7 +41,7 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
 
     const storage = useStorageEngines();
 
-    const action_map_ref = useRef<Map<WebSDKActionName, Set<(message: NamedAction<any>, reply: (message: NamedReply<any>) => void) => void>>>(new Map());
+    const action_map_ref = useRef<Map<WebSDKActionName, Set<(message: NamedAction<any>, reply: (message: NamedReply<any> | WebSDKErrorReply) => void) => void>>>(new Map());
     const pending_actions_ref = useRef<Map<WebSDKActionName, any[]>>(new Map());
 
     const handle_data_channel_message = useCallback((event: MessageEvent) => {
@@ -52,7 +53,7 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
         const handlers = action_map_ref.current.get(data.action);
         if (handlers && handlers.size > 0) {
             handlers.forEach((handler) => {
-                handler(data, (reply_message: NamedReply<any>) => {
+                handler(data, (reply_message: NamedReply<any> | WebSDKErrorReply) => {
                     data_channel_ref.current?.send(JSON.stringify({ ...reply_message, correlation_id: data.correlation_id }));
                 });
             });
@@ -183,16 +184,14 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
     useEffect(() => {
         // add built in handlers
         for (const action_name in builtin_handlers) {
-            const handler = (message: NamedAction<any>, reply: (message: NamedReply<any>) => void) => {
-                const handler_fn = builtin_handlers[action_name as WebSDKActionName] as Handler<any>;
-                handler_fn({ message, storage }).then((response) => {
+            const handler = (message: NamedAction<any>, reply: (message: NamedReply<any> | WebSDKErrorReply) => void) => {
+                handle_web_sdk({ message, storage } as HandlerData<WebSDKActionName>).then((response) => {
                     if (response) {
                         reply(response);
                     }
                 }).catch((error) => {
                     console.error("Error handling SDK message:", message, "Error:", error);
-                    //@ts-ignore
-                    reply({ error: error.message || "Unknown error" });
+                    reply({ for: message.action as WebSDKActionName, error: error instanceof Error ? error.message : "Unknown error" });
                 });
             }
 
@@ -207,10 +206,10 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
     }, []);
 
     const on_action = useCallback(
-        <M extends WebSDKActionName>(action_filter: M, callback: (message: NamedAction<M>, reply: (message: NamedReply<M>) => void) => void) => {
-            const handler = <K extends WebSDKActionName>(message: NamedAction<K>, reply: (message: NamedReply<K>) => void) => {
+        <M extends WebSDKActionName>(action_filter: M, callback: (message: NamedAction<M>, reply: (message: NamedReply<M> | WebSDKErrorReply<M>) => void) => void) => {
+            const handler = (message: NamedAction<any>, reply: (message: NamedReply<any> | WebSDKErrorReply) => void) => {
                 if (!action_filter || message.action === action_filter) {
-                    callback(message as NamedAction<M>, reply as (message: NamedReply<M>) => void);
+                    callback(message as NamedAction<M>, reply as (message: NamedReply<M> | WebSDKErrorReply<M>) => void);
                 }
             };
 
@@ -223,7 +222,7 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
             if (pending && pending.length > 0) {
                 pending_actions_ref.current.delete(action_filter);
                 for (const data of pending) {
-                    handler(data, (reply_message: NamedReply<any>) => {
+                    handler(data, (reply_message: NamedReply<any> | WebSDKErrorReply) => {
                         data_channel_ref.current?.send(JSON.stringify({ ...reply_message, correlation_id: data.correlation_id }));
                     });
                 }
@@ -241,7 +240,7 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
         <M extends WebSDKActionName>(action_filter: M) => {
             return new Promise<{
                 message: NamedAction<M>;
-                reply: (message: NamedReply<M>) => void;
+                reply: (message: NamedReply<M> | WebSDKErrorReply<M>) => void;
             }>((resolve) => {
                 const unsubscribe = on_action(action_filter, (message, reply) => {
                     resolve({ message, reply });

@@ -28,7 +28,7 @@ export const CanvasResizer = ({ containerRef }: { containerRef: React.RefObject<
         };
 
         const observer = new ResizeObserver(([entry]) => {
-            const { width, height } = entry.contentRect;
+            const { width, height } = entry!.contentRect;
             apply_size(width, height);
         });
 

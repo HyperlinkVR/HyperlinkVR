@@ -1,8 +1,8 @@
-import { CustomObject, ObjectShadows } from "@hyperlinkvr/vr-engine-schemas";
+import type { CustomObject, ObjectShadows } from "@hyperlinkvr/vr-engine-schemas";
 import { useGLTF } from "@react-three/drei";
 
 
-import { RendererComponentProps } from "../types";
+import type { RendererComponentProps } from "../types";
 import { ObjectInteractions } from "./ObjectInteractions";
 import { ObjectPhysics } from "./ObjectPhysics";
 
@@ -11,7 +11,6 @@ import {useMemo} from "react";
 import {useMaterialPatternDisruptor} from "../hooks/useMaterialPatternDisruption";
 import {useMaterialScroller} from "../hooks/useMaterialScroll";
 import {useAssetURL} from "../hooks/useAssetURL";
-import { Mesh } from "three";
 import { useObjectShadows } from "../hooks/useObjectShadows";
 
 const GLTFRenderer = ({url, shadows}: {url: string, shadows: Required<ObjectShadows>}) => {

@@ -1,5 +1,5 @@
 import { instrument, secure, traverseRenderedFibers } from "bippy";
-import { Object3D } from "three";
+import type { Object3D } from "three";
 
 export type FlashEntry = { count: number; last: number };
 export const flashes = new Map<Object3D, FlashEntry>();

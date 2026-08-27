@@ -1,4 +1,4 @@
-import { ThreeEvent } from "@react-three/fiber";
+import type { ThreeEvent } from "@react-three/fiber";
 import { Container, Input, Text } from "@react-three/uikit";
 import { useEffect, useRef, useState } from "react";
 import {useCrossfadeOpacity} from "../animation/Crossfader";
@@ -236,8 +236,13 @@ export const SmartSlider = ({
                     <Input
                         value={input_str}
                         onValueChange={handle_text_change}
-                        onFocus={() => setIsFocused(true)}
-                        onBlur={handle_blur}
+                        onFocusChange={(focused) => {
+                            if (focused) {
+                                setIsFocused(true);
+                            } else {
+                                handle_blur();
+                            }
+                        }}
                         width={48}
                         backgroundColor="transparent"
                         color="white"

@@ -1,3 +1,5 @@
+import type * as hvr from "@hyperlinkvr/web-sdk";
+
 import { show_hole, show_oob, show_result, show_stroke } from "./hud";
 import { get_start_markers } from "./markers";
 import type { Player } from "./types";
@@ -9,14 +11,14 @@ interface PlayerState {
     score: number;
     strokes_this_hole: number;
     finished_this_hole: boolean;
-    ball: typeof h.EnginePrefabObjectCreationResult;
-    putter: typeof h.EnginePrefabObjectCreationResult;
+    ball: hvr.builders.EnginePrefabObjectCreationResult;
+    putter: hvr.builders.EnginePrefabObjectCreationResult;
     last_pos: [number, number, number] | null;
 }
 
 const create_player_state = (
-    ball: typeof h.EnginePrefabObjectCreationResult,
-    putter: typeof h.EnginePrefabObjectCreationResult
+    ball: hvr.builders.EnginePrefabObjectCreationResult,
+    putter: hvr.builders.EnginePrefabObjectCreationResult
 ): PlayerState => {
     return {
         score: 0,
@@ -48,11 +50,11 @@ export const add_player = async (player: Player, spawn_pos: [number, number, num
     const ball_pos = [spawn_pos[0], spawn_pos[1] + 2.5, spawn_pos[2] - 2] as [number, number, number];
 
     const created_putter = await new h.EngineObjectDispatchBuilder(putter)
-        .set_position(putter_pos)
+        .set_position(...putter_pos)
         .create();
 
     const created_ball = await new h.EngineObjectDispatchBuilder(ball)
-        .set_position(ball_pos)
+        .set_position(...ball_pos)
         .on("ball", (e) => {
             if (e.kind !== "golf-ball-prefab") return;
 

@@ -32,6 +32,10 @@ export const send_via_messaging = async <T extends WebSDKActionName>(
                 window.removeEventListener("message", handle_message);
 
                 const { correlation_id, ...without_correlation } = data;
+                if ("error" in without_correlation && without_correlation.error) {
+                    reject(new Error(String(without_correlation.error)));
+                    return;
+                }
                 resolve(without_correlation as NamedWebSDKReplyOrVoid<T>);
             }
         };
@@ -188,6 +192,10 @@ export const send_via_rtc = async <T extends WebSDKActionName>(
                 rtc_data_channel?.removeEventListener("message", handle_message);
 
                 const { correlation_id, ...without_correlation } = data;
+                if ("error" in without_correlation && without_correlation.error) {
+                    reject(new Error(String(without_correlation.error)));
+                    return;
+                }
                 resolve(without_correlation);
             }
         };

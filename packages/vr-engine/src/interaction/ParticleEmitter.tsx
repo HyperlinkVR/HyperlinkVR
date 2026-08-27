@@ -1,8 +1,11 @@
-import { HexColor, ParticleEmitterBehavior, ParticleEmitterColor, ParticleEmitterInteraction, ParticleEmitterRandomisableValue, ParticleEmitterShape, ParticleEmitterVisual } from "@hyperlinkvr/vr-engine-schemas";
-import { FlexibleColor, ParticleSystem, ParticleSystemRef } from "quarks.r3f";
+import type { HexColor, ParticleEmitterBehavior, ParticleEmitterColor, ParticleEmitterInteraction, ParticleEmitterRandomisableValue, ParticleEmitterShape, ParticleEmitterVisual } from "@hyperlinkvr/vr-engine-schemas";
+import type { FlexibleColor, ParticleSystemRef } from "quarks.r3f";
+import { ParticleSystem } from "quarks.r3f";
 import { useCallback, useMemo } from "react";
-import { BufferGeometry, DoubleSide, Euler, Material, MeshBasicMaterial, PlaneGeometry, SRGBColorSpace, TextureLoader } from "three";
-import { ApplyForce, ColorGenerator, ColorOverLife, ConeEmitter, ConstantValue, EmitterMode, FunctionColorGenerator, FunctionJSON, GeneratorMemory, GravityForce, PointEmitter, Vector4 as QuarksVector4, RenderMode, SphereEmitter, Vector3 } from "three.quarks";
+import type { BufferGeometry, Material} from "three";
+import { DoubleSide, Euler, MeshBasicMaterial, PlaneGeometry, SRGBColorSpace, TextureLoader } from "three";
+import type { ColorGenerator, FunctionColorGenerator, FunctionJSON, GeneratorMemory, Vector4 as QuarksVector4} from "three.quarks";
+import { ApplyForce, ColorOverLife, ConeEmitter, ConstantValue, EmitterMode, GravityForce, PointEmitter, RenderMode, SphereEmitter, Vector3 } from "three.quarks";
 
 
 

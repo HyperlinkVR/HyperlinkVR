@@ -1,6 +1,6 @@
 import type {
     Interacted,
-    RaycastAim, RaycastCastPayload, RaycastHit,
+    RaycastAim, RaycastHit,
     RaycastInteraction,
     RaycastRays, RaycastResult,
     RaycastTargets
@@ -8,7 +8,8 @@ import type {
 import { useFrame, useThree } from "@react-three/fiber";
 import { useAfterPhysicsStep, useRapier, type RapierCollider } from "@react-three/rapier";
 import { useCallback, useEffect, useImperativeHandle, useMemo, useRef } from "react";
-import { Group, MathUtils, Object3D, Quaternion, Raycaster, Vector3 } from "three";
+import type { Group, Object3D} from "three";
+import { MathUtils, Quaternion, Raycaster, Vector3 } from "three";
 
 import { useSessionMode } from "../contexts/SessionModeContext";
 import { useFlatFrameInput } from "../input/impl/flat/bindings";

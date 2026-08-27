@@ -1,14 +1,16 @@
-import { ReflectiveMirrorPrefab } from "@hyperlinkvr/vr-engine-schemas";
+import type { ReflectiveMirrorPrefab } from "@hyperlinkvr/vr-engine-schemas";
 import { useFrame } from "@react-three/fiber";
-import { ComponentProps, useEffect, useMemo } from "react";
-import { Camera, PlaneGeometry } from "three";
+import type { ComponentProps} from "react";
+import { useEffect, useMemo } from "react";
+import type { Camera} from "three";
+import { PlaneGeometry } from "three";
 import { Reflector } from "three/examples/jsm/objects/Reflector";
 
 
 
 import { useObjectShadows } from "../hooks/useObjectShadows";
 import { compute_layer_mask, Layer } from "../render";
-import { PrefabProps } from "../types";
+import type { PrefabProps } from "../types";
 import { get_head_cameras } from "../util/get_head_cameras";
 import { PrefabRoot } from "./PrefabRoot";
 

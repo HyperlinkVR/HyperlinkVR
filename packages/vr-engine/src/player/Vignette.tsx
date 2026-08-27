@@ -3,9 +3,11 @@ import {useFrame, useThree} from "@react-three/fiber"
 
 import {useSetting} from "@hyperlinkvr/react";
 import {usePlayerOrigin} from "../contexts";
-import {Color, MathUtils, Mesh, Quaternion, ShaderMaterial, Vector3} from "three";
+import type { Mesh, ShaderMaterial} from "three";
+import {Color, MathUtils, Quaternion, Vector3} from "three";
 import {Layer} from "../render";
-import {RapierCollider, useRapier} from "@react-three/rapier";
+import type {RapierCollider} from "@react-three/rapier";
+import { useRapier} from "@react-three/rapier";
 import {get_united_head_camera} from "../util/get_head_cameras";
 import {CAPSULE_RADIUS, get_capsule_world_position} from "./motion";
 
@@ -220,7 +222,7 @@ export const Vignette = ({
             1 - Math.exp(-blackout_smoothing * delta)
         );
 
-        material.uniforms.blackout.value = blackout_amount.current;
+        material.uniforms.blackout!.value = blackout_amount.current;
 
         // show comfort vignette briefly when its setting changes
         const intensity_changed = Math.abs(last_intensity.current - vignette_intensity) > 0.5;
@@ -245,10 +247,10 @@ export const Vignette = ({
             const target_radius = vignette_enabled
                 ? MathUtils.lerp(OPEN_RADIUS, max_closed, 1.0)
                 : OPEN_RADIUS;
-            material.uniforms.clear_radius.value = target_radius;
+            material.uniforms.clear_radius!.value = target_radius;
 
             const target_opacity = (vignette_enabled && 1.0 > 0.05) ? 1.0 : 0.0;
-            material.uniforms.intensity.value = target_opacity;
+            material.uniforms.intensity!.value = target_opacity;
             return;
         }
 
@@ -260,8 +262,8 @@ export const Vignette = ({
             : OPEN_RADIUS;
 
         // smoothly animate the radius
-        material.uniforms.clear_radius.value = MathUtils.lerp(
-            material.uniforms.clear_radius.value,
+        material.uniforms.clear_radius!.value = MathUtils.lerp(
+            material.uniforms.clear_radius!.value,
             target_radius,
             1 - Math.exp(-12 * delta),
         );
@@ -269,8 +271,8 @@ export const Vignette = ({
         // fade opacity out if not moving or if completely disabled in settings
         const opacity_smoothing = preview_active ? 8 : 15;
         const target_opacity = (vignette_enabled && effective_movement_factor > 0.05) ? 1.0 : 0.0;
-        material.uniforms.intensity.value = MathUtils.lerp(
-            material.uniforms.intensity.value,
+        material.uniforms.intensity!.value = MathUtils.lerp(
+            material.uniforms.intensity!.value,
             target_opacity,
             1 - Math.exp(-opacity_smoothing * delta),
         );

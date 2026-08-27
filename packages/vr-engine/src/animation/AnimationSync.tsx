@@ -46,7 +46,7 @@ export const AnimationSync = () => {
             const {success, data: animation} = safe_parse_and_adopt(AnimationSchema, message.animation);
             if (!success) {
                 console.error("Failed to parse animation dispatch", animation);
-                reply({success: false, error: "Failed to parse animation dispatch"});
+                reply({for: "HVRSDK_CREATE_ANIMATION", error: "Failed to parse animation dispatch"});
                 return;
             }
 

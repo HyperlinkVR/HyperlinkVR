@@ -1,5 +1,5 @@
 import { useSettingsTree } from "@hyperlinkvr/react";
-import { SettingKey, SettingsTree } from "@hyperlinkvr/types";
+import type { SettingKey, SettingsTree } from "@hyperlinkvr/types";
 import { FlatSettingWidget } from "@hyperlinkvr/ui-dom/settings";
 import { useMemo, useState } from "react";
 
@@ -7,6 +7,8 @@ const bg = new URL("../node_modules/@hyperlinkvr/assets/bg.webp", import.meta.ur
 
 const SettingSubtree = ({index, tree, is_root = false}: {index: string, tree: SettingsTree, is_root?: boolean}) => {
     const subtree = useMemo(() => tree.subtrees[index], [index, tree]);
+
+    if (!subtree) return null;
 
     return (
         <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 items-start justify-stretch h-full ${is_root ? "": "border border-white/20 p-4 rounded-md bg-black/20 backdrop-blur-md"}`}>

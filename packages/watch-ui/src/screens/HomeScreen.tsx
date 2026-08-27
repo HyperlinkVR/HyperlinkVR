@@ -22,7 +22,7 @@ export const HomeScreen = ({}: ScreenProps) => {
     }, [favourite_worlds, session.url]);
 
 
-    const [recent_worlds] = useStorage("local", "recent_worlds", [] as string[]);
+    const [_recent_worlds] = useStorage("local", "recent_worlds", [] as string[]);
 
     const opacity = useCrossfadeOpacity();
 

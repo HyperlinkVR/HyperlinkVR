@@ -1,4 +1,4 @@
-import type { CreatedAnimation, CreatedEngineObject, CreatedHUDElement, EngineObjectDispatch, EngineObjectModification, HUDDispatch, HUDElementModification, PlayerMonitor, ReportEvent, Tween, VFXStack, WorldEnv } from "@hyperlinkvr/vr-engine-schemas";
+import type { Animation, CreatedAnimation, CreatedEngineObject, CreatedHUDElement, EngineObjectDispatch, EngineObjectModification, HUDDispatch, HUDElementModification, PlayerMonitor, ReportEvent, Tween, VFXStack, WorldEnv } from "@hyperlinkvr/vr-engine-schemas";
 
 
 
@@ -539,6 +539,19 @@ export type EventType = EventMessage["type"];
 export type ReplyFor = ReplyMessage["for"];
 export type WebSDKActionName = WebSDKActionMessage["action"];
 export type WebSDKReplyFor = WebSDKReplyMessage["for"];
+
+// a failure reply the host can send for any action instead of its normal reply.
+// the sdk sender detects the `error` field and rejects the pending call with it.
+export interface WebSDKErrorReply<T extends WebSDKActionName = WebSDKActionName> {
+    for: T;
+    error: string;
+}
+
+// what a host action handler may hand back: the action's normal reply, or an error
+export type WebSDKReplyOrError<T extends WebSDKActionName> =
+    NamedWebSDKReplyOrVoid<T> extends void
+        ? WebSDKErrorReply<T> | void
+        : NamedWebSDKReplyOrVoid<T> | WebSDKErrorReply<T>;
 export type WebSDKMessageName = WebSDKActionName | WebSDKReplyFor;
 export type MessageName = ActionName | EventType | ReplyFor | WebSDKMessageName;
 

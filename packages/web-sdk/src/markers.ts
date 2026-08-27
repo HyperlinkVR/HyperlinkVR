@@ -1,4 +1,4 @@
-import { Transform } from "@hyperlinkvr/vr-engine-schemas";
+import type { Transform } from "@hyperlinkvr/vr-engine-schemas";
 import { glMatrix, mat4, quat, vec3 } from "gl-matrix";
 
 
@@ -66,7 +66,7 @@ const resolve_world = (
         return cached;
     }
 
-    const local = local_matrix(nodes[node_idx]);
+    const local = local_matrix(nodes[node_idx]!);
     const parent = parent_map.get(node_idx);
     const world = mat4.create();
 
@@ -96,9 +96,10 @@ const decompose = (mat: mat4): Transform => {
     const rot_only = mat4.clone(mat);
     for (let axis = 0; axis < 3; axis++) {
         const s = scale[axis] || 1;
-        rot_only[axis * 4 + 0] /= s;
-        rot_only[axis * 4 + 1] /= s;
-        rot_only[axis * 4 + 2] /= s;
+        const base = axis * 4;
+        rot_only[base] = rot_only[base]! / s;
+        rot_only[base + 1] = rot_only[base + 1]! / s;
+        rot_only[base + 2] = rot_only[base + 2]! / s;
     }
 
     const rotation = quat.create();

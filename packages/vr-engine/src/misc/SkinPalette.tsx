@@ -1,9 +1,11 @@
-import { ComponentProps, useMemo } from "react";
-import { MeshBasicMaterial, MeshStandardMaterial } from "three";
+import type { ComponentProps} from "react";
+import { useMemo } from "react";
+import { MeshBasicMaterial } from "three";
 
 
 
-import { skin_tones, SkinType, SkinWarmth, useAvatar, useStoredAvatarProperty } from "../contexts/AvatarContext";
+import type { SkinType, SkinWarmth} from "../contexts/AvatarContext";
+import { skin_tones, useAvatar } from "../contexts/AvatarContext";
 
 
 const SkinPaletteOption = ({skin_type, skin_warmth, on_click, chosen, box_size, position}: {

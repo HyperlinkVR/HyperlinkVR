@@ -23,9 +23,8 @@ export const EngineObjectSync = () => {
 
             const {success, data} = safe_parse_and_adopt(EngineObjectDispatchSchema, message.object);
             if (!success) {
-                // TODO: proper error support, this is just stuffing it into a type that wont go. just need a standard error reply then expect it on the builder's create method/sdk sender
                 console.error("Failed to parse engine object dispatch", data);
-                reply({ success: false, error: "Failed to parse engine object dispatch" });
+                reply({ for: "HVRSDK_CREATE_ENGINE_OBJECT", error: "Failed to parse engine object dispatch" });
                 return;
             }
 
@@ -65,14 +64,13 @@ export const EngineObjectSync = () => {
 
             const stored = get_object(message.object_id);
             if (!stored) {
-                // TODO: proper error support
-                reply({ success: false, error: `No object found with id ${message.object_id}` });
+                reply({ for: "HVRSDK_REFRESH_ENGINE_OBJECT", error: `No object found with id ${message.object_id}` });
                 return;
             }
 
             const refs = get_object_refs(message.object_id);
             if (!refs) {
-                reply({ success: false, error: `No refs found for object with id ${message.object_id}` });
+                reply({ for: "HVRSDK_REFRESH_ENGINE_OBJECT", error: `No refs found for object with id ${message.object_id}` });
                 return;
             }
 
@@ -92,19 +90,19 @@ export const EngineObjectSync = () => {
 
             const {success, data} = safe_parse_and_adopt(EngineObjectModificationSchema, message.changes);
             if (!success) {
-                reply({ success: false, error: `Failed to parse engine object modification: ${data}` });
+                reply({ for: "HVRSDK_MODIFY_ENGINE_OBJECT", error: `Failed to parse engine object modification: ${data}` });
                 return;
             }
 
             const stored = get_object(message.object_id);
             if (!stored) {
-                reply({ success: false, error: `No object found with id ${message.object_id}` });
+                reply({ for: "HVRSDK_MODIFY_ENGINE_OBJECT", error: `No object found with id ${message.object_id}` });
                 return;
             }
 
             const refs = get_object_refs(message.object_id);
             if (!refs) {
-                reply({ success: false, error: `No refs found for object with id ${message.object_id}` });
+                reply({ for: "HVRSDK_MODIFY_ENGINE_OBJECT", error: `No refs found for object with id ${message.object_id}` });
                 return;
             }
 

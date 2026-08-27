@@ -1,5 +1,7 @@
-import { get_setting, StorageEngine, update_setting, watch_setting } from "@hyperlinkvr/core";
-import { SettingKey, settings_def } from "@hyperlinkvr/types";
+import type { StorageEngine} from "@hyperlinkvr/core";
+import { get_setting, update_setting, watch_setting } from "@hyperlinkvr/core";
+import type { SettingKey} from "@hyperlinkvr/types";
+import { settings_def } from "@hyperlinkvr/types";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 
 
@@ -20,7 +22,7 @@ export const useSettingWithEngines = <K extends SettingKey>(
     const [loaded, setLoaded] = useState(false);
 
     useEffect(() => {
-        get_setting(key).then((stored) => {
+        get_setting(key, storage).then((stored) => {
             setValue(stored);
             setLoaded(true);
         });

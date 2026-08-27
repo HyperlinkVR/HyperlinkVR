@@ -1,17 +1,19 @@
-import {
+import type {
     Animation,
-    AnimationInput,
-    AnimationSchema, CreatedAnimation,
+    AnimationInput, CreatedAnimation,
     HexColor,
     InterpolationType,
     KeyframeTrack,
-    KeyframeTrackSchema,
     KeyframeTrackSelector,
     QuaternionInterpolationType
 } from "@hyperlinkvr/vr-engine-schemas";
+import {
+    AnimationSchema,
+    KeyframeTrackSchema
+} from "@hyperlinkvr/vr-engine-schemas";
 import {BaseBuilder} from "./base";
 
-import {BindingMap} from "./triggers";
+import type {BindingMap} from "./triggers";
 import {send_via_rtc} from "../messenger";
 
 // loosely a created object dispatch, which is the only form that can resolve interaction binding names
@@ -71,7 +73,7 @@ const resolve_binding_segments = (target: AnimationTarget, segments: string[]): 
     }
 
     const [prefix, binding_name, ...rest] = segments;
-    const binding_id = target.bindings.get(binding_name);
+    const binding_id = target.bindings.get(binding_name!);
 
     if (!binding_id) {
         const known = [...target.bindings.keys()].map((name) => `"${name}"`).join(", ");

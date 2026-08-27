@@ -1,6 +1,7 @@
 import { useThree } from "@react-three/fiber";
 import { useEffect } from "react";
-import { Object3D, Raycaster, Vector2 } from "three";
+import type { Object3D} from "three";
+import { Raycaster, Vector2 } from "three";
 
 type R3FHandlers = Record<string, ((event: unknown) => void) | undefined>;
 

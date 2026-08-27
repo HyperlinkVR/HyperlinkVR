@@ -7,7 +7,8 @@ import { CapsuleGeometry, Mesh, MeshBasicMaterial, OrthographicCamera, Perspecti
 import { usePlayerOrigin } from "../contexts";
 import { active_pipeline } from "./GraphicsPipeline";
 import { Layer } from "./layers";
-import { CameraControllerTransform, frame_transforms } from "./SpectatorCameraController";
+import type { CameraControllerTransform} from "./SpectatorCameraController";
+import { frame_transforms } from "./SpectatorCameraController";
 
 
 // three and uikit each inject a clipping block into the fragment shader, and
@@ -232,7 +233,7 @@ export const MixedRealityCameraController = ({
             blit_material.map = fg_rt.texture;
             blit_material.needsUpdate = true;
         }
-        mask_material.uniforms.tForeground.value = fg_rt.texture;
+        mask_material.uniforms.tForeground!.value = fg_rt.texture;
 
         const headset_camera = gl.xr.getCamera();
         first_person_transform({

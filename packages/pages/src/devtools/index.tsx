@@ -1,5 +1,5 @@
 import { useMessageEngine, useSetting } from "@hyperlinkvr/react";
-import type { Message, SettingKeyReturning, WindowIntent } from "@hyperlinkvr/types";
+import type { SettingKeyReturning, WindowIntent } from "@hyperlinkvr/types";
 import { ToggleSwitch } from "@hyperlinkvr/ui-dom/settings";
 import { WATCH_UI_HEIGHT, WATCH_UI_WIDTH } from "@hyperlinkvr/watch-ui";
 
@@ -40,21 +40,21 @@ const ToolButton = ({
     );
 };
 
-const ToolMessengerButton = ({
-    label,
-    message
-}: {
-    label: string;
-    message: Message;
-}) => {
-    const messenger = useMessageEngine();
-
-    const handle_click = () => {
-        messenger.send(message);
-    };
-
-    return <ToolButton label={label} on_click={handle_click} />;
-};
+// const ToolMessengerButton = ({
+//     label,
+//     message
+// }: {
+//     label: string;
+//     message: Message;
+// }) => {
+//     const messenger = useMessageEngine();
+//
+//     const handle_click = () => {
+//         messenger.send(message);
+//     };
+//
+//     return <ToolButton label={label} on_click={handle_click} />;
+// };
 
 const ToolWindowButton = ({
     label,

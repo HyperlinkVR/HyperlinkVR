@@ -1,11 +1,12 @@
 import { Suspense, useEffect, useMemo} from "react";
 import {Container, Text} from "@react-three/uikit";
-import {
+import type {
     HUDSlot,
     HUDVRAnchor,
 } from "@hyperlinkvr/vr-engine-schemas";
 
-import {useHUDStore, ResolvedHUDElement as StoreResolvedHUDElement} from "../stores/HUDStore";
+import type { ResolvedHUDElement as StoreResolvedHUDElement} from "../stores/HUDStore";
+import {useHUDStore} from "../stores/HUDStore";
 import {mark_hud_element_ready} from "./hud_ready_registry";
 
 export const HUD_CANVAS_WIDTH = 1920;

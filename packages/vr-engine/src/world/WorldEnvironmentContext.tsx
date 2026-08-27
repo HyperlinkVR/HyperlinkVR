@@ -1,5 +1,6 @@
 import {createContext, useContext, useEffect, useState} from "react";
-import {WorldEnvFull, WorldEnvSchema} from "@hyperlinkvr/vr-engine-schemas";
+import type {WorldEnvFull} from "@hyperlinkvr/vr-engine-schemas";
+import { WorldEnvSchema} from "@hyperlinkvr/vr-engine-schemas";
 import {useWebSDKMessaging} from "../contexts";
 
 export const WORLD_ENV_DEFAULT: WorldEnvFull = {
@@ -114,7 +115,6 @@ export const SDKWorldEnvironmentProvider = ({children}: {children: React.ReactNo
                     console.error("Invalid world env update", data);
                     reply({
                         for: "HVRSDK_UPDATE_WORLD_ENV",
-                        success: false,
                         error: "Invalid world env update",
                     });
                     return prev;

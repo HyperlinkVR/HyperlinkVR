@@ -1,15 +1,16 @@
 import { useSetting } from "@hyperlinkvr/react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
+import type {
+    DirectionalLight,
+    Group,
+    PointLight,
+    SpotLight} from "three";
 import {
     BoxHelper,
     CanvasTexture,
-    Color,
-    DirectionalLight, DirectionalLightHelper,
-    Group,
-    PointLight,
-    PointLightHelper,
-    SpotLight, SpotLightHelper,
+    Color, DirectionalLightHelper,
+    PointLightHelper, SpotLightHelper,
     Sprite,
     SpriteMaterial,
     Vector3

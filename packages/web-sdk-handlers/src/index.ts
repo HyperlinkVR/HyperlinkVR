@@ -1,4 +1,4 @@
-import { WebSDKActionName } from "@hyperlinkvr/types";
+import type { WebSDKActionName } from "@hyperlinkvr/types";
 
 
 import * as auth_handlers from "./auth";

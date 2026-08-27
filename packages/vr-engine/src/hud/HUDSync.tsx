@@ -23,7 +23,7 @@ export const HUDSync = () => {
             const {success, data} = safe_parse_and_adopt(HUDDispatchSchema, message.element);
             if (!success) {
                 console.error("Failed to parse HUD element dispatch", data);
-                reply({success: false, error: "Failed to parse HUD element dispatch"});
+                reply({for: "HVRSDK_CREATE_HUD_ELEMENT", error: "Failed to parse HUD element dispatch"});
                 return;
             }
 
@@ -72,14 +72,14 @@ export const HUDSync = () => {
 
             const stored = get_element(message.element_id);
             if (!stored) {
-                reply({success: false, error: "No such HUD element"});
+                reply({for: "HVRSDK_UPDATE_HUD_ELEMENT", error: "No such HUD element"});
                 return;
             }
 
             const {success, data} = safe_parse_and_adopt(HUDElementModificationSchema, message.changes);
             if (!success) {
                 console.error("Failed to parse HUD element modification", data);
-                reply({success: false, error: "Failed to parse HUD element modification"});
+                reply({for: "HVRSDK_UPDATE_HUD_ELEMENT", error: "Failed to parse HUD element modification"});
                 return;
             }
 

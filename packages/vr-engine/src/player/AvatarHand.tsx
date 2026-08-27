@@ -3,13 +3,15 @@ import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import {useTouchPointer, useXRInputSourceStateContext} from "@react-three/xr";
 import { Suspense, useCallback, useEffect, useMemo, useRef } from "react";
-import { ArrowHelper, Group, Mesh, MeshBasicMaterial, Object3D, Quaternion, SphereGeometry, Vector3 } from "three";
+import type { Group, Object3D} from "three";
+import { ArrowHelper, Mesh, MeshBasicMaterial, Quaternion, SphereGeometry, Vector3 } from "three";
 
 
 
 import { useAvatarMaterials } from "../contexts/AvatarContext";
 import { ObjectPhysics } from "../engine/ObjectPhysics";
-import { Hand, useHands } from "../input/hands";
+import type { Hand} from "../input/hands";
+import { useHands } from "../input/hands";
 import { LayerGroup } from "../render/LayerGroup";
 import { Layer } from "../render/layers";
 import {XRTeleportControl} from "../input/impl/xr/locomotion";
@@ -171,8 +173,8 @@ const AvatarHandModel = ({
                     .multiply(math.delta);
                 if (i === 0) bone.position.copy(bindPos);
                 else {
-                    const prevBone = chain[i - 1].bone,
-                        prevBindPos = chain[i - 1].bindPos;
+                    const prevBone = chain[i - 1]!.bone,
+                        prevBindPos = chain[i - 1]!.bindPos;
                     math.offset
                         .copy(bindPos)
                         .sub(prevBindPos)
@@ -210,8 +212,8 @@ const AvatarHandModel = ({
                         .multiply(math.delta);
                     if (i === 0) bone.position.copy(bindPos);
                     else {
-                        const prevBone = thumbChain[i - 1].bone,
-                            prevBindPos = thumbChain[i - 1].bindPos;
+                        const prevBone = thumbChain[i - 1]!.bone,
+                            prevBindPos = thumbChain[i - 1]!.bindPos;
                         math.offset
                             .copy(bindPos)
                             .sub(prevBindPos)
@@ -325,6 +327,11 @@ export const XRAvatarHand = () => {
         [glue, debug_touch]
     );
 
+    if (handedness === "none") {
+        console.warn("XRAvatarHand: handedness is 'none', cannot render hand model");
+        return null;
+    }
+
     const hand =
         hands.find((candidate) => candidate.handedness === handedness) ?? null;
 
@@ -370,9 +377,8 @@ export const FlatAvatarHands = () => {
     return (
         <>
             {hands.map((hand) => (
-                <Suspense fallback={null}>  {/* TODO: can have a little fallback avatar while it loads, just a gray or translucent placeholder akin to vrchat */}
+                <Suspense key={hand.handedness} fallback={null}>  {/* TODO: can have a little fallback avatar while it loads, just a gray or translucent placeholder akin to vrchat */}
                     <AvatarHandModel
-                        key={hand.handedness}
                         hand={hand}
                         handedness={hand.handedness}
                     >

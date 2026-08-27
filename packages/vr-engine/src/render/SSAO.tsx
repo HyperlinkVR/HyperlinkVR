@@ -1,17 +1,18 @@
 import {useFrame} from "@react-three/fiber";
 import {useEffect, useMemo, useRef} from "react";
+import type { Material, MeshPhysicalMaterial,
+    Object3D} from "three";
 import {
     Color,
     DataTexture,
     DepthTexture, DoubleSide,
     FloatType,
-    LinearFilter, Material,
+    LinearFilter,
     Matrix4,
     Mesh,
-    MeshBasicMaterial, MeshPhysicalMaterial,
+    MeshBasicMaterial,
     MultiplyBlending,
     NearestFilter,
-    Object3D,
     OrthographicCamera,
     PerspectiveCamera,
     PlaneGeometry,
@@ -327,9 +328,9 @@ const SSAOImpl = ({ enabled, samples, radius, intensity, bias, resolution_scale 
 
     // keep tuning uniforms live without rebuilding the program
     useEffect(() => {
-        ao_material.uniforms.u_radius.value = radius;
-        ao_material.uniforms.u_bias.value = bias;
-        ao_material.uniforms.u_intensity.value = intensity;
+        ao_material.uniforms.u_radius!.value = radius;
+        ao_material.uniforms.u_bias!.value = bias;
+        ao_material.uniforms.u_intensity!.value = intensity;
     }, [ao_material, radius, bias, intensity]);
 
     const blur_material = useMemo(
@@ -547,7 +548,7 @@ const SSAOImpl = ({ enabled, samples, radius, intensity, bias, resolution_scale 
         frame_scene.overrideMaterial = depth_material;
 
         for (let view_index = 0; view_index < scratch_views.length; view_index++) {
-            const view = scratch_views[view_index];
+            const view = scratch_views[view_index]!;
 
             while (prepass_cameras.length <= view_index) {
                 const scratch_camera = new PerspectiveCamera();
@@ -555,7 +556,7 @@ const SSAOImpl = ({ enabled, samples, radius, intensity, bias, resolution_scale 
                 scratch_camera.matrixWorldAutoUpdate = false;
                 prepass_cameras.push(scratch_camera);
             }
-            const prepass_camera = prepass_cameras[view_index];
+            const prepass_camera = prepass_cameras[view_index]!;
 
             prepass_camera.projectionMatrix.copy(view.camera.projectionMatrix);
             prepass_camera.projectionMatrixInverse.copy(view.camera.projectionMatrixInverse);
@@ -591,7 +592,7 @@ const SSAOImpl = ({ enabled, samples, radius, intensity, bias, resolution_scale 
         gl.autoClear = false;
 
         for (let view_index = 0; view_index < scratch_views.length; view_index++) {
-            const view = scratch_views[view_index];
+            const view = scratch_views[view_index]!;
             const vx = Math.floor(view.viewport.x * resolution_scale);
             const vy = Math.floor(view.viewport.y * resolution_scale);
             const vw = Math.floor(view.viewport.z * resolution_scale);
@@ -602,7 +603,7 @@ const SSAOImpl = ({ enabled, samples, radius, intensity, bias, resolution_scale 
             targets.depth_target.scissorTest = true;
 
             gl.setRenderTarget(targets.depth_target);
-            gl.render(frame_scene, prepass_cameras[view_index]);
+            gl.render(frame_scene, prepass_cameras[view_index]!);
         }
 
         gl.autoClear = prev_auto_clear;
@@ -617,7 +618,7 @@ const SSAOImpl = ({ enabled, samples, radius, intensity, bias, resolution_scale 
 
         // ---- pass 2: SSAO, one fullscreen draw per eye viewport ----
         pass_quad.material = ao_material;
-        ao_material.uniforms.t_depth.value = targets.depth_target.depthTexture;
+        ao_material.uniforms.t_depth!.value = targets.depth_target.depthTexture;
 
         for (const view of scratch_views) {
             const vx = Math.floor(view.viewport.x * resolution_scale);
@@ -625,19 +626,19 @@ const SSAOImpl = ({ enabled, samples, radius, intensity, bias, resolution_scale 
             const vw = Math.floor(view.viewport.z * resolution_scale);
             const vh = Math.floor(view.viewport.w * resolution_scale);
 
-            ao_material.uniforms.u_projection.value.copy(view.camera.projectionMatrix);
-            ao_material.uniforms.u_projection_inverse.value
+            ao_material.uniforms.u_projection!.value.copy(view.camera.projectionMatrix);
+            ao_material.uniforms.u_projection_inverse!.value
                 .copy(view.camera.projectionMatrix)
                 .invert();
-            ao_material.uniforms.u_uv_offset.value.set(
+            ao_material.uniforms.u_uv_offset!.value.set(
                 vx / target_width,
                 vy / target_height
             );
-            ao_material.uniforms.u_uv_scale.value.set(
+            ao_material.uniforms.u_uv_scale!.value.set(
                 vw / target_width,
                 vh / target_height
             );
-            ao_material.uniforms.u_noise_scale.value.set(vw / 4, vh / 4);
+            ao_material.uniforms.u_noise_scale!.value.set(vw / 4, vh / 4);
 
             targets.ao_target.viewport.set(vx, vy, vw, vh);
             targets.ao_target.scissor.set(vx, vy, vw, vh);
@@ -649,8 +650,8 @@ const SSAOImpl = ({ enabled, samples, radius, intensity, bias, resolution_scale 
 
         // ---- pass 3: blur, single fullscreen draw over the whole atlas ----
         pass_quad.material = blur_material;
-        blur_material.uniforms.t_ao.value = targets.ao_target.texture;
-        blur_material.uniforms.u_texel.value.set(1 / target_width, 1 / target_height);
+        blur_material.uniforms.t_ao!.value = targets.ao_target.texture;
+        blur_material.uniforms.u_texel!.value.set(1 / target_width, 1 / target_height);
 
         targets.blur_target.viewport.set(0, 0, target_width, target_height);
         targets.blur_target.scissorTest = false;
@@ -663,9 +664,9 @@ const SSAOImpl = ({ enabled, samples, radius, intensity, bias, resolution_scale 
         gl.xr.enabled = prev_xr_enabled;
         gl.setClearColor(scratch_clear_color, prev_clear_alpha);
 
-        composite_material.uniforms.t_ao.value = targets.blur_target.texture;
-        composite_material.uniforms.t_mask.value = targets.depth_target.texture;
-        composite_material.uniforms.u_resolution.value.set(fb_width, fb_height);
+        composite_material.uniforms.t_ao!.value = targets.blur_target.texture;
+        composite_material.uniforms.t_mask!.value = targets.depth_target.texture;
+        composite_material.uniforms.u_resolution!.value.set(fb_width, fb_height);
         composite_mesh.visible = true;
     });
 

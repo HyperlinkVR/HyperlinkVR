@@ -1,8 +1,9 @@
 import type { StorageEngine } from "@hyperlinkvr/core";
 import type { Identity } from "@hyperlinkvr/types";
 
+import type {
+    AUTH_METHODS} from "./schema";
 import {
-    AUTH_METHODS,
     AuthManifestSchema,
     type AuthManifest,
     type StaticIdentityRecord

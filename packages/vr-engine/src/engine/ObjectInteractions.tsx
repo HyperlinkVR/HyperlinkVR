@@ -1,12 +1,12 @@
 import { useSetting } from "@hyperlinkvr/react";
-import { DirectionalLightInteraction, FollowPlayerInteraction, GlobalAudioInteraction, GrabbableInteraction, Interaction, ParticleEmitterInteraction, PointLightInteraction, PositionalAudioInteraction, RaycastInteraction, SeatInteraction, SpotLightInteraction, TriggerVolumeInteraction } from "@hyperlinkvr/vr-engine-schemas";
+import type { DirectionalLightInteraction, FollowPlayerInteraction, GlobalAudioInteraction, GrabbableInteraction, Interaction, ParticleEmitterInteraction, PointLightInteraction, PositionalAudioInteraction, RaycastInteraction, SeatInteraction, SpotLightInteraction, TriggerVolumeInteraction } from "@hyperlinkvr/vr-engine-schemas";
 import { PositionalAudio } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useXRInputSourceState } from "@react-three/xr";
 import type { ParticleSystemRef } from "quarks.r3f";
 import { useEffect, useMemo, useRef } from "react";
-import { Audio, AudioLoader, DirectionalLight, Euler, Group, MathUtils, Object3D, PointLight, SpotLight, Vector3 } from "three";
-import type { PositionalAudio as PositionalAudioType } from "three";
+import { Audio, AudioLoader, Euler, MathUtils, Vector3 } from "three";
+import type { PositionalAudio as PositionalAudioType , DirectionalLight, Group, Object3D, PointLight, SpotLight} from "three";
 
 
 
@@ -19,7 +19,8 @@ import { useFlatFrameInput } from "../input/impl/flat/bindings";
 import { Grabbable } from "../interaction";
 import { FollowPlayer } from "../interaction/FollowPlayer";
 import { ParticleEmitter } from "../interaction/ParticleEmitter";
-import { Raycast, RaycastHandle } from "../interaction/Raycast";
+import type { RaycastHandle } from "../interaction/Raycast";
+import { Raycast } from "../interaction/Raycast";
 import { detect_trigger_direction, resolve_interacted, TriggerVolume } from "../interaction/TriggerVolume";
 import { ShadowDirectionalLight, ShadowPointLight, ShadowSpotLight } from "../render";
 import { get_capsule_world_position } from "../player/motion";
@@ -553,7 +554,7 @@ const DirectionalLightWrapper = ({interaction, children}: InteractionWrapperProp
                 position={interaction.offset}
                 rotation={euler_rotation}
                 castShadow={interaction.cast_shadow}
-                shadowArea={interaction.shadow_area}
+                shadow_area={interaction.shadow_area}
             />
             {children}
         </>

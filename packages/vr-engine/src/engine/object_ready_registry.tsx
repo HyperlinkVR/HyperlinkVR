@@ -1,8 +1,9 @@
 import { useFrame } from "@react-three/fiber";
 import { useState } from "react";
 
+import type {
+    ObjectRefsContextType} from "../contexts";
 import {
-    ObjectRefsContextType,
     useObjectRefs,
 } from "../contexts";
 

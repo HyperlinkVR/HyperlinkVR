@@ -1,12 +1,13 @@
 import {BaseBuilder} from "./base";
-import {
+import type {
     BindableInteraction,
     CustomObject,
     CustomObjectInput,
-    CustomObjectSchema,
     FollowPlayerInteraction,
     Interaction, ObjectShadows,
-    PhysicsSystem,
+    PhysicsSystem} from "@hyperlinkvr/vr-engine-schemas";
+import {
+    CustomObjectSchema
 } from "@hyperlinkvr/vr-engine-schemas";
 import {asset_url} from "../assets";
 

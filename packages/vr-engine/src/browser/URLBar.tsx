@@ -1,5 +1,4 @@
 import { Text } from "@react-three/drei";
-import type { Vector3 } from "@react-three/fiber";
 import { useEffect, useState } from "react";
 import { configureTextBuilder } from "troika-three-text";
 
@@ -10,7 +9,7 @@ configureTextBuilder({
     useWorker: false
 });
 
-export const URLBar = ({position, height, height_of_dom_mirror}: {position: Vector3; height: number; height_of_dom_mirror: number}) => {
+export const URLBar = ({position, height, height_of_dom_mirror}: {position: [number, number, number]; height: number; height_of_dom_mirror: number}) => {
     const session = useTabSession();
     const [width, setWidth] = useState(0);
     

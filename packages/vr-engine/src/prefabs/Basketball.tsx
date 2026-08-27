@@ -1,5 +1,6 @@
 import { PositionalAudio, useGLTF } from "@react-three/drei";
-import { CollisionEnterPayload, useRapier } from "@react-three/rapier";
+import type { CollisionEnterPayload} from "@react-three/rapier";
+import { useRapier } from "@react-three/rapier";
 import { useCallback, useRef } from "react";
 import type { PositionalAudio as PositionalAudioType } from "three";
 
@@ -7,7 +8,7 @@ import type { PositionalAudio as PositionalAudioType } from "three";
 
 import { get_collision_info, ObjectPhysics } from "../engine/ObjectPhysics";
 import { Grabbable } from "../interaction";
-import { PrefabProps } from "../types";
+import type { PrefabProps } from "../types";
 import { PrefabRoot } from "./PrefabRoot";
 import { useObjectShadows } from "../hooks/useObjectShadows";
 

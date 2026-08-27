@@ -2,7 +2,7 @@ import {ArrowLeft} from "@react-three/uikit-lucide";
 import {Container, Text} from "@react-three/uikit";
 import {Button} from "@react-three/uikit-default";
 import {Crossfader, useCrossfadeOpacity} from "../animation/Crossfader";
-import {useNavState} from "../contexts/NavStateContext";
+import type {useNavState} from "../contexts/NavStateContext";
 
 interface HeaderProps {
     nav_state: ReturnType<typeof useNavState>;
@@ -17,7 +17,7 @@ const BackButton = ({nav_state}: {nav_state: ReturnType<typeof useNavState>}) =>
         backwards.length !== 0 && (
             <Button variant="link" color="white" onPointerDown={back} opacity={opacity} gap={16}>
                 <ArrowLeft />
-                <Text color={0xdddddd} fontSize={16}>{name_to_title(backwards[backwards.length - 1])}</Text>
+                <Text color={0xdddddd} fontSize={16}>{name_to_title(backwards[backwards.length - 1]!)}</Text>
             </Button>
         )
     );

@@ -1,10 +1,11 @@
 import {BaseBuilder} from "./base";
-import {
+import type {
     Trigger,
     TriggerEventFilter,
-    TriggerInput, TriggerSchema,
+    TriggerInput,
     TriggerTarget,
-    TriggerTargetInput,
+    TriggerTargetInput} from "@hyperlinkvr/vr-engine-schemas";
+import { TriggerSchema,
     TriggerTargetSchema
 } from "@hyperlinkvr/vr-engine-schemas";
 

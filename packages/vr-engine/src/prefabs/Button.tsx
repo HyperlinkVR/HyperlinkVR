@@ -10,7 +10,7 @@ import { mergeVertices, toCreasedNormals } from "three/examples/jsm/utils/Buffer
 import { ObjectPhysics } from "../engine/ObjectPhysics";
 import { useObjectBinding } from "../hooks/useObjectBinding";
 import { Grabbable } from "../interaction";
-import { PrefabProps } from "../types";
+import type { PrefabProps } from "../types";
 import { PrefabRoot } from "./PrefabRoot";
 
 
@@ -117,6 +117,7 @@ export const Button = (props: ButtonProps) => {
         // ExtrudeGeometry bevels both ends: the back bevel occupies z < 0.
         // Flatten it so the back is a flush squircle face.
         const positions = geo.attributes.position;
+        if (!positions) throw new Error("ExtrudeGeometry has no position attribute");
         for (let index = 0; index < positions.count; index++) {
             if (positions.getZ(index) < 0) {
                 positions.setZ(index, 0);

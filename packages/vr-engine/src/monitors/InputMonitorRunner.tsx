@@ -9,9 +9,10 @@ import {useSessionMode} from "../contexts/SessionModeContext";
 import {useHands} from "../input/hands";
 import {useFlatFrameInput} from "../input/impl/flat/bindings";
 import {StandardControllerInput} from "../input/impl/flat/bindings";
-import {
+import type {
     CompiledAxisMonitor,
-    CompiledButtonMonitor,
+    CompiledButtonMonitor} from "./input_monitor_registry";
+import {
     get_input_monitor_entries
 } from "./input_monitor_registry";
 
@@ -51,11 +52,6 @@ interface ButtonSample {
     pressed: boolean;
     handedness: "left" | "right" | null;
 }
-
-const hand_by_handedness = (
-    context: SampleContext,
-    handedness: "left" | "right"
-) => context.hands.find((hand) => hand.handedness === handedness) ?? null;
 
 const xr_button_pressed = (controller: any, code: string): boolean =>
     controller?.gamepad?.[code]?.state === "pressed";
@@ -178,7 +174,7 @@ const sample_button = (
             return null;
         }
 
-        const index = (StandardControllerInput as Record<string, number>)[source.code];
+        const index = (StandardControllerInput as unknown as Record<string, number>)[source.code];
         if (index === undefined) {
             warn_once(entry.source_id, `unknown gamepad code "${source.code}"`);
             return null;

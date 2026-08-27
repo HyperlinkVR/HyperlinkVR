@@ -1,8 +1,9 @@
 import { useSetting, useSettingUIDefinition } from "@hyperlinkvr/react";
-import {
+import type {
     SettingValueType,
     WidgetArguments,
-    WidgetType,
+    WidgetType} from "@hyperlinkvr/types";
+import {
     type SettingKey
 } from "@hyperlinkvr/types";
 import { useMemo } from "react";

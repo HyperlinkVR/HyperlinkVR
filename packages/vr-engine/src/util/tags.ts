@@ -1,4 +1,4 @@
-import {Object3D} from "three";
+import type {Object3D} from "three";
 
 
 // merge the base tags and contributed tags into a single `tags` array on the user_data object

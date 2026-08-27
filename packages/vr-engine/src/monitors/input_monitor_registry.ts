@@ -1,4 +1,4 @@
-import {PlayerMonitor, ButtonSource, AxisSource} from "@hyperlinkvr/vr-engine-schemas";
+import type {PlayerMonitor, ButtonSource, AxisSource} from "@hyperlinkvr/vr-engine-schemas";
 
 export interface CompiledButtonMonitor {
     entry_type: "button";

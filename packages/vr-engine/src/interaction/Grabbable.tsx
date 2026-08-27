@@ -1,8 +1,11 @@
 import type { GrabCollider, Rotation } from "@hyperlinkvr/vr-engine-schemas";
 import { useFrame } from "@react-three/fiber";
-import { RapierRigidBody, useRapier } from "@react-three/rapier";
-import { ComponentProps, RefObject, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
-import { BackSide, Box3, Group, Matrix4, Mesh, MeshBasicMaterial, Object3D, Quaternion, Raycaster, Sphere, Vector3 } from "three";
+import type { RapierRigidBody} from "@react-three/rapier";
+import { useRapier } from "@react-three/rapier";
+import type { ComponentProps, RefObject} from "react";
+import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
+import type { Group, Object3D} from "three";
+import { BackSide, Box3, Matrix4, Mesh, MeshBasicMaterial, Quaternion, Raycaster, Sphere, Vector3 } from "three";
 
 
 
@@ -10,8 +13,10 @@ import { useObjectRefsOptional } from "../contexts";
 import { useSessionMode } from "../contexts/SessionModeContext";
 import { DEFAULT_IGNORE_RELEASE_DELAY_S, PLAYER_FILTER_BIT, PROP_FILTER_BIT, WORLD_FILTER_BIT} from "../physics/collision_groups";
 import { rotation_to_quaternion } from "../util/rotation";
-import { Hand, useHands } from "../input/hands";
-import { HintLayer, useSetHintState } from "../input/impl/flat/hints";
+import type { Hand} from "../input/hands";
+import { useHands } from "../input/hands";
+import type { HintLayer} from "../input/impl/flat/hints";
+import { useSetHintState } from "../input/impl/flat/hints";
 import { FULL_THROW_CHARGE_S } from "../input/values";
 import { CAPSULE_RADIUS, get_capsule_world_position } from "../player/motion";
 import { clear_object_holder, set_object_holder } from "./util/holders";
@@ -371,7 +376,7 @@ const ray_hit_distance = (
     _rc.set(_ro, _rd);
     _rc.far = reach;
     const hits = _rc.intersectObject(target, true);
-    return hits.length > 0 ? hits[0].distance : null;
+    return hits.length > 0 ? hits[0]!.distance : null;
 };
 
 // TODO: unite with grabbable props
@@ -714,7 +719,7 @@ export const useGrabbable = (
 
         const saved = saved_collision_groups.current!;
         for (let index = 0; index < collider_count && index < saved.length; index++) {
-            body.collider(index).setCollisionGroups(saved[index] & mask);
+            body.collider(index).setCollisionGroups(saved[index]! & mask);
         }
     };
 
@@ -725,7 +730,7 @@ export const useGrabbable = (
         if (saved) {
             const collider_count = body.numColliders();
             for (let index = 0; index < collider_count && index < saved.length; index++) {
-                body.collider(index).setCollisionGroups(saved[index]);
+                body.collider(index).setCollisionGroups(saved[index]!);
             }
         }
 

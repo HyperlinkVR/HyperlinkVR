@@ -1,6 +1,7 @@
 import { Container, Text } from "@react-three/uikit";
 import { ChevronDown, ChevronUp } from "@react-three/uikit-lucide";
-import {ComponentRef, useCallback, useEffect, useRef, useState} from "react";
+import type {ComponentRef} from "react";
+import { useCallback, useEffect, useRef, useState} from "react";
 import {useCrossfadeOpacity} from "../animation/Crossfader";
 import {useFocusable} from "../contexts/FocusNavContext";
 

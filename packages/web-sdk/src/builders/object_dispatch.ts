@@ -1,20 +1,21 @@
-import {
+import type {
     Bindable,
     CreatedEngineObject,
     EngineObject,
     EngineObjectDispatch,
     EngineObjectDispatchInput,
-    EngineObjectDispatchSchema,
     EngineObjectModification,
     EngineObjectModificationInput,
-    EngineObjectModificationSchema,
     ObjectMonitor,
     PartialTransformInput,
     PrefabInput,
     ReportEvent,
     TransformInput, Trigger,
-    TweenEasingInput,
-    TweenSchema, Vector3, Vector3Schema, Vector4, Vector4Schema
+    TweenEasingInput, Vector3, Vector4} from "@hyperlinkvr/vr-engine-schemas";
+import {
+    EngineObjectDispatchSchema,
+    EngineObjectModificationSchema,
+    TweenSchema, Vector3Schema, Vector4Schema
 } from "@hyperlinkvr/vr-engine-schemas";
 import {BaseBuilder} from "./base";
 import {subscribe_report} from "../event_bus";
@@ -625,7 +626,7 @@ export class EngineObjectDispatchBuilder<T extends EngineObject = EngineObject> 
 
                 if (name) {
                     if (interaction.type in _INTERACTION_API_MAKERS) {
-                        const make_api = _INTERACTION_API_MAKERS[interaction.type];
+                        const make_api = _INTERACTION_API_MAKERS[interaction.type]!;
                         unbound_interaction_apis[name] = (binding_id) => (object_id) => make_api(object_id, binding_id);
                     }
 
@@ -637,7 +638,7 @@ export class EngineObjectDispatchBuilder<T extends EngineObject = EngineObject> 
 
                             if (name in unbound_interaction_apis) {
                                 // uncurry to bind the interaction id
-                                partially_bound_interaction_apis[name] = unbound_interaction_apis[name](id);
+                                partially_bound_interaction_apis[name] = unbound_interaction_apis[name]!(id);
                                 console.log(`Bound interaction API for "${name}" with id ${id}`);
                             }
                         }
@@ -731,7 +732,7 @@ export class EngineObjectDispatchBuilder<T extends EngineObject = EngineObject> 
             // if this is a prefab, bind its api if it has one to bind
             if (dispatch.object.type === "prefab" && dispatch.object.name in _PREFAB_API_MAKERS) {
                 // binding id not actually needed for prefabs as they're exclusive
-                const make_api = _PREFAB_API_MAKERS[dispatch.object.name];
+                const make_api = _PREFAB_API_MAKERS[dispatch.object.name]!;
                 prefab_api = make_api(object_id);
             }
 

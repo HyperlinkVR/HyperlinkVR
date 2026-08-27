@@ -1,21 +1,22 @@
 import {BaseBuilder} from "./base";
-import {
+import type {
     CreatedHUDElement,
     HUDComponentInput,
     HUDDispatch,
     HUDDispatchInput,
-    HUDDispatchSchema,
     HUDElementModification,
     HUDElementModificationInput,
-    HUDElementModificationSchema,
     HUDSlotOrShorthand,
     HUDTextComponentInput,
     HUDVRAnchor,
-    TweenEasingInput,
+    TweenEasingInput} from "@hyperlinkvr/vr-engine-schemas";
+import {
+    HUDDispatchSchema,
+    HUDElementModificationSchema,
     TweenSchema
 } from "@hyperlinkvr/vr-engine-schemas";
 import {send_via_rtc} from "../messenger";
-import {BindingMap} from "./triggers";
+import type {BindingMap} from "./triggers";
 
 // undefined writes the element's own scope, a value writes one player's override
 export type HUDUpdateTarget = string | null | undefined;

@@ -1,6 +1,6 @@
-import { ObjectShadows } from "@hyperlinkvr/vr-engine-schemas";
+import type { ObjectShadows } from "@hyperlinkvr/vr-engine-schemas";
 import { useMemo } from "react";
-import { Object3D } from "three";
+import type { Object3D } from "three";
 
 export const useObjectShadows = (instance: Object3D, shadows: Required<ObjectShadows>) => {
     // apply shadow preferences to all meshes in the scene

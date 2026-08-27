@@ -1,11 +1,12 @@
 import {BaseBuilder} from "./base";
-import {
+import type {
     WorldEnv,
     WorldEnvInput,
-    WorldEnvSchema,
     WorldFog,
+    WorldSky} from "@hyperlinkvr/vr-engine-schemas";
+import {
+    WorldEnvSchema,
     WorldFogSchema,
-    WorldSky,
     WorldSkySchema
 } from "@hyperlinkvr/vr-engine-schemas";
 import {send_via_rtc} from "../messenger";

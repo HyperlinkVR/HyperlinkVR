@@ -4,7 +4,8 @@ import {useCallback, useEffect, useRef} from "react";
 import {useObjectRefsOptional} from "../contexts/ObjectRefsContext";
 import { useWebSDKMessaging } from "../contexts/WebSDKMessagingContext";
 import {register_command_handler, run_triggers} from "../engine/trigger_registry";
-import {AnimationChannel, register_animation_channels} from "../animation/channel_registry";
+import type {AnimationChannel} from "../animation/channel_registry";
+import { register_animation_channels} from "../animation/channel_registry";
 
 type ReportBody = Pick<ReportEvent, "kind" | "payload">;
 

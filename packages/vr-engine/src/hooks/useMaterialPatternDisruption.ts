@@ -1,4 +1,5 @@
-import { Color, Material, RepeatWrapping, Texture, Vector3 } from "three";
+import type { Material, Texture} from "three";
+import { Color, RepeatWrapping, Vector3 } from "three";
 import { useLayoutEffect } from "react";
 import { useTexture } from "@react-three/drei";
 

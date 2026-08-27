@@ -1,5 +1,6 @@
 import {useEffect, useMemo, useState} from "react";
-import {AssetRef, is_asset_ref} from "@hyperlinkvr/vr-engine-schemas";
+import type {AssetRef} from "@hyperlinkvr/vr-engine-schemas";
+import { is_asset_ref} from "@hyperlinkvr/vr-engine-schemas";
 import {useSetting, useTabSession} from "@hyperlinkvr/react";
 import {fetch_asset} from "../security/fetch_asset";
 
