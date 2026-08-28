@@ -98,6 +98,9 @@ patchedDependencies:
   jiti@2.7.0:
     hash: d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477
     path: patches/jiti@2.7.0.patch
+  realism-effects@1.1.2:
+    hash: 61ee467309253b9f4392a686f5711d74d1a87dc8b769bc266f9befc88f623682
+    path: patches/realism-effects@1.1.2.patch
 
 importers:
 
@@ -511,6 +514,9 @@ importers:
       bippy:
         specifier: ^0.5.43
         version: 0.5.43(react@19.2.7)
+      postprocessing:
+        specifier: ^6.39.4
+        version: 6.39.4(three@0.185.0)
       quarks.r3f:
         specifier: ^0.17.1
         version: 0.17.1(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(react@19.2.7)(three.quarks@0.17.1(three@0.185.0))(three@0.185.0)
@@ -523,6 +529,9 @@ importers:
       react-error-boundary:
         specifier: ^6.1.2
         version: 6.1.2(react@19.2.7)
+      realism-effects:
+        specifier: ^1.1.2
+        version: 1.1.2(patch_hash=61ee467309253b9f4392a686f5711d74d1a87dc8b769bc266f9befc88f623682)(postprocessing@6.39.4(three@0.185.0))(three@0.185.0)
       three:
         specifier: ^0.185.0
         version: 0.185.0
@@ -6977,6 +6986,11 @@ packages:
     resolution: {integrity: sha512-u82N74LFzG8ca+dD8puPnplTXoGH4fTPpVGuIbt36G3qvNlkvfD0lEAZSxaly3KX8TS/L1A1gsCEmvKmBcVbkQ==}
     engines: {node: ^10 || ^12 || >=14}
 
+  postprocessing@6.39.4:
+    resolution: {integrity: sha512-oAS/PjAbc/xT3OzjUrGsorJ4J064XwhVD2t0OwKLP/E8QwDMUJ0oOv6ZI1SYMtLchv4g0ySEx+JcLy92+48vlA==}
+    peerDependencies:
+      three: ^0.185.0
+
   potpack@1.0.2:
     resolution: {integrity: sha512-choctRBIV9EMT9WGAZHn3V7t0Z2pMQyl0EZE6pFc/6ml3ssw7Dlf/oAOvFwjm1HVsqfQN8GfeFyJ+d8tRzqueQ==}
 
@@ -7230,6 +7244,12 @@ packages:
   readdirp@5.0.0:
     resolution: {integrity: sha512-9u/XQ1pvrQtYyMpZe7DXKv2p5CNvyVwzUB6uhLAnQwHMSgKMBR62lc7AHljaeteeHXn11XTAaLLUVZYVZyuRBQ==}
     engines: {node: '>= 20.19.0'}
+
+  realism-effects@1.1.2:
+    resolution: {integrity: sha512-dHI++mxZNYJ/k8UO+TUE/PHiNiZcUSkrNlSEwVT48c4d4PHjSz9sjdkH2QlzbmOaI4wYJEmcc9VzI6BZNgpx1A==}
+    peerDependencies:
+      postprocessing: '>=6.30.1'
+      three: ^0.185.0
 
   recma-build-jsx@1.0.0:
     resolution: {integrity: sha512-8GtdyqaBcDfva+GUKDr3nev3VpKAhup1+RvkMvUxURHpW7QyIvk9F5wz7Vzo06CEMSilw6uArgRqhpiUcWp8ew==}
@@ -16511,6 +16531,10 @@ snapshots:
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
+  postprocessing@6.39.4(three@0.185.0):
+    dependencies:
+      three: 0.185.0
+
   potpack@1.0.2: {}
 
   powershell-utils@0.1.0: {}
@@ -16760,6 +16784,11 @@ snapshots:
       picomatch: 2.3.2
 
   readdirp@5.0.0: {}
+
+  realism-effects@1.1.2(patch_hash=61ee467309253b9f4392a686f5711d74d1a87dc8b769bc266f9befc88f623682)(postprocessing@6.39.4(three@0.185.0))(three@0.185.0):
+    dependencies:
+      postprocessing: 6.39.4(three@0.185.0)
+      three: 0.185.0
 
   recma-build-jsx@1.0.0:
     dependencies:

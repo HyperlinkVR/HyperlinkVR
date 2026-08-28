@@ -49,3 +49,4 @@ patchedDependencies:
   '@wordlist/random': patches/@wordlist__random.patch
   argon2-browser: patches/argon2-browser.patch
   jiti@2.7.0: patches/jiti@2.7.0.patch
+  realism-effects@1.1.2: patches/realism-effects@1.1.2.patch

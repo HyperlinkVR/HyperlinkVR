@@ -1,0 +1,26 @@
+diff --git a/dist/index.js b/dist/index.js
+index 72e1b7015d7812004597da9c04e8a312fdbf8ec6..e619ca3f95263bb889a1207023b038b2596bb113 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -1,5 +1,20 @@
+ import { Pass, Effect, RenderPass, Selection, NormalPass } from 'postprocessing';
+-import { DataTexture, RGBAFormat, FloatType, ShaderChunk, ShaderLib, UniformsUtils, WebGLMultipleRenderTargets, ShaderMaterial, GLSL3, NoBlending, Uniform, Vector2, Matrix4, Vector3, Clock, Quaternion, LinearFilter, HalfFloatType, UnsignedByteType, RGBADepthPacking, BasicDepthPacking, NearestFilter, WebGLRenderTarget, ClampToEdgeWrapping, LinearMipMapLinearFilter, EquirectangularReflectionMapping, Color, Matrix3, TangentSpaceNormalMap, RepeatWrapping, RedFormat, Source, MeshDepthMaterial, BackSide, TextureLoader, NoColorSpace, DepthTexture, SRGBColorSpace, Texture, NoToneMapping, PerspectiveCamera, FramebufferTexture } from 'three';
++import { DataTexture, RGBAFormat, FloatType, ShaderChunk, ShaderLib, UniformsUtils, ShaderMaterial, GLSL3, NoBlending, Uniform, Vector2, Matrix4, Vector3, Clock, Quaternion, LinearFilter, HalfFloatType, UnsignedByteType, RGBADepthPacking, BasicDepthPacking, NearestFilter, WebGLRenderTarget, ClampToEdgeWrapping, LinearMipMapLinearFilter, EquirectangularReflectionMapping, Color, Matrix3, TangentSpaceNormalMap, RepeatWrapping, RedFormat, Source, MeshDepthMaterial, BackSide, TextureLoader, NoColorSpace, DepthTexture, SRGBColorSpace, Texture, NoToneMapping, PerspectiveCamera, FramebufferTexture } from 'three';
++
++class WebGLMultipleRenderTargets extends WebGLRenderTarget {
++  constructor(width, height, count = 1, options = {}) {
++    // Pass the count parameter directly to the WebGLRenderTarget options
++    super(width, height, { ...options, count });
++
++    // Flag to identify it as a render target
++    this.isWebGLMultipleRenderTargets = true;
++  }
++
++  // Modern Three.js uses target.textures, but this provides a fallback alias
++  get texture() {
++    return this.textures;
++  }
++}
+ 
+ const getVisibleChildren = object => {
+   const queue = [object];

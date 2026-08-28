@@ -63,6 +63,7 @@ import { SDKWorldEnvironmentProvider, useWorldEnvironment, WORLD_ENV_DEFAULT, WO
 import { EngineObjectSpawner } from "./EngineObjectSpawner";
 import { EngineObjectSync } from "./EngineObjectSync";
 import { FlatLoadingScreen, VRLoadingScreen } from "./LoadingScreen";
+import { SSGIPass } from "../render/SSGIPass";
 
 
 configureTextBuilder({
@@ -463,6 +464,7 @@ const EngineHostInternal = memo(
 
                                             <GraphicsPipeline>
                                                 <SceneRenderPass />
+                                                <SSGIPass />
                                                 <VFXPasses />
                                                 <QualityPasses />
                                                 {/*<SRGBOutputPass />*/}

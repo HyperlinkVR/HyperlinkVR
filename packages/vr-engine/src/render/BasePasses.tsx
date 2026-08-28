@@ -6,7 +6,7 @@ import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass";
 import { PASS_ORDER, usePass } from "./GraphicsPipeline";
 
 
-export const SceneRenderPass = ({ _index }: { _index?: number }) => {
+export const SceneRenderPass = () => {
     const scene = useThree((s) => s.scene);
     const camera = useThree((s) => s.camera);
 
