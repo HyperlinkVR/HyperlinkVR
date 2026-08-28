@@ -23,6 +23,8 @@ export const VFXSync = () => {
             }
 
             useVFXStore.getState().set_stack(data);
+            console.log("(+) Set VFX stack", data);
+
             reply({
                 for: "HVRSDK_SET_VFX",
                 success: true

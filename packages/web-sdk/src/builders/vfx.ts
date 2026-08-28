@@ -1,4 +1,8 @@
-import { VFX_SPECS, VFXStackSchema } from "@hyperlinkvr/vr-engine-schemas";
+import {
+    BloomEffectInput,
+    VFX_SPECS,
+    VFXStackSchema
+} from "@hyperlinkvr/vr-engine-schemas";
 import type { BadTVEffectInput, FilmEffectInput, GrayscaleEffectInput, RGBShiftEffectInput, ScreenShakeEffectInput, StaticEffectInput, VFXEffectInput, VFXStack } from "@hyperlinkvr/vr-engine-schemas";
 
 
@@ -100,6 +104,11 @@ export class VFXStackBuilder extends BaseBuilder<VFXEffectInput[]> {
 
     film(params: Omit<FilmEffectInput, "type" | "binding"> = {}, name?: string) {
         this._internal.push({ type: "film", ...(name ? { binding: { name } } : {}), ...params });
+        return this;
+    }
+
+    bloom(params: Omit<BloomEffectInput, "type" | "binding"> = {}, name?: string) {
+        this._internal.push({ type: "bloom", ...(name ? { binding: { name } } : {}), ...params });
         return this;
     }
 

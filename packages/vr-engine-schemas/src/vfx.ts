@@ -1,6 +1,9 @@
 import { z } from "zod";
 
+
+
 import { BindingConfigSchema } from "./binding";
+
 
 export interface VFXUniformSpec {
     field: string;
@@ -21,6 +24,7 @@ interface BaseVFXPassSpec {
     type: string;
     category: "vfx";
     kind: "declarative" | "impulse";
+    source: "shader" | "three";
     time_driven: boolean;
     uniforms: readonly VFXUniformSpec[];
 }
@@ -37,10 +41,11 @@ export interface ImpulseVFXPassSpec extends BaseVFXPassSpec {
 export type VFXPassSpec = DeclarativeVFXPassSpec | ImpulseVFXPassSpec;
 
 export const VFX_SPECS = {
-    "grayscale": {
+    grayscale: {
         type: "grayscale",
         category: "vfx",
         kind: "declarative",
+        source: "shader",
         time_driven: false,
         uniforms: []
     },
@@ -48,56 +53,135 @@ export const VFX_SPECS = {
         type: "rgb-shift",
         category: "vfx",
         kind: "declarative",
+        source: "shader",
         time_driven: false,
         uniforms: [
-            { field: "amount", uniform: "amount", min: 0, max: 0.05, default: 0.002 }, // uv offset between channels
-            { field: "angle", uniform: "angle", min: 0, max: Math.PI * 2, default: 1.0 } // shift direction (radians)
+            {
+                field: "amount",
+                uniform: "amount",
+                min: 0,
+                max: 0.05,
+                default: 0.002
+            }, // uv offset between channels
+            {
+                field: "angle",
+                uniform: "angle",
+                min: 0,
+                max: Math.PI * 2,
+                default: 1.0
+            } // shift direction (radians)
         ]
     },
     "bad-tv": {
         type: "bad-tv",
         category: "vfx",
         kind: "declarative",
+        source: "shader",
         time_driven: true,
         uniforms: [
-            { field: "distortion", uniform: "distortion", min: 0, default: 0.5 }, // thick wave distortion
-            { field: "fine_distortion", uniform: "distortion2", min: 0, default: 2.5 }, // fine grain
+            {
+                field: "distortion",
+                uniform: "distortion",
+                min: 0,
+                default: 0.5
+            }, // thick wave distortion
+            {
+                field: "fine_distortion",
+                uniform: "distortion2",
+                min: 0,
+                default: 2.5
+            }, // fine grain
             { field: "speed", uniform: "speed", default: 0.45 }, // vertical travel speed
             { field: "roll_speed", uniform: "rollSpeed", default: 0 } // vertical roll speed
         ]
     },
-    "static": {
+    static: {
         type: "static",
         category: "vfx",
         kind: "declarative",
+        source: "shader",
         time_driven: true,
         uniforms: [
-            { field: "amount", uniform: "amount", min: 0, max: 1, default: 0.03 }, // noise strength
+            {
+                field: "amount",
+                uniform: "amount",
+                min: 0,
+                max: 1,
+                default: 0.03
+            }, // noise strength
             { field: "size", uniform: "size", min: 0, default: 4.0 } // grain size in pixels
         ]
     },
-    "film": {
+    film: {
         type: "film",
         category: "vfx",
         kind: "declarative",
+        source: "shader",
         time_driven: true,
         uniforms: [
-            { field: "intensity", uniform: "intensity", min: 0, max: 1, default: 0.4 } // grain + scanline strength
+            {
+                field: "intensity",
+                uniform: "intensity",
+                min: 0,
+                max: 1,
+                default: 0.4
+            } // grain + scanline strength
         ]
     },
     "screen-shake": {
         type: "screen-shake",
         category: "vfx",
         kind: "impulse",
+        source: "shader",
         time_driven: false,
         // pulse writes the magnitude into u_magnitude; it decays 10%/frame and u_time
         // is driven from the clock so the jitter animates while it fades
-        impulse: { uniform: "u_magnitude", time_uniform: "u_time", decay: 0.9, default_magnitude: 0.05 },
+        impulse: {
+            uniform: "u_magnitude",
+            time_uniform: "u_time",
+            decay: 0.9,
+            default_magnitude: 0.05
+        },
         uniforms: []
+    },
+    bloom: {
+        type: "bloom",
+        category: "vfx",
+        kind: "declarative",
+        source: "three",
+        time_driven: false,
+        uniforms: [
+            {
+                field: "strength",
+                uniform: "strength",
+                min: 0,
+                default: 1
+            },
+            {
+                field: "radius",
+                uniform: "radius",
+                min: 0,
+                max: 1,
+                default: 0.4
+            },
+            {
+                field: "threshold",
+                uniform: "threshold",
+                min: 0,
+                max: 1,
+                default: 0.85
+            }
+        ]
     }
 } as const satisfies Record<string, VFXPassSpec>;
 
+type FilterVFXKeysBySource<T, TargetSource extends "shader" | "three"> = {
+    [K in keyof T]: T[K] extends { source: TargetSource } ? K : never;
+}[keyof T];
+
 export type VFXEffectType = keyof typeof VFX_SPECS;
+export type VFXShaderEffectType = FilterVFXKeysBySource<typeof VFX_SPECS, "shader">;
+export type VFXThreeEffectType = FilterVFXKeysBySource<typeof VFX_SPECS, "three">;
 
 // build a zod schema for a given effect spec, with the right type and default values for its uniforms
 const build_effect_schema = <S extends VFXPassSpec>(spec: S) => {
@@ -147,13 +231,18 @@ export const ScreenShakeEffectSchema = build_effect_schema(VFX_SPECS["screen-sha
 export type ScreenShakeEffect = z.infer<typeof ScreenShakeEffectSchema>;
 export type ScreenShakeEffectInput = z.input<typeof ScreenShakeEffectSchema>;
 
+export const BloomEffectSchema = build_effect_schema(VFX_SPECS["bloom"]);
+export type BloomEffect = z.infer<typeof BloomEffectSchema>;
+export type BloomEffectInput = z.input<typeof BloomEffectSchema>;
+
 export const VFXEffectSchema = z.discriminatedUnion("type", [
     GrayscaleEffectSchema,
     RGBShiftEffectSchema,
     BadTVEffectSchema,
     StaticEffectSchema,
     FilmEffectSchema,
-    ScreenShakeEffectSchema
+    ScreenShakeEffectSchema,
+    BloomEffectSchema
 ]);
 export type VFXEffect = z.infer<typeof VFXEffectSchema>;
 export type VFXEffectInput = z.input<typeof VFXEffectSchema>;

@@ -1,6 +1,11 @@
-import type { VFXEffectType } from "@hyperlinkvr/vr-engine-schemas";
+import type {
+    VFXShaderEffectType
+} from "@hyperlinkvr/vr-engine-schemas";
 import { FilmShader } from "three/examples/jsm/shaders/FilmShader";
 import { RGBShiftShader } from "three/examples/jsm/shaders/RGBShiftShader";
+
+
+
 
 
 // matches three shader interface
@@ -232,7 +237,7 @@ const ScreenShakeShader: RawShader = {
 
 // TODO: implement vr friendly screen shake https://www.zulubo.com/blog/vr-screen-shake
 
-export const VFX_SHADERS: Record<VFXEffectType, RawShader> = {
+export const VFX_SHADERS: Record<VFXShaderEffectType, RawShader> = {
     "grayscale": GrayscaleShader,
     "rgb-shift": RGBShiftShader,
     "bad-tv": BadTVShader,
