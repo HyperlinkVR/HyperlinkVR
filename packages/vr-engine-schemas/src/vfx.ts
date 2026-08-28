@@ -25,15 +25,25 @@ interface BaseVFXPassSpec {
     category: "vfx";
     kind: "declarative" | "impulse";
     source: "shader" | "three";
-    time_driven: boolean;
     uniforms: readonly VFXUniformSpec[];
 }
 
-export interface DeclarativeVFXPassSpec extends BaseVFXPassSpec {
+interface BaseShaderVFXPassSpec extends BaseVFXPassSpec {
+    source: "shader";
+    time_driven: boolean;
+}
+
+interface BaseThreeVFXPassSpec extends BaseVFXPassSpec {
+    source: "three";
+}
+
+type SourceStampedVFXPassSpec = BaseShaderVFXPassSpec | BaseThreeVFXPassSpec;
+
+export type DeclarativeVFXPassSpec = SourceStampedVFXPassSpec & {
     kind: "declarative";
 }
 
-export interface ImpulseVFXPassSpec extends BaseVFXPassSpec {
+export type ImpulseVFXPassSpec = SourceStampedVFXPassSpec & {
     kind: "impulse";
     impulse: VFXImpulseSpec;
 }
@@ -149,7 +159,6 @@ export const VFX_SPECS = {
         category: "vfx",
         kind: "declarative",
         source: "three",
-        time_driven: false,
         uniforms: [
             {
                 field: "strength",
@@ -170,6 +179,21 @@ export const VFX_SPECS = {
                 min: 0,
                 max: 1,
                 default: 0.85
+            }
+        ]
+    },
+    drunk: {
+        type: "drunk",
+        category: "vfx",
+        kind: "declarative",
+        source: "three",
+        uniforms: [
+            {
+                field: "damp",
+                uniform: "damp",
+                min: 0,
+                max: 1,
+                default: 0.9
             }
         ]
     }
@@ -235,6 +259,10 @@ export const BloomEffectSchema = build_effect_schema(VFX_SPECS["bloom"]);
 export type BloomEffect = z.infer<typeof BloomEffectSchema>;
 export type BloomEffectInput = z.input<typeof BloomEffectSchema>;
 
+export const DrunkEffectSchema = build_effect_schema(VFX_SPECS["drunk"]);
+export type DrunkEffect = z.infer<typeof DrunkEffectSchema>;
+export type DrunkEffectInput = z.input<typeof DrunkEffectSchema>;
+
 export const VFXEffectSchema = z.discriminatedUnion("type", [
     GrayscaleEffectSchema,
     RGBShiftEffectSchema,
@@ -242,7 +270,8 @@ export const VFXEffectSchema = z.discriminatedUnion("type", [
     StaticEffectSchema,
     FilmEffectSchema,
     ScreenShakeEffectSchema,
-    BloomEffectSchema
+    BloomEffectSchema,
+    DrunkEffectSchema
 ]);
 export type VFXEffect = z.infer<typeof VFXEffectSchema>;
 export type VFXEffectInput = z.input<typeof VFXEffectSchema>;

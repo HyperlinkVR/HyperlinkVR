@@ -5,6 +5,7 @@ import type { Pass as ThreePass } from "three/examples/jsm/postprocessing/Pass";
 
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass";
 import { Vector2 } from "three";
+import { AfterimagePass } from "three/examples/jsm/postprocessing/AfterimagePass";
 
 type VFXThreePassConstructor = (values: Record<string, number>) => ThreePass;
 
@@ -12,5 +13,8 @@ export const VFX_THREE_PASSES: Record<VFXThreeEffectType, VFXThreePassConstructo
     "bloom": (values) => {
         // TODO: configurable res from user settings (based on some effects quality setting)
         return new UnrealBloomPass(new Vector2(512, 512), values.strength ?? 1, values.radius ?? 0.5, values.threshold ?? 0.8);
+    },
+    "drunk": (values) => {
+        return new AfterimagePass(values.damp ?? 0.9);
     }
 }
