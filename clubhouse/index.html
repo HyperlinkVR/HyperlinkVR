@@ -15,19 +15,25 @@
 
         promises.push(
             new h.WorldEnvBuilder()
-            .set_sky(new h.WorldSkyBuilder()
-                    .set_sky_horizon_color(0xfbffb8)
-                    .set_sun_direction([0.8, 0.3, 0.7])
-                    .set_sun_intensity(1.2)
-                    .set_sun_size(1)
-                    .set_sun_glow(8)
-                    .set_sun_color(0xffe198)
-                    .set_light_intensity(1.5)
-                    .set_sky_light_intensity(0.3)
-                    .build()
+                .set_sky(new h.WorldSkyBuilder()
+                .set_sky_horizon_color(0xfbffb8)
+                .set_sun_direction([0.8, 0.3, 0.7])
+                .set_sun_intensity(1.2)
+                .set_sun_size(1)
+                .set_sun_glow(8)
+                .set_sun_color(0xffe198)
+                .set_light_intensity(1.5)
+                .set_sky_light_intensity(0.3)
+                .build()
             )
             .apply()
         );
+
+        promises.push(
+            new h.VFXStackBuilder()
+                .bloom({strength: 0.25})
+                .apply()
+        )
         
         const interior = new h.CustomObjectBuilder()
             .set_mesh("/clubhouse/visual.glb")
