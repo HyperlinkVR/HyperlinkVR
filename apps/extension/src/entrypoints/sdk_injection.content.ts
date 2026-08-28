@@ -10,9 +10,9 @@ export default defineContentScript({
     runAt: "document_start",
     main() {
         console.log("Injecting HyperlinkVR SDK into page context");
-        const {bind_messages, ...sdk_rest} = sdk;
+        const {_bind_messages, ...sdk_rest} = sdk;
 
-        bind_messages();
+        _bind_messages();
 
         Object.defineProperty(window, "hyperlinkvr", {
             value: sdk_rest,

@@ -38,7 +38,8 @@ export const connect = async () => {
     }
 }
 
-export const bind_messages = () => {
+/** @internal */
+export const _bind_messages = () => {
     console.log("Binding messages for HyperlinkVR Web SDK");
 
     // on recieving HVRSDK_READY event, dispatch DOM event
