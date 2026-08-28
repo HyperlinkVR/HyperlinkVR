@@ -70,7 +70,8 @@ export const add_player = async (player: hvr.players.Player, spawn_pos: [number,
 
 let current_hole = 0;
 
-export const get_current_hole = () => current_hole;
+// cheap guard against oob message when teleporting to next hole, its enough for now (the only consequence is a hud message)
+let going_to_next_hole = false;
 
 export const next_hole = () => {
     const start_markers = get_start_markers();
@@ -81,6 +82,8 @@ export const next_hole = () => {
     if (!start_marker) {
         throw new Error(`Start marker for hole ${current_hole} not found`);
     }
+
+    going_to_next_hole = true;
     
     for (const [username, state] of players.entries()) {
         state.strokes_this_hole = 0;
@@ -96,6 +99,10 @@ export const next_hole = () => {
         show_stroke(1, username);
     }
 
+    setTimeout(() => {
+        going_to_next_hole = false;
+    }, 250);
+
     show_hole(current_hole, start_marker.properties);
 }
 
@@ -110,10 +117,9 @@ export const out_of_bounds = (ball_object_id: string) => {
         throw new Error(`Player ${owner} not found`);
     }
 
-    if (state.finished_this_hole) {
+    if (state.finished_this_hole || going_to_next_hole) {
         return;
     }
-    // TODO: fix this race so we dont pop the oob message when you score
 
     let pos = state.last_pos;
     if (!pos) {
