@@ -473,6 +473,8 @@ export class EngineObjectModificationBuilder extends BaseBuilder<EngineObjectMod
 /**
  * @group Objects
  *
+ * @bindable host=true
+ *
  * @channels
  * - transform.position - the position of the object in world space
  * - transform.rotation - the rotation of the object in world space, as a quaternion

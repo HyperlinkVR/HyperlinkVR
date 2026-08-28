@@ -4,7 +4,6 @@ import { Radio } from "lucide-react";
 import styles from "./styles.module.css";
 import Heading from "@theme/Heading";
 import Link from "@docusaurus/Link";
-import MDXA from "@theme/MDXComponents/A";
 
 type MaybeStringified<T> = T | string;
 
@@ -23,18 +22,15 @@ export const ChannelList = (
         return props.items;
     }, [props.items]);
 
-    // TODO: get the animated hash thingy the main headings use
     return (
         <div className={styles.element}>
-            <MDXA href="#channels">
-                <Heading as="h3">Animation Channels</Heading>
-            </MDXA>
+            <Heading as="h3">Animation Channels<a href="#channels" className="hash-link" aria-label="Direct link to Channels" title="Direct link to Channels" translate="no">​</a></Heading>
             <p>These channels can be animated with an <Link to="/docs/sdk/@hyperlinkvr/namespaces/builders/classes/AnimationBuilder">Animation</Link>.</p>
             <ul className={styles.list}>
                 {items.map((item, index) => (
                     <li key={index} className={styles.list_item}>
                         <Radio />
-                        <code>{item.name}</code>: {item.desc}
+                        <span><code>{item.name}</code>: {item.desc}</span>
                     </li>
                 ))}
             </ul>
