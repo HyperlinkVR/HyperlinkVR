@@ -1,0 +1,23 @@
+.element {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.text {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.attribute_list {
+    list-style: none;
+}
+
+.attribute {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+    align-items: center;
+}

@@ -470,7 +470,14 @@ export class EngineObjectModificationBuilder extends BaseBuilder<EngineObjectMod
     }
 }
 
-/** @group Objects */
+/**
+ * @group Objects
+ *
+ * @channels
+ * - transform.position - the position of the object in world space
+ * - transform.rotation - the rotation of the object in world space, as a quaternion
+ * - transform.scale - the scale of the object in world space
+ */
 export class EngineObjectDispatchBuilder<T extends EngineObject = EngineObject> extends BaseBuilder<EngineObjectDispatchInput> {
     #callbacks = new Map<string, (event: ReportEvent) => void>();
 

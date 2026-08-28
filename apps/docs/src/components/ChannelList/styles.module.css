@@ -1,0 +1,14 @@
+.element {
+
+}
+
+.list {
+    list-style: none;
+}
+
+.list_item {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    align-items: center;
+}

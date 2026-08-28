@@ -1,69 +1,7 @@
-import type {
-    ColliderOrCollection,
-    DirectionalLightInteraction,
-    DirectionalLightInteractionInput,
-    FollowPlayerInteractionInput,
-    GlobalAudioInteraction,
-    GlobalAudioInteractionInput,
-    GrabbableInteraction,
-    GrabbableInteractionInput,
-    GrabCollider,
-    GrabOffsetInput,
-    ParticleEmitterBehaviorInput,
-    ParticleEmitterColorInput,
-    ParticleEmitterInteraction,
-    ParticleEmitterInteractionInput,
-    ParticleEmitterRandomisableValueInput,
-    ParticleEmitterShapeInput,
-    ParticleEmitterVisualInput,
-    PointLightInteraction,
-    PointLightInteractionInput,
-    PositionalAudioInteraction,
-    PositionalAudioInteractionInput,
-    RaycastAim,
-    RaycastAimInput,
-    RaycastInteraction,
-    RaycastInteractionInput,
-    RaycastRays,
-    RaycastRaysInput,
-    RaycastResult,
-    RaycastSpace,
-    RaycastTargets,
-    RaycastTargetsInput,
-    RaycastTrigger,
-    RaycastTriggerInput,
-    Rotation,
-    SeatInteraction,
-    SeatInteractionInput,
-    SpotLightInteraction,
-    SpotLightInteractionInput,
-    TriggerVolumeInteraction,
-    TriggerVolumeInteractionInput,
-    TweenEasing
-} from "@hyperlinkvr/vr-engine-schemas";
-import {
-    DirectionalLightInteractionSchema,
-    FollowPlayerInteractionSchema,
-    GlobalAudioInteractionSchema,
-    GrabbableInteractionSchema,
-    ParticleEmitterBehaviorSchema,
-    ParticleEmitterColorSchema,
-    ParticleEmitterInteractionSchema,
-    ParticleEmitterRandomisableValueSchema,
-    ParticleEmitterShapeSchema,
-    ParticleEmitterVisualSchema,
-    PointLightInteractionSchema,
-    PositionalAudioInteractionSchema,
-    RaycastAimSchema,
-    RaycastInteractionSchema,
-    RaycastRaysSchema,
-    RaycastTargetsSchema,
-    RaycastTriggerSchema,
-    RotationSchema,
-    SeatInteractionSchema,
-    SpotLightInteractionSchema,
-    TriggerVolumeInteractionSchema
-} from "@hyperlinkvr/vr-engine-schemas";
+import type { ColliderOrCollection, DirectionalLightInteraction, DirectionalLightInteractionInput, FollowPlayerInteractionInput, GlobalAudioInteraction, GlobalAudioInteractionInput, GrabbableInteraction, GrabbableInteractionInput, GrabCollider, GrabOffsetInput, ParticleEmitterBehaviorInput, ParticleEmitterColorInput, ParticleEmitterInteraction, ParticleEmitterInteractionInput, ParticleEmitterRandomisableValueInput, ParticleEmitterShapeInput, ParticleEmitterVisualInput, PointLightInteraction, PointLightInteractionInput, PositionalAudioInteraction, PositionalAudioInteractionInput, RaycastAim, RaycastAimInput, RaycastInteraction, RaycastInteractionInput, RaycastRays, RaycastRaysInput, RaycastResult, RaycastSpace, RaycastTargets, RaycastTargetsInput, RaycastTrigger, RaycastTriggerInput, Rotation, SeatInteraction, SeatInteractionInput, SpotLightInteraction, SpotLightInteractionInput, TriggerVolumeInteraction, TriggerVolumeInteractionInput, TweenEasing } from "@hyperlinkvr/vr-engine-schemas";
+import { DirectionalLightInteractionSchema, FollowPlayerInteractionSchema, GlobalAudioInteractionSchema, GrabbableInteractionSchema, ParticleEmitterBehaviorSchema, ParticleEmitterColorSchema, ParticleEmitterInteractionSchema, ParticleEmitterRandomisableValueSchema, ParticleEmitterShapeSchema, ParticleEmitterVisualSchema, PointLightInteractionSchema, PositionalAudioInteractionSchema, RaycastAimSchema, RaycastInteractionSchema, RaycastRaysSchema, RaycastTargetsSchema, RaycastTriggerSchema, RotationSchema, SeatInteractionSchema, SpotLightInteractionSchema, TriggerVolumeInteractionSchema } from "@hyperlinkvr/vr-engine-schemas";
+
+
 
 import { asset_url } from "../assets";
 import { send_via_rtc } from "../messenger";
@@ -184,7 +122,11 @@ export class GrabbableInteractionBuilder extends BaseBuilder<GrabbableInteractio
     // TODO: set enabled/disabled, api to change that, api to change sticky/snaps to hand etc, api to eject
 }
 
-/** @group Interactions */
+/**
+ * @group Interactions
+ *
+ * @bindable events=TriggerVolumeInteractionPayload
+ */
 export class TriggerVolumeInteractionBuilder extends BaseBuilder<TriggerVolumeInteractionInput> {
     constructor() {
         super({type: "trigger-volume"} as TriggerVolumeInteractionInput);
@@ -543,7 +485,9 @@ export class DirectionalLightInteractionBuilder extends BaseBuilder<DirectionalL
     }
 }
 
-/** @group Interactions */
+/**
+ * @group Interactions
+ */
 export class SpotLightInteractionBuilder extends BaseBuilder<SpotLightInteractionInput> {
     constructor() {
         super({type: "spot-light"} as SpotLightInteractionInput);
@@ -630,7 +574,19 @@ export class SpotLightInteractionBuilder extends BaseBuilder<SpotLightInteractio
     }
 }
 
-/** @group Interactions */
+
+/** @group Command APIs */
+export interface ParticleEmitterInteractionAPI {
+    play: () => Promise<void>;
+    pause: () => Promise<void>;
+    stop: (hard?: boolean) => Promise<void>;
+    restart: () => Promise<void>;
+}
+
+/** @group Interactions
+ *
+ * @bindable api=ParticleEmitterInteractionAPI
+ */
 export class ParticleEmitterInteractionBuilder extends BaseBuilder<ParticleEmitterInteractionInput> {
     constructor() {
         super({type: "particle-emitter"} as ParticleEmitterInteractionInput);
@@ -734,7 +690,7 @@ export class ParticleEmitterInteractionBuilder extends BaseBuilder<ParticleEmitt
 
 
     /** @internal */
-    static _make_api(object_id: string, interaction_id: string) {
+    static _make_api(object_id: string, interaction_id: string): ParticleEmitterInteractionAPI {
         return {
             play: async () => {
                 return await interaction_command(object_id, interaction_id, "play");

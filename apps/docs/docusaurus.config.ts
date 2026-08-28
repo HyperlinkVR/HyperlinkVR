@@ -1,6 +1,12 @@
 import type * as Preset from '@docusaurus/preset-classic';
 import type { Config, PluginConfig } from "@docusaurus/types";
 import { themes as prismThemes } from 'prism-react-renderer';
+import { OptionDefaults } from "typedoc";
+
+
+
+import { custom_block_tags, custom_modifier_tags, remark_custom_jsdoc_tags } from "./plugins/remark_custom_jsdoc_tags";
+
 
 const typedoc = (
     pkg: string,
@@ -31,6 +37,16 @@ const typedoc = (
             autoConfiguration: true,
             pretty: true
         },
+
+        blockTags: [
+            ...OptionDefaults.blockTags,
+            ...custom_block_tags.map((tag) => `@${tag}`),
+        ],
+
+        modifierTags: [
+            ...OptionDefaults.modifierTags,
+            ...custom_modifier_tags.map((tag) => `@${tag}`),
+        ],
 
         ...extra
     }
@@ -77,8 +93,8 @@ const config: Config = {
             {
                 docs: {
                     routeBasePath: "/",
-                    sidebarPath: "./sidebars.ts"
-                    // API docs are generated; no editUrl.
+                    sidebarPath: "./sidebars.ts",
+                    remarkPlugins: [remark_custom_jsdoc_tags]
                 },
                 blog: false,
                 theme: {
@@ -158,8 +174,9 @@ const config: Config = {
             groupOrder: [
                 "Prefabs",
                 "Interactions",
-                "Rigid Bodies",
+                "Command APIs",
                 "Physics",
+                "Rigid Bodies",
                 "Object Monitors",
                 "Input Monitors",
                 "HUD",
@@ -176,7 +193,7 @@ const config: Config = {
                 "*"
             ]
         }),
-        typedoc("vr-engine-schemas", "engine-schemas"),
+        typedoc("vr-engine-schemas", "engine-schemas")
     ]
 };
 
