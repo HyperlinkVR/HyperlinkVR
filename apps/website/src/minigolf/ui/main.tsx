@@ -12,3 +12,5 @@ export const load_app = () => {
         </React.StrictMode>
     );
 }
+
+load_app();
