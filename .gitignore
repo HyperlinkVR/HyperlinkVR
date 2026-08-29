@@ -44,3 +44,5 @@ dist/
 .turbo
 
 schemas
+
+apps/website/public/ui-dom/

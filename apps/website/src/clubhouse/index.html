@@ -3,11 +3,15 @@
   <head>
     <meta name="hyperlinkvr" content="supported" />
     <meta charset="utf-8" />
+
+    <script src="/ui-dom/web-component/hyperlink-splash.js"></script>
     
     <script data-cfasync="false">
       hyperlinkvr.on_ready(async () => {
         await hyperlinkvr.connect();
         console.log("Connected!");
+
+        document.querySelector("#splash").remove();
         
         const h = hyperlinkvr.builders;
 
@@ -108,5 +112,7 @@
     🏠
 
     Times scored on the basketball hoop: <span id="score">0</span>
+
+    <hyperlink-splash id="splash" style="position: fixed; top: 0; left: 0;"></hyperlink-splash>
   </body>
 </html>

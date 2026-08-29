@@ -5,8 +5,9 @@
     "private": true,
     "description": "Static site and official worlds.",
     "scripts": {
-        "dev": "vite",
-        "build": "vite build",
+        "sync:ui-dom": "turbo run build:web --filter=@hyperlinkvr/ui-dom && shx cp -r ../../packages/ui-dom/dist/. ./public/ui-dom/",
+        "dev": "pnpm run sync:ui-dom && vite",
+        "build": "pnpm run sync:ui-dom && vite build",
         "build:web": "vite build",
         "preview": "vite preview",
         "typecheck": "tsc --noEmit"
