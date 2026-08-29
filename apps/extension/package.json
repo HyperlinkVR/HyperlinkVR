@@ -19,6 +19,7 @@
         "@hyperlinkvr/platform-browser": "workspace:*",
         "@hyperlinkvr/platform-extension": "workspace:*",
         "@hyperlinkvr/react": "workspace:*",
+        "@hyperlinkvr/styles": "workspace:*",
         "@hyperlinkvr/types": "workspace:*",
         "@hyperlinkvr/ui-dom": "workspace:*",
         "@hyperlinkvr/vr-engine": "workspace:*",

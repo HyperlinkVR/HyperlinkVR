@@ -13,6 +13,7 @@
     },
     "dependencies": {
         "@hyperlinkvr/ui-dom": "workspace:*",
+        "@hyperlinkvr/styles": "workspace:*",
         "react": "catalog:",
         "react-dom": "catalog:"
     },

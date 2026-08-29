@@ -224,6 +224,9 @@ importers:
       '@hyperlinkvr/react':
         specifier: workspace:*
         version: link:../../packages/react
+      '@hyperlinkvr/styles':
+        specifier: workspace:*
+        version: link:../../packages/styles
       '@hyperlinkvr/types':
         specifier: workspace:*
         version: link:../../packages/types
@@ -291,6 +294,9 @@ importers:
 
   apps/website:
     dependencies:
+      '@hyperlinkvr/styles':
+        specifier: workspace:*
+        version: link:../../packages/styles
       '@hyperlinkvr/ui-dom':
         specifier: workspace:*
         version: link:../../packages/ui-dom
@@ -509,6 +515,12 @@ importers:
       tailwind-preset-mantine:
         specifier: 'catalog:'
         version: 4.1.0(@mantine/core@7.17.8(@mantine/hooks@7.17.8(react@19.2.7))(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(tailwindcss@4.3.1)
+
+  packages/styles:
+    dependencies:
+      tailwindcss:
+        specifier: 'catalog:'
+        version: 4.3.1
 
   packages/types:
     dependencies:

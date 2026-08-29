@@ -18,7 +18,7 @@
     },
     "scripts": {
         "build": "tsc --build",
-        "build:deact": "node ./node_modules/@hyperlinkvr/deact/bin/index.js ./src/HyperlinkSplash.tsx -t web-component -o ./dist/web-component -c ../assets/shared.css && node ./node_modules/@hyperlinkvr/deact/bin/index.js ./src/HyperlinkSplash.tsx -t legacy-dom -o ./dist/dom -c ../assets/shared.css",
+        "build:deact": "node ./node_modules/@hyperlinkvr/deact/bin/index.js ./src/HyperlinkSplash.tsx -t web-component -o ./dist/web-component -c ../styles/shared.css && node ./node_modules/@hyperlinkvr/deact/bin/index.js ./src/HyperlinkSplash.tsx -t legacy-dom -o ./dist/dom -c ../styles/shared.css",
         "build:web": "pnpm run build:deact",
         "typecheck": "tsc --noEmit"
     },

@@ -1,0 +1,11 @@
+{
+    "name": "@hyperlinkvr/styles",
+    "version": "0.0.1",
+    "private": true,
+    "files": [
+        "./**/*"
+    ],
+    "dependencies": {
+        "tailwindcss": "catalog:"
+    }
+}

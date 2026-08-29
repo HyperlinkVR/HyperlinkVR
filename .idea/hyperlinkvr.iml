@@ -17,6 +17,7 @@
       <sourceFolder url="file://$MODULE_DIR$/packages/web-sdk" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/packages/web-sdk-handlers" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/packages/deact" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/packages/styles" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/.turbo" />
       <excludeFolder url="file://$MODULE_DIR$/apps/extension/.output" />
       <excludeFolder url="file://$MODULE_DIR$/apps/extension/.turbo" />
