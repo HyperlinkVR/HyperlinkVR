@@ -31,16 +31,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build the website
-        run: pnpm --filter @hyperlinkvr/website build
-
-      - name: Build the docs
-        run: pnpm --filter @hyperlinkvr/docs build
-
-      - name: Combine docs under /docs
-        run: |
-          mkdir -p apps/website/dist/docs
-          cp -r apps/docs/build/. apps/website/dist/docs/
+      - name: Build all web content
+        run: pnpm build:web-all
 
       - name: Deploy to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4

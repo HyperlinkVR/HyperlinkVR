@@ -5,6 +5,12 @@
             "dependsOn": ["^build"],
             "outputs": ["build/**", "dist/**"]
         },
+        "build:web": {
+            "outputs": ["build/**", "dist/**"]
+        },
+        "//#build:schema": {
+            "outputs": ["schemas/**"]
+        },
         "dev": {
             "cache": false,
             "persistent": true
