@@ -1,5 +1,5 @@
-@import url("https://fonts.googleapis.com/css2?family=Michroma&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans&display=swap");
+@import "./fonts/Michroma";
+@import "./fonts/IBM_Plex_Sans";
 
 @import "tailwindcss";
 @source "../**/*.{ts,tsx}";
@@ -8,4 +8,3 @@
     --font-title: "Michroma", sans-serif;
     --font-sans: "IBM Plex Sans", sans-serif;
 }
-/*TODO: add fonts direct to bundle/assets package*/
