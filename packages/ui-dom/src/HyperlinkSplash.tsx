@@ -9,9 +9,9 @@ export const HyperlinkSplash = ({ custom_subtext, show_subtext_if_not_installed 
 
     return (
         <div className="flex flex-col items-center justify-center h-screen w-screen text-center" style={{ backgroundImage: `url(${BG_URL})`, backgroundSize: "cover", backgroundPosition: "center" }}>
-            <div className="backdrop-blur-md flex flex-col items-center justify-center h-screen w-screen pb-32 px-4 text-white">
+            <div className="backdrop-blur-md flex flex-col items-center justify-center h-screen w-screen pb-32 px-4 text-white font-sans">
                 <img src={ANIM_LOGO_URL} className="w-1/2 max-w-[300px] mb-6" />
-                <h1 className="text-3xl font-bold mb-3">HyperlinkVR</h1>
+                <h1 className="text-3xl font-bold mb-3 font-title">HyperlinkVR</h1>
 
                 <p className="text-lg mb-2">There's a world behind this page.</p>
 
