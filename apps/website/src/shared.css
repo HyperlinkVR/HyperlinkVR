@@ -1,11 +1,8 @@
 @import url("https://fonts.googleapis.com/css2?family=Michroma&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans&display=swap");
-/*TODO: add fonts direct to bundle*/
-/*TODO: move this to shared place across monorepo*/
 
 @import "tailwindcss";
 @source "../../../packages/**/*.{ts,tsx}";
-@source "./entrypoints/**/*.{ts,tsx}";
 
 @theme inline {
     --font-title: "Michroma", sans-serif;

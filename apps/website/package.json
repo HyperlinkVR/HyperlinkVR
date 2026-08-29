@@ -1,25 +1,28 @@
 {
-  "name": "@hyperlinkvr/website",
-  "type": "module",
-  "version": "0.0.1",
-  "private": true,
-  "description": "Static site and official worlds.",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
-  },
-  "dependencies": {
-    "react": "catalog:",
-    "react-dom": "catalog:"
-  },
-  "devDependencies": {
-    "@hyperlinkvr/web-sdk": "workspace:*",
-    "@types/react": "catalog:",
-    "@types/react-dom": "catalog:",
-    "@vitejs/plugin-react": "^6.1.1",
-    "typescript": "5.9.3",
-    "vite": "^8.1.0"
-  }
+    "name": "@hyperlinkvr/website",
+    "type": "module",
+    "version": "0.0.1",
+    "private": true,
+    "description": "Static site and official worlds.",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview",
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@hyperlinkvr/ui-dom": "workspace:*",
+        "react": "catalog:",
+        "react-dom": "catalog:"
+    },
+    "devDependencies": {
+        "@hyperlinkvr/web-sdk": "workspace:*",
+        "@tailwindcss/vite": "catalog:",
+        "@types/react": "catalog:",
+        "@types/react-dom": "catalog:",
+        "@vitejs/plugin-react": "^6.1.1",
+        "tailwindcss": "catalog:",
+        "typescript": "5.9.3",
+        "vite": "^8.1.0"
+    }
 }

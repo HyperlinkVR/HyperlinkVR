@@ -13,7 +13,7 @@ catalog:
   '@react-three/uikit-default': ^1.0.74
   '@react-three/uikit-lucide': ^1.0.74
   '@react-three/xr': ^6.6.30
-  '@tailwindcss/vite': ^4.3.1
+  '@tailwindcss/vite': 4.3.1
   '@types/node': 20.11.5
   '@types/react': 19.2.3
   '@types/react-dom': 19.2.3
@@ -23,7 +23,7 @@ catalog:
   react: 19.2.7
   react-dom: 19.2.7
   tailwind-preset-mantine: ^4.1.0
-  tailwindcss: ^4.1.4
+  tailwindcss: 4.3.1
   three: ^0.185.0
   troika-three-text: ^0.52.4
   wxt: ^0.21.4

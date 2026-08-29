@@ -1,11 +1,29 @@
-import { useGameState } from "./hooks/useGameState";
-import { Splash } from "./components/Splash";
+import { HyperlinkSplash } from "@hyperlinkvr/ui-dom";
+import { useEffect, useState } from "react";
+
+
+
 import { Scoreboard } from "./components/Scoreboard";
+import { useGameState } from "./hooks/useGameState";
+
 
 export const App = () => {
     const {hole} = useGameState();
+    
+    const [hyperlink_ready, setHyperlinkReady] = useState(false);
+    useEffect(() => {
+        if (typeof (window as any).hyperlinkvr === "undefined") {
+            return;
+        }
 
-    return hole === 0 ? <Splash /> : <Scoreboard />;
+        hyperlinkvr.on_ready(() => {
+            setHyperlinkReady(true);
+        });
+    }, []);
+
+    if (hole === 0) {
+        return hyperlink_ready ? <p>Press start game to begin!</p> : <HyperlinkSplash />;
+    } else {
+        return <Scoreboard />;
+    }
 }
-
-// TODO: create a generic hyperlink splash screen component in ui-dom that points to open the game (or where to get it if they dont have it)

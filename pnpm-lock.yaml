@@ -31,7 +31,7 @@ catalogs:
       specifier: ^6.6.30
       version: 6.6.30
     '@tailwindcss/vite':
-      specifier: ^4.3.1
+      specifier: 4.3.1
       version: 4.3.1
     '@types/node':
       specifier: 20.11.5
@@ -61,7 +61,7 @@ catalogs:
       specifier: ^4.1.0
       version: 4.1.0
     tailwindcss:
-      specifier: ^4.1.4
+      specifier: 4.3.1
       version: 4.3.1
     troika-three-text:
       specifier: ^0.52.4
@@ -288,6 +288,9 @@ importers:
 
   apps/website:
     dependencies:
+      '@hyperlinkvr/ui-dom':
+        specifier: workspace:*
+        version: link:../../packages/ui-dom
       react:
         specifier: 'catalog:'
         version: 19.2.7
@@ -298,6 +301,9 @@ importers:
       '@hyperlinkvr/web-sdk':
         specifier: workspace:*
         version: link:../../packages/web-sdk
+      '@tailwindcss/vite':
+        specifier: 'catalog:'
+        version: 4.3.1(vite@8.1.0(esbuild@0.28.1)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.26))(terser@5.51.2)(tsx@4.22.4)(yaml@2.9.0))
       '@types/react':
         specifier: 'catalog:'
         version: 19.2.3
@@ -307,6 +313,9 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^6.1.1
         version: 6.1.1(vite@8.1.0(esbuild@0.28.1)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.26))(terser@5.51.2)(tsx@4.22.4)(yaml@2.9.0))
+      tailwindcss:
+        specifier: 'catalog:'
+        version: 4.3.1
       typescript:
         specifier: 5.9.3
         version: 5.9.3
@@ -12536,6 +12545,13 @@ snapshots:
       '@tailwindcss/oxide': 4.3.1(patch_hash=adaee549c69537cdd9ceb5b9384d1da927741fb9a0540133a953c7b14dcbb6dc)
       tailwindcss: 4.3.1
       vite: 8.1.0(@types/node@20.11.5)(esbuild@0.28.1)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.26))(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)
+
+  '@tailwindcss/vite@4.3.1(vite@8.1.0(esbuild@0.28.1)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.26))(terser@5.51.2)(tsx@4.22.4)(yaml@2.9.0))':
+    dependencies:
+      '@tailwindcss/node': 4.3.1
+      '@tailwindcss/oxide': 4.3.1(patch_hash=adaee549c69537cdd9ceb5b9384d1da927741fb9a0540133a953c7b14dcbb6dc)
+      tailwindcss: 4.3.1
+      vite: 8.1.0(esbuild@0.28.1)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.26))(terser@5.51.2)(tsx@4.22.4)(yaml@2.9.0)
 
   '@topcli/prompts@4.0.0': {}
 

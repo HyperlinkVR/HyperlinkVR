@@ -1,6 +1,6 @@
+import "../shared.css";
+
 import type * as hvr from "@hyperlinkvr/web-sdk";
-
-
 
 import { add_player,
     compute_hole_pars, get_ball_by_object_id, get_ball_of_player, get_owner_of_ball, next_hole, out_of_bounds, scored_on_hole, stroke_at_rest, take_stroke } from "./game_state";
