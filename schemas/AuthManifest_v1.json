@@ -1,0 +1,73 @@
+{
+    "$id": "https://hyperlink.surf/schemas/AuthManifest_v1.json",
+    "version": 1,
+    "title": "HyperlinkVR - Auth Manifest (version 1)",
+    "description": "An auth manifest for HyperlinkVR to describe the authentication methods supported by a site, as well as friendly display properties, under the .well-known/hyperlinkvr/auth-manifest.json path. This schema is version 1.",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+        "$schema": {
+            "default": "https://hyperlink.surf/schemas/AuthManifest_v1.json",
+            "type": "string"
+        },
+        "version": {
+            "type": "integer",
+            "const": 1
+        },
+        "methods": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+                "type": "string",
+                "enum": [
+                    "static",
+                    "jwt",
+                    "passkey"
+                ]
+            }
+        },
+        "host_name": {
+            "type": "string"
+        },
+        "host_description": {
+            "type": "string"
+        },
+        "host_icon": {
+            "type": "string",
+            "format": "uri"
+        },
+        "open_for_registration": {
+            "default": true,
+            "type": "boolean"
+        },
+        "static_submit_hint": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "$schema",
+        "version",
+        "methods",
+        "open_for_registration"
+    ],
+    "additionalProperties": false,
+    "if": {
+        "required": [
+            "static_submit_hint"
+        ]
+    },
+    "then": {
+        "properties": {
+            "methods": {
+                "contains": {
+                    "const": "static"
+                }
+            }
+        },
+        "errorMessage": {
+            "properties": {
+                "methods": "static_submit_hint should not be provided if static auth is not supported"
+            }
+        }
+    }
+}

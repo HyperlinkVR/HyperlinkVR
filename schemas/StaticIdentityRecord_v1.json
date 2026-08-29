@@ -1,0 +1,148 @@
+{
+    "$id": "https://hyperlink.surf/schemas/StaticIdentityRecord_v1.json",
+    "version": 1,
+    "title": "HyperlinkVR - Static Identity Record (version 1)",
+    "description": "A static identity record for HyperlinkVR to authenticate users on a static site, under the .well-known/hyperlinkvr/auth/* path. This schema is version 1.",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+        "$schema": {
+            "default": "https://hyperlink.surf/schemas/StaticIdentityRecord_v1.json",
+            "type": "string"
+        },
+        "version": {
+            "type": "integer",
+            "const": 1
+        },
+        "identity": {
+            "type": "string"
+        },
+        "created_at": {
+            "type": "number"
+        },
+        "status": {
+            "type": "string",
+            "enum": [
+                "active",
+                "suspended"
+            ]
+        },
+        "auth": {
+            "type": "object",
+            "properties": {
+                "password_deriv": {
+                    "type": "object",
+                    "properties": {
+                        "algorithm": {
+                            "type": "string",
+                            "enum": [
+                                "argon2"
+                            ]
+                        },
+                        "custom": {
+                            "type": "object",
+                            "properties": {
+                                "salt": {
+                                    "type": "string"
+                                },
+                                "iv": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "salt",
+                                "iv"
+                            ],
+                            "additionalProperties": false
+                        }
+                    },
+                    "required": [
+                        "algorithm",
+                        "custom"
+                    ],
+                    "additionalProperties": false
+                },
+                "encrypted_private_key": {
+                    "type": "string"
+                },
+                "public_key": {
+                    "anyOf": [
+                        {
+                            "type": "object",
+                            "properties": {
+                                "kty": {
+                                    "type": "string",
+                                    "const": "EC"
+                                },
+                                "crv": {
+                                    "type": "string",
+                                    "enum": [
+                                        "P-256",
+                                        "P-384",
+                                        "P-521"
+                                    ]
+                                },
+                                "x": {
+                                    "type": "string"
+                                },
+                                "y": {
+                                    "type": "string"
+                                },
+                                "ext": {
+                                    "type": "boolean"
+                                }
+                            },
+                            "required": [
+                                "kty",
+                                "crv",
+                                "x",
+                                "y"
+                            ],
+                            "additionalProperties": false
+                        },
+                        {
+                            "type": "object",
+                            "properties": {
+                                "kty": {
+                                    "type": "string",
+                                    "const": "OKP"
+                                },
+                                "crv": {
+                                    "type": "string",
+                                    "const": "Ed25519"
+                                },
+                                "x": {
+                                    "type": "string"
+                                },
+                                "ext": {
+                                    "type": "boolean"
+                                }
+                            },
+                            "required": [
+                                "kty",
+                                "crv",
+                                "x"
+                            ],
+                            "additionalProperties": false
+                        }
+                    ]
+                }
+            },
+            "required": [
+                "password_deriv",
+                "encrypted_private_key",
+                "public_key"
+            ],
+            "additionalProperties": false
+        }
+    },
+    "required": [
+        "$schema",
+        "version",
+        "identity",
+        "created_at",
+        "status",
+        "auth"
+    ],
+    "additionalProperties": false
+}
