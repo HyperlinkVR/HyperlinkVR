@@ -1,0 +1,28 @@
+{
+    "name": "@hyperlinkvr/deact",
+    "version": "0.0.1",
+    "private": true,
+    "type": "module",
+    "bin": {
+        "deact": "./bin/index.js"
+    },
+    "scripts": {
+        "build": "tsup",
+        "prepublishOnly": "npm run build"
+    },
+    "dependencies": {
+        "@preact/preset-vite": "^2.10.6",
+        "@tailwindcss/vite": "catalog:",
+        "commander": "^15.0.0",
+        "preact": "^10.29.8",
+        "preact-custom-element": "^4.6.0",
+        "tailwindcss": "catalog:",
+        "vite": "^8.1.0",
+        "vite-plugin-css-injected-by-js": "^5.0.2"
+    },
+    "devDependencies": {
+        "@types/node": "catalog:",
+        "tsup": "^8.5.1",
+        "typescript": "^7.0.2"
+    }
+}

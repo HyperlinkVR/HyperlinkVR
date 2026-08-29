@@ -18,6 +18,7 @@
     },
     "scripts": {
         "build": "tsc --build",
+        "build:deact": "deact ./src/HyperlinkSplash.tsx -t web-component -o ./dist/wc && deact ./src/HyperlinkSplash.tsx -t legacy-dom -o ./dist/dom",
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {
@@ -28,6 +29,7 @@
         "lucide-react": "catalog:"
     },
     "devDependencies": {
-        "@types/react": "catalog:"
+        "@types/react": "catalog:",
+        "@hyperlinkvr/deact": "workspace:*"
     }
 }
