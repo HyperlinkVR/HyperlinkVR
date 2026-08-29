@@ -18,7 +18,7 @@
     },
     "scripts": {
         "build": "tsc --build",
-        "build:deact": "deact ./src/HyperlinkSplash.tsx -t web-component -o ./dist/wc && deact ./src/HyperlinkSplash.tsx -t legacy-dom -o ./dist/dom",
+        "build:deact": "deact ./src/HyperlinkSplash.tsx -t web-component -o ./dist/wc -c ../assets/shared.css && deact ./src/HyperlinkSplash.tsx -t legacy-dom -o ./dist/dom -c ../assets/shared.css",
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {

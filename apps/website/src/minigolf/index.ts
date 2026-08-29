@@ -1,4 +1,4 @@
-import "../shared.css";
+import "../../../../packages/assets/shared.css";
 
 import type * as hvr from "@hyperlinkvr/web-sdk";
 

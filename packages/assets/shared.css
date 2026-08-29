@@ -2,9 +2,10 @@
 @import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans&display=swap");
 
 @import "tailwindcss";
-@source "../../../packages/**/*.{ts,tsx}";
+@source "../**/*.{ts,tsx}";
 
 @theme inline {
     --font-title: "Michroma", sans-serif;
     --font-sans: "IBM Plex Sans", sans-serif;
 }
+/*TODO: add fonts direct to bundle/assets package*/

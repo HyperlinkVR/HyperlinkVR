@@ -1,6 +1,7 @@
 import * as component_module from "__COMPONENT_PATH__";
 import styles from "__CSS_PATH__?inline";
 import register from "preact-custom-element";
+import { hoist_font_rules } from "./hoist-fonts";
 
 
 // accept a default export or a single named function export, so authors can pick whichever style they like without the cli needing to know the name
@@ -18,10 +19,13 @@ if (candidates.length !== 1) {
 
 const Component = candidates[0] as (props: Record<string, any>) => any;
 
+// register font faces on the document; keep the rest scoped to the shadow root
+const shadow_styles = hoist_font_rules(styles);
+
 function WebComponentWrapper(props: Record<string, any>) {
     return (
         <>
-            <style>{styles}</style>
+            <style>{shadow_styles}</style>
             <Component {...props} />
         </>
     );

@@ -1,6 +1,7 @@
 import * as component_module from "__COMPONENT_PATH__";
 import styles from "__CSS_PATH__?inline";
 import { render } from "preact";
+import { hoist_font_rules } from "./hoist-fonts";
 
 // accept a default export or a single named function export, so authors can pick whichever style they like without the cli needing to know the name
 const exports = component_module as Record<string, unknown>;
@@ -46,7 +47,8 @@ window[`init_${__EXPORT_NAME__}`] = function (
         mount.id = "root";
 
         const style_tag = document.createElement("style");
-        style_tag.textContent = styles;
+        // register font faces on the document; keep the rest in the shadow root
+        style_tag.textContent = hoist_font_rules(styles);
         shadow_root.appendChild(style_tag);
         shadow_root.appendChild(mount);
     }
