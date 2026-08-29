@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import { join, resolve, sep } from "node:path";
 import { defineConfig, type Plugin } from "vite";
+import react from "@vitejs/plugin-react";
 
 const source_root = resolve(import.meta.dirname, "src");
 const static_root = resolve(import.meta.dirname, "public");
@@ -45,7 +46,7 @@ export default defineConfig({
     publicDir: static_root,
     appType: "mpa",
 
-    plugins: [redirect_to_directory_slash([source_root, static_root])],
+    plugins: [redirect_to_directory_slash([source_root, static_root]), react()],
 
     server: {
         port: 5175,

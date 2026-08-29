@@ -13,6 +13,10 @@ export const load_all_markers = async (offset_pos?: [number, number, number]) =>
     });
 }
 
+export const are_markers_loaded = () => {
+    return all_markers !== null;
+}
+
 let hole_markers: MarkerMap | null = null;
 
 export const get_hole_markers = () => {

@@ -287,10 +287,26 @@ importers:
         version: 0.21.4(@rspack/core@1.7.12)(esbuild@0.28.1)(eslint@10.9.1(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477)))(oxc-parser@0.137.0)(rolldown@1.1.3)(rollup@3.30.0)(typescript@6.0.3)(vite@8.1.0(@types/node@20.11.5)(esbuild@0.28.1)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.26))(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0))(webpack@5.110.0(esbuild@0.28.1)(postcss@8.5.26))
 
   apps/website:
+    dependencies:
+      react:
+        specifier: 'catalog:'
+        version: 19.2.7
+      react-dom:
+        specifier: 'catalog:'
+        version: 19.2.7(react@19.2.7)
     devDependencies:
       '@hyperlinkvr/web-sdk':
         specifier: workspace:*
         version: link:../../packages/web-sdk
+      '@types/react':
+        specifier: 'catalog:'
+        version: 19.2.3
+      '@types/react-dom':
+        specifier: 'catalog:'
+        version: 19.2.3(@types/react@19.2.3)
+      '@vitejs/plugin-react':
+        specifier: ^6.1.1
+        version: 6.1.1(vite@8.1.0(esbuild@0.28.1)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.26))(terser@5.51.2)(tsx@4.22.4)(yaml@2.9.0))
       typescript:
         specifier: 5.9.3
         version: 5.9.3
@@ -3877,6 +3893,22 @@ packages:
     resolution: {integrity: sha512-Yy19y6O2GJq8f7CHf7L0nxL8bf4PZCPaVOCgJrusOeFHY1LvHgYXnmnXg6N5iwAnbgbZCDjo60SiM6IPJi9C5g==}
     peerDependencies:
       react: '>= 16.8.0'
+
+  '@vitejs/plugin-react@6.1.1':
+    resolution: {integrity: sha512-yxLaQV9gkhS8ezJqCM6+ndU7mDY6gqAg75NQ+0IjwEI8IYOmQCgkRwHKVSfWXW076DsqMo0Dk+0FK1U+M5RgFw==}
+    engines: {node: ^20.19.0 || >=22.12.0}
+    peerDependencies:
+      '@rolldown/plugin-babel': ^0.1.7 || ^0.2.0
+      babel-plugin-react-compiler: ^1.0.0
+      oxc-transform-react: ^0.145.0
+      vite: ^8.0.0
+    peerDependenciesMeta:
+      '@rolldown/plugin-babel':
+        optional: true
+      babel-plugin-react-compiler:
+        optional: true
+      oxc-transform-react:
+        optional: true
 
   '@vue/compiler-core@3.3.4':
     resolution: {integrity: sha512-cquyDNvZ6jTbf/+x+AgM2Arrp6G4Dzbb0R64jiG804HRMfRiFXWI6kqUVqZ6ZR0bQhIoQjB4+2bhNtVwndW15g==}
@@ -12831,6 +12863,11 @@ snapshots:
     dependencies:
       '@use-gesture/core': 10.3.1
       react: 19.2.7
+
+  '@vitejs/plugin-react@6.1.1(vite@8.1.0(esbuild@0.28.1)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.26))(terser@5.51.2)(tsx@4.22.4)(yaml@2.9.0))':
+    dependencies:
+      '@rolldown/pluginutils': 1.0.1
+      vite: 8.1.0(esbuild@0.28.1)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.26))(terser@5.51.2)(tsx@4.22.4)(yaml@2.9.0)
 
   '@vue/compiler-core@3.3.4':
     dependencies:

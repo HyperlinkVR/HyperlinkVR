@@ -1,7 +1,9 @@
 import type * as hvr from "@hyperlinkvr/web-sdk";
 
+
+
 import { show_hole, show_oob, show_result, show_stroke } from "./hud";
-import { get_start_markers } from "./markers";
+import { are_markers_loaded, get_start_markers } from "./markers";
 
 
 const h = hyperlinkvr.builders;
@@ -30,6 +32,94 @@ const create_player_state = (
 };
 
 const players = new Map<string | null, PlayerState>();
+
+interface StoreSnapshot {
+    hole: number;
+    players: Map<string | null, Omit<PlayerState, "last_pos">>; // last_pos will be there, but don't use it, it won't be updated in real time
+}
+
+const game_state_listeners = new Set<() => void>();
+let game_state_snapshot: StoreSnapshot = {
+    hole: 0,
+    players: new Map(players)
+};
+const notify_game_state = () => {
+    game_state_snapshot = {
+        hole: current_hole,
+        players: new Map(players)
+    };
+    for (const cb of game_state_listeners) {
+        cb();
+    }
+};
+export const game_state_store = {
+    subscribe: (cb: () => void) => {
+        game_state_listeners.add(cb);
+        return () => {
+            game_state_listeners.delete(cb);
+        };
+    },
+    get_snapshot: () => game_state_snapshot
+};
+
+let hole_pars: Map<number, number> | null = null;
+let total_par = 0;
+
+const hole_info_listeners = new Set<() => void>();
+let hole_info_snapshot: {
+    holes: Record<number, { par: number }>;
+    total_par: number;
+} | null = null;
+const notify_hole_info = () => {
+    if (!are_markers_loaded()) {
+        hole_info_snapshot = null;
+    } else {
+        const holes: Record<number, { par: number }> = {};
+        for (const [hole_num, par] of hole_pars!) {
+            holes[hole_num] = { par };
+        }
+
+        hole_info_snapshot = {
+            holes,
+            total_par
+        };
+    }
+
+    for (const cb of hole_info_listeners) {
+        cb();
+    }
+}
+export const hole_info_store = {
+    subscribe: (cb: () => void) => {
+        hole_info_listeners.add(cb);
+        return () => {
+            hole_info_listeners.delete(cb);
+        };
+    },
+    get_snapshot: () => hole_info_snapshot
+};
+
+export const compute_hole_pars = () => {
+    if (hole_pars !== null) {
+        return;
+    }
+
+    hole_pars = new Map<number, number>();
+    total_par = 0;
+
+    const start_markers = get_start_markers();
+
+    for (const [name, marker] of start_markers) {
+        const hole_num = parseInt(name);
+        const par = marker.properties?.par;
+        if (par !== undefined) {
+            hole_pars.set(hole_num, par as number);
+            total_par += par as number;
+        }
+    }
+
+    notify_hole_info();
+};
 
 export const add_player = async (player: hvr.players.Player, spawn_pos: [number, number, number] = [0, 0, 0]) => {
     const username = await player.get_username();
@@ -66,6 +156,7 @@ export const add_player = async (player: hvr.players.Player, spawn_pos: [number,
         .create();
 
     players.set(username, create_player_state(created_ball, created_putter));
+    notify_game_state();
 };
 
 let current_hole = 0;
@@ -98,6 +189,8 @@ export const next_hole = () => {
 
         show_stroke(1, username);
     }
+
+    notify_game_state();
 
     setTimeout(() => {
         going_to_next_hole = false;
@@ -182,6 +275,8 @@ export const scored_on_hole = async (username: string | null) => {
     }
 
     state.finished_this_hole = true;
+    notify_game_state();
+
     show_stroke(state.strokes_this_hole, username);
 
     const start_markers = get_start_markers();
@@ -219,6 +314,8 @@ export const take_stroke = (username: string | null) => {
 
     state.strokes_this_hole++;
     state.score++;
+
+    notify_game_state();
 }
 
 export const stroke_at_rest = (username: string | null) => {
@@ -264,6 +361,8 @@ const dev_cheats = {
 
             show_stroke(1, username);
         }
+
+        notify_game_state();
 
         show_hole(current_hole, start_marker.properties);
     },
