@@ -1,4 +1,4 @@
-name: Deploy Website and Docs to gh-pages
+name: Deploy all web content to gh-pages
 
 on:
   workflow_dispatch:
@@ -10,6 +10,8 @@ on:
       - 'apps/docs/**'
       - 'packages/web-sdk/**'
       - 'packages/vr-engine-schemas/**'
+      - 'packages/ui-dom/**'
+      - 'packages/auth/**'
 
 permissions:
   contents: write
