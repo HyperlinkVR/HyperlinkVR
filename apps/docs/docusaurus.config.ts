@@ -152,10 +152,13 @@ const config: Config = {
             style: "dark",
             links: [
                 {
-                  title: "Guides",
-                  items: [
-                      { label: "Getting started", to: "/guides/getting-started" },
-                      { label: "All guides", to: "/guides" }
+                    title: "Guides",
+                    items: [
+                        {
+                            label: "Getting started",
+                            to: "/guides/getting-started"
+                        },
+                        { label: "All guides", to: "/guides" }
                     ]
                 },
                 {
@@ -214,6 +217,16 @@ const config: Config = {
             ]
         }),
         typedoc("vr-engine-schemas", "engine-schemas")
+    ],
+    themes: [
+        [
+            require.resolve("@easyops-cn/docusaurus-search-local"),
+            /** @type {import("@easyops-cn/docusaurus-search-local").PluginOptions} */
+            ({
+                hashed: true,
+                indexBlog: false,
+            })
+        ]
     ]
 };
 
