@@ -5,7 +5,7 @@
     "scripts": {
         "docusaurus": "docusaurus",
         "start": "docusaurus start --port 3001",
-        "dev": "npm run start",
+        "dev": "docusaurus start --port 3001 --no-open",
         "build": "docusaurus build",
         "build:web": "docusaurus build",
         "swizzle": "docusaurus swizzle",
