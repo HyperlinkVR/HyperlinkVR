@@ -157,8 +157,7 @@ const config: Config = {
                         {
                             label: "Getting started",
                             to: "/guides/getting-started"
-                        },
-                        { label: "All guides", to: "/guides" }
+                        }
                     ]
                 },
                 {
