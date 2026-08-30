@@ -224,6 +224,7 @@ const config: Config = {
             ({
                 hashed: true,
                 indexBlog: false,
+                docsRouteBasePath: "/",
             })
         ]
     ]
