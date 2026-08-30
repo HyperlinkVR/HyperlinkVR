@@ -566,10 +566,10 @@ export const Raycast = ({
 
             let should_report = nearest ? settings.report_hits : settings.report_misses;
 
-            if (should_report && settings.trigger.type === "continuous") {
+            if (should_report && settings.firing.type === "continuous") {
                 const unchanged = has_reported.current && key === last_target_key.current;
 
-                if (unchanged && settings.trigger.ignore_unchanged) {
+                if (unchanged && settings.firing.ignore_unchanged) {
                     // same target, so only speak up if the hit point actually moved
                     const moved = nearest
                         ? last_point.current.distanceTo(
@@ -577,7 +577,7 @@ export const Raycast = ({
                         )
                         : 0;
 
-                    should_report = moved >= settings.trigger.min_change_delta;
+                    should_report = moved >= settings.firing.min_change_delta;
                 }
             }
 
@@ -632,17 +632,17 @@ export const Raycast = ({
 
         const now = performance.now();
 
-        if (settings.trigger.type === "continuous") {
-            if (now - last_cast_ms.current < settings.trigger.interval_ms) return;
+        if (settings.firing.type === "continuous") {
+            if (now - last_cast_ms.current < settings.firing.interval_ms) return;
             last_cast_ms.current = now;
             publish(fire());
             return;
         }
 
-        if (settings.trigger.type !== "on-use") return;
+        if (settings.firing.type !== "on-use") return;
 
         const holder = get_object_holder(object_id);
-        if (settings.trigger.require_held && !holder) {
+        if (settings.firing.require_held && !holder) {
             was_pressed.current = false;
             return;
         }
@@ -651,7 +651,7 @@ export const Raycast = ({
         // gun and a monitor watching "use" always agree about what happened
         const pressed =
             session_mode === "vr"
-                ? settings.trigger.require_held
+                ? settings.firing.require_held
                     ? holder?.trigger.pressed ?? false
                     : hands.some((hand) => hand.trigger.pressed)
                 : flat_input.use;
@@ -660,7 +660,7 @@ export const Raycast = ({
         was_pressed.current = pressed;
 
         if (!just_pressed) return;
-        if (now - last_cast_ms.current < settings.trigger.cooldown_ms) return;
+        if (now - last_cast_ms.current < settings.firing.cooldown_ms) return;
 
         last_cast_ms.current = now;
         publish(fire());

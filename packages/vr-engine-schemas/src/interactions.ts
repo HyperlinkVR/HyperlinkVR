@@ -385,7 +385,7 @@ export const RaycastTargetsSchema = z.object({
 export type RaycastTargets = z.infer<typeof RaycastTargetsSchema>;
 export type RaycastTargetsInput = z.input<typeof RaycastTargetsSchema>;
 
-export const RaycastTriggerSchema = z.discriminatedUnion("type", [
+export const RaycastFiringSchema = z.discriminatedUnion("type", [
     // only fires when the sdk calls .fire()
     z.object({ type: z.literal("manual") }),
 
@@ -405,8 +405,8 @@ export const RaycastTriggerSchema = z.discriminatedUnion("type", [
         cooldown_ms: z.number().nonnegative().default(0)
     })
 ]);
-export type RaycastTrigger = z.infer<typeof RaycastTriggerSchema>;
-export type RaycastTriggerInput = z.input<typeof RaycastTriggerSchema>;
+export type RaycastFiring = z.infer<typeof RaycastFiringSchema>;
+export type RaycastFiringInput = z.input<typeof RaycastFiringSchema>;
 
 export const RaycastRaysSchema = z.object({
     count: z.number().int().positive().default(1),
@@ -436,7 +436,7 @@ export const RaycastInteractionSchema = bindable({
 
     aim: RaycastAimSchema.default({ type: "direction" } as RaycastAim),
     targets: RaycastTargetsSchema.default({} as RaycastTargets),
-    trigger: RaycastTriggerSchema.default({ type: "manual" }),
+    firing: RaycastFiringSchema.default({ type: "manual" }),
 
     // 0 is a true ray. > 0 sphere-casts instead, for forgiving aim
     thickness: z.number().nonnegative().default(0),

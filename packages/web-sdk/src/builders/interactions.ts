@@ -1,5 +1,5 @@
-import type { ColliderOrCollection, DirectionalLightInteraction, DirectionalLightInteractionInput, FollowPlayerInteractionInput, GlobalAudioInteraction, GlobalAudioInteractionInput, GrabbableInteraction, GrabbableInteractionInput, GrabCollider, GrabOffsetInput, ParticleEmitterBehaviorInput, ParticleEmitterColorInput, ParticleEmitterInteraction, ParticleEmitterInteractionInput, ParticleEmitterRandomisableValueInput, ParticleEmitterShapeInput, ParticleEmitterVisualInput, PointLightInteraction, PointLightInteractionInput, PositionalAudioInteraction, PositionalAudioInteractionInput, RaycastAim, RaycastAimInput, RaycastInteraction, RaycastInteractionInput, RaycastRays, RaycastRaysInput, RaycastResult, RaycastSpace, RaycastTargets, RaycastTargetsInput, RaycastTrigger, RaycastTriggerInput, Rotation, SeatInteraction, SeatInteractionInput, SpotLightInteraction, SpotLightInteractionInput, TriggerVolumeInteraction, TriggerVolumeInteractionInput, TweenEasing } from "@hyperlinkvr/vr-engine-schemas";
-import { DirectionalLightInteractionSchema, FollowPlayerInteractionSchema, GlobalAudioInteractionSchema, GrabbableInteractionSchema, ParticleEmitterBehaviorSchema, ParticleEmitterColorSchema, ParticleEmitterInteractionSchema, ParticleEmitterRandomisableValueSchema, ParticleEmitterShapeSchema, ParticleEmitterVisualSchema, PointLightInteractionSchema, PositionalAudioInteractionSchema, RaycastAimSchema, RaycastInteractionSchema, RaycastRaysSchema, RaycastTargetsSchema, RaycastTriggerSchema, RotationSchema, SeatInteractionSchema, SpotLightInteractionSchema, TriggerVolumeInteractionSchema } from "@hyperlinkvr/vr-engine-schemas";
+import type { ColliderOrCollection, DirectionalLightInteraction, DirectionalLightInteractionInput, FollowPlayerInteractionInput, GlobalAudioInteraction, GlobalAudioInteractionInput, GrabbableInteraction, GrabbableInteractionInput, GrabCollider, GrabOffsetInput, ParticleEmitterBehaviorInput, ParticleEmitterColorInput, ParticleEmitterInteraction, ParticleEmitterInteractionInput, ParticleEmitterRandomisableValueInput, ParticleEmitterShapeInput, ParticleEmitterVisualInput, PointLightInteraction, PointLightInteractionInput, PositionalAudioInteraction, PositionalAudioInteractionInput, RaycastAim, RaycastAimInput, RaycastInteraction, RaycastInteractionInput, RaycastRays, RaycastRaysInput, RaycastResult, RaycastSpace, RaycastTargets, RaycastTargetsInput, RaycastFiring, RaycastFiringInput, Rotation, SeatInteraction, SeatInteractionInput, SpotLightInteraction, SpotLightInteractionInput, TriggerVolumeInteraction, TriggerVolumeInteractionInput, TweenEasing } from "@hyperlinkvr/vr-engine-schemas";
+import { DirectionalLightInteractionSchema, FollowPlayerInteractionSchema, GlobalAudioInteractionSchema, GrabbableInteractionSchema, ParticleEmitterBehaviorSchema, ParticleEmitterColorSchema, ParticleEmitterInteractionSchema, ParticleEmitterRandomisableValueSchema, ParticleEmitterShapeSchema, ParticleEmitterVisualSchema, PointLightInteractionSchema, PositionalAudioInteractionSchema, RaycastAimSchema, RaycastInteractionSchema, RaycastRaysSchema, RaycastTargetsSchema, RaycastFiringSchema, RotationSchema, SeatInteractionSchema, SpotLightInteractionSchema, TriggerVolumeInteractionSchema } from "@hyperlinkvr/vr-engine-schemas";
 
 
 
@@ -887,9 +887,9 @@ export class RaycastTargetsBuilder extends BaseBuilder<RaycastTargetsInput> {
  * @group Interactions
  * @category Raycasts
  */
-export class RaycastTriggerBuilder extends BaseBuilder<RaycastTriggerInput> {
+export class RaycastFiringBuilder extends BaseBuilder<RaycastFiringInput> {
     constructor() {
-        super({type: "manual"} as RaycastTriggerInput);
+        super({type: "manual"} as RaycastFiringInput);
     }
 
     // only fires when the sdk calls fire()
@@ -913,8 +913,8 @@ export class RaycastTriggerBuilder extends BaseBuilder<RaycastTriggerInput> {
         return this;
     }
 
-    build(): RaycastTrigger {
-        return RaycastTriggerSchema.parse(this._internal);
+    build(): RaycastFiring {
+        return RaycastFiringSchema.parse(this._internal);
     }
 }
 
@@ -992,8 +992,8 @@ export class RaycastInteractionBuilder extends BaseBuilder<RaycastInteractionInp
         return this;
     }
 
-    set_trigger(trigger: RaycastTrigger) {
-        this._internal.trigger = trigger;
+    set_firing(firing: RaycastFiring) {
+        this._internal.firing = firing;
         return this;
     }
 
@@ -1038,7 +1038,7 @@ export class RaycastInteractionBuilder extends BaseBuilder<RaycastInteractionInp
             );
         }
 
-        if (built.trigger.type === "manual" && built.report_target_changes) {
+        if (built.firing.type === "manual" && built.report_target_changes) {
             console.warn(
                 "report_target_changes on a manual raycast only fires when consecutive fire() calls hit different things, which is rarely what is wanted."
             );
