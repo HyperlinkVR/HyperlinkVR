@@ -119,6 +119,12 @@ const config: Config = {
             items: [
                 {
                     type: "docSidebar",
+                    sidebarId: "guidesSidebar",
+                    position: "left",
+                    label: "Guides"
+                },
+                {
+                    type: "docSidebar",
                     sidebarId: "sdkSidebar",
                     position: "left",
                     label: "Web SDK Reference"
@@ -145,6 +151,13 @@ const config: Config = {
         footer: {
             style: "dark",
             links: [
+                {
+                  title: "Guides",
+                  items: [
+                      { label: "Getting started", to: "/guides/getting-started" },
+                      { label: "All guides", to: "/guides" }
+                    ]
+                },
                 {
                     title: "Reference",
                     items: [
