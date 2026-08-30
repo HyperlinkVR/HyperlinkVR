@@ -22,6 +22,23 @@ export default defineContentScript({
 
             // only forward sdk messages
             if (sdk_message && sdk_message.action && sdk_message.action.startsWith("HVRSDK_")) {
+                // only auto-launch on user activation to prevent abuse
+                if (sdk_message.action === "HVRSDK_LAUNCH" && !navigator.userActivation?.isActive) {
+                    console.warn("Dropping HVRSDK_LAUNCH: no user activation");
+
+                    // reply rejection locally
+                    if ("correlation_id" in sdk_message) {
+                        const response_with_correlation: WithCorrelation<WebSDKReplyMessage> = {
+                            for: sdk_message.action,
+                            launching: false,
+                            correlation_id: sdk_message.correlation_id!
+                        };
+                        window.postMessage(response_with_correlation, window.location.origin);
+                    }
+
+                    return;
+                }
+
                 let correlation_id: string | undefined = undefined;
                 if ("correlation_id" in sdk_message) {
                     correlation_id = sdk_message.correlation_id;

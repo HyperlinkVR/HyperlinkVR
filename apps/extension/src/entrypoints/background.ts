@@ -350,6 +350,27 @@ export default defineBackground(() => {
                 return;
             }
 
+            // sdk_forwarder already checks for a user interaction, so fine to accept this
+            if (msg.action === "HVRSDK_LAUNCH") {
+                const tab_id = sender.tab?.id;
+                if (!tab_id) {
+                    console.error("No tab id for HVRSDK_LAUNCH");
+                    dropped = false;
+                    return;
+                }
+
+                if (!check_url_allowed(sender.url || "")) {
+                    console.error("URL not allowed for HyperlinkVR launch:", sender.url);
+                    dropped = false;
+                    return;
+                }
+
+                launch_vr_host(tab_id);
+                sendResponse({ launching: true });
+                dropped = false;
+                return;
+            }
+
             // otherwise we assume this is for us
             handle_web_sdk({
                 message: msg,

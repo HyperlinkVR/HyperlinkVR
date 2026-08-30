@@ -1,8 +1,13 @@
+import { Play, Plus } from "lucide-react";
 import { useMemo } from "react";
-import { Plus } from "lucide-react";
+
 
 const ANIM_LOGO_URL = new URL("../../assets/hyperlinkvr_anim.svg", import.meta.url).href;
 const BG_URL = new URL("../../assets/bg.webp", import.meta.url).href;
+
+const button_class =
+    "mt-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded flex gap-2 cursor-pointer";
+// TODO: we should have a standardised ui button that lives in ui-dom
 
 export const HyperlinkSplash = ({ custom_subtext, show_subtext_if_not_installed = false }: { custom_subtext?: string, show_subtext_if_not_installed?: boolean }) => {
     const has_installed = useMemo(() => typeof (window as any).hyperlinkvr !== "undefined", []);
@@ -21,6 +26,12 @@ export const HyperlinkSplash = ({ custom_subtext, show_subtext_if_not_installed 
                         {custom_subtext && (
                             <p className="text-md text-white/70 mb-4">{custom_subtext}</p>
                         )}
+                        <button
+                            onClick={() => (window as any).hyperlinkvr?.launch?.()}
+                            className={button_class}
+                        >
+                            <Play /> Launch
+                        </button>
                     </>
                 ) : (
                     <>
@@ -29,7 +40,7 @@ export const HyperlinkSplash = ({ custom_subtext, show_subtext_if_not_installed 
                         {custom_subtext && show_subtext_if_not_installed && (
                             <p className="text-md text-white/70 mb-6">{custom_subtext}</p>
                         )}
-                        <a href="https://hyperlink.surf" target="_blank" rel="noopener noreferrer" className="mt-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded flex gap-2">
+                        <a href="https://hyperlink.surf" target="_blank" rel="noopener noreferrer" className={button_class}>
                             <Plus /> Get the extension
                         </a>
                         <p className="text-sm text-white/50 mt-4">Free and open source.</p>
@@ -39,5 +50,3 @@ export const HyperlinkSplash = ({ custom_subtext, show_subtext_if_not_installed 
         </div>
     );
 }
-
-// TODO: add a button that opens it/the popup right away? need to guard against abuse somehow though

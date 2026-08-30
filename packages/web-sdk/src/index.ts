@@ -8,7 +8,7 @@ export * as color from "./color";
 export * as markers from "./re-exports/markers";
 export * as players from "./re-exports/players";
 
-import { bind_rtc_event, facilitate_rtc, send_via_rtc } from "./messenger";
+import { bind_rtc_event, facilitate_rtc, send_via_messaging, send_via_rtc } from "./messenger";
 import { _dispatch_spawn as dispatch_player_spawn } from "./players";
 
 let unbind_rtc_events: (() => void) | undefined;
@@ -80,6 +80,9 @@ export const on_ready = (callback: () => void): (() => void) => {
     }
 
     return () => window.removeEventListener("hyperlinkvr_ready", handler);
+};
+export const launch = async () => {
+    return send_via_messaging({action: "HVRSDK_LAUNCH"});
 };
 
 export const finished_loading = async () => {

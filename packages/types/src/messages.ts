@@ -233,6 +233,10 @@ interface WebSDKResetHUDAction extends BaseWebSDKActionMessage {
     target_username?: string | null;
 }
 
+interface WebSDKLaunchAction extends BaseWebSDKActionMessage {
+    action: "HVRSDK_LAUNCH";
+}
+
 export type WebSDKActionMessage =
     WebSDKAuthQueryAction
     | WebSDKAuthWhoAmIAction
@@ -262,7 +266,8 @@ export type WebSDKActionMessage =
     | WebSDKCreateHUDElementAction
     | WebSDKDestroyHUDElementAction
     | WebSDKUpdateHUDElementAction
-    | WebSDKResetHUDAction;
+    | WebSDKResetHUDAction
+    | WebSDKLaunchAction;
 
 export type ActionMessage =
     StartStreamAction |
@@ -484,6 +489,11 @@ interface WebSDKHUDResetReplyMessage extends BaseWebSDKReplyMessage {
     success: true;
 }
 
+interface WebSDKLaunchReplyMessage extends BaseWebSDKReplyMessage {
+    for: "HVRSDK_LAUNCH";
+    launching: boolean;
+}
+
 export type WebSDKReplyMessage =
     WebSDKAuthQueryReplyMessage
     | WebSDKAuthWhoAmIReplyMessage
@@ -510,7 +520,8 @@ export type WebSDKReplyMessage =
     | WebSDKHUDElementCreatedReplyMessage
     | WebSDKHUDElementDestroyedReplyMessage
     | WebSDKHUDElementUpdatedReplyMessage
-    | WebSDKHUDResetReplyMessage;
+    | WebSDKHUDResetReplyMessage
+    | WebSDKLaunchReplyMessage;
 
 export type ReplyMessage =
     WebSDKReplyMessage;
