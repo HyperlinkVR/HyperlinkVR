@@ -1,5 +1,5 @@
 import { useFrame } from "@react-three/fiber";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import type {
     ObjectRefsContextType} from "../contexts";
@@ -47,6 +47,17 @@ export const wait_for_object_ready = (object_id: string, timeout_ms = 15000) => 
         notifiers.add(notify);
         waiters.set(object_id, notifiers);
     });
+};
+
+export const useObjectReady = (object_id: string, timeout_ms = 15000) => {
+    const [ready, setReady] = useState(ready_ids.has(object_id));
+
+    useEffect(() => {
+        if (ready) return;
+        wait_for_object_ready(object_id, timeout_ms).then(() => setReady(true));
+    }, []);
+
+    return ready;
 };
 
 export const ObjectReadyMarker = ({

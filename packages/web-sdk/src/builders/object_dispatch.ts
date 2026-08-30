@@ -5,7 +5,7 @@ import type {
     EngineObjectDispatch,
     EngineObjectDispatchInput,
     EngineObjectModification,
-    EngineObjectModificationInput,
+    EngineObjectModificationInput, EngineObjectType,
     ObjectMonitor,
     PartialTransformInput,
     PrefabInput,
@@ -24,7 +24,7 @@ import {_INTERACTION_API_MAKERS} from "./interactions";
 import type {BindingMap} from "./triggers";
 import { _PREFAB_API_MAKERS } from "./prefabs";
 
-interface EngineObjectCreationResultBase {
+interface EngineObjectHandleBase {
     object: CreatedEngineObject;
     bindings: BindingMap; // map of binding names to their ids for automatic trigger resolution
     channels: string[]; // list of animation channels on this object (which can be used for keyframing)
@@ -34,21 +34,28 @@ interface EngineObjectCreationResultBase {
 }
 
 /** @group Objects */
-export interface EngineCustomObjectCreationResult extends EngineObjectCreationResultBase {
+export interface EngineCustomObjectHandle extends EngineObjectHandleBase {
     interactions: Record<string, Record<string, Function>>; // interaction apis (binding name -> function name -> function)
     object: CreatedEngineObject & { type: "custom" }; // override type to custom
 }
 
 /** @group Objects */
-export interface EnginePrefabObjectCreationResult extends EngineObjectCreationResultBase {
+export interface EnginePrefabObjectHandle extends EngineObjectHandleBase {
     prefab: Record<string, Function>; // prefab api (function name -> function)
     object: CreatedEngineObject & { type: "prefab" }; // override type to prefab
 }
 
 /** @group Objects */
-export type EngineObjectCreationResult<Type extends "custom" | "prefab" = "custom" | "prefab"> =
-    Type extends "custom" ? EngineCustomObjectCreationResult :
-    Type extends "prefab" ? EnginePrefabObjectCreationResult :
+export interface EngineObjectCollectionHandle extends EngineObjectHandleBase {
+    object: CreatedEngineObject & { type: "collection" }; // override type to collection
+    // TODO: how will command apis be accessed throughout the hierarchy?
+}
+
+/** @group Objects */
+export type EngineObjectCreationResult<Type extends EngineObjectType = EngineObjectType> =
+    Type extends "custom" ? EngineCustomObjectHandle :
+    Type extends "prefab" ? EnginePrefabObjectHandle :
+    Type extends "collection" ? EngineObjectCollectionHandle :
     never;
 
 // triggers are authored against binding names, but the engine only ever routes on the id

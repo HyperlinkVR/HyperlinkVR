@@ -68,7 +68,7 @@ export const EngineObjectSync = () => {
                 return;
             }
 
-            const refs = get_object_refs(message.object_id);
+            const refs = get_object_refs(message.object_id)?.current;
             if (!refs) {
                 reply({ for: "HVRSDK_REFRESH_ENGINE_OBJECT", error: `No refs found for object with id ${message.object_id}` });
                 return;
@@ -100,7 +100,7 @@ export const EngineObjectSync = () => {
                 return;
             }
 
-            const refs = get_object_refs(message.object_id);
+            const refs = get_object_refs(message.object_id)?.current;
             if (!refs) {
                 reply({ for: "HVRSDK_MODIFY_ENGINE_OBJECT", error: `No refs found for object with id ${message.object_id}` });
                 return;

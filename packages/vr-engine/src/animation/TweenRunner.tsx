@@ -34,7 +34,7 @@ export const TweenRunner = () => {
         const now = performance.now();
 
         for (const [id, tween] of active) {
-            const refs = get_object_refs(id);
+            const refs = get_object_refs(id)?.current;
             if (!refs) {
                 cancel_active_tween(id);
                 continue;

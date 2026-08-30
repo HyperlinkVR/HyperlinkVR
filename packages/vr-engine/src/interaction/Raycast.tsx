@@ -112,7 +112,7 @@ const resolve_aim = (aim: RaycastAim, origin_node: Object3D): ResolvedRay | null
     }
 
     // object aim: sample the target's live pose each cast so it tracks
-    const target_refs = get_object_refs(aim.object_id);
+    const target_refs = get_object_refs(aim.object_id)?.current;
     if (!target_refs) return null;
 
     const transform = sample_live_transform(target_refs);
@@ -264,7 +264,7 @@ export const Raycast = ({
                 ? undefined
                 : rapier.QueryFilterFlags.EXCLUDE_SENSORS;
 
-            const own_refs = get_object_refs(object_id);
+            const own_refs = get_object_refs(object_id)?.current;
             const exclude_body =
                 targets.include_self ? undefined : own_refs?.rigid_body.current ?? undefined;
 

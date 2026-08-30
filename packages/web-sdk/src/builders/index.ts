@@ -4,6 +4,7 @@ export * from "./player_monitors";
 export * from "./physics";
 export * from "./prefabs";
 export * from "./custom";
+export * from "./collection";
 export * from "./object_dispatch";
 export * from "./world_env";
 export * from "./vfx";

@@ -115,7 +115,7 @@ Interchangeable with Epic B.
 - [ ] Option for bodies to ignore player or object collisions
 - [ ] Decide if/how to deal with duplicate interactions
 - [ ] Scene/collection dispatch
-- [ ] Object parenting via SDK (transform resolution against parent; decide what happens when a
+- [x] Object parenting via SDK (transform resolution against parent; decide what happens when a
   parent has a rigid body)
 - [x] Way to add prefabs using empties with custom props (replaced with generic marker system that creators can set their own convention for)
 - [ ] Extend prefab library in general (props, weapons, sports stuff, maybe even vehicles)

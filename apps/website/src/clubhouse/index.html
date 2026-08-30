@@ -11,7 +11,10 @@
         await hyperlinkvr.connect();
         console.log("Connected!");
 
-        document.querySelector("#splash").remove();
+        const splash = document.querySelector("#splash");
+        if (splash) {
+          splash.remove();
+        }
         
         const h = hyperlinkvr.builders;
 

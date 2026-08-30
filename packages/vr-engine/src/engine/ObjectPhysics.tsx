@@ -66,6 +66,14 @@ export const useKinematicPosition = (
 
         if (still) return;
 
+        // first write: hard-teleport so the body snaps to its tracked pose instead of
+        // interpolating from its spawn origin (matters when it becomes ready after the
+        // tracked container has already moved, e.g. a collection child of a moved parent)
+        if (!written.current) {
+            rb_ref.current.setTranslation(target_pos, true);
+            rb_ref.current.setRotation(target_quat, true);
+        }
+
         rb_ref.current.setNextKinematicTranslation(target_pos);
         rb_ref.current.setNextKinematicRotation(target_quat);
 
@@ -426,7 +434,7 @@ const get_body_props = (rb: RigidBodyConfig): Partial<ComponentProps<typeof Rigi
     return {};
 }
 
-export const ObjectPhysics = ({
+const ObjectPhysicsInternal = ({
     physics,
     children = null,
     body_name,
@@ -598,5 +606,28 @@ export const ObjectPhysics = ({
         </group>
     );
 };
+
+const ForcedKinematicPosPhysics = (props: ComponentProps<typeof ObjectPhysicsInternal>) => {
+    const physics = {
+        ...props.physics,
+        rigid_body: {
+            ...props.physics.rigid_body,
+            type: "kinematic-pos" as const
+        }
+    };
+
+    return <ObjectPhysicsInternal {...props} physics={physics} />;
+}
+
+export const ObjectPhysics = (props: ComponentProps<typeof ObjectPhysicsInternal>) => {
+    const {parent} = useObjectRefsOptional() ?? {};
+
+    // if a parent is present, we need to follow it, so force kinematic-pos
+    if (parent) {
+        return <ForcedKinematicPosPhysics {...props} />;
+    }
+
+    return <ObjectPhysicsInternal {...props} />;
+}
 
 // TODO: differentiate not colliding in response the player (getting slapped basically) vs letting the player walk through something

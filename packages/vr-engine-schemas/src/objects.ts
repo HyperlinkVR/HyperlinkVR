@@ -4,6 +4,8 @@ import {bindable} from "./binding";
 import {InteractionSchema} from "./interactions";
 import {HexColorSchema} from "./colors";
 import {AbsoluteAssetURLSchema} from "./assets";
+import {TransformSchema} from "./transforms";
+import type {Transform, TransformInput} from "./transforms";
 
 
 // export const MaterialAlbedoColorSchema = z.object({
@@ -162,10 +164,54 @@ export const PrefabSchema = z.discriminatedUnion("name", [
 export type Prefab = z.infer<typeof PrefabSchema>;
 export type PrefabInput = z.input<typeof PrefabSchema>;
 
-export const EngineObjectSchema = z.union([CustomObjectSchema, PrefabSchema]);
-export type EngineObject = z.infer<typeof EngineObjectSchema>;
-export type EngineObjectInput = z.input<typeof EngineObjectSchema>;
+// need to explicitly declare types, as using cyclical dependency that zod can't infer
+export type EngineObject = CustomObject | Prefab | ObjectCollection;
+export type EngineObjectInput = CustomObjectInput | PrefabInput | ObjectCollectionInput;
+export type EngineObjectType = EngineObject["type"];
+export type EngineObjectOfType<T extends EngineObjectType> = Extract<EngineObject, { type: T }>;
+
+export interface CollectionMember {
+    object: EngineObject;
+    transform: Transform;
+}
+export interface CollectionMemberInput {
+    object: EngineObjectInput;
+    transform?: TransformInput;
+}
+
+export interface ObjectCollection {
+    type: "collection";
+    parent: CollectionMember;
+    children: CollectionMember[];
+}
+export interface ObjectCollectionInput {
+    type: "collection";
+    parent: CollectionMemberInput;
+    children: CollectionMemberInput[];
+}
+
+// lazy, because it references EngineObjectSchema declared below
+export const CollectionMemberSchema: z.ZodType<CollectionMember, CollectionMemberInput> = z.lazy(() =>
+    z.object({
+        object: EngineObjectSchema,
+        transform: TransformSchema.default({position: [0, 0, 0], rotation: [0, 0, 0], scale: [1, 1, 1]})
+    })
+);
+
+export const ObjectCollectionSchema: z.ZodType<ObjectCollection, ObjectCollectionInput> = z.lazy(() =>
+    z.object({
+        type: z.literal("collection"),
+        parent: CollectionMemberSchema,
+        children: z.array(CollectionMemberSchema).min(1)
+        // TODO: should they be able to specify extra interactions etc here, or should they just add it to the parent/children, using a dummy if necessary
+    })
+);
+
+export const EngineObjectSchema = z.union([
+    CustomObjectSchema,
+    PrefabSchema,
+    ObjectCollectionSchema,
+]);
 
 // TODO: prefab for dom mirror
-// TODO: support parenting
 // TODO: split these schemas too in the same manner as builders

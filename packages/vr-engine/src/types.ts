@@ -1,4 +1,7 @@
-import type { CreatedEngineObject } from "@hyperlinkvr/vr-engine-schemas";
+import type {
+    CreatedEngineObject,
+    EngineObject
+} from "@hyperlinkvr/vr-engine-schemas";
 import type { Group } from "three";
 
 
@@ -17,7 +20,7 @@ interface RendererComponentPropsAdditional extends RootProps {
     transform: CreatedEngineObject["transform"];
 }
 
-export type RendererComponentProps<T extends CreatedEngineObject["object"]> = Omit<T, "type"> & RendererComponentPropsAdditional;
+export type RendererComponentProps<T extends EngineObject> = Omit<T, "type"> & RendererComponentPropsAdditional;
 
 
 export type PrefabProps<T extends { type: "prefab"; name: string } = any> = Omit<

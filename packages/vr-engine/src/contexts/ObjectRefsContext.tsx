@@ -1,7 +1,7 @@
 import type { RapierRigidBody } from "@react-three/rapier";
-import type { RefObject} from "react";
+import type { RefObject } from "react";
 import { createContext, useContext } from "react";
-import type {Group} from "three";
+import type { Group } from "three";
 
 export interface ObjectRefsContextType {
     id: string;
@@ -9,6 +9,7 @@ export interface ObjectRefsContextType {
     rigid_body: RefObject<RapierRigidBody | null>;
     constrained: RefObject<boolean>;
     user_data: Record<string, any>;
+    parent?: RefObject<ObjectRefsContextType>;
 }
 
 const ObjectRefsContext = createContext<ObjectRefsContextType | null>(null);
@@ -28,12 +29,13 @@ export const useObjectRefsOptional = () => {
     return context;
 }
 
-export const create_object_refs = (id: string): ObjectRefsContextType => {
+export const create_object_refs = (id: string, parent?: RefObject<ObjectRefsContextType>): ObjectRefsContextType => {
     return {
         id,
         root: { current: null },
         rigid_body: { current: null },
         constrained: { current: false },
         user_data: {},
+        parent
     };
 }

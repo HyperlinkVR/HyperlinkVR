@@ -1,31 +1,39 @@
 import type { CreatedEngineObject } from "@hyperlinkvr/vr-engine-schemas";
-import { Suspense, useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { RefObject, Suspense, useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import type { Group } from "three";
 
+
+
+import { register_animation_channels } from "../animation/channel_registry";
+import { create_object_refs, ObjectRefsContextType, ObjectRefsProvider } from "../contexts/ObjectRefsContext";
+import { register_object_monitors } from "../monitors/object_monitor_registry";
 import type { RendererComponentProps } from "../types";
-import { create_object_refs, ObjectRefsProvider } from "../contexts/ObjectRefsContext";
+import { rotation_to_quaternion } from "../util/rotation";
+import { recompute_object_tags } from "../util/tags";
+import { body_owns_pose_for } from "./object_modification";
+import { ObjectReadyMarker } from "./object_ready_registry";
 import { register_object_refs } from "./object_ref_registry";
-import { CustomObjectRenderer } from "./CustomObjectRenderer";
-import { PrefabRenderer } from "./PrefabRenderer";
-import {rotation_to_quaternion} from "../util/rotation";
-import type {Group} from "three";
-import {ObjectReadyMarker} from "./object_ready_registry";
-import {register_object_monitors} from "../monitors/object_monitor_registry";
-import {register_triggers} from "./trigger_registry";
-import {body_owns_pose_for} from "./object_modification";
-import {register_animation_channels} from "../animation/channel_registry";
-import {recompute_object_tags} from "../util/tags";
+import { RENDERERS } from "./renderers";
+import { register_triggers } from "./trigger_registry";
 
-export const EngineObjectRenderer = ({ data }: { data: CreatedEngineObject }) => {
+
+export const EngineObjectRenderer = ({
+    data,
+    parent
+}: {
+    data: CreatedEngineObject;
+    parent?: RefObject<ObjectRefsContextType>;
+}) => {
     const { type, ...obj_rest } = data.object;
 
     const RendererComponent = useMemo(
-        () => (type === "prefab" ? PrefabRenderer : CustomObjectRenderer),
+        () => RENDERERS[data.object.type],
         [data.object.type]
     ) as React.ComponentType<RendererComponentProps<any>>;
 
     const user_data_ref = useRef(data.user_data);
 
-    const refs = useRef(create_object_refs(data.id));
+    const refs = useRef(create_object_refs(data.id, parent));
 
     // publish tags to user data (that live on object refs, not the render group itself)
     useLayoutEffect(() => {
@@ -37,7 +45,7 @@ export const EngineObjectRenderer = ({ data }: { data: CreatedEngineObject }) =>
     }, [data.id, data.user_data, data.tags]);
 
     // register refs with registry for retrieval by sdk
-    useEffect(() => register_object_refs(refs.current), []);
+    useEffect(() => register_object_refs(refs), []);
 
     // register monitors
     useEffect(
@@ -46,16 +54,16 @@ export const EngineObjectRenderer = ({ data }: { data: CreatedEngineObject }) =>
     );
 
     // register triggers
-    useEffect(
-        () => register_triggers(data.triggers),
-        [data.triggers]
-    );
+    useEffect(() => register_triggers(data.triggers), [data.triggers]);
 
     // register animation channels for transform
     useEffect(() => {
         const object_refs = refs.current;
 
-        const write = (target: "position" | "quaternion" | "scale", value: number[]) => {
+        const write = (
+            target: "position" | "quaternion" | "scale",
+            value: number[]
+        ) => {
             // dynamic and fixed bodies own their own pose, so leave them to the solver
             // TODO: tell the sdk if they're trying to illegally animate a fixed or dynamic body, so they ensure they use kinematic pos instead. maybe could convert temporarily to kinematic pos but that should be explicit behaviour
             if (body_owns_pose_for(object_refs)) return;
@@ -82,7 +90,10 @@ export const EngineObjectRenderer = ({ data }: { data: CreatedEngineObject }) =>
     // stay at identity or the mesh double-transforms. a kinematic-pos or non-physics object is posed by
     // this group instead — matching body_owns_pose_for, which the animation channel writes rely on.
     const has_physics = data.object.type === "custom" && !!data.object.physics;
-    const rb_type = data.object.type === "custom" ? data.object.physics?.rigid_body?.type : undefined;
+    const rb_type =
+        data.object.type === "custom"
+            ? data.object.physics?.rigid_body?.type
+            : undefined;
     const body_owns_pose = has_physics && rb_type !== "kinematic-pos";
     // TODO: what about prefabs? or do they not need considering here as they can fully own their pose. but this also affects ready marker now
 
@@ -126,7 +137,11 @@ export const EngineObjectRenderer = ({ data }: { data: CreatedEngineObject }) =>
                         {...obj_rest}
                     />
                 </Suspense>
-                <ObjectReadyMarker object_id={data.id} has_physics={has_physics} />
+
+                <ObjectReadyMarker
+                    object_id={data.id}
+                    has_physics={has_physics}
+                />
             </group>
         </ObjectRefsProvider>
     );

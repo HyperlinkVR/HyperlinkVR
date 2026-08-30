@@ -104,7 +104,7 @@ export const ObjectMonitorRunner = () => {
         const now = performance.now();
 
         for (const entry of entries) {
-            const refs = get_object_refs(entry.object_id);
+            const refs = get_object_refs(entry.object_id)?.current;
             if (!refs) {
                 continue;
             }
