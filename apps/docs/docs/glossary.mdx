@@ -33,7 +33,7 @@ The goal is to avoid confusion, not to police language.
   you "dispatch it" to the engine with `.create()`.<br></br>
   *Not to be confused with: **spawn**, which is an engine process detailed below. Dispatching an object may colloquially be called "spawning" it, but this is not technically correct.*
 
-- **Spawning** - the process the engine takes to realise a dispatched object. This involves invoking the **engine object renderer** to create the object in the world.
+- **Spawning** - the process the engine takes to realise a dispatched object. This involves invoking the **engine object renderer** to create the object in the world. A spawned entity may also be known as a **created**     entity.
 
 - **Object renderer** - engine-side implementations involved in spawning an object. The **engine object renderer** handles all objects, first setting up tags, monitors, etc,
   then invoking the type specific renderer to finish realising the object. See the graphic below to illustrate the process.
