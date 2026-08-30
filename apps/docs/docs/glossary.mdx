@@ -31,7 +31,7 @@ The goal is to avoid confusion, not to police language.
 - **Dispatch** - may be either a verb meaning the act of using the SDK to create or modify some entity (objects, HUD elements, animations, etc),
   or a noun referring to the data itself. For example, you build "an object dispatch" with `EngineObjectDispatchBuilder`, then
   you "dispatch it" to the engine with `.create()`. Colloquially, the term "spawn" may be used in an object context, but this should be avoided
-  to avoid confusion with the concept of player spawning.
+  to avoid confusion with the concept of player spawning, as well as that the process the engine takes to realise a dispatched object is known as "spawning" internally.
 
 - **Handle** - an interface often created within the SDK as a result of a dispatch in order to modify it further.
   For example, `EngineObjectDispatchBuilder` creates an object dispatch, which is then dispatched to the engine with `.create()`,
