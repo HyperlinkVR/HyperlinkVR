@@ -130,6 +130,12 @@ const config: Config = {
                     label: "Engine Schemas"
                 },
                 {
+                    type: "doc",
+                    docId: "glossary",
+                    position: "left",
+                    label: "Glossary"
+                },
+                {
                     href: "https://github.com/obfuscatedgenerated/HyperlinkVR",
                     label: "GitHub",
                     position: "right"
@@ -143,7 +149,8 @@ const config: Config = {
                     title: "Reference",
                     items: [
                         { label: "Web SDK Reference", to: "/sdk" },
-                        { label: "Engine Schemas", to: "/engine-schemas" }
+                        { label: "Engine Schemas", to: "/engine-schemas" },
+                        { label: "Glossary", to: "/glossary" }
                     ]
                 },
                 {
