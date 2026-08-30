@@ -11,7 +11,7 @@ It is not a comprehensive list of all terms in the ecosystem, nor the game devel
 mandate people follow this glossary to a tee, people are human and will use language in a way that makes sense to them.
 The goal is to avoid confusion, not to police language.
 
-## Meta
+## Meta & engine
 
 - **HyperlinkVR** - the platform, engine, and ecosystem. In speaking, it may be referred to as "hyperlink" for brevity, but only
   when the context is clear. The platform is **not** called "Hyperlink".
@@ -30,8 +30,13 @@ The goal is to avoid confusion, not to police language.
 
 - **Dispatch** - may be either a verb meaning the act of using the SDK to create or modify some entity (objects, HUD elements, animations, etc),
   or a noun referring to the data itself. For example, you build "an object dispatch" with `EngineObjectDispatchBuilder`, then
-  you "dispatch it" to the engine with `.create()`. Colloquially, the term "spawn" may be used in an object context, but this should be avoided
-  to avoid confusion with the concept of player spawning, as well as that the process the engine takes to realise a dispatched object is known as "spawning" internally.
+  you "dispatch it" to the engine with `.create()`.<br></br>
+  *Not to be confused with: **spawn**, which is an engine process detailed below. Dispatching an object may colloquially be called "spawning" it, but this is not technically correct.*
+
+- **Spawning** - the process the engine takes to realise a dispatched object. This involves invoking the **engine object renderer** to create the object in the world.
+
+- **Object renderer** - engine-side implementations involved in spawning an object. The **engine object renderer** handles all objects, first setting up tags, monitors, etc,
+  then invoking the type specific renderer to finish realising the object. See the graphic below to illustrate the process.
 
 - **Handle** - an interface often created within the SDK as a result of a dispatch in order to modify it further.
   For example, `EngineObjectDispatchBuilder` creates an object dispatch, which is then dispatched to the engine with `.create()`,
@@ -41,6 +46,95 @@ The goal is to avoid confusion, not to police language.
   If there is the need to have multiple discriminants, "kind" is used for the broader category, and "type" is used for the specific subtype.
   In rare cases (such as prefab dispatch), a discriminant may be called "name", but this is discouraged as it implies a human-readable label rather than a machine-readable identifier.
   These are not hard rules, but general guidance for internal engine code.
+
+### Object creation and spawning flow graphic
+
+The following diagram illustrates the flow of creating and spawning an object in HyperlinkVR.
+The SDK builds an object dispatch, which is then sent to the engine for spawning.
+The engine object renderer sets up properties available to all engine objects (such as monitors, tags, etc) and then
+uses the type of the object to determine which sub-renderer to invoke.
+Once the object is marked as ready, the engine returns a handle to the SDK for further manipulation.
+
+```dot
+digraph spawn_flow {
+    bgcolor="transparent";
+    rankdir=TB;
+    compound=true;
+    newrank=true;
+    nodesep=.4;
+    ranksep=0.6;
+
+    node [shape=box, fontname="sans-serif", margin="0.15,0.08"];
+    edge [fontname="sans-serif", fontsize=11];
+
+    subgraph cluster_sdk {
+        label="SDK";
+        style=rounded;
+        A [label="Built object definition"];
+        B [label="Dispatch builder"];
+        L [label="Handle"];
+        A -> B [xlabel="added to   "];
+        B -> L [style=invis,minlen=3];
+    }
+
+    subgraph cluster_engine {
+        label="Engine";
+        style=rounded;
+        F [label="Engine object renderer"];
+        T [label="by type", shape=diamond];
+        G [label="Custom object renderer"];
+        H [label="Prefab renderer"];
+        I [label="Object collection renderer"];
+        S [label="Spawned engine object"];
+
+        F -> T [xlabel="wraps and invokes   ", tailport=s, headport=n];
+        T -> G [label=" custom"];
+        T -> H [label="  prefab"];
+        T -> I [label=" collection"];
+        I -> T [label="  per member", style=dashed, constraint=false, tailport=n, headport=e];
+        G -> S [minlen=2];
+        H -> S [minlen=2];
+        I -> S [minlen=2];
+    }
+
+    B -> F [label="  dispatched to", constraint=false, tailport=ne, headport=w];
+    S -> L [xlabel="returns", constraint=false, tailport=nw, headport=ne];
+    L -> S [xlabel="used to modify                               ", constraint=false, headport=w, tailport=e];
+}
+```
+
+*(The **object collection renderer** recurses per member back into the type-specific renderers, so a collection can nest arbitrarily.)*
+
+
+## Objects & prefabs
+
+- **Object** - the fundamental placeable thing in a world (`EngineObject`). Other terms below describe *kinds* or *aspects* of objects, not separate entities.<br></br>
+  *Not to be confused with: JavaScript objects, which are a programming construct and not a HyperlinkVR entity.
+  It may be suitable to refer to JavaScript objects or similar constructs as "dictionaries" to avoid confusion.*
+
+- **Custom object** - an object built from your own selection of mesh, physics, interactions, etc (`CustomObjectBuilder`).
+
+- **Prefab** - a premade, parameterised object implemented in the engine itself
+  (`ButtonPrefab`, `GolfBallPrefab`, `TextSignPrefab`, ...). A prefab is still an
+  object once created.
+
+- **Standard prefab** - a prefab which has no special properties (e.g. a basketball), and thus is simply constructed with `StandardPrefabBuilder`.
+
+- **Object collection** - a grouping of objects, with a parent object owning the children objects. This allows more complex objects to be constructed by
+  creating parenting relationships (`ObjectCollectionBuilder`). Note that this is also considered a type of object in itself. Object collections can also contain
+  other object collections, as either the parent or child, allowing for arbitrarily complex hierarchies.
+
+- **Mesh** - the 3D model/geometry (e.g. a `.glb`) attached to an object.
+
+- **Prop** - a *collision group*, not an entity type. Props are the physics enabled
+  objects that can be moved, as opposed to fixed/non-physics objects which sit on the **world** layer,
+  (and of course players sit on the **players** layer).<br></br>
+  *Not to be confused with: **object**, which is **not** a synonym for prop. A prop is an object, but not all objects are props (some are fixed world objects for example).*
+
+- **Tag** - an arbitrary string label attached to an object at dispatch (`add_tag`), used to
+  identify or group objects at runtime. Object-targeting interactions such as **raycast** and
+  **trigger volume** can filter by tag (include-only, or `exclude_tags`).
+  Tags can also be used for collision filtering, but note this can be expensive at scale.
 
 ## Worlds & navigation
 
@@ -63,32 +157,6 @@ The goal is to avoid confusion, not to police language.
 - **Marker** - a creator-defined convention for tagging points/objects in a world
   so the SDK can find them (`load_markers`). Most commonly, these will be represented in 3D modelling software as "empties",
   but technically any object following the set naming convention (default: `marker_*`) will be detected as a marker.
-
-## Objects & prefabs
-
-- **Object** - the fundamental placeable thing in a world (`EngineObject`). Other terms below describe *kinds* or *aspects* of objects, not separate entities.<br></br>
-  *Not to be confused with: JavaScript objects, which are a programming construct and not a HyperlinkVR entity.
-  It may be suitable to refer to JavaScript objects or similar constructs as "dictionaries" to avoid confusion.*
-
-- **Custom object** - an object built from your own selection of mesh, physics, interactions, etc (`CustomObjectBuilder`).
-
-- **Prefab** - a premade, parameterised object implemented in the engine itself
-  (`ButtonPrefab`, `GolfBallPrefab`, `TextSignPrefab`, ...). A prefab is still an
-  object once created.
-
-- **Standard prefab** - a prefab which has no special properties (e.g. a basketball), and thus is simply constructed with `StandardPrefabBuilder`.
-
-- **Mesh** - the 3D model/geometry (e.g. a `.glb`) attached to an object.
-
-- **Prop** - a *collision group*, not an entity type. Props are the physics enabled
-  objects that can be moved, as opposed to fixed/non-physics objects which sit on the **world** layer,
-  (and of course players sit on the **players** layer).<br></br>
-  *Not to be confused with: **object**, which is **not** a synonym for prop. A prop is an object, but not all objects are props (some are fixed world objects for example).*
-
-- **Tag** - an arbitrary string label attached to an object at dispatch (`add_tag`), used to
-  identify or group objects at runtime. Object-targeting interactions such as **raycast** and
-  **trigger volume** can filter by tag (include-only, or `exclude_tags`).
-  Tags can also be used for collision filtering, but note this can be expensive at scale.
 
 ## Physics
 

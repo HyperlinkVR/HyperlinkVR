@@ -5,7 +5,12 @@ import { OptionDefaults } from "typedoc";
 
 
 
-import { custom_block_tags, custom_modifier_tags, remark_custom_jsdoc_tags } from "./plugins/remark_custom_jsdoc_tags";
+import {
+    custom_block_tags,
+    custom_modifier_tags,
+    remark_custom_jsdoc_tags
+} from "./plugins/remark_custom_jsdoc_tags";
+import { remark_graphviz } from "./plugins/remark_graphviz";
 
 
 const typedoc = (
@@ -94,7 +99,10 @@ const config: Config = {
                 docs: {
                     routeBasePath: "/",
                     sidebarPath: "./sidebars.ts",
-                    remarkPlugins: [remark_custom_jsdoc_tags]
+                    remarkPlugins: [
+                        remark_custom_jsdoc_tags,
+                        remark_graphviz
+                    ]
                 },
                 blog: false,
                 theme: {
@@ -218,6 +226,7 @@ const config: Config = {
         typedoc("vr-engine-schemas", "engine-schemas")
     ],
     themes: [
+        "@docusaurus/theme-mermaid",
         [
             require.resolve("@easyops-cn/docusaurus-search-local"),
             /** @type {import("@easyops-cn/docusaurus-search-local").PluginOptions} */

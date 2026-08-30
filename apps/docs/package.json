@@ -21,6 +21,7 @@
         "@docusaurus/faster": "3.10.2",
         "@docusaurus/preset-classic": "3.10.2",
         "@easyops-cn/docusaurus-search-local": "^0.55.3",
+        "@hpcc-js/wasm": "^2.35.0",
         "@mdx-js/react": "^3.0.0",
         "clsx": "^2.0.0",
         "lucide-react": "catalog:",
