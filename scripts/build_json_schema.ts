@@ -31,6 +31,7 @@ interface CustomSchemaMeta {
 
 for (const schema of EXPORT_TO_JSON) {
     const raw_schema = schema.toJSONSchema({
+        io: "input",
         // pass empty registry so we can control metadata exactly
         metadata: z.registry()
     });
