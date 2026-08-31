@@ -1,4 +1,4 @@
-import { DiscordPresenceProvider, TabSessionProvider, useSetting, useStorage, useTabSession } from "@hyperlinkvr/react";
+import { DiscordPresenceProvider, WorldSessionProvider, useSetting, useStorage, useWorldSession, useDiscordPresence } from "@hyperlinkvr/react";
 import { SoftShadows, Stats, Text } from "@react-three/drei";
 import type { RootState } from "@react-three/fiber";
 import { Canvas } from "@react-three/fiber";
@@ -175,7 +175,7 @@ const SceneContents = ({
     const internal_ref = useRef<Group>(null);
     useImperativeHandle(player_ref, () => internal_ref.current!);
 
-    const {url, meta, meta_generation} = useTabSession();
+    const {url, support, doc_generation} = useWorldSession();
     const setRecentWorlds = useStorage("local", "recent_worlds", [] as string[])[1];
 
     useEffect(() => {
@@ -197,31 +197,31 @@ const SceneContents = ({
     const set_timed_out = useWorldLoadingStateStore((store) => store.set_timed_out);
     const set_loading = useWorldLoadingStateStore((store) => store.set_loading);
 
-    const resolved_meta = timed_out ? "defer" : meta;
+    const resolved_meta = timed_out ? "defer" : support;
 
     const show_default_world = resolved_meta !== "supported";
     const spawning_enabled = resolved_meta !== "disable";
     const show_loader = resolved_meta === "supported" && !world_ready;
 
     useEffect(() => {
-        if (meta === "defer" || meta === "disable") {
+        if (support === "defer" || support === "disable") {
             setWorldEnv(WORLD_ENV_GRAYSPACE);
         }
-    }, [meta, setWorldEnv]);
+    }, [support, setWorldEnv]);
 
     // reset world env and player position/rotation on new document load
     useEffect(() => {
-        if (meta_generation === 0) {
+        if (doc_generation === 0) {
             return;
         }
 
-        setWorldEnv(meta === "supported" ? WORLD_ENV_DEFAULT : WORLD_ENV_GRAYSPACE);
+        setWorldEnv(support === "supported" ? WORLD_ENV_DEFAULT : WORLD_ENV_GRAYSPACE);
 
         if (internal_ref.current) {
             internal_ref.current.position.set(0, 0, 0);
             internal_ref.current.rotation.set(0, 0, 0);
         }
-    }, [meta_generation, meta, setWorldEnv]);
+    }, [doc_generation, support, setWorldEnv]);
 
     useEffect(() => {
         if (!show_loader) {
@@ -307,7 +307,7 @@ const WorldPhysics = ({children}: {children: React.ReactNode}) => {
 
 const WorldSessionListener = () => {
     const { on_action } = useWebSDKMessaging();
-    const { meta, meta_generation } = useTabSession();
+    const { support, doc_generation } = useWorldSession();
 
     const set_world_ready = useWorldLoadingStateStore((store) => store.set_world_ready);
     const reset_for_new_document = useWorldLoadingStateStore((store) => store.reset_for_new_document);
@@ -330,20 +330,39 @@ const WorldSessionListener = () => {
     }, [on_action, set_world_ready]);
 
     useEffect(() => {
-        if (meta_generation === 0) {
+        if (doc_generation === 0) {
             return;
         }
 
-        console.log("New document, meta:", meta);
+        console.log("New document, meta:", support);
 
         // reset world
         clear_all_objects();
         reset_for_new_document();
         clear_collider_collision_info();
-    }, [meta_generation, meta, clear_all_objects, reset_for_new_document]);
+    }, [doc_generation, support, clear_all_objects, reset_for_new_document]);
 
     return null;
 };
+
+const DiscordPresenceSync = () => {
+    const {url, world_metadata} = useWorldSession();
+    const {set_activity} = useDiscordPresence();
+
+    useEffect(() => {
+        if (!url) {
+            return;
+        }
+
+        const activity = {
+            details: `Playing ${world_metadata?.title || "Unknown World"}`,
+            state: url || "Unknown URL",
+        };
+        set_activity(activity);
+    }, [url, world_metadata, set_activity]);
+
+    return null;
+}
 
 const EngineHostInternal = memo(
     ({ on_ready, mode }: { on_ready: () => void; mode: "vr" | "flat" }) => {
@@ -413,12 +432,13 @@ const EngineHostInternal = memo(
 
         return (
             <SessionModeProvider value={mode}>
-                <TabSessionProvider>
+                <WorldSessionProvider>
                     <WebSDKMessagingProvider>
                         <HintStateProvider>
                             <DiscordPresenceProvider initial_activity={{
                                 details: "Loading..."
                             }}>
+                                <DiscordPresenceSync />
                                 <WorldSessionListener />
 
                                 <EngineObjectSync />
@@ -533,7 +553,7 @@ const EngineHostInternal = memo(
                             </DiscordPresenceProvider>
                         </HintStateProvider>
                     </WebSDKMessagingProvider>
-                </TabSessionProvider>
+                </WorldSessionProvider>
             </SessionModeProvider>
         );
     }

@@ -1,5 +1,5 @@
 import type { ThreeEvent, Vector3 } from "@react-three/fiber";
-import { useMessageEngine, useTabSession } from "@hyperlinkvr/react";
+import { useMessageEngine, useWorldSession } from "@hyperlinkvr/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { VideoTexture } from "three";
 
@@ -24,8 +24,8 @@ export const DOMMirror = ({
 
     const videoRef = useRef(document.createElement("video"));
 
-    const session = useTabSession();
-    const tabDims = session.dimensions || { width: 1, height: 1 };
+    const session = useWorldSession();
+    const tabDims = session.tab_dimensions || { width: 1, height: 1 };
 
     // State 2: The oversized square stream (the envelope)
     const [videoDims, setVideoDims] = useState({ width: 0, height: 0 });

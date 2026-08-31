@@ -1,4 +1,4 @@
-import { useMessageEngine, useSetting, useTabSession } from "@hyperlinkvr/react";
+import { useMessageEngine, useSetting, useWorldSession } from "@hyperlinkvr/react";
 import { PlayerMonitorSchema } from "@hyperlinkvr/vr-engine-schemas";
 import { Text } from "@react-three/drei";
 import { XROrigin } from "@react-three/xr";
@@ -99,7 +99,7 @@ export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>
 
     const {on_action, emit_event, connected} = useWebSDKMessaging();
     const messenger = useMessageEngine();
-    const {id: tab_id} = useTabSession();
+    const {id: tab_id} = useWorldSession();
 
     const seated = useIsSeated();
 

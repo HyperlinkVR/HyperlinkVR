@@ -1,5 +1,5 @@
 import type { MessageChannel } from "@hyperlinkvr/core";
-import { useMessageEngine, useStorageEngines, useTabSession } from "@hyperlinkvr/react";
+import { useMessageEngine, useStorageEngines, useWorldSession } from "@hyperlinkvr/react";
 import type { NamedAction, NamedReply, WebSDKActionMessage, WebSDKActionName, WebSDKErrorReply, WebSDKEventMessage } from "@hyperlinkvr/types";
 import type { HandlerData } from "@hyperlinkvr/web-sdk-handlers";
 import { builtin_handlers, handle_web_sdk } from "@hyperlinkvr/web-sdk-handlers";
@@ -32,7 +32,7 @@ const WebSDKMessagingContext = createContext<WebSDKMessagingContextType | null>(
 export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode}) => {
     const messenger = useMessageEngine();
 
-    const {id} = useTabSession();
+    const {id} = useWorldSession();
 
     const peer_connection_ref = useRef<RTCPeerConnection | null>(null);
     const data_channel_ref = useRef<RTCDataChannel | null>(null);

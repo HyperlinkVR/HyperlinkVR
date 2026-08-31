@@ -108,4 +108,6 @@ export const useDiscordPresence = (no_op_if_unavailable = true) => {
             throw new Error("useDiscordPresence must be used within a DiscordPresenceProvider (or set no_op_if_unavailable to true)");
         }
     }
+
+    return context;
 }

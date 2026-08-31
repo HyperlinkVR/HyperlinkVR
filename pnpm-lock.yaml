@@ -498,6 +498,9 @@ importers:
       '@hyperlinkvr/types':
         specifier: workspace:*
         version: link:../types
+      '@hyperlinkvr/vr-engine-schemas':
+        specifier: workspace:*
+        version: link:../vr-engine-schemas
       react:
         specifier: 'catalog:'
         version: 19.2.7

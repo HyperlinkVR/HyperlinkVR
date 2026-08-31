@@ -1,5 +1,5 @@
 import { Container, Svg, Text } from "@react-three/uikit";
-import { useStorage, useTabSession } from "@hyperlinkvr/react";
+import { useStorage, useWorldSession } from "@hyperlinkvr/react";
 
 import type { ScreenProps } from "./index";
 import { Star } from "@react-three/uikit-lucide";
@@ -13,7 +13,7 @@ const StarFilled = () => (
 );
 
 export const HomeScreen = ({}: ScreenProps) => {
-    const session = useTabSession();
+    const session = useWorldSession();
 
     const [favourite_worlds, setFavouriteWorlds] = useStorage("sync", "favourite_worlds", [] as string[]);
     const is_world_favourite = useMemo(() => {

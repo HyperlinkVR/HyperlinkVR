@@ -1,7 +1,7 @@
 import {useEffect, useMemo, useState} from "react";
 import type {AssetRef} from "@hyperlinkvr/vr-engine-schemas";
 import { is_asset_ref} from "@hyperlinkvr/vr-engine-schemas";
-import {useSetting, useTabSession} from "@hyperlinkvr/react";
+import {useSetting, useWorldSession} from "@hyperlinkvr/react";
 import {fetch_asset} from "../security/fetch_asset";
 
 // TODO: cache resulting blobs keyed by source url, they can use standard cache busting to bypass it
@@ -26,7 +26,7 @@ const world_url_is_local = (world_url: string): boolean => {
 
 export const useAssetURL = (ref: AssetRef | string | undefined): string | null | undefined => {
     const [allow_local_anywhere, _, allow_local_anywhere_setting_loaded] = useSetting("devtools_dangerously_allow_localhost_fetch");
-    const {url} = useTabSession();
+    const {url} = useWorldSession();
 
     const allow_local = useMemo(() => allow_local_anywhere || (url ? world_url_is_local(url) : false), [allow_local_anywhere, url]);
 

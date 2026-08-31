@@ -4,7 +4,7 @@ import type { Group} from "three";
 import {BackSide} from "three";
 import {get_united_head_camera} from "../util/get_head_cameras";
 import {Layer, LayerGroup} from "../render";
-import {useTabSession} from "@hyperlinkvr/react";
+import {useWorldSession} from "@hyperlinkvr/react";
 import {LoadingSpinner} from "@hyperlinkvr/ui-dom";
 import { Text } from "@react-three/drei";
 
@@ -22,7 +22,7 @@ export const VRLoadingScreen = () => {
         head_camera.getWorldPosition(group.position);
     });
 
-    const {url} = useTabSession();
+    const {url} = useWorldSession();
 
     return (
         <LayerGroup ref={group_ref} layers={[Layer.Loader]}>
@@ -45,7 +45,7 @@ export const VRLoadingScreen = () => {
 }
 
 export const FlatLoadingScreen = () => {
-    const {url} = useTabSession();
+    const {url} = useWorldSession();
 
     return (
         <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center gap-2 bg-[#111111] z-5 text-white font-sans">

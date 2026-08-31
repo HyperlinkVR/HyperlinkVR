@@ -2,7 +2,7 @@ import { Text } from "@react-three/drei";
 import { useEffect, useState } from "react";
 import { configureTextBuilder } from "troika-three-text";
 
-import { useTabSession } from "@hyperlinkvr/react";
+import { useWorldSession } from "@hyperlinkvr/react";
 
 // its not happy! turn off web workers
 configureTextBuilder({
@@ -10,15 +10,15 @@ configureTextBuilder({
 });
 
 export const URLBar = ({position, height, height_of_dom_mirror}: {position: [number, number, number]; height: number; height_of_dom_mirror: number}) => {
-    const session = useTabSession();
+    const session = useWorldSession();
     const [width, setWidth] = useState(0);
     
     useEffect(() => {
-        if (!session.dimensions) return;
+        if (!session.tab_dimensions) return;
 
-        const new_width = (session.dimensions.width / session.dimensions.height) * height_of_dom_mirror;
+        const new_width = (session.tab_dimensions.width / session.tab_dimensions.height) * height_of_dom_mirror;
         setWidth(new_width);
-    }, [session.dimensions, height_of_dom_mirror]);
+    }, [session.tab_dimensions, height_of_dom_mirror]);
     
     return (
         <>

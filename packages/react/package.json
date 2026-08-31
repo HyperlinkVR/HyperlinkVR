@@ -12,6 +12,7 @@
         "@hyperlinkvr/core": "workspace:*",
         "@hyperlinkvr/auth": "workspace:*",
         "@hyperlinkvr/types": "workspace:*",
+        "@hyperlinkvr/vr-engine-schemas": "workspace:*",
         "react": "catalog:"
     },
     "devDependencies": {

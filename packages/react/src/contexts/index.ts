@@ -1,5 +1,5 @@
 export * from "./engines";
-export * from "./TabSession";
+export * from "./WorldSession";
 export * from "./AuthSession";
 export * from "./windowing";
 export * from "./DiscordPresence";
