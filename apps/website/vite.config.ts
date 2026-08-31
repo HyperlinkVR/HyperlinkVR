@@ -61,7 +61,9 @@ export default defineConfig({
             input: {
                 home: page("index.html"),
                 clubhouse: page("clubhouse", "index.html"),
-                minigolf: page("minigolf", "index.html")
+                minigolf: page("minigolf", "index.html"),
+                // TODO: auto collect pages somehow
+                download_discord_rpc: page("download", "discord_rpc", "index.html")
             }
         }
     }
