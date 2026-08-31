@@ -1,4 +1,4 @@
-import { execSync } from "child_process";
+import { execSync, spawn } from "child_process";
 import fs from "fs";
 import net from "net";
 import os from "os";
@@ -71,96 +71,171 @@ const wait_for_keypress = async (): Promise<string> => {
     });
 }
 
-const run_installer = async () => {
-    try {
-        const source_exe = process.execPath;
-        const exe_name = path.basename(source_exe);
-
-        let install_dir: string;
-        let manifest_path: string;
-
-        if (process.platform === "win32") {
-            install_dir = path.join(
-                process.env.LOCALAPPDATA || os.homedir(),
-                HOST_NAME
-            );
-            manifest_path = path.join(install_dir, "manifest.json");
-        } else if (process.platform === "darwin") {
-            install_dir = path.join(
-                os.homedir(),
-                "Library",
-                "Application Support",
-                HOST_NAME
-            );
-            manifest_path = path.join(
-                os.homedir(),
-                "Library",
-                "Application Support",
-                "Google",
-                "Chrome",
-                "NativeMessagingHosts",
-                `${HOST_NAME}.json`
-            );
-        } else {
-            install_dir = path.join(os.homedir(), ".local", "share", HOST_NAME);
-            manifest_path = path.join(
-                os.homedir(),
-                ".config",
-                "google-chrome",
-                "NativeMessagingHosts",
-                `${HOST_NAME}.json`
-            );
-        }
-
-        // create target directories
-        fs.mkdirSync(install_dir, { recursive: true });
-        fs.mkdirSync(path.dirname(manifest_path), { recursive: true });
-
-        const installed_exe_path = path.join(install_dir, exe_name);
-
-        // copy binary to app data folder if it's not already running from there
-        if (path.resolve(source_exe) !== path.resolve(installed_exe_path)) {
-            fs.copyFileSync(source_exe, installed_exe_path);
-            if (process.platform !== "win32") {
-                fs.chmodSync(installed_exe_path, 0o755);
-            }
-        }
-
-        // create manifest pointing to the copied binary path
-        const manifest: NativeManifest = {
-            name: HOST_NAME,
-            description: "Discord Rich Presence Host for HyperlinkVR",
-            path: installed_exe_path,
-            type: "stdio",
-            allowed_origins: [
-                `chrome-extension://${EXTENSION_ID_DEV}/`,
-                `chrome-extension://${EXTENSION_ID_PROD}/`
-            ]
-        };
-
-        fs.writeFileSync(manifest_path, JSON.stringify(manifest, null, 2));
-
-        if (process.platform === "win32") {
-            execSync(
-                `reg add "HKCU\\Software\\Google\\Chrome\\NativeMessagingHosts\\${HOST_NAME}" /ve /d "${manifest_path}" /f`
-            );
-        }
-
-        console.log(`\nSuccess! ${HOST_NAME} installed and registered for Chrome.`);
-        console.log("You can safely delete this executable.\n");
-        process.stdout.write("Press any key to exit...");
-
-        await wait_for_keypress();
-        console.log();
-        process.exit(0);
-    } catch (err) {
-        console.error("Installation failed:", (err as Error).message);
-        process.stdout.write("\nPress any key to exit...");
-        await wait_for_keypress();
-        console.log();
-        process.exit(1);
-    }
+interface InstallPaths {
+    install_dir: string;
+    manifest_path: string;
+    installed_exe_path: string;
 }
+
+const REGISTRY_KEY = `HKCU\\Software\\Google\\Chrome\\NativeMessagingHosts\\${HOST_NAME}`;
+
+const get_install_paths = (): InstallPaths => {
+    // basename of the currently running exe; on install the binary is copied
+    // into install_dir under this name, on uninstall the whole dir is removed
+    const exe_name = path.basename(process.execPath);
+
+    let install_dir: string;
+    let manifest_path: string;
+
+    if (process.platform === "win32") {
+        install_dir = path.join(
+            process.env.LOCALAPPDATA || os.homedir(),
+            HOST_NAME
+        );
+        manifest_path = path.join(install_dir, "manifest.json");
+    } else if (process.platform === "darwin") {
+        install_dir = path.join(
+            os.homedir(),
+            "Library",
+            "Application Support",
+            HOST_NAME
+        );
+        manifest_path = path.join(
+            os.homedir(),
+            "Library",
+            "Application Support",
+            "Google",
+            "Chrome",
+            "NativeMessagingHosts",
+            `${HOST_NAME}.json`
+        );
+    } else {
+        install_dir = path.join(os.homedir(), ".local", "share", HOST_NAME);
+        manifest_path = path.join(
+            os.homedir(),
+            ".config",
+            "google-chrome",
+            "NativeMessagingHosts",
+            `${HOST_NAME}.json`
+        );
+    }
+
+    return {
+        install_dir,
+        manifest_path,
+        installed_exe_path: path.join(install_dir, exe_name)
+    };
+};
+
+const is_installed = (paths: InstallPaths): boolean =>
+    fs.existsSync(paths.manifest_path);
+
+const run_install = (paths: InstallPaths) => {
+    const source_exe = process.execPath;
+
+    fs.mkdirSync(paths.install_dir, { recursive: true });
+    fs.mkdirSync(path.dirname(paths.manifest_path), { recursive: true });
+
+    // copy binary to app data folder if it's not already running from there
+    if (path.resolve(source_exe) !== path.resolve(paths.installed_exe_path)) {
+        fs.copyFileSync(source_exe, paths.installed_exe_path);
+        if (process.platform !== "win32") {
+            fs.chmodSync(paths.installed_exe_path, 0o755);
+        }
+    }
+
+    // create manifest pointing to the copied binary path
+    const manifest: NativeManifest = {
+        name: HOST_NAME,
+        description: "Discord Rich Presence Host for HyperlinkVR",
+        path: paths.installed_exe_path,
+        type: "stdio",
+        allowed_origins: [
+            `chrome-extension://${EXTENSION_ID_DEV}/`,
+            `chrome-extension://${EXTENSION_ID_PROD}/`
+        ]
+    };
+
+    fs.writeFileSync(paths.manifest_path, JSON.stringify(manifest, null, 2));
+
+    if (process.platform === "win32") {
+        execSync(`reg add "${REGISTRY_KEY}" /ve /d "${paths.manifest_path}" /f`);
+    }
+};
+
+const run_uninstall = (paths: InstallPaths) => {
+    if (process.platform === "win32") {
+        try {
+            execSync(`reg delete "${REGISTRY_KEY}" /f`, { stdio: "ignore" });
+        } catch {
+            // key already absent
+        }
+    }
+
+    try {
+        fs.rmSync(paths.manifest_path, { force: true });
+    } catch {
+        // ignore
+    }
+
+    const running_inside = path
+        .resolve(process.execPath)
+        .startsWith(path.resolve(paths.install_dir) + path.sep);
+
+    if (running_inside && process.platform === "win32") {
+        // can't delete our own running exe on Windows, schedule a detached cleanup that runs once this process has exited and released the lock
+        const child = spawn(
+            "cmd.exe",
+            ["/c", `timeout /t 2 >nul & rmdir /s /q "${paths.install_dir}"`],
+            { detached: true, stdio: "ignore", windowsHide: true }
+        );
+        child.unref();
+    } else {
+        try {
+            fs.rmSync(paths.install_dir, { recursive: true, force: true });
+        } catch {
+            // ignore
+        }
+    }
+};
+
+const exit_prompt = async (code: number): Promise<never> => {
+    process.stdout.write("Press any key to exit...");
+    await wait_for_keypress();
+    console.log();
+    process.exit(code);
+};
+
+const install_flow = async (paths: InstallPaths, is_update: boolean) => {
+    try {
+        run_install(paths);
+        console.log(
+            `\nSuccess! ${HOST_NAME} ${is_update ? "updated" : "installed"} and registered for Chrome.`
+        );
+        console.log("You can safely delete this executable.\n");
+    } catch (err) {
+        console.error(
+            `${is_update ? "Update" : "Installation"} failed:`,
+            (err as Error).message
+        );
+        await exit_prompt(1);
+    }
+    await exit_prompt(0);
+};
+
+const uninstall_flow = async (paths: InstallPaths) => {
+    try {
+        run_uninstall(paths);
+        console.log(`\n${HOST_NAME} has been removed.`);
+        console.log(
+            "Discord Rich Presence for HyperlinkVR is now uninstalled.\n"
+        );
+    } catch (err) {
+        console.error("Uninstall failed:", (err as Error).message);
+        await exit_prompt(1);
+    }
+    await exit_prompt(0);
+};
 
 const run_host = () => {
     let ipc_socket: net.Socket | null = null;
@@ -304,24 +379,63 @@ const run_host = () => {
     }
 };
 
-if (process.stdout.isTTY || process.argv.includes("--install")) {
-    console.log(
-        `This will install and register the Discord Rich Presence Host for HyperlinkVR with Chrome.\n` +
-            `The executable will be copied to your user AppData folder so you can delete this installer file.\n`
-    );
-    process.stdout.write("Do you want to continue? (y/n): ");
+const is_interactive =
+    process.stdout.isTTY ||
+    process.argv.includes("--install") ||
+    process.argv.includes("--uninstall");
 
-    wait_for_keypress().then(async (key) => {
-        const char = key.toLowerCase();
-        console.log(char); // echo
+if (is_interactive) {
+    const paths = get_install_paths();
 
-        if (char === "y") {
-            await run_installer();
-        } else {
-            console.log("\nInstallation cancelled.");
-            process.exit(0);
+    (async () => {
+        // explicit flags for scripted / silent invocation
+        if (process.argv.includes("--uninstall")) {
+            await uninstall_flow(paths);
+            return;
         }
-    });
+        if (process.argv.includes("--install")) {
+            await install_flow(paths, is_installed(paths));
+            return;
+        }
+
+        if (is_installed(paths)) {
+            console.log(
+                `An existing Discord Rich Presence Host for HyperlinkVR was found.\n`
+            );
+            process.stdout.write(
+                "Would you like to [U]pdate, [R]emove, or [C]ancel? (press the corresponding key in brackets): "
+            );
+
+            const char = (await wait_for_keypress()).toLowerCase();
+            console.log(char); // echo
+
+            if (char === "u") {
+                await install_flow(paths, true);
+            } else if (char === "r") {
+                await uninstall_flow(paths);
+            } else {
+                console.log("\nNo changes made.");
+                process.exit(0);
+            }
+        } else {
+            // fresh install
+            console.log(
+                `This will install and register the Discord Rich Presence Host for HyperlinkVR with Chrome.\n` +
+                    `The executable will be copied to your user AppData folder so you can delete this installer file.\n`
+            );
+            process.stdout.write("Do you want to continue? (y/n): ");
+
+            const char = (await wait_for_keypress()).toLowerCase();
+            console.log(char); // echo
+
+            if (char === "y") {
+                await install_flow(paths, false);
+            } else {
+                console.log("\nInstallation cancelled.");
+                process.exit(0);
+            }
+        }
+    })();
 } else {
     run_host();
 }
