@@ -640,13 +640,20 @@ export class EngineObjectDispatchBuilder<T extends EngineObject = EngineObject> 
         const unbound_interaction_apis: Record<string, (binding_id: string) => (object_id: string) => any> = {};
         const partially_bound_interaction_apis: Record<string, (object_id: string) => any> = {};
 
-        // find all interactions with binding names
-        if (dispatch.object.type === "custom" && dispatch.object.interactions) {
-            for (const interaction of dispatch.object.interactions) {
-                const name = "binding" in interaction && interaction.binding?.name ? interaction.binding.name : null;
+        // collect every named reporting source from an object and its monitors, recursing into
+        // collection members so member interactions/monitors report and can act as trigger sources.
+        // only the top-level object gets command apis bound — members have no stable object id to bind against.
+        const collect_sources = (
+            object: EngineObject,
+            monitors: ObjectMonitor[] | undefined,
+            register_apis: boolean
+        ) => {
+            if (object.type === "custom" && object.interactions) {
+                for (const interaction of object.interactions) {
+                    const name = "binding" in interaction && interaction.binding?.name ? interaction.binding.name : null;
+                    if (!name) continue;
 
-                if (name) {
-                    if (interaction.type in _INTERACTION_API_MAKERS) {
+                    if (register_apis && interaction.type in _INTERACTION_API_MAKERS) {
                         const make_api = _INTERACTION_API_MAKERS[interaction.type]!;
                         unbound_interaction_apis[name] = (binding_id) => (object_id) => make_api(object_id, binding_id);
                     }
@@ -660,37 +667,43 @@ export class EngineObjectDispatchBuilder<T extends EngineObject = EngineObject> 
                             if (name in unbound_interaction_apis) {
                                 // uncurry to bind the interaction id
                                 partially_bound_interaction_apis[name] = unbound_interaction_apis[name]!(id);
-                                console.log(`Bound interaction API for "${name}" with id ${id}`);
                             }
                         }
                     });
                 }
             }
-        }
 
-        // if prefab has reporting, add it
-        if (dispatch.object.type === "prefab" && "binding" in dispatch.object && dispatch.object.binding?.name) {
-            const prefab_object = dispatch.object as PrefabInput;
-            named_sources.push({
-                name: dispatch.object.binding.name,
-                assign_id: (id) => {
-                    const bindable = prefab_object as Bindable;
-                    bindable.binding = {...bindable.binding, id};
-                }
-            });
-        }
-
-        // add any reporting monitors
-        for (const monitor of dispatch.monitors ?? []) {
-            if (monitor.binding?.name) {
+            if (object.type === "prefab" && "binding" in object && object.binding?.name) {
+                const prefab_object = object as PrefabInput;
                 named_sources.push({
-                    name: monitor.binding.name,
+                    name: object.binding.name,
                     assign_id: (id) => {
-                        monitor.binding = {...monitor.binding, id};
+                        const bindable = prefab_object as Bindable;
+                        bindable.binding = {...bindable.binding, id};
                     }
                 });
             }
-        }
+
+            for (const monitor of monitors ?? []) {
+                if (monitor.binding?.name) {
+                    named_sources.push({
+                        name: monitor.binding.name,
+                        assign_id: (id) => {
+                            monitor.binding = {...monitor.binding, id};
+                        }
+                    });
+                }
+            }
+
+            if (object.type === "collection") {
+                collect_sources(object.parent.object, object.parent.monitors, false);
+                for (const child of object.children) {
+                    collect_sources(child.object, child.monitors, false);
+                }
+            }
+        };
+
+        collect_sources(dispatch.object, dispatch.monitors, true);
 
         const seen = new Set<string>();
         for (const source of named_sources) {
@@ -731,10 +744,27 @@ export class EngineObjectDispatchBuilder<T extends EngineObject = EngineObject> 
 
         // swap names for ids now that every named source has one. throws on a
         // name that matches nothing, which is the only place a mistyped
-        // trigger can be caught before it silently does nothing at runtime
-        if (dispatch.triggers) {
+        // trigger can be caught before it silently does nothing at runtime.
+        // covers the top-level triggers plus every collection member's triggers.
+        const all_triggers: Trigger[][] = [];
+        if (dispatch.triggers) all_triggers.push(dispatch.triggers);
+
+        const collect_triggers = (object: EngineObject) => {
+            if (object.type !== "collection") return;
+            if (object.parent.triggers) all_triggers.push(object.parent.triggers);
+            collect_triggers(object.parent.object);
+            for (const child of object.children) {
+                if (child.triggers) all_triggers.push(child.triggers);
+                collect_triggers(child.object);
+            }
+        };
+        collect_triggers(dispatch.object);
+
+        if (all_triggers.length > 0) {
             try {
-                resolve_trigger_bindings(dispatch.triggers, binding_ids);
+                for (const triggers of all_triggers) {
+                    resolve_trigger_bindings(triggers, binding_ids);
+                }
             } catch (e) {
                 for (const unsubscribe of unsubscribes) unsubscribe();
                 throw e;

@@ -1,10 +1,11 @@
 import { CreatedEngineObject, ObjectCollection } from "@hyperlinkvr/vr-engine-schemas";
 import { useFrame } from "@react-three/fiber";
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Group, Matrix4, Quaternion, Vector3 } from "three";
 
 
 
+import { useObjectRefs } from "../contexts/ObjectRefsContext";
 import type { RendererComponentProps } from "../types";
 import { EngineObjectRenderer } from "./EngineObjectRenderer";
 import { sample_live_transform } from "./object_modification";
@@ -17,11 +18,15 @@ export const ObjectCollectionRenderer = (props: RendererComponentProps<ObjectCol
         return {
             object: props.parent.object,
             transform: props.parent.transform ?? {position: [0, 0, 0], rotation: [0, 0, 0], scale: [1, 1, 1]},
-            user_data: props.user_data_ref.current ?? {},
+            // collection user_data is the base identity; member user_data overrides on top
+            user_data: {...(props.user_data_ref.current ?? {}), ...(props.parent.user_data ?? {})},
+            monitors: props.parent.monitors,
+            triggers: props.parent.triggers,
+            // collection tags apply to every member (so tag-filtered hits catch the whole thing), plus the member's own TODO: do we always want this or should it be config
+            tags: [...(props.tags ?? []), ...(props.parent.tags ?? [])],
             id: `${props.id}-parent`
-            // TODO: triggers, monitors etc
         } satisfies CreatedEngineObject;
-    }, [props.parent]);
+    }, [props.parent, props.tags]);
 
     const parent_ready = useObjectReady(renderable_parent.id);
     const parent_refs = useMemo(() => {
@@ -36,16 +41,35 @@ export const ObjectCollectionRenderer = (props: RendererComponentProps<ObjectCol
         return refs;
     }, [parent_ready, renderable_parent.id]);
 
+    // need to grab object refs for the object root itself to allow binding monitors
+    const collection_refs = useObjectRefs();
+    useEffect(() => {
+        if (!parent_refs || !parent_refs.current) {
+            return;
+        }
+
+        // collection driven by parent
+        const original = collection_refs.rigid_body;
+        collection_refs.rigid_body = parent_refs.current.rigid_body;
+
+        return () => {
+            collection_refs.rigid_body = original;
+        };
+    }, [collection_refs, parent_refs]);
+
     const renderable_children = useMemo(() => {
         return props.children.map((child) => {
             return {
                 object: child.object,
                 transform: child.transform ?? {position: [0, 0, 0], rotation: [0, 0, 0], scale: [1, 1, 1]},
-                user_data: props.user_data_ref.current ?? {},
+                user_data: {...(props.user_data_ref.current ?? {}), ...(child.user_data ?? {})},
+                monitors: child.monitors,
+                triggers: child.triggers,
+                tags: [...(props.tags ?? []), ...(child.tags ?? [])],
                 id: `${props.id}-child-${crypto.randomUUID()}`
             } satisfies CreatedEngineObject;
         });
-    }, [props.children]);
+    }, [props.children, props.tags]);
 
     const child_group_ref = useRef<Group>(null);
 
@@ -79,10 +103,10 @@ export const ObjectCollectionRenderer = (props: RendererComponentProps<ObjectCol
 
     return (
         <>
-            <EngineObjectRenderer data={renderable_parent} />
+            <EngineObjectRenderer data={renderable_parent} object_id_override={props.id} />
             <group ref={child_group_ref}>
                 {parent_refs && renderable_children.map((child) => (
-                    <EngineObjectRenderer key={child.id} data={child} parent={parent_refs} />
+                    <EngineObjectRenderer key={child.id} data={child} parent={parent_refs} object_id_override={props.id} />
                 ))}
             </group>
         </>

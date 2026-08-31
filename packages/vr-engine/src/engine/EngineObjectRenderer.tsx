@@ -19,10 +19,13 @@ import { register_triggers } from "./trigger_registry";
 
 export const EngineObjectRenderer = ({
     data,
-    parent
+    parent,
+    object_id_override
 }: {
     data: CreatedEngineObject;
     parent?: RefObject<ObjectRefsContextType>;
+    // collections pass the root object id to keep user data united TODO: do we want this? or should it be per object
+    object_id_override?: string;
 }) => {
     const { type, ...obj_rest } = data.object;
 
@@ -40,9 +43,14 @@ export const EngineObjectRenderer = ({
         const user_data = refs.current.user_data;
         user_data.object_id = data.id;
         Object.assign(user_data, data.user_data);
+        // override wins over both data.id and anything in data.user_data, so a collection
+        // member resolves to the collection rather than its internal id
+        if (object_id_override !== undefined) {
+            user_data.object_id = object_id_override;
+        }
         user_data.__base_tags = data.tags ?? [];
         recompute_object_tags(user_data);
-    }, [data.id, data.user_data, data.tags]);
+    }, [data.id, data.user_data, data.tags, object_id_override]);
 
     // register refs with registry for retrieval by sdk
     useEffect(() => register_object_refs(refs), []);
@@ -134,6 +142,7 @@ export const EngineObjectRenderer = ({
                         user_data_ref={user_data_ref}
                         id={data.id}
                         transform={data.transform}
+                        tags={data.tags}
                         {...obj_rest}
                     />
                 </Suspense>

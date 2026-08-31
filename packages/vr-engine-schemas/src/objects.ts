@@ -6,6 +6,10 @@ import {HexColorSchema} from "./colors";
 import {AbsoluteAssetURLSchema} from "./assets";
 import {TransformSchema} from "./transforms";
 import type {Transform, TransformInput} from "./transforms";
+import {ObjectMonitorSchema} from "./object_monitors";
+import type {ObjectMonitor, ObjectMonitorInput} from "./object_monitors";
+import {TriggerSchema} from "./triggers";
+import type {Trigger, TriggerInput} from "./triggers";
 
 
 // export const MaterialAlbedoColorSchema = z.object({
@@ -173,10 +177,18 @@ export type EngineObjectOfType<T extends EngineObjectType> = Extract<EngineObjec
 export interface CollectionMember {
     object: EngineObject;
     transform: Transform;
+    user_data?: Record<string, any>;
+    monitors?: ObjectMonitor[];
+    triggers?: Trigger[];
+    tags?: string[];
 }
 export interface CollectionMemberInput {
     object: EngineObjectInput;
     transform?: TransformInput;
+    user_data?: Record<string, any>;
+    monitors?: ObjectMonitorInput[];
+    triggers?: TriggerInput[];
+    tags?: string[];
 }
 
 export interface ObjectCollection {
@@ -194,7 +206,11 @@ export interface ObjectCollectionInput {
 export const CollectionMemberSchema: z.ZodType<CollectionMember, CollectionMemberInput> = z.lazy(() =>
     z.object({
         object: EngineObjectSchema,
-        transform: TransformSchema.default({position: [0, 0, 0], rotation: [0, 0, 0], scale: [1, 1, 1]})
+        transform: TransformSchema.default({position: [0, 0, 0], rotation: [0, 0, 0], scale: [1, 1, 1]}),
+        user_data: z.record(z.string(), z.any()).optional(),
+        monitors: z.array(ObjectMonitorSchema).optional(),
+        triggers: z.array(TriggerSchema).optional(),
+        tags: z.array(z.string()).optional()
     })
 );
 

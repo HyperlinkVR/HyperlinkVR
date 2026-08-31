@@ -18,6 +18,8 @@ export interface RootProps {
 
 interface RendererComponentPropsAdditional extends RootProps {
     transform: CreatedEngineObject["transform"];
+    // dispatch-level tags, forwarded so a collection can push its own tags onto members for hit filtering
+    tags: CreatedEngineObject["tags"];
 }
 
 export type RendererComponentProps<T extends EngineObject> = Omit<T, "type"> & RendererComponentPropsAdditional;
