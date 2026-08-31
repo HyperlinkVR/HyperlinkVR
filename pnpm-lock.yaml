@@ -315,6 +315,9 @@ importers:
       '@hyperlinkvr/ui-dom':
         specifier: workspace:*
         version: link:../../packages/ui-dom
+      lucide-react:
+        specifier: 'catalog:'
+        version: 1.21.0(react@19.2.7)
       react:
         specifier: 'catalog:'
         version: 19.2.7

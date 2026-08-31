@@ -16,7 +16,8 @@
         "@hyperlinkvr/ui-dom": "workspace:*",
         "@hyperlinkvr/styles": "workspace:*",
         "react": "catalog:",
-        "react-dom": "catalog:"
+        "react-dom": "catalog:",
+        "lucide-react": "catalog:"
     },
     "devDependencies": {
         "@hyperlinkvr/web-sdk": "workspace:*",
