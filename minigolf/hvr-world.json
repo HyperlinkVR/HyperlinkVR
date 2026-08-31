@@ -1,0 +1,31 @@
+{
+    "$schema": "https://hyperlink.surf/schemas/WorldMetadata_v1.json",
+    "version": 1,
+    "supports": {
+        "vr": "yes",
+        "flat": "yes",
+        "low_power": "maybe",
+        "teleport": true
+    },
+    "languages": [
+        "en"
+    ],
+    "max_players": 8,
+    "recommended_players": 4,
+    "title": "Minigolf",
+    "category": "game",
+    "tags": [
+        "golf",
+        "ball"
+    ],
+    "author": {
+        "username": "ollie@hyperlink.surf",
+        "signature": "gEiFq2uw9GJITlXigu3xcIa9DufJkpUWKPb9Mzsgw8t682C7eMo+Gv1CTBXNoZkvHUrDcbU78kcApkFq+5JADA=="
+    },
+    "additional_contributors": [],
+    "gallery": [],
+    "content_flags": [],
+    "vr_comfort": "moderate",
+    "preloads": [],
+    "endorsements": []
+}
