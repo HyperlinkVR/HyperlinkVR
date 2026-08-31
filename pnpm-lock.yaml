@@ -746,6 +746,9 @@ importers:
       '@hyperlinkvr/auth':
         specifier: workspace:*
         version: link:../packages/auth
+      '@hyperlinkvr/vr-engine-schemas':
+        specifier: workspace:*
+        version: link:../packages/vr-engine-schemas
       zod:
         specifier: 'catalog:'
         version: 4.4.3

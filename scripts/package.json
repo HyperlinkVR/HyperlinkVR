@@ -4,7 +4,8 @@
     "private": true,
     "dependencies": {
         "zod": "catalog:",
-        "@hyperlinkvr/auth": "workspace:*"
+        "@hyperlinkvr/auth": "workspace:*",
+        "@hyperlinkvr/vr-engine-schemas": "workspace:*"
     },
     "devDependencies": {
         "@types/node": "catalog:"

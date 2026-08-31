@@ -1,14 +1,13 @@
 import fs from "fs";
 import path from "path";
 import { EXPORT_TO_JSON as AUTH_EXPORTS } from "@hyperlinkvr/auth";
+import { METADATA_EXPORT_TO_JSON } from "@hyperlinkvr/vr-engine-schemas";
 import { z } from "zod";
 
 
-
-
-
 const EXPORT_TO_JSON = [
-    ...AUTH_EXPORTS
+    ...AUTH_EXPORTS,
+    ...METADATA_EXPORT_TO_JSON
 ];
 
 

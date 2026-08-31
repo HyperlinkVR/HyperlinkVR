@@ -16,3 +16,4 @@ export * from "./triggers";
 export * from "./animation";
 export * from "./hud";
 export {BindingConfigSchema, type BindingConfig, type Bindable} from "./binding";
+export * from "./metadata";

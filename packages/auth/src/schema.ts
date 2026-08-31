@@ -45,7 +45,7 @@ export const StaticIdentityRecordSchema = z.object({
         .optional()
         .default(`https://hyperlink.surf/schemas/StaticIdentityRecord_v${StaticIdentityRecordSchema_VERSION}.json`),
     version: z.number().int().min(1).max(StaticIdentityRecordSchema_VERSION),
-    identity: z.string(),
+    identity: z.string().min(3).max(64),
     created_at: z.number(),
     status: z.enum(["active", "suspended"]),
     auth: StaticAuthRecordSchema
