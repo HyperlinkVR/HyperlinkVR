@@ -4,15 +4,14 @@
     "version": "0.0.1",
     "scripts": {
         "build:ts": "tsc --build",
-        "build": "npm run build:ts && pkg --sea --compress Zstd --public --out-path out ."
+        "build": "npm run build:ts && pkg --sea --compress Zstd --public --out-path out . && resedit --ignore-signed out/discord_rpc-win.exe out/discord_rpc-win.exe --delete-allIcon --fail-if-no-delete --icon ../../packages/assets/hyperlinkvr.ico && shx mv out/discord_rpc-win.exe out/hyperlinkvr_discord_rpc-win.exe && shx mv out/discord_rpc-linux out/hyperlinkvr_discord_rpc-linux && shx mv out/discord_rpc-macos out/hyperlinkvr_discord_rpc-macos"
     },
     "bin": {
         "hyperlinkvr_discord_rpc": "dist/index.js"
     },
-    "dependencies": {
-    },
     "devDependencies": {
+        "@types/node": "catalog:",
         "@yao-pkg/pkg": "^6.22.0",
-        "@types/node": "catalog:"
+        "resedit-cli": "^3.1.0"
     }
 }

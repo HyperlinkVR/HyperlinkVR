@@ -151,6 +151,9 @@ importers:
       '@yao-pkg/pkg':
         specifier: ^6.22.0
         version: 6.22.0
+      resedit-cli:
+        specifier: ^3.1.0
+        version: 3.1.0(typescript@7.0.2)
 
   apps/docs:
     dependencies:
@@ -5302,6 +5305,15 @@ packages:
       typescript:
         optional: true
 
+  cosmiconfig@9.0.2:
+    resolution: {integrity: sha512-gtTZxTDau1wL7Y7zifc2dd8jHSK/k6BTx/2Xp/BpdlAdnlYWFVt7qhJqgwi7637yRwRQ3qL4ZidbB4I8tA5VOg==}
+    engines: {node: '>=14'}
+    peerDependencies:
+      typescript: '>=4.9.5'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
   cross-env@7.0.3:
     resolution: {integrity: sha512-+/HKd6EgcQCJGh2PSjZuUitQBQynKor4wrFbRg4DtAgS1aWO+gU52xpH7M9ScGgXSYmAVS9bIJ8EzuaGw0oNAw==}
     engines: {node: '>=10.14', npm: '>=6', yarn: '>=1'}
@@ -5687,6 +5699,10 @@ packages:
   entities@7.0.1:
     resolution: {integrity: sha512-TWrgLOFUQTH994YUyl1yT4uyavY5nNB5muff+RtWaqNVCAK408b5ZnnbNAUEWLTCpum9w6arT70i1XdQ4UeOPA==}
     engines: {node: '>=0.12'}
+
+  env-paths@2.2.1:
+    resolution: {integrity: sha512-+h1lkLKhZMTYjog1VEpJNG7NZJWcuc2DDk/qsqSTRRCOXiLjeQ1d1/udrUGhqMxUgAlwKNZ0cf2uqan5GLuS2A==}
+    engines: {node: '>=6'}
 
   errno@0.1.8:
     resolution: {integrity: sha512-dJ6oBr5SQ1VSd9qkk7ByRgb/1SH4JZjCHSW/mr63/QcXO9zLVxvJ6Oy13nio03rxpSnVDDjFor75SjVeZWPW/A==}
@@ -6772,6 +6788,10 @@ packages:
   lodash@4.18.1:
     resolution: {integrity: sha512-dMInicTPVE8d1e5otfwmmjlxkZoUpiVLwyeTdUsi/Caj/gfzzblBcCE5sRHV/AsjuCmxWrte2TNGSYuCeCq+0Q==}
 
+  loglevel@1.9.2:
+    resolution: {integrity: sha512-HgMmCqIJSAKqo68l0rS2AanEWfkxaZ5wNiEFb5ggm08lDs9Xl2KxBlX3PTcaD2chBM1gXAYf491/M2Rv8Jwayg==}
+    engines: {node: '>= 0.6.0'}
+
   longest-streak@3.1.0:
     resolution: {integrity: sha512-9Ri+o0JYgehTaVBBDoMqIl8GXtbWg711O3srftcHhZ0dqnETqLaoIK0x17fUw9rFSlK/0NlsKe0Ahhyl5pXE2g==}
 
@@ -7238,6 +7258,10 @@ packages:
     resolution: {integrity: sha512-Z3lTE9pLaJF47NyMhd4ww1yFTAP8YhYI8SleJiHzM46Fgpm5cnNzSl9XfzFNqbaz+VlJrIj3fXQ4DeN1Rjm6cw==}
     engines: {node: '>=18'}
 
+  node-forge@1.4.0:
+    resolution: {integrity: sha512-LarFH0+6VfriEhqMMcLX2F7SwSXeWwnEAJEsYm5QKWchiVYVvJyV9v7UDvUv+w5HO23ZpQTXDv/GxdDdMyOuoQ==}
+    engines: {node: '>= 6.13.0'}
+
   node-html-parser@6.1.13:
     resolution: {integrity: sha512-qIsTMOY4C/dAa5Q5vsobRpOOvPfC4pB61UVW2uSwZNUp0QU/jCekTal1vMmbO0DgdHeLUJpv/ARmDqErVxA3Sg==}
 
@@ -7463,6 +7487,10 @@ packages:
 
   pathe@2.0.3:
     resolution: {integrity: sha512-WUjGcAqP1gQacoQe+OBJsFA7Ld4DyXuUIjZ5cc75cLHvJ7dtNsTugphxIADwspS+AraAUePCKrSVtPLFj/F88w==}
+
+  pe-library@2.0.1:
+    resolution: {integrity: sha512-/qjYFqNSlq59B5DI36am++5/3gMgh02QnzpYigrwrW6s+QpU0mHf09/iA4wjTu21UUxodyV7ZCetV5MiDhaN/A==}
+    engines: {node: '>=20'}
 
   perfect-debounce@2.1.0:
     resolution: {integrity: sha512-LjgdTytVFXeUgtHZr9WYViYSM/g8MkcTPYDlPa3cDqMirHjKiSZPYd6DoL7pK8AJQr+uWkQvCjHNdiMqsrJs+g==}
@@ -8296,6 +8324,15 @@ packages:
 
   requires-port@1.0.0:
     resolution: {integrity: sha512-KigOCHcocU3XODJxsu8i/j8T9tzT4adHiecwORRQ0ZZFcp7ahwXuRU1m+yuO90C5ZUyGeGfocHDI14M3L3yDAQ==}
+
+  resedit-cli@3.1.0:
+    resolution: {integrity: sha512-yvM7xPV1JJR5ATcfU1EFZlEQF/PMnK9QqLbsd/OrkYToR78FUzzpeWtu92irelROTISW4wy4fyB/WqmoXSkMOA==}
+    engines: {node: '>=20'}
+    hasBin: true
+
+  resedit@3.1.0:
+    resolution: {integrity: sha512-i6CN8E6FzTpzsGq/oUnm2GTWhddpZEbnAE+zeNwqTppucTK7xd178q1xWEMrFb+nLnCh+geDqZ4QwhFN8VEgVQ==}
+    engines: {node: '>=20'}
 
   resolve-alpn@1.2.1:
     resolution: {integrity: sha512-0a1F4l73/ZFZOakJnQ3FvkJ2+gSTQWz/r2KE5OdDY0TxPm5h4GkqkWWfM47T7HsbnOtcJVEF4epCVy6u7Q3K+g==}
@@ -15118,6 +15155,15 @@ snapshots:
     optionalDependencies:
       typescript: 6.0.3
 
+  cosmiconfig@9.0.2(typescript@7.0.2):
+    dependencies:
+      env-paths: 2.2.1
+      import-fresh: 3.3.1
+      js-yaml: 4.3.2
+      parse-json: 5.2.0
+    optionalDependencies:
+      typescript: 7.0.2
+
   cross-env@7.0.3:
     dependencies:
       cross-spawn: 7.0.6
@@ -15494,6 +15540,8 @@ snapshots:
   entities@6.0.1: {}
 
   entities@7.0.1: {}
+
+  env-paths@2.2.1: {}
 
   errno@0.1.8:
     dependencies:
@@ -16713,6 +16761,8 @@ snapshots:
 
   lodash@4.18.1: {}
 
+  loglevel@1.9.2: {}
+
   longest-streak@3.1.0: {}
 
   loose-envify@1.4.0:
@@ -17460,6 +17510,8 @@ snapshots:
       emojilib: 2.4.0
       skin-tone: 2.0.0
 
+  node-forge@1.4.0: {}
+
   node-html-parser@6.1.13:
     dependencies:
       css-select: 5.2.2
@@ -17732,6 +17784,8 @@ snapshots:
   path-type@4.0.0: {}
 
   pathe@2.0.3: {}
+
+  pe-library@2.0.1: {}
 
   perfect-debounce@2.1.0: {}
 
@@ -18666,6 +18720,22 @@ snapshots:
   require-like@0.1.2: {}
 
   requires-port@1.0.0: {}
+
+  resedit-cli@3.1.0(typescript@7.0.2):
+    dependencies:
+      cosmiconfig: 9.0.2(typescript@7.0.2)
+      loglevel: 1.9.2
+      node-forge: 1.4.0
+      pe-library: 2.0.1
+      resedit: 3.1.0
+      undici: 7.29.0
+      yargs: 17.7.3
+    transitivePeerDependencies:
+      - typescript
+
+  resedit@3.1.0:
+    dependencies:
+      pe-library: 2.0.1
 
   resolve-alpn@1.2.1: {}
 
