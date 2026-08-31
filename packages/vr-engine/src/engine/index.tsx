@@ -358,7 +358,9 @@ const DiscordPresenceSync = () => {
             details: `Playing ${world_metadata?.title || "Unknown World"}`,
             state: url || "Unknown URL",
         };
-        set_activity(activity);
+        set_activity(activity).catch((err => {
+            console.error("Failed to set Discord activity:", err);
+        }));
     }, [url, world_metadata, set_activity]);
 
     return null;
