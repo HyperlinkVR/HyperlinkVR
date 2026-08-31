@@ -109,9 +109,6 @@ importers:
       '@ianvs/prettier-plugin-sort-imports':
         specifier: 4.1.1
         version: 4.1.1(@vue/compiler-sfc@3.3.4)(prettier@3.2.4)
-      autoprefixer:
-        specifier: ^10.5.0
-        version: 10.5.0(postcss@8.5.26)
       eslint:
         specifier: ^10.9.1
         version: 10.9.1(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))
