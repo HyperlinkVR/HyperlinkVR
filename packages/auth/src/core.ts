@@ -8,7 +8,7 @@ import {
     type AuthManifest,
     type StaticIdentityRecord
 } from "./schema";
-import { resolve_static_record } from "./static";
+import { resolve_static_record, static_sign_with_private_key, static_verify_signature } from "./static";
 
 export type LoginMethod = (typeof AUTH_METHODS)[number];
 
@@ -275,6 +275,32 @@ export const read_auth_session = async (
 ): Promise<AuthSession | null> => {
     const session = await storage.get<AuthSession>("auth_session");
     return session || null;
+}
+
+export const sign_with_private_key = async (
+    data: string,
+    storage: StorageEngine<"local">,
+    identity: Identity,
+    method: LoginMethod
+): Promise<string | null> => {
+    if (method === "static") {
+        return await static_sign_with_private_key(data, storage, identity);
+    } else {
+        throw new Error(`Unsupported signing method: ${method}`);
+    }
+}
+
+export const verify_signature = async (
+    data: string,
+    signature: string,
+    public_key: JsonWebKey,
+    method: LoginMethod
+): Promise<boolean> => {
+    if (method === "static") {
+        return await static_verify_signature(data, signature, public_key);
+    } else {
+        throw new Error(`Unsupported signature verification method: ${method}`);
+    }
 }
 
 // TODO: force impls to expose a fixed interface (e.g. signup, try_login etc)

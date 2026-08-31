@@ -442,6 +442,9 @@ importers:
       '@hyperlinkvr/ui-dom':
         specifier: workspace:*
         version: link:../ui-dom
+      '@hyperlinkvr/vr-engine-schemas':
+        specifier: workspace:*
+        version: link:../vr-engine-schemas
       '@hyperlinkvr/watch-ui':
         specifier: workspace:*
         version: link:../watch-ui

@@ -114,7 +114,19 @@ export const DevToolsPage = () => {
                 </h1>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-                    <ToolGroup title="Authentication Hosts">
+                    <ToolGroup title="Generators">
+                        <ToolWindowButton
+                            label="Open world metadata generator"
+                            intent="DEVTOOLS_FORM"
+                            args={{
+                                schema: "WorldMetadata",
+                                format: "json",
+                                filename: "hvr-world"
+                            }}
+                            width={400}
+                            height={800}
+                        />
+
                         <ToolWindowButton
                             label="Open auth manifest generator"
                             intent="DEVTOOLS_FORM"

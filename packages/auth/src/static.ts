@@ -452,3 +452,73 @@ export const check_private_key = async (
 
     return true;
 };
+
+export const static_sign_with_private_key = async (
+    data: string,
+    local_storage: StorageEngine<"local">,
+    identity: Identity,
+    params?: {
+        password?: string;
+        force_password?: boolean;
+    }
+): Promise<string | null> => {
+    const private_key = await request_private_key(identity, {local: local_storage}, params);
+    if (!private_key) {
+        console.error("No private key found for signing");
+        return null;
+    }
+
+    const private_key_obj = await crypto.subtle.importKey(
+        "jwk",
+        private_key,
+        {
+            name: "Ed25519"
+        },
+        false,
+        ["sign"]
+    );
+
+    const encoder = new TextEncoder();
+    const data_bytes = encoder.encode(data);
+
+    const signature = await crypto.subtle.sign(
+        {
+            name: "Ed25519"
+        },
+        private_key_obj,
+        data_bytes
+    );
+
+    return btoa(String.fromCharCode(...new Uint8Array(signature)));
+};
+
+export const static_verify_signature = async (
+    data: string,
+    signature: string,
+    public_key: JsonWebKey
+): Promise<boolean> => {
+    const public_key_obj = await crypto.subtle.importKey(
+        "jwk",
+        public_key,
+        {
+            name: "Ed25519"
+        },
+        false,
+        ["verify"]
+    );
+
+    const encoder = new TextEncoder();
+    const data_bytes = encoder.encode(data);
+    const signature_bytes = Uint8Array.from(atob(signature), c => c.charCodeAt(0));
+
+    const is_valid = await crypto.subtle.verify(
+        {
+            name: "Ed25519"
+        },
+        public_key_obj,
+        signature_bytes,
+        data_bytes
+    );
+
+    return is_valid;
+};

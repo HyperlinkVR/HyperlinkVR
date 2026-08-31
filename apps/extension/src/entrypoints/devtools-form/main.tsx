@@ -1,9 +1,14 @@
 import { DevToolsFormPage } from "@hyperlinkvr/pages/devtools/form";
 import ReactDOM from "react-dom/client";
 
+import { DefaultContextProviders } from "~/contexts/DefaultContextProviders";
+
+
 export const DevToolsFormUI = () => {
     return (
-        <DevToolsFormPage />
+        <DefaultContextProviders>
+            <DevToolsFormPage />
+        </DefaultContextProviders>
     )
 }
 

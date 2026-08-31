@@ -22,6 +22,7 @@
         "@hyperlinkvr/watch-ui": "workspace:*",
         "@hyperlinkvr/auth": "workspace:*",
         "@hyperlinkvr/assets": "workspace:*",
+        "@hyperlinkvr/vr-engine-schemas": "workspace:*",
         "react": "catalog:",
         "@react-three/fiber": "catalog:",
         "@react-three/uikit": "catalog:",
