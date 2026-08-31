@@ -24,7 +24,8 @@
         "@hyperlinkvr/assets": "workspace:*",
         "react": "catalog:",
         "@react-three/fiber": "catalog:",
-        "@react-three/uikit": "catalog:"
+        "@react-three/uikit": "catalog:",
+        "lucide-react": "catalog:"
     },
     "devDependencies": {
         "@types/react": "catalog:"

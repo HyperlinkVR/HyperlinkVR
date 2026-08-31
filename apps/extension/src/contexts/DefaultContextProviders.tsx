@@ -1,21 +1,21 @@
-import type { MessageEngine, WindowArgumentsStrategy } from "@hyperlinkvr/core";
+import {
+    DiscordRPCEngine,
+    MessageEngine,
+    WindowArgumentsStrategy
+} from "@hyperlinkvr/core";
 import { URLParamsWindowArgumentsStrategy } from "@hyperlinkvr/platform-browser";
-import {
-    ExtensionMessageEngine,
-    ExtensionStorage
-} from "@hyperlinkvr/platform-extension";
-import type {
-    StorageEnginesContextType} from "@hyperlinkvr/react";
-import {
-    AuthSessionProvider,
-    MessageEngineProvider, SettingsProvider,
-    StorageEnginesProvider,
-    WindowArgumentsStrategyProvider
-} from "@hyperlinkvr/react";
+import { ExtensionDiscordRPCEngine, ExtensionMessageEngine, ExtensionStorage } from "@hyperlinkvr/platform-extension";
+import  { DiscordRPCEngineProvider, StorageEnginesContextType } from "@hyperlinkvr/react";
+import { AuthSessionProvider, MessageEngineProvider, SettingsProvider, StorageEnginesProvider, WindowArgumentsStrategyProvider } from "@hyperlinkvr/react";
+
+
+
+
 
 let _default_messenger: MessageEngine | undefined;
 let _default_storage_engines: StorageEnginesContextType | undefined;
 let _default_window_args_strategy: WindowArgumentsStrategy<unknown> | undefined;
+let _default_discord_rpc: DiscordRPCEngine | undefined;
 
 const get_default_messenger = () =>
     (_default_messenger ??= new ExtensionMessageEngine());
@@ -30,16 +30,21 @@ const get_default_storage_engines = () =>
 const get_default_window_args_strategy = () =>
     (_default_window_args_strategy ??= new URLParamsWindowArgumentsStrategy());
 
+const get_default_discord_rpc = () =>
+    (_default_discord_rpc ??= new ExtensionDiscordRPCEngine());
+
 export const DefaultContextProviders = ({
     children,
     messenger,
     storage_engines,
-    window_args_strategy
+    window_args_strategy,
+    discord_rpc
 }: {
     children: React.ReactNode;
     messenger?: MessageEngine;
     storage_engines?: StorageEnginesContextType;
     window_args_strategy?: WindowArgumentsStrategy<unknown>;
+    discord_rpc?: DiscordRPCEngine;
 }) => {
     const resolved_messenger = messenger ?? get_default_messenger();
     const resolved_storage_engines =
@@ -52,8 +57,13 @@ export const DefaultContextProviders = ({
             <StorageEnginesProvider engines={resolved_storage_engines}>
                 <SettingsProvider>
                     <WindowArgumentsStrategyProvider
-                        strategy={resolved_window_args_strategy}>
-                        <AuthSessionProvider>{children}</AuthSessionProvider>
+                        strategy={resolved_window_args_strategy}
+                    >
+                        <AuthSessionProvider>
+                            <DiscordRPCEngineProvider engine={discord_rpc ?? get_default_discord_rpc()}>
+                                {children}
+                            </DiscordRPCEngineProvider>
+                        </AuthSessionProvider>
                     </WindowArgumentsStrategyProvider>
                 </SettingsProvider>
             </StorageEnginesProvider>

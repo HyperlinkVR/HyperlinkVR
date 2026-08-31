@@ -134,6 +134,10 @@ export default defineConfig({
             //"debugger", TODO: implement debug input sidecar
             "storage"
         ],
+        // for discord rpc
+        optional_permissions: [
+            "nativeMessaging"
+        ],
         content_security_policy: {
             extension_pages:
                 `script-src 'self'${ENVIRONMENT === "production" ? "" : " http://localhost:8097"} 'wasm-unsafe-eval'; object-src 'self';`

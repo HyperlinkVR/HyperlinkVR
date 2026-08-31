@@ -1,9 +1,14 @@
-import type {
+import {
+    DiscordRPCEngine,
     MessageEngine,
     StorageEngine,
     StorageKind
 } from "@hyperlinkvr/core";
 import { createContext, useContext } from "react";
+
+
+
+
 
 export type StorageEnginesContextType<K extends StorageKind = StorageKind> = {
     [P in K]?: StorageEngine<P>;
@@ -69,5 +74,36 @@ export const useMessageEngine = (): MessageEngine => {
             "useMessageEngine must be used within a MessageEngineProvider"
         );
     }
+    return context;
+};
+
+
+const DiscordRPCEngineContext = createContext<DiscordRPCEngine | null>(null);
+
+export const DiscordRPCEngineProvider = ({
+    children,
+    engine
+}: {
+    children: React.ReactNode;
+    engine: DiscordRPCEngine;
+}) => {
+    return (
+        <DiscordRPCEngineContext.Provider value={engine}>
+            {children}
+        </DiscordRPCEngineContext.Provider>
+    );
+};
+export const useDiscordRPCEngine = (): DiscordRPCEngine => {
+    const context = useContext(DiscordRPCEngineContext);
+    if (!context) {
+        throw new Error(
+            "useDiscordRPCEngine must be used within a DiscordRPCEngineProvider"
+        );
+    }
+    return context;
+};
+
+export const useDiscordRPCEngineOptional = (): DiscordRPCEngine | null => {
+    const context = useContext(DiscordRPCEngineContext);
     return context;
 };

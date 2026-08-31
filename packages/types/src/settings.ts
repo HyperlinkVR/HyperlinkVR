@@ -378,6 +378,21 @@ export const settings_def = build_settings({
         }
     },
 
+    discord_rpc: {
+        default_value: false,
+        local_only: true,
+        ui: {
+           flat: {
+                label: "Discord Rich Presence",
+                description: "Show your current activity in HyperlinkVR on Discord",
+                widget: {
+                    type: "switch"
+                },
+                breadcrumbs: ["Discord"]
+            }
+        }
+    },
+
     // TODO: widget cross conditions: only show angle if mode is snap, only show speed if mode is smooth
 
     debug_ray_hits: {

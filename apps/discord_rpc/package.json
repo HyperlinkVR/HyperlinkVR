@@ -1,0 +1,18 @@
+{
+    "name": "@hyperlinkvr/discord_rpc",
+    "type": "module",
+    "version": "0.0.1",
+    "scripts": {
+        "build:ts": "tsc --build",
+        "build": "npm run build:ts && pkg --sea --compress Zstd --public --out-path out ."
+    },
+    "bin": {
+        "hyperlinkvr_discord_rpc": "dist/index.js"
+    },
+    "dependencies": {
+    },
+    "devDependencies": {
+        "@yao-pkg/pkg": "^6.22.0",
+        "@types/node": "catalog:"
+    }
+}
