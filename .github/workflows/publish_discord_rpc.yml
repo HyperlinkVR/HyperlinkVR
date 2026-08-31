@@ -1,0 +1,76 @@
+name: Publish Discord RPC bridge
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release (blank = use apps/discord_rpc/package.json)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write      # create the release + tag
+  id-token: write      # keyless sigstore signing for provenance
+  attestations: write  # upload the attestation
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # yao-pkg downloads per-target binaries, so cache them to avoid re-downloading every run
+      - name: Cache pkg binaries
+        uses: actions/cache@v4
+        with:
+          path: ~/.pkg-cache
+          key: pkg-cache-${{ runner.os }}
+
+      - name: Resolve version
+        id: v
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          if [ -z "$VERSION" ]; then
+            VERSION=$(node -p "require('./apps/discord_rpc/package.json').version")
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=discord_rpc-v$VERSION" >> "$GITHUB_OUTPUT"
+
+      # turbo runs ^build first, so tsc --build project references resolve
+      - name: Build binaries
+        run: pnpm turbo run build --filter=@hyperlinkvr/discord_rpc
+
+      - name: Generate checksums
+        working-directory: apps/discord_rpc/out
+        run: sha256sum hyperlinkvr_discord_rpc-* > SHA256SUMS.txt
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: 'apps/discord_rpc/out/hyperlinkvr_discord_rpc-*'
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ steps.v.outputs.tag }}" \
+            apps/discord_rpc/out/hyperlinkvr_discord_rpc-win.exe \
+            apps/discord_rpc/out/hyperlinkvr_discord_rpc-linux \
+            apps/discord_rpc/out/hyperlinkvr_discord_rpc-macos \
+            apps/discord_rpc/out/SHA256SUMS.txt \
+            --title "Discord RPC bridge v${{ steps.v.outputs.version }}" \
+            --latest \
+            --notes "Native messaging host for HyperlinkVR Discord Rich Presence.
+
+          Verify the build came from this repo, untampered:
+          \`gh attestation verify <file> --repo ${{ github.repository }}\`"
