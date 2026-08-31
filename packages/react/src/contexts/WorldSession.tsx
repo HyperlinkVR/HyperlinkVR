@@ -1,8 +1,16 @@
+import type { EventMessage } from "@hyperlinkvr/types";
+import {
+    WorldMetadata,
+    WorldMetadataInput,
+    WorldMetadataSchema
+} from "@hyperlinkvr/vr-engine-schemas";
 import { createContext, useContext, useEffect, useState } from "react";
+
+
+
 import { useMessageEngine } from "./engines";
 import { useWindowArguments } from "./windowing";
-import type { EventMessage } from "@hyperlinkvr/types";
-import type { WorldMetadata } from "@hyperlinkvr/vr-engine-schemas";
+
 
 export type SupportMeta = "supported" | "defer" | "disable";
 
@@ -135,7 +143,55 @@ export const MockWorldSessionProvider = ({
     tab_dimensions = { width: 800, height: 600 },
     support = null,
     doc_generation = 0,
-    world_metadata = null
+    world_metadata = {
+        version: 1,
+        title: "Mock World",
+        description: "Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.",
+        category: "utility",
+        tags: [
+            "fake",
+            "test"
+        ],
+        author: {
+            username: "ollie@hyperlink.surf",
+            signature: "4iiM/d0XS6Lx4qG07/knLmxoi79/uDFdKBMMKz27IfvhjYnnZc4KAg6Eg+PPqLHzGC7apxggRKC9fHvlj8EpCg=="
+        },
+        additional_contributors: [
+            {
+                username: "johndoe@example.com",
+                role: "contributor"
+            }
+        ],
+        thumbnail: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Cat_August_2010-4.jpg/500px-Cat_August_2010-4.jpg",
+        gallery: [
+            "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Cat_August_2010-4.jpg/500px-Cat_August_2010-4.jpg",
+            "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Cat_August_2010-4.jpg/500px-Cat_August_2010-4.jpg",
+            "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Cat_August_2010-4.jpg/500px-Cat_August_2010-4.jpg"
+        ],
+        theme_color: 16711935,
+        supports: {
+            vr: "yes",
+            flat: "no",
+            low_power: "maybe",
+            teleport: true
+        },
+        languages: [
+            "en",
+            "zh"
+        ],
+        max_players: 32,
+        recommended_players: 8,
+        content_flags: [
+            "drugs"
+        ],
+        vr_comfort: "intense",
+        preloads: [
+            "https://example.com/image.png"
+        ],
+        endorsements: [
+            "https://hyperlink.surf/minigolf"
+        ]
+    }
 }: {
     children: React.ReactNode;
     id?: number;
@@ -143,7 +199,7 @@ export const MockWorldSessionProvider = ({
     tab_dimensions?: { width: number; height: number };
     support?: SupportMeta | null;
     doc_generation?: number;
-    world_metadata?: WorldMetadata | null;
+    world_metadata?: WorldMetadataInput | null;
 }) => {
     return (
         <WorldSessionContext.Provider
@@ -153,7 +209,7 @@ export const MockWorldSessionProvider = ({
                 tab_dimensions,
                 support,
                 doc_generation,
-                world_metadata
+                world_metadata: WorldMetadataSchema.parse(world_metadata),
             }}>
             {children}
         </WorldSessionContext.Provider>
