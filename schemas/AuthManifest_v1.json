@@ -45,12 +45,9 @@
         }
     },
     "required": [
-        "$schema",
         "version",
-        "methods",
-        "open_for_registration"
+        "methods"
     ],
-    "additionalProperties": false,
     "if": {
         "required": [
             "static_submit_hint"

@@ -15,7 +15,9 @@
             "const": 1
         },
         "identity": {
-            "type": "string"
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 64
         },
         "created_at": {
             "type": "number"
@@ -52,15 +54,13 @@
                             "required": [
                                 "salt",
                                 "iv"
-                            ],
-                            "additionalProperties": false
+                            ]
                         }
                     },
                     "required": [
                         "algorithm",
                         "custom"
-                    ],
-                    "additionalProperties": false
+                    ]
                 },
                 "encrypted_private_key": {
                     "type": "string"
@@ -97,8 +97,7 @@
                                 "crv",
                                 "x",
                                 "y"
-                            ],
-                            "additionalProperties": false
+                            ]
                         },
                         {
                             "type": "object",
@@ -122,8 +121,7 @@
                                 "kty",
                                 "crv",
                                 "x"
-                            ],
-                            "additionalProperties": false
+                            ]
                         }
                     ]
                 }
@@ -132,17 +130,14 @@
                 "password_deriv",
                 "encrypted_private_key",
                 "public_key"
-            ],
-            "additionalProperties": false
+            ]
         }
     },
     "required": [
-        "$schema",
         "version",
         "identity",
         "created_at",
         "status",
         "auth"
-    ],
-    "additionalProperties": false
+    ]
 }
