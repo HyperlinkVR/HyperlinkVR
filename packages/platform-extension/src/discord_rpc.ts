@@ -98,8 +98,8 @@ export class ExtensionDiscordRPCEngine extends DiscordRPCEngine {
 
         // TODO: defaults should be set on abstract class, not in impls
         const activity_payload = {
-            details: this.#current_activity.details || "",
-            state: this.#current_activity.state || "",
+            details: this.#current_activity.details || undefined,
+            state: this.#current_activity.state || undefined,
             timestamps: this.#current_activity.timestamps || {
                 start: Date.now()
             },
