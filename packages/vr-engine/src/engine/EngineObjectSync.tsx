@@ -10,6 +10,7 @@ import {
 import {get_object_refs} from "./object_ref_registry";
 import {apply_modification, sample_live_transform} from "./object_modification";
 import {cancel_active_tween, set_active_tween} from "../animation/tween_registry";
+import {cancel_active_seek} from "../animation/seek_registry";
 import {clear_object_ready, wait_for_object_ready} from "./object_ready_registry";
 import {list_animation_channels} from "../animation/channel_registry";
 
@@ -106,8 +107,9 @@ export const EngineObjectSync = () => {
                 return;
             }
 
-            // starting any modify supersedes a running tween on this object
+            // starting any modify supersedes a running tween or seek on this object
             cancel_active_tween(message.object_id);
+            cancel_active_seek(message.object_id);
 
             if (message.tween && data.transform) {
                 const live = sample_live_transform(refs);

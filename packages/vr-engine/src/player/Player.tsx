@@ -24,6 +24,7 @@ import { useWorldLoadingStateStore } from "../stores/WorldLoadingStateStore";
 import { Avatar } from "./Avatar";
 import { FlatCameraRig } from "./FlatCameraRig";
 import { PlayerKinematics } from "./PlayerKinematics";
+import { set_local_player_origin } from "./player_position_registry";
 import { useIsSeated } from "./seating";
 import { LOCAL_PLAYER_SUBJECT } from "./subject";
 import { Vignette } from "./Vignette";
@@ -96,6 +97,13 @@ export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>
     useImperativeHandle(ref, () => origin_ref.current!);
 
     const session_mode = useSessionMode();
+
+    // expose the origin group for synchronous per-frame readers (e.g. seek).
+    // keyed on session_mode because the vr/flat rigs are different elements
+    useEffect(() => {
+        set_local_player_origin(origin_ref.current);
+        return () => set_local_player_origin(null);
+    }, [session_mode]);
 
     const {on_action, emit_event, connected} = useWebSDKMessaging();
     const messenger = useMessageEngine();

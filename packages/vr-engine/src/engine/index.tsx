@@ -23,6 +23,8 @@ import { configureTextBuilder } from "troika-three-text";
 
 import { AnimationRunner } from "../animation/AnimationRunner";
 import { AnimationSync } from "../animation/AnimationSync";
+import { SeekRunner } from "../animation/SeekRunner";
+import { SeekSync } from "../animation/SeekSync";
 import { TweenRunner } from "../animation/TweenRunner";
 import { DOMMirror } from "../browser/DOMMirror";
 import { URLBar } from "../browser/URLBar";
@@ -281,6 +283,7 @@ const SceneContents = ({
 
             <AnimationRunner />
             <TweenRunner />
+            <SeekRunner />
             <ObjectMonitorRunner />
             <InputMonitorRunner />
 
@@ -462,6 +465,7 @@ const EngineHostInternal = memo(
 
                                 <EngineObjectSync />
                                 <AnimationSync />
+                                <SeekSync />
                                 <HUDSync />
                                 <VFXSync />
 

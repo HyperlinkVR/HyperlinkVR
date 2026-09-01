@@ -1,4 +1,4 @@
-import type { Animation, CreatedAnimation, CreatedEngineObject, CreatedHUDElement, EngineObjectDispatch, EngineObjectModification, HUDDispatch, HUDElementModification, PlayerMonitor, ReportEvent, Tween, VFXStack, WorldEnv } from "@hyperlinkvr/vr-engine-schemas";
+import type { Animation, CreatedAnimation, CreatedEngineObject, CreatedHUDElement, EngineObjectDispatch, EngineObjectModification, HUDDispatch, HUDElementModification, PlayerMonitor, ReportEvent, SeekConfig, Tween, VFXStack, WorldEnv } from "@hyperlinkvr/vr-engine-schemas";
 
 
 
@@ -111,6 +111,17 @@ interface WebSDKModifyEngineObjectAction extends BaseWebSDKActionMessage {
 
 interface WebSDKRefreshEngineObjectAction extends BaseWebSDKActionMessage {
     action: "HVRSDK_REFRESH_ENGINE_OBJECT";
+    object_id: string;
+}
+
+interface WebSDKSeekEngineObjectAction extends BaseWebSDKActionMessage {
+    action: "HVRSDK_SEEK_ENGINE_OBJECT";
+    object_id: string;
+    config: SeekConfig;
+}
+
+interface WebSDKStopSeekEngineObjectAction extends BaseWebSDKActionMessage {
+    action: "HVRSDK_STOP_SEEK_ENGINE_OBJECT";
     object_id: string;
 }
 
@@ -247,6 +258,8 @@ export type WebSDKActionMessage =
     | WebSDKDestroyEngineObjectAction
     | WebSDKModifyEngineObjectAction
     | WebSDKRefreshEngineObjectAction
+    | WebSDKSeekEngineObjectAction
+    | WebSDKStopSeekEngineObjectAction
     | WebSDKInteractionCommandAction
     | WebSDKPrefabCommandAction
     | WebSDKCreateAnimationAction
@@ -382,6 +395,18 @@ interface WebSDKObjectRefreshReplyMessage extends BaseWebSDKReplyMessage {
     object: CreatedEngineObject;
 }
 
+interface WebSDKSeekEngineObjectReplyMessage extends BaseWebSDKReplyMessage {
+    for: "HVRSDK_SEEK_ENGINE_OBJECT";
+    object_id: string;
+    success: true;
+}
+
+interface WebSDKStopSeekEngineObjectReplyMessage extends BaseWebSDKReplyMessage {
+    for: "HVRSDK_STOP_SEEK_ENGINE_OBJECT";
+    object_id: string;
+    success: true;
+}
+
 interface WebSDKInteractionCommandReplyMessage extends BaseWebSDKReplyMessage {
     for: "HVRSDK_INTERACTION_COMMAND";
     object_id: string;
@@ -502,6 +527,8 @@ export type WebSDKReplyMessage =
     | WebSDKObjectDestroyedReplyMessage
     | WebSDKObjectModifiedReplyMessage
     | WebSDKObjectRefreshReplyMessage
+    | WebSDKSeekEngineObjectReplyMessage
+    | WebSDKStopSeekEngineObjectReplyMessage
     | WebSDKInteractionCommandReplyMessage
     | WebSDKPrefabCommandReplyMessage
     | WebSDKAnimationCreatedReplyMessage

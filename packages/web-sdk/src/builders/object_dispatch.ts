@@ -21,6 +21,7 @@ import {BaseBuilder} from "./base";
 import {subscribe_report} from "../event_bus";
 import {send_via_rtc} from "../messenger";
 import {_INTERACTION_API_MAKERS} from "./interactions";
+import {SeekBuilder} from "./seek";
 import type {BindingMap} from "./triggers";
 import { _PREFAB_API_MAKERS } from "./prefabs";
 
@@ -30,6 +31,7 @@ interface EngineObjectHandleBase {
     channels: string[]; // list of animation channels on this object (which can be used for keyframing)
     destroy: () => Promise<void>;
     modify: () => EngineObjectModificationBuilder;
+    seek: () => SeekBuilder;
     refresh: () => Promise<void>;
 }
 
@@ -838,6 +840,13 @@ export class EngineObjectDispatchBuilder<T extends EngineObject = EngineObject> 
                     }
 
                     return new EngineObjectModificationBuilder(created.object.id, binding_ids);
+                },
+                seek: () => {
+                    if (burned) {
+                        throw new Error("This object has already been destroyed.");
+                    }
+
+                    return new SeekBuilder(created.object.id);
                 },
                 refresh: async () => {
                     if (burned) {
