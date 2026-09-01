@@ -10,7 +10,7 @@ import type { Group } from "three";
 import { useWebSDKMessaging } from "../contexts";
 import type { ExpressionMouth} from "../contexts/PlayerExpressionContext";
 import { PlayerExpressionProvider, usePlayerExpression } from "../contexts/PlayerExpressionContext";
-import { useSessionMode } from "../contexts/SessionModeContext";
+import { useSessionMode } from "../../../react/src/contexts/SessionMode";
 import { BodyHUD } from "../hud/BodyHUD";
 import { FlatHUD } from "../hud/FlatHUD";
 import { HeadHUD } from "../hud/HeadHUD";

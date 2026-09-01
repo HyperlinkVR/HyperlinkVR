@@ -9,6 +9,7 @@
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {
+        "@hyperlinkvr/core": "workspace:*",
         "@hyperlinkvr/react": "workspace:*",
         "@hyperlinkvr/types": "workspace:*",
         "react": "catalog:",

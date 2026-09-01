@@ -11,7 +11,7 @@ import { useCallback, useEffect, useImperativeHandle, useMemo, useRef } from "re
 import type { Group, Object3D} from "three";
 import { MathUtils, Quaternion, Raycaster, Vector3 } from "three";
 
-import { useSessionMode } from "../contexts/SessionModeContext";
+import { useSessionMode } from "../../../react/src/contexts/SessionMode";
 import { useFlatFrameInput } from "../input/impl/flat/bindings";
 import { useHands } from "../input/hands";
 import { get_object_refs } from "../engine/object_ref_registry";

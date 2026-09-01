@@ -3,3 +3,4 @@ export * from "./WorldSession";
 export * from "./AuthSession";
 export * from "./windowing";
 export * from "./DiscordPresence";
+export * from "./SessionMode";

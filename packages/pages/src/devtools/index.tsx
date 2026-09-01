@@ -154,8 +154,8 @@ export const DevToolsPage = () => {
                                 Open watch UI
                             </>}
                             intent="DEVTOOLS_WATCH_UI"
-                            width={WATCH_UI_WIDTH}
-                            height={WATCH_UI_HEIGHT}
+                            width={WATCH_UI_WIDTH + 50}
+                            height={WATCH_UI_HEIGHT + 100}
                         />
                     </ToolGroup>
 

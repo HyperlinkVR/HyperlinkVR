@@ -10,7 +10,7 @@ import { BackSide, Box3, Matrix4, Mesh, MeshBasicMaterial, Quaternion, Raycaster
 
 
 import { useObjectRefsOptional } from "../contexts";
-import { useSessionMode } from "../contexts/SessionModeContext";
+import { useSessionMode } from "../../../react/src/contexts/SessionMode";
 import { DEFAULT_IGNORE_RELEASE_DELAY_S, PLAYER_FILTER_BIT, PROP_FILTER_BIT, WORLD_FILTER_BIT} from "../physics/collision_groups";
 import { rotation_to_quaternion } from "../util/rotation";
 import type { Hand} from "../input/hands";

@@ -28,7 +28,7 @@ import { DOMMirror } from "../browser/DOMMirror";
 import { URLBar } from "../browser/URLBar";
 import { AvatarProvider, PlayerOriginProvider, useWebSDKMessaging } from "../contexts";
 import { AudioListenerProvider } from "../contexts/AudioListenerContext";
-import { SessionModeProvider } from "../contexts/SessionModeContext";
+import { SessionModeProvider } from "../../../react/src/contexts/SessionMode";
 import { WebSDKMessagingProvider } from "../contexts/WebSDKMessagingContext";
 import { SceneDebug } from "../debug/SceneDebug";
 import { HUDSync } from "../hud/HUDSync";

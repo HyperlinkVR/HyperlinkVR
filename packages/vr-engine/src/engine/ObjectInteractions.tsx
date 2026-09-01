@@ -12,7 +12,7 @@ import type { PositionalAudio as PositionalAudioType , DirectionalLight, Group, 
 
 import { useAudioListener } from "../contexts/AudioListenerContext";
 import { useObjectRefs } from "../contexts/ObjectRefsContext";
-import { useSessionMode } from "../contexts/SessionModeContext";
+import { useSessionMode } from "../../../react/src/contexts/SessionMode";
 import { useAssetURL } from "../hooks/useAssetURL";
 import { useObjectBinding } from "../hooks/useObjectBinding";
 import { useFlatFrameInput } from "../input/impl/flat/bindings";

@@ -6,7 +6,7 @@ import { Suspense, useMemo, useRef, useState } from "react";
 import type { Group} from "three";
 import { MathUtils, Matrix4, Quaternion, Vector3 } from "three";
 
-import { useSessionMode } from "../contexts/SessionModeContext";
+import { useSessionMode } from "../../../react/src/contexts/SessionMode";
 import { useHands } from "../input/hands";
 import {FlatWatchUINavDriver, useFlatInputControls, useFlatInputState} from "../input/impl/flat/bindings";
 

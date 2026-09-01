@@ -8,7 +8,7 @@ import {usePlayerOrigin} from "../contexts";
 import {useSetting} from "@hyperlinkvr/react";
 import {useXRInputSourceState} from "@react-three/xr";
 import {useFlatFrameInput} from "../input/impl/flat/bindings";
-import {useSessionMode} from "../contexts/SessionModeContext";
+import {useSessionMode} from "../../../react/src/contexts/SessionMode";
 import {JUMP_SPEED} from "../input/values";
 import {useWorldEnvironment} from "../world/WorldEnvironmentContext";
 import {CAPSULE_RADIUS, consume_player_movement, set_capsule_world_position} from "./motion";

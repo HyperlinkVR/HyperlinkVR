@@ -1,26 +1,51 @@
+import { useSettingsTree, useSettingVisible, useSessionMode, useAnySettingVisible } from "@hyperlinkvr/react";
+import type { Setting, SettingKey, SettingsTree } from "@hyperlinkvr/types";
 import { Container, Text } from "@react-three/uikit";
-import { useSettingsTree } from "@hyperlinkvr/react";
-import type {ComponentRef} from "react";
-import { useEffect, useMemo, useRef, useState} from "react";
-import type { SettingsTree, SettingKey } from "@hyperlinkvr/types";
+import type { ComponentRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+
+import { Crossfader } from "../animation/Crossfader";
+import { useFocusable } from "../contexts/FocusNavContext";
 import { WatchSettingWidget } from "../settings/WatchSettingWidget";
 import type { ScreenProps } from "./index";
-import {Crossfader} from "../animation/Crossfader";
-import {useFocusable} from "../contexts/FocusNavContext";
+import { collect_settings_in_tree } from "@hyperlinkvr/core";
+
+
+const SettingRenderSlot = ({ setting }: { setting: Setting<any> }) => {
+    const mode = useSessionMode();
+    const visible = useSettingVisible(setting.key as SettingKey, "watch", mode);
+    if (!visible) return null;
+
+    return <WatchSettingWidget setting_key={setting.key as SettingKey} />;
+};
+
+const SettingsSectionSlot = ({label, subtree}: {label: string, subtree: SettingsTree}) => {
+    const mode = useSessionMode();
+    const visible = useAnySettingVisible(collect_settings_in_tree(subtree).map(s => s.key as SettingKey), "watch", mode);
+    if (!visible) return null;
+
+    return (
+        <Container
+            flexDirection="column"
+            gap={8}
+            width="48%"
+            minWidth={250}
+        >
+            <Text fontSize={18} fontWeight="bold" color="white" marginBottom={8}>
+                {label}
+            </Text>
+            <SettingSubtree tree={subtree} />
+        </Container>
+    )
+};
 
 const SettingSubtree = ({
-    index,
     tree,
     is_root = false
 }: {
-    index: string;
     tree: SettingsTree;
     is_root?: boolean;
 }) => {
-    const subtree = useMemo(() => tree.subtrees[index], [index, tree]);
-
-    if (!subtree) return null;
-
     return (
         <Container
             flexDirection="row"
@@ -38,7 +63,7 @@ const SettingSubtree = ({
             } : {})}
         >
             {/* TILE 1: Top-level settings (if any) */}
-            {subtree.settings && subtree.settings.length > 0 && (
+            {tree.settings && tree.settings.length > 0 && (
                 <Container
                     flexDirection="column"
                     gap={16}
@@ -46,36 +71,23 @@ const SettingSubtree = ({
                     width="48%"
                     minWidth={250} // Prevent it from getting too squished
                 >
-                    {subtree.settings.map(setting => (
-                        <WatchSettingWidget key={setting.key} setting_key={setting.key as SettingKey} />
+                    {tree.settings.map(setting => (
+                        <SettingRenderSlot key={setting.key} setting={setting} />
                     ))}
                 </Container>
             )}
 
             {/* TILES 2+: Each nested subtree gets its own panel */}
-            {subtree.subtrees && Object.keys(subtree.subtrees).length > 0 && (
-                Object.keys(subtree.subtrees).map(subtab => (
-                    <Container
-                        key={subtab}
-                        flexDirection="column"
-                        gap={8}
-                        // Match the settings tile width
-                        width="48%"
-                        minWidth={250}
-                    >
-                        <Text fontSize={18} fontWeight="bold" color="white" marginBottom={8}>
-                            {subtab}
-                        </Text>
-                        {/* Render the next level of the grid inside this panel */}
-                        <SettingSubtree index={subtab} tree={subtree} />
-                    </Container>
+            {tree.subtrees && Object.keys(tree.subtrees).length > 0 && (
+                Object.entries(tree.subtrees).map(([label, subtree]) => (
+                    <SettingsSectionSlot key={label} label={label} subtree={subtree} />
                 ))
             )}
         </Container>
     );
 };
 
-const TabButton = ({ label, active, on_click }: { label: string; active: boolean; on_click: () => void; }) => {
+const TabButton = ({ label, subtree, active, on_click }: { label: string; subtree?: SettingsTree; active: boolean; on_click: () => void; }) => {
     const ref = useRef<ComponentRef<typeof Container>>(null);
     const {is_focused, grab_focus} = useFocusable(ref, {on_accept: on_click}, undefined);
 
@@ -85,6 +97,13 @@ const TabButton = ({ label, active, on_click }: { label: string; active: boolean
             grab_focus();
         }
     }, [active, grab_focus]);
+
+    const under_subtree = useMemo(() => subtree ? collect_settings_in_tree(subtree).map(s => s.key) : [], [subtree]) as SettingKey[];
+    const mode = useSessionMode();
+    const visible = useAnySettingVisible(under_subtree, "watch", mode);
+
+    if (subtree && !visible) return null;
+    // TODO: handle redirect if current tab becomes invisible due to conditions
 
     return (
         <Container
@@ -108,19 +127,20 @@ const TabButton = ({ label, active, on_click }: { label: string; active: boolean
 
 export const SettingsScreen = ({}: ScreenProps) => {
     const tree = useSettingsTree("watch");
-    const subtree_keys = useMemo(() => Object.keys(tree.subtrees), [tree]);
 
     const [tab, setTab] = useState("General");
+    const tab_tree = useMemo(() => tree.subtrees[tab], [tree, tab]);
 
     return (
         <Container width="100%" flexDirection="column">
             <Container flexDirection="row" gap={8} flexShrink={0}>
-                {subtree_keys.map((subtab, idx) => (
+                {Object.entries(tree.subtrees).map(([name, subtree]) => (
                     <TabButton
-                        key={subtab}
-                        label={subtab}
-                        active={tab === subtab}
-                        on_click={() => setTab(subtab)}
+                        key={name}
+                        label={name}
+                        subtree={subtree}
+                        active={tab === name}
+                        on_click={() => setTab(name)}
                     />
                 ))}
             </Container>
@@ -134,8 +154,12 @@ export const SettingsScreen = ({}: ScreenProps) => {
                 borderColor="rgba(255, 255, 255, 0.2)"
             >
                 <Crossfader content_key={tab} duration={150} width="100%" maxHeight="100%" overflow="scroll">
-                    {tree.subtrees[tab] && (
-                        <SettingSubtree index={tab} tree={tree} is_root />
+                    {tab_tree ? <SettingSubtree tree={tab_tree} is_root /> : (
+                        <Container width="100%" height="100%" justifyContent="center" alignItems="center">
+                            <Text fontSize={18} color="white">
+                                No settings available for this tab.
+                            </Text>
+                        </Container>
                     )}
                 </Crossfader>
             </Container>

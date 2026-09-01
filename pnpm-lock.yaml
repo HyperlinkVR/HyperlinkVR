@@ -673,6 +673,9 @@ importers:
 
   packages/watch-ui:
     dependencies:
+      '@hyperlinkvr/core':
+        specifier: workspace:*
+        version: link:../core
       '@hyperlinkvr/react':
         specifier: workspace:*
         version: link:../react

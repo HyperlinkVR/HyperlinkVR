@@ -5,7 +5,7 @@ import type {ReportEvent} from "@hyperlinkvr/vr-engine-schemas";
 import {useSetting} from "@hyperlinkvr/react";
 
 import {useWebSDKMessaging} from "../contexts/WebSDKMessagingContext";
-import {useSessionMode} from "../contexts/SessionModeContext";
+import {useSessionMode} from "../../../react/src/contexts/SessionMode";
 import {useHands} from "../input/hands";
 import {useFlatFrameInput} from "../input/impl/flat/bindings";
 import {StandardControllerInput} from "../input/impl/flat/bindings";
