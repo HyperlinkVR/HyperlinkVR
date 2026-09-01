@@ -420,9 +420,8 @@ export const settings_def = build_settings({
 
     discord_show_world: {
         default_value: true,
-        local_only: true,
         ui: {
-            flat: {
+            common: {
                 label: "Show current world",
                 description:
                     "Show the current world you're in on Discord Rich Presence",

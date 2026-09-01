@@ -346,6 +346,7 @@ const WorldSessionListener = () => {
 };
 
 const DiscordPresenceSync = () => {
+    const [show_world] = useSetting("discord_show_world");
     const {url, world_metadata} = useWorldSession();
     const {set_activity} = useDiscordPresence();
 
@@ -354,14 +355,30 @@ const DiscordPresenceSync = () => {
             return;
         }
 
-        const activity = {
-            details: `Playing ${world_metadata?.title || "Unknown World"}`,
-            state: url || "Unknown URL",
-        };
-        set_activity(activity).catch((err => {
+        if (!show_world) {
+            set_activity({
+                details: "In a world",
+            }).catch((err => {
+                console.error("Failed to set Discord activity:", err);
+            }));
+            return;
+        }
+
+        // TODO: maintain timestamp if show world changed
+        set_activity({
+            details: world_metadata?.title || "Unknown World",
+            state: url,
+            // n.b to engine devs your discord client doesnt show your own buttons, so hop on an alt :O
+            buttons: [
+                {
+                    label: "Play this world",
+                    url
+                }
+            ]
+        }).catch((err => {
             console.error("Failed to set Discord activity:", err);
         }));
-    }, [url, world_metadata, set_activity]);
+    }, [url, world_metadata, set_activity, show_world]);
 
     return null;
 }
