@@ -51,34 +51,100 @@ export const Scoreboard = () => {
     }, [players, running_par]);
 
     if (!running_par || !this_hole_info || !sorted_scoreboard) {
-        return <div>Loading...</div>;
+        return (
+            <div className="flex h-full items-center justify-center text-lg font-medium text-emerald-100/70">
+                Loading scoreboard…
+            </div>
+        );
     }
 
-    return (
-        <div>
-            <h1>Hole {hole} • Par {this_hole_info.par}</h1>
+    const format_relative = (relative: number) => {
+        if (relative === 0) return "E";
+        return relative > 0 ? `+${relative}` : `${relative}`;
+    };
 
-            <table>
+    const relative_color = (relative: number) => {
+        if (relative < 0) return "text-emerald-300";
+        if (relative > 0) return "text-rose-300";
+        return "text-slate-300";
+    };
+
+    return (
+        <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-white/10 bg-slate-900/70 shadow-2xl shadow-black/40 backdrop-blur">
+            <div className="flex items-center justify-between gap-4 border-b border-white/10 bg-gradient-to-r from-emerald-600/30 to-emerald-500/10 px-6 py-4">
+                <div>
+                    <p className="text-xs font-semibold uppercase tracking-widest text-emerald-300/80">
+                        Now playing
+                    </p>
+                    <h1 className="text-2xl font-bold text-white">Hole {hole}</h1>
+                </div>
+                <div className="rounded-lg bg-white/10 px-4 py-2 text-center">
+                    <p className="text-[0.65rem] font-semibold uppercase tracking-widest text-emerald-200/70">
+                        Par
+                    </p>
+                    <p className="text-2xl font-bold text-white">{this_hole_info.par}</p>
+                </div>
+            </div>
+
+            <table className="w-full border-collapse text-sm">
                 <thead>
-                    <tr>
-                        <th>Player</th>
-                        <th>This hole</th>
-                        <th>Total</th>
-                        <th>± Par</th>
-                        <th>Waiting?</th>
+                    <tr className="text-left text-[0.7rem] font-semibold uppercase tracking-wider text-emerald-200/60">
+                        <th className="px-6 py-3">Player</th>
+                        <th className="px-3 py-3 text-center">This hole</th>
+                        <th className="px-3 py-3 text-center">Total</th>
+                        <th className="px-3 py-3 text-center">± Par</th>
+                        <th className="px-6 py-3 text-center">Done</th>
                     </tr>
                 </thead>
 
-                <tbody>
-                    {sorted_scoreboard.map(([username, state]) => (
-                        <tr key={username}>
-                            <td>{username || my_username}</td>
-                            <td>{state.strokes_this_hole}</td>
-                            <td>{state.score}</td>
-                            <td>{state.score - running_par}</td>
-                            <td>{state.finished_this_hole ? "✔" : ""}</td>
-                        </tr>
-                    ))}
+                <tbody className="divide-y divide-white/5">
+                    {sorted_scoreboard.map(([username, state], index) => {
+                        const is_me = !username;
+                        const relative = state.score - running_par;
+
+                        return (
+                            <tr
+                                key={username}
+                                className={
+                                    (is_me ? "bg-emerald-400/10 " : "") +
+                                    "transition-colors hover:bg-white/5"
+                                }
+                            >
+                                <td className="px-6 py-3">
+                                    <div className="flex items-center gap-3">
+                                        <span className="w-4 text-xs font-semibold text-emerald-200/50">
+                                            {index + 1}
+                                        </span>
+                                        <div style={{backgroundColor: `#${state.color.toString(16).padStart(6, "0")}`}} className="h-3 w-3 rounded-full" />
+                                        <span className="font-medium text-white">
+                                            {username || my_username}
+                                        </span>
+                                        {is_me && (
+                                            <span className="rounded-full bg-emerald-400/20 px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-wide text-emerald-200">
+                                                You
+                                            </span>
+                                        )}
+                                    </div>
+                                </td>
+                                <td className="px-3 py-3 text-center text-slate-200">
+                                    {state.strokes_this_hole}
+                                </td>
+                                <td className="px-3 py-3 text-center font-semibold text-white">
+                                    {state.score}
+                                </td>
+                                <td className={"px-3 py-3 text-center font-bold " + relative_color(relative)}>
+                                    {format_relative(relative)}
+                                </td>
+                                <td className="px-6 py-3 text-center">
+                                    {state.finished_this_hole ? (
+                                        <span className="text-emerald-400">✔</span>
+                                    ) : (
+                                        <span className="text-slate-500">·</span>
+                                    )}
+                                </td>
+                            </tr>
+                        );
+                    })}
                 </tbody>
             </table>
         </div>

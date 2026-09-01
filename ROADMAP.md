@@ -21,6 +21,7 @@ Singleplayer, to support a handful of games
 - [ ] Start implementing more games, with room for multiplayer soon
 - [x] SDK HUD layer
 - [ ] Add more components to HUD
+- [ ] JWT or passkey auth? More friendly to new people than static fed
 
 ---
 

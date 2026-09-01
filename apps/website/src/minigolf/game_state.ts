@@ -12,14 +12,16 @@ interface PlayerState {
     score: number;
     strokes_this_hole: number;
     finished_this_hole: boolean;
-    ball: hvr.builders.EnginePrefabObjectCreationResult;
-    putter: hvr.builders.EnginePrefabObjectCreationResult;
+    color: number;
+    ball: hvr.builders.EnginePrefabObjectHandle;
+    putter: hvr.builders.EnginePrefabObjectHandle;
     last_pos: [number, number, number] | null;
 }
 
 const create_player_state = (
-    ball: hvr.builders.EnginePrefabObjectCreationResult,
-    putter: hvr.builders.EnginePrefabObjectCreationResult
+    ball: hvr.builders.EnginePrefabObjectHandle,
+    putter: hvr.builders.EnginePrefabObjectHandle,
+    color: number
 ): PlayerState => {
     return {
         score: 0,
@@ -27,6 +29,7 @@ const create_player_state = (
         finished_this_hole: false,
         ball,
         putter,
+        color,
         last_pos: null
     };
 };
@@ -155,7 +158,7 @@ export const add_player = async (player: hvr.players.Player, spawn_pos: [number,
         })
         .create();
 
-    players.set(username, create_player_state(created_ball, created_putter));
+    players.set(username, create_player_state(created_ball, created_putter, putter.color));
     notify_game_state();
 };
 
