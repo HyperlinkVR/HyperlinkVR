@@ -16,6 +16,7 @@
     },
     "dependencies": {
         "@hyperlinkvr/types": "workspace:*",
+        "@hyperlinkvr/core": "workspace:*",
         "@hyperlinkvr/react": "workspace:*",
         "@hyperlinkvr/ui-dom": "workspace:*",
         "@hyperlinkvr/schema-form": "workspace:*",

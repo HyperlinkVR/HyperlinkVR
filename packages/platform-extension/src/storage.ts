@@ -1,5 +1,8 @@
-import browser from "webextension-polyfill";
 import type { StorageEngine, StorageKind } from "@hyperlinkvr/core";
+import browser from "webextension-polyfill";
+
+
+
 
 
 export class ExtensionStorage<T extends StorageKind> implements StorageEngine {
@@ -45,5 +48,30 @@ export class ExtensionStorage<T extends StorageKind> implements StorageEngine {
         return () => {
             browser.storage.onChanged.removeListener(listener);
         };
+    }
+
+    async entries<V>(prefix?: string) {
+        const all = await browser.storage[this.kind].get(null);
+        const filtered: Record<string, V> = {};
+        for (const [key, value] of Object.entries(all)) {
+            if (!prefix || key.startsWith(prefix)) {
+                filtered[key] = value as V;
+            }
+        }
+        return filtered;
+    }
+
+    watch_all(callback: (changes: Partial<Record<string, { new_value?: any }>>) => void): () => void {
+        const listener = (changes: Record<string, { newValue?: any; oldValue?: any }>, area: string) => {
+            if (area === this.kind) {
+                const filtered_changes: Partial<Record<string, { new_value?: any }>> = {};
+                for (const [key, change] of Object.entries(changes)) {
+                    filtered_changes[key] = { new_value: change.newValue };
+                }
+                callback(filtered_changes);
+            }
+        };
+        browser.storage.onChanged.addListener(listener);
+        return () => browser.storage.onChanged.removeListener(listener);
     }
 }

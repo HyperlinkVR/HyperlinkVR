@@ -1,8 +1,7 @@
-import type { StorageEngine} from "@hyperlinkvr/core";
-import { get_setting, update_setting, watch_setting } from "@hyperlinkvr/core";
-import type { SettingKey} from "@hyperlinkvr/types";
+import { get_all_settings, get_default_settings, get_setting, StorageEngine, update_setting, watch_all_settings, watch_setting } from "@hyperlinkvr/core";
+import type { SettingKey } from "@hyperlinkvr/types";
 import { settings_def } from "@hyperlinkvr/types";
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
 
 
@@ -56,6 +55,9 @@ interface SettingsContextType {
     get_setting: <K extends SettingKey>(key: K) => Promise<(typeof settings_def)[K]["default_value"]>;
     set_setting: <K extends SettingKey>(key: K, value: (typeof settings_def)[K]["default_value"], skip_debounce?: boolean) => void;
     watch_setting: <K extends SettingKey>(key: K, callback: (value: (typeof settings_def)[K]["default_value"]) => void) => () => void;
+
+    subscribe_settings: (cb: () => void) => () => void;
+    get_settings_snapshot: () => Record<SettingKey, any>;
 }
 
 const SettingsContext = createContext<SettingsContextType | null>(null);
@@ -63,41 +65,53 @@ const SettingsContext = createContext<SettingsContextType | null>(null);
 export const SettingsProvider = ({ children, debounce_delay = 500 }: { children: React.ReactNode; debounce_delay?: number }) => {
     const storage_engines = useStorageEngines();
 
-    // used to expose realtime settings to consumers, but not persisted until debounced
-    // stores "overridden" values that have not yet been persisted to storage but will be read back
     const [uncommited_settings, setUncommitedSettings] = useState<Partial<Record<SettingKey, any>>>({});
+    const uncommited_ref = useRef<Partial<Record<SettingKey, any>>>({}); // synchronous mirror for read-your-writes
     const uncommited_watchers_ref = useRef<Partial<Record<SettingKey, Set<(value: any) => void>>>>({});
 
+    // provide an external store for all settings
+    const storage_snapshot_ref = useRef<Record<SettingKey, any>>(get_default_settings());
+    const merged_ref = useRef<Record<SettingKey, any>>(get_default_settings());
+    const listeners_ref = useRef(new Set<() => void>());
+
+    const rebuild_and_notify = useCallback(() => {
+        merged_ref.current = { ...storage_snapshot_ref.current, ...uncommited_ref.current };
+        for (const l of listeners_ref.current) l();
+    }, []);
+
+    const subscribe_settings = useCallback((cb: () => void) => {
+        listeners_ref.current.add(cb);
+        return () => { listeners_ref.current.delete(cb); };
+    }, []);
+
+    const get_settings_snapshot = useCallback(() => merged_ref.current, []);
+
+    // reads uncommited_ref (not state) so this stays reference-stable
     const get_setting_fn = useCallback(
         async <K extends SettingKey>(key: K) => {
-            if (key in uncommited_settings) {
-                return uncommited_settings[key] as (typeof settings_def)[K]["default_value"];
+            if (key in uncommited_ref.current) {
+                return uncommited_ref.current[key] as (typeof settings_def)[K]["default_value"];
             }
             return await get_setting(key, storage_engines);
         },
-        [uncommited_settings]
+        [storage_engines]
     );
 
     const set_setting_fn = useCallback(
         <K extends SettingKey>(key: K, value: (typeof settings_def)[K]["default_value"], skip_debounce = false) => {
             if (skip_debounce) {
                 update_setting(key, value, storage_engines);
-            } else {
-                setUncommitedSettings((prev) => ({ ...prev, [key]: value }));
+                return;
+            }
+            setUncommitedSettings((prev) => ({ ...prev, [key]: value }));
+            uncommited_ref.current = { ...uncommited_ref.current, [key]: value };
+            rebuild_and_notify();
 
-                // notify uncommited watchers immediately
-                if (key in uncommited_watchers_ref.current) {
-                    for (const callback of uncommited_watchers_ref.current[key]!) {
-                        try {
-                            callback(value);
-                        } catch (e) {
-                            console.error(`Error in uncommited watcher for setting ${key}:`, e);
-                        }
-                    }
-                }
+            for (const callback of uncommited_watchers_ref.current[key] ?? []) {
+                try { callback(value); } catch (e) { console.error(`Error in uncommited watcher for setting ${key}:`, e); }
             }
         },
-        [storage_engines]
+        [storage_engines, rebuild_and_notify]
     );
 
     // commit uncommited settings to storage after debounce delay (with leading edge)
@@ -106,32 +120,27 @@ export const SettingsProvider = ({ children, debounce_delay = 500 }: { children:
         const keys_to_commit = Object.keys(debounced_uncommited_settings) as SettingKey[];
         if (keys_to_commit.length === 0) return;
 
-        console.log(`Committing settings: ${keys_to_commit.join(", ")}`, debounced_uncommited_settings);
-
         for (const key of keys_to_commit) {
-            const value = debounced_uncommited_settings[key];
-            update_setting(key as SettingKey, value, storage_engines);
+            update_setting(key, debounced_uncommited_settings[key], storage_engines);
         }
-
-        // clear only the committed keys for safety
         setUncommitedSettings((prev) => {
-            const new_state = { ...prev };
-            for (const key of keys_to_commit) {
-                delete new_state[key];
-            }
-            return new_state;
+            const next = { ...prev };
+            for (const key of keys_to_commit) delete next[key];
+            return next;
         });
     }, [debounced_uncommited_settings, storage_engines]);
 
+    // sync uncommited_ref with state and rebuild merged snapshot on uncommited_settings change
+    useEffect(() => {
+        uncommited_ref.current = uncommited_settings;
+        rebuild_and_notify();
+    }, [uncommited_settings, rebuild_and_notify]);
+
     const watch_setting_fn = useCallback(
         <K extends SettingKey>(key: K, callback: (value: (typeof settings_def)[K]["default_value"]) => void) => {
-            if (!(key in uncommited_watchers_ref.current)) {
-                uncommited_watchers_ref.current[key] = new Set();
-            }
+            if (!(key in uncommited_watchers_ref.current)) uncommited_watchers_ref.current[key] = new Set();
             uncommited_watchers_ref.current[key]!.add(callback);
-
             const unlisten_real = watch_setting(key, callback, storage_engines);
-
             return () => {
                 uncommited_watchers_ref.current[key]!.delete(callback);
                 unlisten_real();
@@ -140,12 +149,37 @@ export const SettingsProvider = ({ children, debounce_delay = 500 }: { children:
         [storage_engines]
     );
 
-    return (
-        <SettingsContext.Provider value={{ get_setting: get_setting_fn, set_setting: set_setting_fn, watch_setting: watch_setting_fn }}>
-            {children}
-        </SettingsContext.Provider>
+    // initialise storage snapshot and watch for changes in storage
+    useEffect(() => {
+        let cancelled = false;
+        get_all_settings(storage_engines).then((snapshot) => {
+            if (cancelled) return;
+            storage_snapshot_ref.current = snapshot;
+            rebuild_and_notify();
+        });
+        const unwatch = watch_all_settings((changes) => {
+            for (const [key, change] of Object.entries(changes)) {
+                storage_snapshot_ref.current[key as SettingKey] = change.new_value;
+            }
+            rebuild_and_notify();
+        }, storage_engines);
+        return () => { cancelled = true; unwatch(); };
+    }, [storage_engines, rebuild_and_notify]);
+
+    const value = useMemo(
+        () => ({
+            get_setting: get_setting_fn,
+            set_setting: set_setting_fn,
+            watch_setting: watch_setting_fn,
+            subscribe_settings,
+            get_settings_snapshot
+        }),
+        [get_setting_fn, set_setting_fn, watch_setting_fn, subscribe_settings, get_settings_snapshot]
     );
-}
+
+    return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;
+};
+
 
 export const useSetting = <K extends SettingKey>(key: K, debounce_delay = 500) => {
     const context = useContext(SettingsContext);
@@ -183,3 +217,18 @@ export const useSetting = <K extends SettingKey>(key: K, debounce_delay = 500) =
 
     return [value, update_value, loaded] as const;
 }
+
+export const useAllSettings = () => {
+    const ctx = useContext(SettingsContext);
+    if (!ctx) throw new Error("useAllSettings must be used within a SettingsProvider");
+    return useSyncExternalStore(ctx.subscribe_settings, ctx.get_settings_snapshot);
+};
+
+export const useSettingsSnapshotStore = () => {
+    const ctx = useContext(SettingsContext);
+    if (!ctx) throw new Error("useSettingsSnapshotStore must be used within a SettingsProvider");
+    return {
+        subscribe: ctx.subscribe_settings,
+        get_snapshot: ctx.get_settings_snapshot
+    };
+};

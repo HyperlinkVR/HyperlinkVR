@@ -52,6 +52,7 @@ export interface UISubdefinition<V> {
     description?: string;
     breadcrumbs?: string[]; // if omitted, component must be added manually to the UI, but will inherit all its existing widget definitions
     widget: WidgetConfig<V>;
+    conditional?: (settings: Record<string, SettingValueType>, watch_play_mode?: "vr" | "flat") => boolean; // if omitted, widget is always shown. watch_play_mode is undefined if the setting is being shown in the flat UI, and "vr" or "flat" if being shown in the watch UI to indicate current play mode
 }
 // TODO: option to only show on watch in VR or only in flat for contextual config
 export interface SeparateUIDefinition<V extends SettingValueType> {
@@ -145,7 +146,8 @@ export const settings_def = build_settings({
                     ]
                 },
                 include_in_popup: true,
-                breadcrumbs: ["General", "Spectator Camera"]
+                breadcrumbs: ["General", "Spectator Camera"],
+                conditional: (_, mode) => !mode || mode === "vr"
             }
         }
     },
@@ -168,7 +170,8 @@ export const settings_def = build_settings({
                     unit: "°"
                 },
                 include_in_popup: true,
-                breadcrumbs: ["General", "Spectator Camera"]
+                breadcrumbs: ["General", "Spectator Camera"],
+                conditional: (_, mode) => !mode || mode === "vr"
             }
         }
     },
@@ -205,7 +208,8 @@ export const settings_def = build_settings({
                     precision_dp: 2,
                     slider_step: 0.1
                 },
-                breadcrumbs: ["Input", "Flat"]
+                breadcrumbs: ["Input", "Flat"],
+                conditional: (_, mode) => !mode || mode === "flat"
             }
         }
     },
@@ -219,11 +223,12 @@ export const settings_def = build_settings({
                 widget: {
                     type: "select",
                     options: [
-                        {label: "Walk", value: "walk"},
-                        {label: "Teleport", value: "teleport"}
+                        { label: "Walk", value: "walk" },
+                        { label: "Teleport", value: "teleport" }
                     ]
                 },
-                breadcrumbs: ["Comfort", "VR Movement"]
+                breadcrumbs: ["Comfort", "VR Movement"],
+                conditional: (_, mode) => !mode || mode === "vr"
             }
         }
     },
@@ -233,15 +238,17 @@ export const settings_def = build_settings({
         ui: {
             common: {
                 label: "Movement hand",
-                description: "Which hand to use for locomotion in VR. The other hand will be used for turning.",
+                description:
+                    "Which hand to use for locomotion in VR. The other hand will be used for turning.",
                 widget: {
                     type: "select",
                     options: [
-                        {label: "Left", value: "left"},
-                        {label: "Right", value: "right"}
+                        { label: "Left", value: "left" },
+                        { label: "Right", value: "right" }
                     ]
                 },
-                breadcrumbs: ["Comfort", "VR Movement"]
+                breadcrumbs: ["Comfort", "VR Movement"],
+                conditional: (_, mode) => !mode || mode === "vr"
             }
         }
     },
@@ -255,11 +262,12 @@ export const settings_def = build_settings({
                 widget: {
                     type: "select",
                     options: [
-                        {label: "Snap", value: "snap"},
-                        {label: "Smooth", value: "smooth"}
+                        { label: "Snap", value: "snap" },
+                        { label: "Smooth", value: "smooth" }
                     ]
                 },
-                breadcrumbs: ["Comfort", "VR Movement"]
+                breadcrumbs: ["Comfort", "VR Movement"],
+                conditional: (_, mode) => !mode || mode === "vr"
             }
         }
     },
@@ -273,16 +281,17 @@ export const settings_def = build_settings({
                 widget: {
                     type: "select",
                     options: [
-                        {label: "5°", value: 5},
-                        {label: "10°", value: 10},
-                        {label: "15°", value: 15},
-                        {label: "30°", value: 30},
-                        {label: "45°", value: 45},
-                        {label: "60°", value: 60},
-                        {label: "90°", value: 90}
+                        { label: "5°", value: 5 },
+                        { label: "10°", value: 10 },
+                        { label: "15°", value: 15 },
+                        { label: "30°", value: 30 },
+                        { label: "45°", value: 45 },
+                        { label: "60°", value: 60 },
+                        { label: "90°", value: 90 }
                     ]
                 },
-                breadcrumbs: ["Comfort", "VR Movement"]
+                breadcrumbs: ["Comfort", "VR Movement"],
+                conditional: (settings, mode) => settings.vr_rotation === "snap" && (!mode || mode === "vr")
             }
         }
     },
@@ -300,7 +309,8 @@ export const settings_def = build_settings({
                     precision_dp: 0,
                     unit: "°/s"
                 },
-                breadcrumbs: ["Comfort", "VR Movement"]
+                breadcrumbs: ["Comfort", "VR Movement"],
+                conditional: (settings, mode) => settings.vr_rotation === "smooth" && (!mode || mode === "vr")
             }
         }
     },
@@ -310,7 +320,8 @@ export const settings_def = build_settings({
         ui: {
             common: {
                 label: "Vignette intensity",
-                description: "Intensity of the motion sickness reduction vignette",
+                description:
+                    "Intensity of the motion sickness reduction vignette",
                 widget: {
                     type: "range",
                     min: 0,
@@ -318,24 +329,30 @@ export const settings_def = build_settings({
                     precision_dp: 0,
                     unit: "%"
                 },
-                breadcrumbs: ["Comfort", "VR Movement"]
+                breadcrumbs: ["Comfort", "VR Movement"],
+                conditional: (_, mode) => !mode || mode === "vr"
             }
         }
     },
 
     ssao_mode: {
-        default_value: "balanced" as "off" | "performance" | "balanced" | "quality",
+        default_value: "balanced" as
+            | "off"
+            | "performance"
+            | "balanced"
+            | "quality",
         ui: {
             common: {
                 label: "SSAO",
-                description: "Screen space ambient occlusion makes lighting more realistic by making corners and crevices darker",
+                description:
+                    "Screen space ambient occlusion makes lighting more realistic by making corners and crevices darker",
                 widget: {
                     type: "select",
                     options: [
-                        {label: "Off", value: "off"},
-                        {label: "Performance", value: "performance"},
-                        {label: "Balanced", value: "balanced"},
-                        {label: "Quality", value: "quality"}
+                        { label: "Off", value: "off" },
+                        { label: "Performance", value: "performance" },
+                        { label: "Balanced", value: "balanced" },
+                        { label: "Quality", value: "quality" }
                     ]
                 },
                 breadcrumbs: ["Graphics"]
@@ -344,19 +361,25 @@ export const settings_def = build_settings({
     },
 
     shadows_mode: {
-        default_value: "soft_medium" as "off" | "basic" | "soft_low" | "soft_medium" | "soft_high",
+        default_value: "soft_medium" as
+            | "off"
+            | "basic"
+            | "soft_low"
+            | "soft_medium"
+            | "soft_high",
         ui: {
             common: {
                 label: "Shadows",
-                description: "Soft shadows make the world look more realistic, but can be expensive to render",
+                description:
+                    "Soft shadows make the world look more realistic, but can be expensive to render",
                 widget: {
                     type: "select",
                     options: [
-                        {label: "Off", value: "off"},
-                        {label: "Basic", value: "basic"},
-                        {label: "Soft (Low)", value: "soft_low"},
-                        {label: "Soft (Medium)", value: "soft_medium"},
-                        {label: "Soft (High)", value: "soft_high"}
+                        { label: "Off", value: "off" },
+                        { label: "Basic", value: "basic" },
+                        { label: "Soft (Low)", value: "soft_low" },
+                        { label: "Soft (Medium)", value: "soft_medium" },
+                        { label: "Soft (High)", value: "soft_high" }
                     ]
                 },
                 breadcrumbs: ["Graphics"]
@@ -375,25 +398,42 @@ export const settings_def = build_settings({
                 },
                 breadcrumbs: ["Graphics"]
             }
-        }
+        } // TODO: show fps in vr too
     },
 
     discord_rpc: {
         default_value: false,
         local_only: true,
         ui: {
-           flat: {
+            flat: {
                 label: "Discord Rich Presence",
-                description: "Show your current activity in HyperlinkVR on Discord",
+                description:
+                    "Show your current activity in HyperlinkVR on Discord",
                 widget: {
                     type: "switch"
                 },
                 breadcrumbs: ["Discord"]
+                // TODO: show in vr if has been set up already
             }
         }
     },
 
-    // TODO: widget cross conditions: only show angle if mode is snap, only show speed if mode is smooth
+    discord_show_world: {
+        default_value: true,
+        local_only: true,
+        ui: {
+            flat: {
+                label: "Show current world",
+                description:
+                    "Show the current world you're in on Discord Rich Presence",
+                widget: {
+                    type: "switch"
+                },
+                breadcrumbs: ["Discord"],
+                conditional: (settings) => settings.discord_rpc === true
+            }
+        }
+    },
 
     debug_ray_hits: {
         default_value: false,

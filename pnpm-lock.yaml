@@ -430,6 +430,9 @@ importers:
       '@hyperlinkvr/auth':
         specifier: workspace:*
         version: link:../auth
+      '@hyperlinkvr/core':
+        specifier: workspace:*
+        version: link:../core
       '@hyperlinkvr/react':
         specifier: workspace:*
         version: link:../react

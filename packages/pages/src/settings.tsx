@@ -1,11 +1,9 @@
-import { useDiscordRPCEngineOptional, useSetting, useSettingsTree } from "@hyperlinkvr/react";
-import type { SettingKey, SettingsTree } from "@hyperlinkvr/types";
+import {useAnySettingVisible, useDiscordRPCEngineOptional, useSetting, useSettingsTree, useSettingVisible} from "@hyperlinkvr/react";
+import {collect_settings_in_tree} from "@hyperlinkvr/core";
+import type {Setting, SettingKey, SettingsTree } from "@hyperlinkvr/types";
 import { FlatSettingWidget } from "@hyperlinkvr/ui-dom/settings";
 import { useEffect, useMemo, useState } from "react";
 import { Download } from "lucide-react";
-
-
-
 
 
 const bg = new URL("../node_modules/@hyperlinkvr/assets/bg.webp", import.meta.url).href;
@@ -121,35 +119,53 @@ const DiscordRPCSettingWidget = () => {
     );
 };
 
-const SettingSubtree = ({index, tree, is_root = false}: {index: string, tree: SettingsTree, is_root?: boolean}) => {
-    const subtree = useMemo(() => tree.subtrees[index], [index, tree]);
-
-    if (!subtree) return null;
+const SettingRenderSlot = ({setting}: {setting: Setting<any>}) => {
+    const visible = useSettingVisible(setting.key as SettingKey, "flat");
+    if (!visible) return null;
 
     return (
+        setting.key !== "discord_rpc" ? <FlatSettingWidget key={setting.key} setting_key={setting.key as SettingKey} /> : <DiscordRPCSettingWidget key={setting.key} />
+    );
+}
+
+const SettingsSectionSlot = ({label, subtree}: {label: string, subtree: SettingsTree}) => {
+    const visible = useAnySettingVisible(collect_settings_in_tree(subtree).map(s => s.key as SettingKey), "flat");
+    if (!visible) return null;
+
+    return (
+        <div className="flex flex-col gap-2 h-full">
+            <h3 className="text-lg font-semibold text-white mb-2">{label}</h3>
+
+            <SettingSubtree tree={subtree} />
+        </div>
+    );
+}
+
+const SettingSubtree = ({tree, is_root = false}: {tree: SettingsTree, is_root?: boolean}) => {
+    return (
         <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 items-start justify-stretch h-full ${is_root ? "": "border border-white/20 p-4 rounded-md bg-black/20 backdrop-blur-md"}`}>
-            {subtree.settings && subtree.settings.length > 0 && (
+            {tree.settings && tree.settings.length > 0 && (
                 <div className="flex flex-col gap-4">
-                    {subtree.settings.map(setting => (
-                        setting.key !== "discord_rpc" ? <FlatSettingWidget key={setting.key} setting_key={setting.key as SettingKey} /> : <DiscordRPCSettingWidget key={setting.key} />
-                    ))}
+                    {tree.settings.map(setting => <SettingRenderSlot setting={setting} key={setting.key} />)}
                 </div>
             )}
 
-            {subtree.subtrees && Object.keys(subtree.subtrees).length > 0 && (
-                Object.keys(subtree.subtrees).map(subtab => (
-                    <div key={subtab} className="flex flex-col gap-2 h-full">
-                        <h3 className="text-lg font-semibold text-white mb-2">{subtab}</h3>
-
-                        <SettingSubtree index={subtab} tree={subtree} />
-                    </div>
+            {tree.subtrees && Object.keys(tree.subtrees).length > 0 && (
+                Object.entries(tree.subtrees).map(([label, subtree]) => (
+                    <SettingsSectionSlot key={label} label={label} subtree={subtree} />
                 ))
             )}
         </div>
     )
 }
 
-const TabButton = ({label, active, on_click}: {label: string, active: boolean, on_click: () => void}) => {
+const TabButton = ({label, subtree, active, on_click}: {label: string, subtree?: SettingsTree, active: boolean, on_click: () => void}) => {
+    const under_subtree = useMemo(() => subtree ? collect_settings_in_tree(subtree).map(s => s.key) : [], [subtree]) as SettingKey[];
+    const visible = useAnySettingVisible(under_subtree, "flat");
+
+    if (subtree && !visible) return null;
+    // TODO: handle redirect if current tab becomes invisible due to conditions
+
     return (
         <button
             className={`cursor-pointer px-4 py-2 rounded-t-md text-xl ${active ? "bg-blue-600 text-white" : "bg-gray-700 text-gray-300 hover:bg-gray-600"}`}
@@ -176,24 +192,27 @@ export const SettingsPage = () => {
         }
     }, [tree]);
 
+    const tab_tree = useMemo(() => tree.subtrees[tab], [tree, tab]);
+
     return (
         <main style={{backgroundImage: `url(${bg})`}} className="w-screen h-screen bg-cover bg-center">
             <div className="w-full h-full p-6 bg-black/50 backdrop-blur-md">
                 <h1 className="text-white text-3xl font-title mb-8">Settings</h1>
 
                 <div className="flex gap-2">
-                    {Object.keys(tree.subtrees).map(subtab => (
+                    {Object.entries(tree.subtrees).map(([name, subtree]) => (
                         <TabButton
-                            key={subtab}
-                            label={subtab}
-                            active={tab === subtab}
-                            on_click={() => setTab(subtab)}
+                            key={name}
+                            label={name}
+                            subtree={subtree}
+                            active={tab === name}
+                            on_click={() => setTab(name)}
                         />
                     ))}
                 </div>
 
                 <div className="text-white bg-black/20 p-4 rounded-b-md backdrop-blur-md border border-white/20">
-                    <SettingSubtree index={tab} tree={tree} is_root />
+                    {tab_tree ? <SettingSubtree tree={tab_tree} is_root /> : <p className="text-gray-300">No settings available for this section.</p>}
                 </div>
             </div>
         </main>

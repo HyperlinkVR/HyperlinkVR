@@ -8,4 +8,7 @@ export interface StorageEngine<T extends StorageKind = StorageKind> {
     remove(key: string): Promise<void>;
 
     watch<V>(key: string, callback: (new_value: V | null) => void): () => void;
+
+    entries<V>(prefix?: string): Promise<Record<string, V>>;
+    watch_all(callback: (changes: Partial<Record<string, { new_value?: any }>>) => void): () => void;
 }
