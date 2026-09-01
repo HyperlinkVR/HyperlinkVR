@@ -25,7 +25,7 @@ export class SeekBuilder extends BaseBuilder<SeekConfigInput> {
     #burned = false;
 
     constructor(object_id: string) {
-        super({} as SeekConfigInput);
+        super({strategy: "direct"} as SeekConfigInput);
         this.#object_id = object_id;
     }
 

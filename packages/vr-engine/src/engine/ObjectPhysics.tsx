@@ -442,7 +442,8 @@ const ObjectPhysicsInternal = ({
     transform,
     collision_groups,
     on_collision_enter,
-    on_collision_exit
+    on_collision_exit,
+    auto_collider_mesh
 }: {
     physics: PhysicsSystem;
     children?: React.ReactNode;
@@ -452,6 +453,8 @@ const ObjectPhysicsInternal = ({
     collision_groups?: number;
     on_collision_enter?: (payload: CollisionEnterPayload) => void;
     on_collision_exit?: (payload: CollisionPayload) => void;
+    // mesh url backing an `auto` collider, so a decoupled body can rebuild the collider from a hidden clone
+    auto_collider_mesh?: string;
 }) => {
     const refs = useObjectRefsOptional();
 
@@ -467,10 +470,27 @@ const ObjectPhysicsInternal = ({
 
     const container_ref = useRef<Group>(null);
 
-    const collider: ColliderOrCollection = rb.collider ?? {
+    const base_collider: ColliderOrCollection = rb.collider ?? {
         type: "auto",
         approximation: rb.type === "fixed" ? "trimesh" : "hull"
     };
+
+    // a tracked kinematic-pos body renders its visual OUTSIDE the RigidBody (see decouple_visual below) so the
+    // rapier writeback can't double-transform a visual the tracked group is also moving. but rapier builds `auto`
+    // colliders from the visual meshes *inside* the body — which decoupling removes, leaving it with no collider.
+    // resolve auto to an explicit mesh collider (rendered from a hidden clone) so the body can decouple AND keep a
+    // collider. only possible when the mesh url is known (custom objects), so prefabs fall back to plain auto.
+    const wants_decouple = rb.type === "kinematic-pos" && !kinematic_pos_tracking_ref;
+    const collider: ColliderOrCollection =
+        wants_decouple && base_collider.type === "auto" && auto_collider_mesh
+            ? {
+                  type: "custom-mesh",
+                  mesh: auto_collider_mesh,
+                  approximation: base_collider.approximation === "trimesh" ? "trimesh" : "hull",
+                  offset: base_collider.offset,
+                  rotation: base_collider.rotation
+              }
+            : base_collider;
 
     if (collider.type === "auto" && !children) {
         console.warn(`RigidBody "${body_name || "unnamed"}" has auto collider but no children to generate colliders from. This may result in no colliders being generated.`);

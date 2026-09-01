@@ -77,13 +77,13 @@ export const CustomObjectRenderer = ({ mesh, interactions, physics, transform, s
     const with_physics = useMemo(
         () =>
             physics ? (
-                <ObjectPhysics physics={physics} transform={transform}>
+                <ObjectPhysics physics={physics} transform={transform} auto_collider_mesh={mesh}>
                     {with_interactions}
                 </ObjectPhysics>
             ) : (
                 with_interactions
             ),
-        [physics, transform, with_interactions]
+        [physics, transform, with_interactions, mesh]
     );
 
     return with_physics;
