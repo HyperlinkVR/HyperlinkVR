@@ -2,6 +2,7 @@ import { useMessageEngine, useSetting } from "@hyperlinkvr/react";
 import type { SettingKeyReturning, WindowIntent } from "@hyperlinkvr/types";
 import { ToggleSwitch } from "@hyperlinkvr/ui-dom/settings";
 import { WATCH_UI_HEIGHT, WATCH_UI_WIDTH } from "@hyperlinkvr/watch-ui";
+import { Earth, UserKey, Watch } from "lucide-react";
 
 const bg = new URL("../../node_modules/@hyperlinkvr/assets/bg.webp", import.meta.url).href;
 
@@ -28,12 +29,12 @@ const ToolButton = ({
     label,
     on_click
 }: {
-    label: string;
+    label: string | React.ReactNode;
     on_click: () => void;
 }) => {
     return (
         <button
-            className="text-gray-300 px-4 py-2 bg-blue-600 rounded-lg hover:not-disabled:bg-blue-700 transition text-lg font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-600"
+            className="text-gray-300 px-4 py-2 bg-blue-600 rounded-lg hover:not-disabled:bg-blue-700 transition text-lg font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-600 flex justify-center items-center gap-3"
             onClick={on_click}>
             {label}
         </button>
@@ -63,7 +64,7 @@ const ToolWindowButton = ({
     width,
     height
 }: {
-    label: string;
+    label: string | React.ReactNode;
     intent: WindowIntent;
     args?: Record<string, any>;
     width: number;
@@ -116,7 +117,10 @@ export const DevToolsPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
                     <ToolGroup title="Generators">
                         <ToolWindowButton
-                            label="Open world metadata generator"
+                            label={<>
+                                <Earth />
+                                Open world metadata generator
+                            </>}
                             intent="DEVTOOLS_FORM"
                             args={{
                                 schema: "WorldMetadata",
@@ -128,7 +132,10 @@ export const DevToolsPage = () => {
                         />
 
                         <ToolWindowButton
-                            label="Open auth manifest generator"
+                            label={<>
+                                <UserKey />
+                                Open auth manifest generator
+                            </>}
                             intent="DEVTOOLS_FORM"
                             args={{
                                 schema: "AuthManifest",
@@ -142,7 +149,10 @@ export const DevToolsPage = () => {
 
                     <ToolGroup title="UI Inspector">
                         <ToolWindowButton
-                            label="Open watch UI"
+                            label={<>
+                                <Watch />
+                                Open watch UI
+                            </>}
                             intent="DEVTOOLS_WATCH_UI"
                             width={WATCH_UI_WIDTH}
                             height={WATCH_UI_HEIGHT}

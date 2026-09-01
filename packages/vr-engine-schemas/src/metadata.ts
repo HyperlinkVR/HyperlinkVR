@@ -131,7 +131,10 @@ export const WorldMetadataSchema = z.object({
         teleport: true
     }),
 
-    languages: z.array(BCP47Schema).min(1).default(["en"]),
+    languages: z.union([
+        z.literal("any"),
+        z.array(BCP47Schema).min(1)
+    ]).default("any"),
 
     max_players: z.number().int().min(1).max(32).default(32),
     recommended_players: z.number().int().min(1).max(32).default(8),

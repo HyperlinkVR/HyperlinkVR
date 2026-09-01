@@ -2,7 +2,7 @@ import { AuthManifestSchema, sign_with_private_key, verify_signature } from "@hy
 import { useAuthSession, useStorageEngine } from "@hyperlinkvr/react";
 import { LoadingSpinner } from "@hyperlinkvr/ui-dom";
 import { WorldMetadataSchema } from "@hyperlinkvr/vr-engine-schemas";
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 
 
 // lazy load schema form to avoid loading css on wrong pages / bundle bloat
@@ -19,15 +19,17 @@ const SCHEMAS = {
         schema: WorldMetadataSchema,
         title: "World Metadata Generator",
         field_overrides: {
-            "author.username": ({ value, set_value }) => {
-                // default to logged in username if available
+            "author.username": ({ value, set_value, error }) => {
                 const auth = useAuthSession();
+                const username = auth?.username;
+                const defaulted = useRef(false);
 
                 useEffect(() => {
-                    if (auth && !value) {
-                        set_value(auth.username);
+                    if (!defaulted.current && username && !value) {
+                        defaulted.current = true;
+                        set_value(username);
                     }
-                }, [auth, value, set_value]);
+                }, [username, value, set_value]);
 
                 return (
                     <label style={{ display: "flex", flexDirection: "column", gap: "0.5rem", marginTop: "1rem" }}>
@@ -40,29 +42,40 @@ const SCHEMAS = {
                             onChange={(e) => set_value(e.target.value)}
                             placeholder="Enter your username"
                         />
+
+                        {error && <span style={{ color: "#dc3545", fontSize: "0.85rem" }}>{error}</span>}
                     </label>
                 );
             },
-            "author.signature": ({ value, set_value }) => {
+            "author.signature": ({ value, set_value, error, set_error, set_warning }) => {
                 const auth = useAuthSession();
+                const public_key = auth?.public_key;
+                const method = auth?.method;
 
                 const [world_url, setWorldURL] = useState("");
                 const [confirmed, setConfirmed] = useState<boolean | null>(null);
 
+                const is_empty = !value;
                 useEffect(() => {
-                    if (!value || !auth) {
+                    set_warning(is_empty ? "Author signature is empty! This world will be published unsigned." : null);
+                }, [is_empty, set_warning]);
+
+                useEffect(() => {
+                    if (!value || !public_key || !method || !world_url) {
                         setConfirmed(null);
+                        set_error(null);
                         return;
                     }
 
-                    // when signature value is set, verify against the pubkey
-                    verify_signature(world_url, value, auth.public_key, auth.method).then((result) => {
+                    verify_signature(world_url, value, public_key, method).then((result) => {
                         setConfirmed(result);
+                        set_error(result ? null : "Author signature is invalid for this world URL.");
                     }).catch((err) => {
                         console.error("Error verifying signature:", err);
                         setConfirmed(false);
+                        set_error("Could not verify the author signature.");
                     });
-                }, [value, auth, world_url]);
+                }, [value, public_key, method, world_url, set_error]);
 
                 const local_storage = useStorageEngine("local");
 
@@ -82,38 +95,73 @@ const SCHEMAS = {
                             />
                         </label>
 
-                        <button
-                            style={{
-                                padding: "0.5rem 1rem",
-                                backgroundColor: confirmed === null ? "#007bff" : confirmed ? "#28a745" : "#dc3545",
-                                color: "white",
-                                border: "none",
-                                borderRadius: "4px",
-                                cursor: "pointer"
-                            }}
-                            onClick={async () => {
-                                // strip trailing slash from world_url if present
-                                let stripped_world_url = world_url;
-                                if (stripped_world_url.endsWith("/")) {
-                                    stripped_world_url = stripped_world_url.slice(0, -1);
-                                }
-                                setWorldURL(stripped_world_url);
+                        <div style={{ display: "flex", gap: "0.5rem" }}>
+                            <button
+                                type="button"
+                                style={{
+                                    padding: "0.5rem 1rem",
+                                    backgroundColor: confirmed === null ? "#007bff" : confirmed ? "#28a745" : "#dc3545",
+                                    color: "white",
+                                    border: "none",
+                                    borderRadius: "4px",
+                                    cursor: "pointer"
+                                }}
+                                onClick={async () => {
+                                    // strip trailing slash from world_url if present
+                                    let stripped_world_url = world_url;
+                                    if (stripped_world_url.endsWith("/")) {
+                                        stripped_world_url = stripped_world_url.slice(0, -1);
+                                    }
+                                    setWorldURL(stripped_world_url);
 
-                                const signature = await sign_with_private_key(stripped_world_url, local_storage, auth!.identity, auth!.method);
+                                    const signature = await sign_with_private_key(stripped_world_url, local_storage, auth!.identity, auth!.method);
 
-                                if (!signature) {
-                                    alert("Failed to sign world. Try logging in again.");
-                                    return;
-                                }
+                                    if (!signature) {
+                                        alert("Failed to sign world. Try logging in again.");
+                                        return;
+                                    }
 
-                                set_value(signature);
-                            }}
-                        >
-                            {confirmed === null ? "Sign world" : confirmed ? "Signature valid ✅" : "Signature invalid ❌"}
-                        </button>
+                                    set_value(signature);
+                                }}
+                            >
+                                {confirmed === null ? "Sign world" : confirmed ? "Signature valid ✅" : "Signature invalid ❌"}
+                            </button>
+
+                            {value && (
+                                <button
+                                    type="button"
+                                    style={{
+                                        padding: "0.5rem 1rem",
+                                        backgroundColor: "transparent",
+                                        color: "#dc3545",
+                                        border: "1px solid #dc3545",
+                                        borderRadius: "4px",
+                                        cursor: "pointer"
+                                    }}
+                                    onClick={() => set_value(undefined)}
+                                >
+                                    Clear signature
+                                </button>
+                            )}
+                        </div>
+
+                        {!value && (
+                            <span style={{ color: "#b8860b", fontSize: "0.85rem" }}>
+                                No signature! This world will be published unsigned.
+                            </span>
+                        )}
+                        {confirmed === false && (
+                            <span style={{ color: "#dc3545", fontSize: "0.85rem" }}>
+                                Signature is invalid for this world URL.
+                            </span>
+                        )}
+                        {error && <span style={{ color: "#dc3545", fontSize: "0.85rem" }}>{error}</span>}
                     </div>
                 );
             }
+            // NOTE: additional_contributors is a union (string | object) and is now
+            // rendered automatically by SchemaForm's generic UnionField, so it no
+            // longer needs a custom override here.
         }
     }
 } as Record<string, { schema: any; title: string, field_overrides?: Record<string, React.ComponentType<any>> }>;
