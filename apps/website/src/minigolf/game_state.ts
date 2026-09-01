@@ -178,7 +178,7 @@ export const next_hole = () => {
     }
 
     going_to_next_hole = true;
-    
+
     for (const [username, state] of players.entries()) {
         state.strokes_this_hole = 0;
         state.finished_this_hole = false;

@@ -160,7 +160,7 @@ hyperlinkvr.on_ready(async () => {
         .create();
 
     // ensure course and terrain are loaded before anything else, as they may be used for collision detection
-    await Promise.all([promise_course, promise_terrain]);
+    await Promise.all([promise_course, promise_terrain, promise_course_bounds]);
 
     const hole_dummy = new h.CustomObjectBuilder()
         .add_interaction(

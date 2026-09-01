@@ -27,7 +27,7 @@ export const GameUI = () => {
                         <span className="text-6xl">⛳</span>
                         <h1 className="text-4xl font-bold tracking-tight">Minigolf</h1>
                         <p className="max-w-sm text-lg text-emerald-100/80">
-                            Ppress the{" "}
+                            Press the{" "}
                             <span className="font-semibold text-white">Start</span> button to
                             begin the game.
                         </p>
