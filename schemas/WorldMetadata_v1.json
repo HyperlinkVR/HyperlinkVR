@@ -174,14 +174,20 @@
             }
         },
         "languages": {
-            "default": [
-                "en"
-            ],
-            "minItems": 1,
-            "type": "array",
-            "items": {
-                "type": "string"
-            }
+            "default": "any",
+            "anyOf": [
+                {
+                    "type": "string",
+                    "const": "any"
+                },
+                {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            ]
         },
         "max_players": {
             "default": 32,

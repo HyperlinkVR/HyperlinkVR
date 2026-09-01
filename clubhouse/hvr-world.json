@@ -1,0 +1,32 @@
+{
+    "$schema": "https://hyperlink.surf/schemas/WorldMetadata_v1.json",
+    "version": 1,
+    "title": "Clubhouse",
+    "category": "social",
+    "tags": [
+        "hangout"
+    ],
+    "author": {
+        "username": "ollie@hyperlink.surf",
+        "signature": "xwPFXFVYUAA+ytWmsu1HMzBMkisOMa1AH3P8ZuiDaWf+OPWZXeqph7KqLWO1ARiVO/L9Js7FSZXCMjMoTT2qAQ=="
+    },
+    "additional_contributors": [],
+    "gallery": [],
+    "theme_color": 10499793,
+    "supports": {
+        "vr": "yes",
+        "flat": "yes",
+        "low_power": "yes",
+        "teleport": true
+    },
+    "languages": "any",
+    "max_players": 32,
+    "recommended_players": 32,
+    "content_flags": [],
+    "vr_comfort": "comfortable",
+    "preloads": [],
+    "endorsements": [
+        "https://hyperlink.surf/minigolf"
+    ],
+    "homepage": "https://hyperlink.surf"
+}
