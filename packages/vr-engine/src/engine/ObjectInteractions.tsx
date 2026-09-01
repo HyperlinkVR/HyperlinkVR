@@ -6,13 +6,13 @@ import { useXRInputSourceState } from "@react-three/xr";
 import type { ParticleSystemRef } from "quarks.r3f";
 import { useEffect, useMemo, useRef } from "react";
 import { Audio, AudioLoader, Euler, MathUtils, Vector3 } from "three";
-import type { PositionalAudio as PositionalAudioType , DirectionalLight, Group, Object3D, PointLight, SpotLight} from "three";
+import type { DirectionalLight, Group, Object3D, PointLight, PositionalAudio as PositionalAudioType, SpotLight } from "three";
 
 
 
+import { useSessionMode } from "../../../react/src/contexts/SessionMode";
 import { useAudioListener } from "../contexts/AudioListenerContext";
 import { useObjectRefs } from "../contexts/ObjectRefsContext";
-import { useSessionMode } from "../../../react/src/contexts/SessionMode";
 import { useAssetURL } from "../hooks/useAssetURL";
 import { useObjectBinding } from "../hooks/useObjectBinding";
 import { useFlatFrameInput } from "../input/impl/flat/bindings";
@@ -22,9 +22,9 @@ import { ParticleEmitter } from "../interaction/ParticleEmitter";
 import type { RaycastHandle } from "../interaction/Raycast";
 import { Raycast } from "../interaction/Raycast";
 import { detect_trigger_direction, resolve_interacted, TriggerVolume } from "../interaction/TriggerVolume";
-import { ShadowDirectionalLight, ShadowPointLight, ShadowSpotLight } from "../render";
 import { get_capsule_world_position } from "../player/motion";
 import { is_seated_on, sit_on, stand_up } from "../player/seating";
+import { ShadowDirectionalLight, ShadowPointLight, ShadowSpotLight } from "../render";
 import { rotation_to_euler } from "../util/rotation";
 
 

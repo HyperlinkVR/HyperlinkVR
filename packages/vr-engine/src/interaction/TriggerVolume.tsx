@@ -1,9 +1,9 @@
 import type { ColliderOrCollection, TriggerVolumeInteractionPayload } from "@hyperlinkvr/vr-engine-schemas";
-import type { IntersectionEnterPayload, IntersectionExitPayload, RapierRigidBody} from "@react-three/rapier";
+import type { IntersectionEnterPayload, IntersectionExitPayload, RapierRigidBody } from "@react-three/rapier";
 import { RigidBody } from "@react-three/rapier";
-import type { ComponentProps} from "react";
+import type { ComponentProps } from "react";
 import { useCallback, useMemo, useRef } from "react";
-import type { Group} from "three";
+import type { Group } from "three";
 import { Quaternion, Vector3 } from "three";
 
 
@@ -108,6 +108,7 @@ export const TriggerVolume = ({collider, on_enter, on_exit, anchor_ref, children
                 ref={rb_ref}
                 type="kinematicPosition"
                 sensor
+                canSleep={false}
                 onIntersectionEnter={handle_enter}
                 onIntersectionExit={handle_exit}
                 activeCollisionTypes={ALL_COLLISIONS}
