@@ -1,34 +1,8 @@
-import type {
-    Bindable,
-    CollectionMember,
-    CreatedEngineObject,
-    EngineObject,
-    EngineObjectDispatch,
-    EngineObjectDispatchInput,
-    EngineObjectModification,
-    EngineObjectModificationInput,
-    EngineObjectType,
-    ObjectMonitor,
-    PartialTransformInput,
-    PrefabInput,
-    ReportEvent,
-    TransformInput,
-    Trigger,
-    TweenEasingInput,
-    Vector3,
-    Vector4
-} from "@hyperlinkvr/vr-engine-schemas";
-import {
-    EngineObjectDispatchSchema,
-    EngineObjectModificationSchema,
-    TweenSchema,
-    Vector3Schema,
-    Vector4Schema
-} from "@hyperlinkvr/vr-engine-schemas";
-
-
-
 import type { CollectionMemberChannels } from "@hyperlinkvr/types";
+import type { Bindable, CollectionMember, CreatedEngineObject, EngineObject, EngineObjectDispatch, EngineObjectDispatchInput, EngineObjectModification, EngineObjectModificationInput, EngineObjectType, ObjectMonitor, PartialTransformInput, PrefabInput, ReportEvent, TransformInput, Trigger, TweenEasingInput, Vector3, Vector4 } from "@hyperlinkvr/vr-engine-schemas";
+import { EngineObjectDispatchSchema, EngineObjectModificationSchema, TweenSchema, Vector3Schema, Vector4Schema } from "@hyperlinkvr/vr-engine-schemas";
+
+
 
 import { subscribe_report } from "../event_bus";
 import { send_via_rtc } from "../messenger";
@@ -62,19 +36,27 @@ export interface EnginePrefabObjectHandle extends EngineObjectHandleBase {
 }
 
 /** @group Objects */
-export interface EngineObjectCollectionChildHandle {
+export interface EngineObjectCollectionMemberHandle {
     label?: string;
     object: CreatedEngineObject;
     bindings: BindingMap;
     channels: string[];
-    children: EngineObjectCollectionChildHandle[];
+    children: EngineObjectCollectionMemberHandle[];
+
+    // TODO: modify support for child handles and collections in general
+    // TODO: if this ends up basically the same, then just use an object handle as the child type
+
+    // TODO: narrowing
+    interactions?: Record<string, Record<string, Function>>; // interaction apis (binding name -> function name -> function)
+    prefab?: Record<string, Function>; // prefab api (function name -> function)
 }
 
 /** @group Objects */
 export interface EngineObjectCollectionHandle extends EngineObjectHandleBase {
     object: CreatedEngineObject & { type: "collection" }; // override type to collection
-    children: EngineObjectCollectionChildHandle[];
-    // TODO: how will command apis be accessed throughout the hierarchy? hoisted out or via children?
+    parent: EngineObjectCollectionMemberHandle;
+    children: EngineObjectCollectionMemberHandle[];
+    // TODO: should interaction/prefab apis be hoisted here to the root too?
 }
 
 /** @group Objects */
@@ -510,14 +492,35 @@ const build_child_handle = (
     member: CollectionMember,
     node: CollectionMemberChannels,
     binding_ids: BindingMap
-): EngineObjectCollectionChildHandle => {
+): EngineObjectCollectionMemberHandle => {
     const names: string[] = [];
     const obj = member.object;
+
+    const interactions = [] as {name: string, api: any}[];
+    let prefab_api: Record<string, Function> | undefined = undefined;
+
     if (obj.type === "custom" && obj.interactions) {
-        for (const i of obj.interactions) if (i.binding?.name) names.push(i.binding.name);
+        for (const i of obj.interactions) {
+            if (i.binding?.name) {
+                names.push(i.binding.name);
+
+                const make_api = _INTERACTION_API_MAKERS[i.type];
+                if (make_api) {
+                    interactions.push({name: i.binding.name, api: make_api(node.id, binding_ids.get(i.binding.name)!)});
+                }
+            }
+        }
     }
-    if (obj.type === "prefab" && "binding" in obj && obj.binding?.name) names.push(obj.binding.name);
+
+    if (obj.type === "prefab" && obj.name in _PREFAB_API_MAKERS) {
+        const make_api = _PREFAB_API_MAKERS[obj.name];
+        if (make_api) {
+            prefab_api = make_api(node.id);
+        }
+    }
+
     for (const m of member.monitors ?? []) if (m.binding?.name) names.push(m.binding.name);
+
     const bindings = new Map<string, string>();
     for (const name of names) {
         const id = binding_ids.get(name);
@@ -525,7 +528,7 @@ const build_child_handle = (
     }
 
     // parent is folded in as the first child handle, matching how the members are laid out
-    let children: EngineObjectCollectionChildHandle[] = [];
+    let children: EngineObjectCollectionMemberHandle[] = [];
     if (obj.type === "collection" && node.parent && node.children) {
         const members = [obj.parent, ...obj.children];
         const member_nodes = [node.parent, ...node.children];
@@ -542,7 +545,15 @@ const build_child_handle = (
         tags: member.tags
     } as CreatedEngineObject;
 
-    return { object: Object.freeze(created), bindings, channels: node.channels, children, label: member.label };
+    return {
+        object: Object.freeze(created),
+        bindings,
+        channels: node.channels,
+        children,
+        label: member.label,
+        interactions: interactions.length > 0 ? Object.fromEntries(interactions.map(({name, api}) => [name, api])) : undefined,
+        prefab: prefab_api
+    };
 };
 
 /**

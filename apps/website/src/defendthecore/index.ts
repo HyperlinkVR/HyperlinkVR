@@ -10,7 +10,6 @@ hyperlinkvr.on_ready(async () => {
 
     hyperlinkvr.players.on_spawn(() => {
         animate_zombot(created_zombot);
-        created_zombot.seek().speed(1).set_distance(1).toward_player().start();
     });
 
     hyperlinkvr.finished_loading();
