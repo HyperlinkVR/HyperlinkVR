@@ -81,18 +81,27 @@ export const EngineObjectRenderer = ({
             object_refs.root.current?.[target].fromArray(value);
         };
 
+        // relative tracks read the base pose off the same group write() targets. body-owned poses
+        // aren't group-driven (write no-ops), so their base reads back as identity — matching that
+        // absolute animation is a no-op there too
+        const read = (target: "position" | "quaternion" | "scale"): number[] =>
+            object_refs.root.current?.[target].toArray() ?? [];
+
         return register_animation_channels(data.id, {
             "transform.position": {
                 value_type: "vector3",
-                set: (value) => write("position", value as number[])
+                set: (value) => write("position", value as number[]),
+                get: () => read("position")
             },
             "transform.rotation": {
                 value_type: "quaternion",
-                set: (value) => write("quaternion", value as number[])
+                set: (value) => write("quaternion", value as number[]),
+                get: () => read("quaternion")
             },
             "transform.scale": {
                 value_type: "vector3",
-                set: (value) => write("scale", value as number[])
+                set: (value) => write("scale", value as number[]),
+                get: () => read("scale")
             }
         });
     }, [data.id]);

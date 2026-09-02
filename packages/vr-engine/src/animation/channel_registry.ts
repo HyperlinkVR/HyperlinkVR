@@ -5,6 +5,9 @@ export type ChannelValue = number | boolean | string | number[];
 export interface AnimationChannel {
     value_type: KeyframeType;
     set: (value: ChannelValue) => void;
+    // current value, used to capture the base pose for relative tracks. optional: a channel that
+    // can't report its value simply can't be animated relatively (falls back to absolute)
+    get?: () => ChannelValue;
 }
 
 type ObjectChannels = Map<string, AnimationChannel>;

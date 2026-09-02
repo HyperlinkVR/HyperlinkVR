@@ -71,6 +71,8 @@ export interface CompiledTrack {
     value_type: KeyframeType;
     evaluate: (time_ms: number) => ArrayLike<number | boolean | string>;
     scalar: boolean;
+    // compose against the base pose captured at play-start rather than overwriting it
+    relative: boolean;
     end_time: number;
 }
 
@@ -115,6 +117,8 @@ export const compile_track = (track: KeyframeTrack): CompiledTrack => {
         value_type: track.type,
         evaluate,
         scalar: discrete || track.type === "number",
+        // discrete tracks have no relative field; treat them as absolute
+        relative: "relative" in track ? track.relative : false,
         // keyframes are sorted by the schema transform, so the last one is the end
         end_time: track.keyframes[track.keyframes.length - 1]!.time
     };

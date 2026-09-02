@@ -3,7 +3,7 @@ import {AnimationSchema, safe_parse_and_adopt} from "@hyperlinkvr/vr-engine-sche
 
 import {useWebSDKMessaging} from "../contexts/WebSDKMessagingContext";
 import {register_command_handler} from "../engine/trigger_registry";
-import {pause_animation, resume_animation, seek_animation, start_animation, stop_animation} from "./playback";
+import {pause_animation, release_animation, resume_animation, seek_animation, start_animation, stop_animation} from "./playback";
 
 export const AnimationSync = () => {
     const rtc = useWebSDKMessaging();
@@ -28,9 +28,9 @@ export const AnimationSync = () => {
                     pause_animation(animation_id, now);
                     break;
                 case "stop":
-                    // holds targets where they are, matching how a cancelled tween behaves
-                    pause_animation(animation_id, now);
-                    seek_animation(animation_id, 0, now);
+                    // holds targets where they are and releases the channel so another writer can
+                    // take over, matching how a cancelled tween behaves. play/restart revives it
+                    release_animation(animation_id);
                     break;
                 case "seek":
                     seek_animation(animation_id, args.time_ms, now);

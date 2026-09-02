@@ -171,6 +171,7 @@ class ContinuousKeyframeTrackBuilder<
     TInterpolation extends string = InterpolationType
 > extends BaseKeyframeTrackBuilder<TValue> {
     #interpolation?: TInterpolation;
+    #relative?: boolean;
 
     constructor(type: string, target: AnimationTarget, property: string | string[]) {
         super(type, target, property);
@@ -181,11 +182,19 @@ class ContinuousKeyframeTrackBuilder<
         return this;
     }
 
+    // keyframe values compose with the target's pose at play-start instead of replacing it:
+    // vectors/numbers add, quaternions multiply. the base is recaptured each time playback (re)starts
+    relative(relative = true) {
+        this.#relative = relative;
+        return this;
+    }
+
     protected _to_input() {
         return {
             selector: this._selector,
             type: this._type,
             interpolation: this.#interpolation,
+            relative: this.#relative,
             keyframes: this._keyframes
         };
     }

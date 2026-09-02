@@ -61,6 +61,9 @@ const make_continuous_keyframe_track_schema = <
     selector: KeyframeTrackSelectorSchema,
     type: z.literal(type),
     interpolation: interpolation_schema,
+    // keyframe values compose with the target's pose captured at play-start rather than replacing it.
+    // vectors/numbers add, quaternions multiply. discrete tracks can't be relative, so it lives here.
+    relative: z.boolean().default(false),
     keyframes: z.array(make_keyframe_schema(VALUE_SCHEMAS[type])).min(1)
 });
 
