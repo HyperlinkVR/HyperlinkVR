@@ -19,6 +19,7 @@ export const player_subject = (username: string | null = null): SubjectRefInput 
     username
 });
 
+// TODO: tag filters
 
 /** @group World Monitors */
 export const any_object = (): TargetRefInput => ({kind: "any-object"});

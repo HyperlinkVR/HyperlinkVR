@@ -11,6 +11,9 @@ const zombot_offset = {
 };
 
 const zombot_markers = await hyperlinkvr.markers.load("zombot_body.glb");
+const face_transform = {
+    position: zombot_markers.get("face")!.transform.position
+};
 
 const zombot_body = new h.CustomObjectBuilder()
     .set_mesh("zombot_body.glb")
@@ -22,6 +25,11 @@ const zombot_body = new h.CustomObjectBuilder()
                     .build()
             )
             .build()
+    )
+    .add_interaction("light", new h.PointLightInteractionBuilder()
+        .set_intensity(0.25)
+        .set_offset(face_transform.position)
+        .build()
     )
     .build();
 
@@ -44,9 +52,7 @@ const zombot_face = new h.FloatingText2DPrefabBuilder()
     .build();
 
 export const zombot = new h.ObjectCollectionBuilder(zombot_body, zombot_offset)
-    .add_child(zombot_face, {
-        position: zombot_markers.get("face")!.transform.position
-    }, { label: "face" })
+    .add_child(zombot_face, face_transform, { label: "face" })
     .add_child(zombot_wheels, undefined, { label: "wheels" })
     .build();
 
@@ -56,8 +62,10 @@ export const apply_zombot_behaviour = async (created_zombot: hvr.builders.Engine
 
     const change_face = async (face_type: keyof typeof zombot_face_data) => {
         const face_data = zombot_face_data[face_type];
+
         face.prefab!.set_text!(face_data.text);
         face.prefab!.set_color!(face_data.color);
+        created_zombot.parent.interactions!.light!.set_color!(face_data.color);
     }
 
     const wheels_idx = created_zombot.children.findIndex(child => child.label === "wheels");

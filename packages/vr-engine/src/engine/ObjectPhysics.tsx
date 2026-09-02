@@ -475,24 +475,20 @@ const ObjectPhysicsInternal = ({
         approximation: rb.type === "fixed" ? "trimesh" : "hull"
     };
 
-    // a tracked kinematic-pos body renders its visual OUTSIDE the RigidBody (see decouple_visual below) so the
-    // rapier writeback can't double-transform a visual the tracked group is also moving. but rapier builds `auto`
-    // colliders from the visual meshes *inside* the body — which decoupling removes, leaving it with no collider.
-    // resolve auto to an explicit mesh collider (rendered from a hidden clone) so the body can decouple AND keep a
-    // collider. only possible when the mesh url is known (custom objects), so prefabs fall back to plain auto.
-    const wants_decouple = rb.type === "kinematic-pos" && !kinematic_pos_tracking_ref;
     const collider: ColliderOrCollection =
-        wants_decouple && base_collider.type === "auto" && auto_collider_mesh
+        // use explicit mesh collider whenever possible to prevent child race in custom objects
+        base_collider.type === "auto" && auto_collider_mesh
             ? {
                   type: "custom-mesh",
                   mesh: auto_collider_mesh,
+            // TODO: if the other approx types arent supported then maybe remove them from the schema
                   approximation: base_collider.approximation === "trimesh" ? "trimesh" : "hull",
                   offset: base_collider.offset,
                   rotation: base_collider.rotation
               }
             : base_collider;
 
-    if (collider.type === "auto" && !children) {
+    if (collider.type === "auto" && !children && !auto_collider_mesh) {
         console.warn(`RigidBody "${body_name || "unnamed"}" has auto collider but no children to generate colliders from. This may result in no colliders being generated.`);
     }
 

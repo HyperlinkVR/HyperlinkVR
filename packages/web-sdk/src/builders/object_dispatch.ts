@@ -560,7 +560,7 @@ export class EngineObjectModificationBuilder extends BaseBuilder<EngineObjectMod
 // pairs a member's definition with the id + channels the engine assigned it, producing an animation
 // target. node mirrors the member: for a member that is itself a collection, node.parent/children
 // line up with obj.parent/children so the recursion stays in step.
-const build_child_handle = (
+const build_member_handle = (
     member: CollectionMember,
     node: CollectionMemberChannels,
     binding_ids: BindingMap
@@ -604,7 +604,7 @@ const build_child_handle = (
     if (obj.type === "collection" && node.parent && node.children) {
         const members = [obj.parent, ...obj.children];
         const member_nodes = [node.parent, ...node.children];
-        children = members.map((child, i) => build_child_handle(child, member_nodes[i]!, binding_ids));
+        children = members.map((child, i) => build_member_handle(child, member_nodes[i]!, binding_ids));
     }
 
     const created = {
@@ -1015,9 +1015,12 @@ export class EngineObjectDispatchBuilder<T extends EngineObject = EngineObject> 
 
                     ret_val.object = Object.freeze(refreshed.object);
                 },
+                parent: (built_object.object.type === "collection" && created.member_channels)
+                    ? build_member_handle(built_object.object.parent, created.member_channels.parent, binding_ids)
+                    : undefined,
                 children: (built_object.object.type === "collection" && created.member_channels)
                     ? built_object.object.children.map((c, i) =>
-                        build_child_handle(c, created.member_channels!.children[i]!, binding_ids))
+                        build_member_handle(c, created.member_channels!.children[i]!, binding_ids))
                     : []
             };
 

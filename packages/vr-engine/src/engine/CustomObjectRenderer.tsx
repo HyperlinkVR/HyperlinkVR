@@ -32,7 +32,7 @@ const GLTFRenderer = ({url, shadows}: {url: string, shadows: Required<ObjectShad
 }
 
 
-export const CustomObjectRenderer = ({ mesh, interactions, physics, transform, shadows }: RendererComponentProps<CustomObject>) => {
+export const CustomObjectRenderer = ({ mesh, interactions, physics, transform, shadows, id }: RendererComponentProps<CustomObject>) => {
     const resolved_url = useAssetURL(mesh);
     if (resolved_url === null) {
         console.warn("CustomObjectRenderer: mesh asset ref could not be resolved");
@@ -77,7 +77,7 @@ export const CustomObjectRenderer = ({ mesh, interactions, physics, transform, s
     const with_physics = useMemo(
         () =>
             physics ? (
-                <ObjectPhysics physics={physics} transform={transform} auto_collider_mesh={mesh}>
+                <ObjectPhysics physics={physics} transform={transform} auto_collider_mesh={mesh} body_name={`objectphys-${id}`}>
                     {with_interactions}
                 </ObjectPhysics>
             ) : (
