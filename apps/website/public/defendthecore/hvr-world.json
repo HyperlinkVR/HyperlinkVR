@@ -1,0 +1,34 @@
+{
+    "$schema": "https://hyperlink.surf/schemas/WorldMetadata_v1.json",
+    "version": 1,
+    "title": "Defend the Core!",
+    "category": "game",
+    "tags": [
+        "defence",
+        "robots",
+        "sci-fi",
+        "wave"
+    ],
+    "author": {
+        "username": "ollie@hyperlink.surf",
+        "signature": "VuRFAr48MV1J+6PNScVcR13sUm11BQwoPgFZuPkcfX1ayVJEMVVIwe7TqP0kO4eJSJQwkCNConlRTmBmbM3SBQ=="
+    },
+    "additional_contributors": [],
+    "gallery": [],
+    "theme_color": 7257087,
+    "supports": {
+        "vr": "yes",
+        "flat": "yes",
+        "low_power": "yes",
+        "teleport": true
+    },
+    "languages": "any",
+    "max_players": 8,
+    "recommended_players": 4,
+    "content_flags": [
+        "cartoon_violence"
+    ],
+    "vr_comfort": "comfortable",
+    "preloads": [],
+    "endorsements": []
+}
