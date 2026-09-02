@@ -43,6 +43,7 @@ import { SpectatorCamera } from "../misc";
 import { LogoOverlay } from "../misc/LogoOverlay";
 import { InputMonitorRunner } from "../monitors/InputMonitorRunner";
 import { ObjectMonitorRunner } from "../monitors/ObjectMonitorRunner";
+import { WorldMonitorRunner } from "../monitors/WorldMonitorRunner";
 import { clear_collider_collision_info, filter_contact_pair } from "../physics/collision_hooks";
 import { FlatAvatarHands, XRAvatarHand } from "../player/AvatarHand";
 import { Player } from "../player/Player";
@@ -286,6 +287,7 @@ const SceneContents = ({
             <SeekRunner />
             <ObjectMonitorRunner />
             <InputMonitorRunner />
+            <WorldMonitorRunner />
 
             <SSAO mode={ssao_mode} />
             {/*TODO: should ssao even be in use in vr? if not, then may as well use react-three postprocessing (which doesn't work in vr but prob more battle tested than out own ao sahder) */}

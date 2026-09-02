@@ -138,6 +138,13 @@ export interface ButtonInputMonitorPayload {
     handedness?: "left" | "right";
 }
 
+export interface DistanceMonitorPayload {
+    // enter fires as the pair moves into the range, leave as it moves back out
+    type: "enter" | "leave";
+    // the measured separation at the moment it crossed, in the monitor's plane
+    distance: number;
+}
+
 export type ReportEventPayload =
     TriggerVolumeInteractionPayload
     | GrabInteractionPayload
@@ -147,7 +154,8 @@ export type ReportEventPayload =
     | BasketballHoopPrefabPayload
     | RaycastPayload
     | ButtonPrefabPayload
-    | GolfBallPrefabPayload;
+    | GolfBallPrefabPayload
+    | DistanceMonitorPayload;
 
 export type ReportEvent =
     | ReportEventEnvelope<"trigger-volume", TriggerVolumeInteractionPayload>
@@ -162,4 +170,5 @@ export type ReportEvent =
     | ReportEventEnvelope<"axis-input", AxesMonitorPayload>
     | ReportEventEnvelope<"button-prefab", ButtonPrefabPayload>
     | ReportEventEnvelope<"raycast", RaycastPayload>
-    | ReportEventEnvelope<"golf-ball-prefab", GolfBallPrefabPayload>;
+    | ReportEventEnvelope<"golf-ball-prefab", GolfBallPrefabPayload>
+    | ReportEventEnvelope<"distance-monitor", DistanceMonitorPayload>;

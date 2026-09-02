@@ -6,6 +6,7 @@ export * from "./events";
 export * from "./interactions";
 export * from "./object_monitors";
 export * from "./player_monitors";
+export * from "./world_monitors";
 export * from "./objects";
 export * from "./physics";
 export * from "./transforms";
