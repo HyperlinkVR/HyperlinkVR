@@ -260,7 +260,12 @@ export const PlayerKinematics = () => {
 
         if (origin.position.y < KILL_LEVEL_Y) {
             velocity_y.current = 0;
-            origin.position.copy(last_grounded_pos.current);
+
+            // add a small y offset to last grounded pos
+            const last_grounded_pos_with_offset = last_grounded_pos.current.clone();
+            last_grounded_pos_with_offset.y += 0.5;
+
+            origin.position.copy(last_grounded_pos_with_offset);
             // TODO: fade out and in
         }
 
