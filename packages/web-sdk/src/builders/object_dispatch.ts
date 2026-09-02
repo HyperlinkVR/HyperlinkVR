@@ -106,6 +106,9 @@ export class EngineObjectModificationBuilder extends BaseBuilder<EngineObjectMod
     // name to binding id for everything already on the object, plus anything this modification adds
     #binding_ids: Map<string, string>;
 
+    // callbacks to subscribe on apply(), keyed by the binding name they report against
+    #callbacks = new Map<string, (event: ReportEvent) => void>();
+
     //constructor(source: EngineObjectCreationResult) {
     //super({ id: source.object.id } as EngineObjectModificationInput);
     //this.#source = source;
@@ -201,7 +204,24 @@ export class EngineObjectModificationBuilder extends BaseBuilder<EngineObjectMod
         return this;
     }
 
-    add_monitor(name: string, monitor: ObjectMonitor) {
+    // attach a callback to a named reporting source: a monitor or interaction already on this
+    // object, or a monitor added in this same modification. lets you wire up reports after creation,
+    // or add another callback to a source that already has one. bound on apply()/tween().
+    on(name: string, callback: (event: ReportEvent) => void) {
+        if (this.#burned) {
+            throw new Error("This modification builder has already been applied.");
+        }
+
+        if (this.#callbacks.has(name)) {
+            throw new Error(`A callback is already bound for "${name}" in this modification.`);
+        }
+
+        this.#callbacks.set(name, callback);
+        return this;
+    }
+
+    // pass a callback to subscribe it to this monitor's reports, sugar for a matching on() call
+    add_monitor(name: string, monitor: ObjectMonitor, callback?: (event: ReportEvent) => void) {
         if (this.#burned) {
             throw new Error("This modification builder has already been applied.");
         }
@@ -215,6 +235,10 @@ export class EngineObjectModificationBuilder extends BaseBuilder<EngineObjectMod
         this.#binding_ids.set(name, id);
 
         this._internal.monitors.push({...monitor, binding: {name, id}});
+
+        if (callback) {
+            this.on(name, callback);
+        }
         return this;
     }
 
@@ -241,13 +265,13 @@ export class EngineObjectModificationBuilder extends BaseBuilder<EngineObjectMod
 
     // TODO: way to remove monitors from source object, need to pull in its state
 
-    add_monitors(monitors: { name: string, monitor: ObjectMonitor }[]) {
+    add_monitors(monitors: { name: string, monitor: ObjectMonitor, callback?: (event: ReportEvent) => void }[]) {
         if (this.#burned) {
             throw new Error("This modification builder has already been applied.");
         }
 
-        for (const {name, monitor} of monitors) {
-            this.add_monitor(name, monitor);
+        for (const {name, monitor, callback} of monitors) {
+            this.add_monitor(name, monitor, callback);
         }
 
         return this;
@@ -416,18 +440,54 @@ export class EngineObjectModificationBuilder extends BaseBuilder<EngineObjectMod
         return built;
     }
 
-    async apply(): Promise<void> {
+    // subscribe every on() callback to its binding id, resolving names the same way triggers do.
+    // returns the unsubscribes so a failed send can roll them back and the caller can detach later.
+    #bind_callbacks(): Array<() => void> {
+        const unsubscribes: Array<() => void> = [];
+
+        for (const [name, callback] of this.#callbacks) {
+            const id = this.#binding_ids.get(name);
+            if (!id) {
+                for (const unsubscribe of unsubscribes) unsubscribe();
+                const known = [...this.#binding_ids.keys()].map((n) => `"${n}"`).join(", ");
+                throw new Error(
+                    `Cannot bind callback for "${name}": matches no named binding on this object. Known bindings: ${known || "none"}.`
+                );
+            }
+
+            unsubscribes.push(subscribe_report(id, callback));
+        }
+
+        return unsubscribes;
+    }
+
+    // resolves to a function that detaches the callbacks added in this modification. the engine keeps
+    // reporting until the source is removed or the object is destroyed; this only drops the js subscriptions.
+    async apply(): Promise<() => void> {
         if (this.#burned) {
             throw new Error("This modification builder has already been applied.");
         }
 
         const built_modification = this.build();
+
+        // subscribe before the send so an early report is not missed, rolling back if the send fails (mirrors world/player add_monitor)
+        const unsubscribes = this.#bind_callbacks();
+
         this.#burned = true;
-        await send_via_rtc({
-            action: "HVRSDK_MODIFY_ENGINE_OBJECT",
-            object_id: this._internal.id,
-            changes: built_modification,
-        });
+        try {
+            await send_via_rtc({
+                action: "HVRSDK_MODIFY_ENGINE_OBJECT",
+                object_id: this._internal.id,
+                changes: built_modification,
+            });
+        } catch (e) {
+            for (const unsubscribe of unsubscribes) unsubscribe();
+            throw e;
+        }
+
+        return () => {
+            for (const unsubscribe of unsubscribes) unsubscribe();
+        };
 
         // // apply the changes to the cached object
         // this.#source.object = Object.freeze({
@@ -443,7 +503,7 @@ export class EngineObjectModificationBuilder extends BaseBuilder<EngineObjectMod
         // });
     }
 
-    async tween(duration_ms: number, easing?: TweenEasingInput) {
+    async tween(duration_ms: number, easing?: TweenEasingInput): Promise<() => void> {
         if (this.#burned) {
             throw new Error("This modification builder has already been applied.");
         }
@@ -460,13 +520,25 @@ export class EngineObjectModificationBuilder extends BaseBuilder<EngineObjectMod
             easing,
         });
 
+        // callbacks here can only target bindings already on the object, since tween rejects new monitors
+        const unsubscribes = this.#bind_callbacks();
+
         this.#burned = true;
-        await send_via_rtc({
-            action: "HVRSDK_MODIFY_ENGINE_OBJECT",
-            object_id: this._internal.id,
-            changes: built_modification,
-            tween
-        });
+        try {
+            await send_via_rtc({
+                action: "HVRSDK_MODIFY_ENGINE_OBJECT",
+                object_id: this._internal.id,
+                changes: built_modification,
+                tween
+            });
+        } catch (e) {
+            for (const unsubscribe of unsubscribes) unsubscribe();
+            throw e;
+        }
+
+        return () => {
+            for (const unsubscribe of unsubscribes) unsubscribe();
+        };
 
         // // could tween the changes to the cached object, for now just wait for the delay then apply the final state
         // await new Promise((resolve) => setTimeout(resolve, duration_ms));
@@ -632,24 +704,30 @@ export class EngineObjectDispatchBuilder<T extends EngineObject = EngineObject> 
         return this;
     }
 
-    add_monitor(name: string, monitor: ObjectMonitor) {
+    // pass a callback to subscribe it to this monitor's reports, sugar for a matching on() call
+    add_monitor(name: string, monitor: ObjectMonitor, callback?: (event: ReportEvent) => void) {
         if (!this._internal.monitors) {
             this._internal.monitors = [];
         }
         this._internal.monitors.push({...monitor, binding: {name}});
-        return this;
-    }
-
-    add_monitors(monitors: { name: string, monitor: ObjectMonitor }[]) {
-        if (!this._internal.monitors) {
-            this._internal.monitors = [];
+        if (callback) {
+            this.on(name, callback);
         }
-        this._internal.monitors.push(...monitors.map(({name, monitor}) => ({...monitor, binding: {name}})));
         return this;
     }
 
-    set_monitors(monitors: { name: string, monitor: ObjectMonitor }[]) {
-        this._internal.monitors = monitors.map(({name, monitor}) => ({...monitor, binding: {name}}));
+    add_monitors(monitors: { name: string, monitor: ObjectMonitor, callback?: (event: ReportEvent) => void }[]) {
+        for (const {name, monitor, callback} of monitors) {
+            this.add_monitor(name, monitor, callback);
+        }
+        return this;
+    }
+
+    set_monitors(monitors: { name: string, monitor: ObjectMonitor, callback?: (event: ReportEvent) => void }[]) {
+        this._internal.monitors = [];
+        for (const {name, monitor, callback} of monitors) {
+            this.add_monitor(name, monitor, callback);
+        }
         return this;
     }
 

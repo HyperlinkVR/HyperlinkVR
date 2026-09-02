@@ -198,6 +198,7 @@ export const apply_modification = (
             ? stored.transform
             : { ...stored.transform, ...changes.transform },
         user_data: changes.user_data !== undefined ? changes.user_data : stored.user_data,
-        monitors: changes.monitors ?? stored.monitors
+        monitors: changes.monitors ?? stored.monitors,
+        triggers: changes.triggers ?? stored.triggers
     };
 };

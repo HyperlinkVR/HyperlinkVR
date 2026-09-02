@@ -122,7 +122,9 @@ export class Player {
     async add_monitor(
         name: string,
         monitor: PlayerMonitor,
-        callback: (event: ReportEvent) => void
+        // optional: omit it to drive the monitor purely through triggers (the monitor
+        // still gets a binding, so a trigger can source it) rather than a js callback
+        callback?: (event: ReportEvent) => void
     ): Promise<() => Promise<void>> {
         const registered = monitors_for(this.#selected_username);
 
@@ -136,7 +138,7 @@ export class Player {
         const placeholder: RegisteredMonitor = {id, monitor, unsubscribe: () => {}};
         registered.set(name, placeholder);
 
-        const unsubscribe = subscribe_report(id, callback);
+        const unsubscribe = callback ? subscribe_report(id, callback) : () => {};
         placeholder.unsubscribe = unsubscribe;
 
         let res;
@@ -165,7 +167,7 @@ export class Player {
     }
 
     async add_monitors(
-        monitors: {name: string, monitor: PlayerMonitor, callback: (event: ReportEvent) => void}[]
+        monitors: {name: string, monitor: PlayerMonitor, callback?: (event: ReportEvent) => void}[]
     ): Promise<() => Promise<void>> {
         const added: string[] = [];
 
