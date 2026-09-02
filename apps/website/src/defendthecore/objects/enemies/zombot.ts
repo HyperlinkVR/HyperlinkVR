@@ -10,6 +10,8 @@ const zombot_offset = {
     position: [0, 0.25, 0] as [number, number, number],
 };
 
+const zombot_speed = 0.75;
+
 const zombot_markers = await hyperlinkvr.markers.load("zombot_body.glb");
 const face_transform = {
     position: zombot_markers.get("face")!.transform.position
@@ -56,7 +58,7 @@ export const zombot = new h.ObjectCollectionBuilder(zombot_body, zombot_offset)
     .add_child(zombot_wheels, undefined, { label: "wheels" })
     .build();
 
-export const apply_zombot_behaviour = async (created_zombot: hvr.builders.EngineObjectCollectionHandle) => {
+export const apply_zombot_behaviour = async (created_zombot: hvr.builders.EngineObjectCollectionHandle, created_core: hvr.builders.EngineObjectCollectionHandle) => {
     const face_idx = created_zombot.children.findIndex(child => child.label === "face");
     const face = created_zombot.children[face_idx]!;
 
@@ -85,6 +87,7 @@ export const apply_zombot_behaviour = async (created_zombot: hvr.builders.Engine
         .loops()
         .create();
 
+    // TODO: why has wheel anim stopped happening? monitor is indeed firing
     await created_zombot.modify()
         // TODO: maybe a way to have axis monitors report falling edge?
         .add_monitor("moving", new h.LinearVelocityMonitorBuilder()
@@ -130,6 +133,7 @@ export const apply_zombot_behaviour = async (created_zombot: hvr.builders.Engine
             .build()
         )
         .create();
+    await surprise_anim.stop(); // TODO: why is it held before start?
 
     const play_surprise_anim = async () => {
         await surprise_anim.seek(0);
@@ -147,6 +151,14 @@ export const apply_zombot_behaviour = async (created_zombot: hvr.builders.Engine
 
     let ongoing_seek: hvr.builders.SeekHandle | null = null;
     let in_range = 0;
+
+    const seek_core = async () => {
+        ongoing_seek = await created_zombot.seek()
+            .toward_object(created_core.object.id)
+            .set_distance(3)
+            .speed(zombot_speed)
+            .start();
+    }
 
     const monitor_name = `proximity-${created_zombot.object.id}`;
 
@@ -177,7 +189,9 @@ export const apply_zombot_behaviour = async (created_zombot: hvr.builders.Engine
 
                 if (ongoing_seek) {
                     ongoing_seek.stop();
-                } else {
+                }
+
+                if (in_range === 1) {
                     // rising edge, play surprise anim first
                     await change_face("alerted");
                     await play_surprise_anim();
@@ -188,7 +202,7 @@ export const apply_zombot_behaviour = async (created_zombot: hvr.builders.Engine
                 // seek player
                 ongoing_seek = await created_zombot
                     .seek()
-                    .speed(1)
+                    .speed(zombot_speed)
                     .set_distance(1)
                     .toward_player(player.username)
                     .start();
@@ -199,12 +213,11 @@ export const apply_zombot_behaviour = async (created_zombot: hvr.builders.Engine
                     change_face("neutral");
                     in_range = 0;
 
-                    if (ongoing_seek) {
-                        ongoing_seek.stop();
-                        ongoing_seek = null;
-                    }
+                    seek_core();
                 }
             }
         }
     );
+
+    seek_core();
 }

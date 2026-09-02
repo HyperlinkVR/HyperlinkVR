@@ -4,8 +4,11 @@ import {
 } from "./objects/core_pillar";
 import { apply_zombot_behaviour, zombot } from "./objects/enemies/zombot";
 
+import type * as hvr from "@hyperlinkvr/web-sdk";
 
 const h = hyperlinkvr.builders;
+
+let created_core: hvr.builders.EngineObjectCollectionHandle | null = null;
 
 hyperlinkvr.on_ready(async () => {
     await hyperlinkvr.connect();
@@ -27,7 +30,7 @@ hyperlinkvr.on_ready(async () => {
         .bloom({strength: 0.5})
         .apply();
 
-    const created_core = await new h.EngineObjectDispatchBuilder(core_pillar)
+    created_core = await new h.EngineObjectDispatchBuilder(core_pillar)
         .set_position(0, 0, -5)
         .create();
     await apply_core_pillar_behaviour(created_core);
@@ -37,5 +40,5 @@ hyperlinkvr.on_ready(async () => {
 
 (globalThis as any).make_zombot = async () => {
     const created_zombot = await new h.EngineObjectDispatchBuilder(zombot).set_position(0, 0, 5).create();
-    await apply_zombot_behaviour(created_zombot);
+    await apply_zombot_behaviour(created_zombot, created_core);
 }
