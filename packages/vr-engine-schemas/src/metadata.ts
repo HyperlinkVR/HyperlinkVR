@@ -115,7 +115,7 @@ export const WorldMetadataSchema = z.object({
     description: z.string().max(512).optional(),
 
     category: CategorySchema.optional(),
-    tags: z.array(z.string().min(1).max(16)).max(8).optional(),
+    tags: z.array(z.string().min(1).max(16).regex(/^[\p{L}\p{N}_-]+$/u, { message: "Only letters, -, and _ are allowed", })).max(8).optional(),
 
     author: WorldAuthorSchema.optional(),
     additional_contributors: z.array(WorldContributorSchema).max(20).optional(),
