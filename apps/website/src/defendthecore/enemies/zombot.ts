@@ -31,6 +31,7 @@ const zombot_wheels = new h.CustomObjectBuilder()
 
 const zombot_face_data = {
     neutral: { text: "(•_•)", color: 0xffffff },
+    alerted: { text: "!", color: 0xffa500 },
     fighter: { text: "(ง'̀-'́)ง", color: 0xff0000 },
     ouch: { text: "(°ロ°)", color: 0xffff00 },
     attack_core: { text: "\\(°_o)/", color: 0xaae4ff }
@@ -59,13 +60,6 @@ export const apply_zombot_behaviour = async (created_zombot: hvr.builders.Engine
         face.prefab!.set_color!(face_data.color);
     }
 
-    (globalThis as any).dev_cheats = {
-        ...(globalThis as any).dev_cheats,
-        [new Date().toISOString()]: {
-            change_face
-        }
-    };
-
     const wheels_idx = created_zombot.children.findIndex(child => child.label === "wheels");
     const wheels = created_zombot.children[wheels_idx]!;
 
@@ -89,14 +83,12 @@ export const apply_zombot_behaviour = async (created_zombot: hvr.builders.Engine
             .when("any")
             .x({min: 0.01})
             .y({min: 0.01})
-            .z({min: 0.01})
             .build()
         )
         .add_monitor("stopped", new h.LinearVelocityMonitorBuilder()
             .when("any")
             .x({max: 0.01})
             .y({max: 0.01})
-            .z({max: 0.01})
             .build()
         )
         .add_trigger(new h.TriggerBuilder("moving")
@@ -108,6 +100,40 @@ export const apply_zombot_behaviour = async (created_zombot: hvr.builders.Engine
             .build()
         )
         .apply();
+
+    // surprise animation to be played when a player activates the zombot by getting too close (and not already being in the "fighter" state)
+    const surprise_anim = await new h.AnimationBuilder()
+        .named("surprise_anim")
+        .add_track(h.KeyframeTrackBuilder.position(created_zombot)
+            .relative()
+            .add_keyframe(0, [0, 0, 0])
+            .add_keyframe(100, [0, 0.5, 0])
+            .add_keyframe(400, [0, 0.5, 0])
+            .add_keyframe(500, [0, 0, 0])
+            .build()
+        )
+        .add_track(h.KeyframeTrackBuilder.rotation(created_zombot)
+            .relative()
+            .add_keyframe(0, [0, 0, 0, 1])
+            .add_keyframe(100, [0, 0, Math.sin(Math.PI / 24), Math.cos(Math.PI / 24)])
+            .add_keyframe(250, [0, 0, 0, 1])
+            .add_keyframe(300, [0, 0, -Math.sin(Math.PI / 24), Math.cos(Math.PI / 24)])
+            .add_keyframe(500, [0, 0, 0, 1])
+            .build()
+        )
+        .create();
+
+    const play_surprise_anim = async () => {
+        await surprise_anim.seek(0);
+        await surprise_anim.play();
+
+        // TODO: no finished report yet so just use a timeout for now
+        return new Promise<void>((resolve) => {
+            setTimeout(() => {
+                resolve();
+            }, 500);
+        });
+    }
 
     // TODO: proper state machine, either here or maybe some engine construct that can be used with fe/re triggers
 
@@ -141,11 +167,15 @@ export const apply_zombot_behaviour = async (created_zombot: hvr.builders.Engine
             if (event.payload.type === "enter") {
                 in_range++;
 
-                change_face("fighter");
-
                 if (ongoing_seek) {
                     ongoing_seek.stop();
+                } else {
+                    // rising edge, play surprise anim first
+                    await change_face("alerted");
+                    await play_surprise_anim();
                 }
+
+                change_face("fighter");
 
                 // seek player
                 ongoing_seek = await created_zombot
