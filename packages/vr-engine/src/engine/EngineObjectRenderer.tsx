@@ -20,12 +20,14 @@ import { register_triggers } from "./trigger_registry";
 export const EngineObjectRenderer = ({
     data,
     parent,
-    object_id_override
+    object_id_override,
+    suspend = true
 }: {
     data: CreatedEngineObject;
     parent?: RefObject<ObjectRefsContextType>;
     // collections pass the root object id to keep user data united TODO: do we want this? or should it be per object
     object_id_override?: string;
+    suspend?: boolean;
 }) => {
     const { type, ...obj_rest } = data.object;
 
@@ -140,6 +142,17 @@ export const EngineObjectRenderer = ({
         }
     }, [body_owns_pose, data.transform]);
 
+    const RendererComponentWrapper = useMemo(() => {
+        if (suspend) {
+            return (props: RendererComponentProps<any>) => (
+                <Suspense fallback={null}>
+                    <RendererComponent {...props} />
+                </Suspense>
+            );
+        }
+        return RendererComponent;
+    }, [RendererComponent, suspend]);
+
     return (
         <ObjectRefsProvider value={refs.current}>
             <group
@@ -148,16 +161,14 @@ export const EngineObjectRenderer = ({
                 scale={data.transform.scale}
                 userData={refs.current.user_data}
             >
-                <Suspense fallback={null}>
-                    <RendererComponent
-                        root_ref={refs.current.root}
-                        user_data_ref={user_data_ref}
-                        id={data.id}
-                        transform={data.transform}
-                        tags={data.tags}
-                        {...obj_rest}
-                    />
-                </Suspense>
+                <RendererComponentWrapper
+                    root_ref={refs.current.root}
+                    user_data_ref={user_data_ref}
+                    id={data.id}
+                    transform={data.transform}
+                    tags={data.tags}
+                    {...obj_rest}
+                />
 
                 <ObjectReadyMarker
                     object_id={data.id}

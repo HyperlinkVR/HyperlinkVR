@@ -102,12 +102,13 @@ export const ObjectCollectionRenderer = (props: RendererComponentProps<ObjectCol
         local_matrix.decompose(group.position, group.quaternion, group.scale);
     }, -2);
 
+    // suspense disabled so collection is suspended as a whole if any child is suspended, rather than each child individually
     return (
         <>
-            <EngineObjectRenderer data={renderable_parent} object_id_override={props.id} />
+            <EngineObjectRenderer data={renderable_parent} object_id_override={props.id} suspend={false} />
             <group ref={child_group_ref}>
                 {parent_refs && renderable_children.map((child) => (
-                    <EngineObjectRenderer key={child.id} data={child} parent={parent_refs} object_id_override={props.id} />
+                    <EngineObjectRenderer key={child.id} data={child} parent={parent_refs} object_id_override={props.id} suspend={false} />
                 ))}
             </group>
         </>

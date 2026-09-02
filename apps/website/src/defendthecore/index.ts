@@ -13,6 +13,21 @@ let created_core: hvr.builders.EngineObjectCollectionHandle | null = null;
 hyperlinkvr.on_ready(async () => {
     await hyperlinkvr.connect();
 
+    const map = new h.CustomObjectBuilder()
+        .set_mesh("map.glb")
+        .set_physics(new h.PhysicsSystemBuilder()
+            .set_rigid_body(
+                new h.FixedRigidBodyBuilder()
+                    .set_collider(new h.ColliderBuilder().auto("trimesh").build())
+                    .build()
+            )
+            .build()
+        )
+        .build();
+
+    await new h.EngineObjectDispatchBuilder(map)
+        .create();
+
     await new h.WorldEnvBuilder()
         .set_sky(new h.WorldSkyBuilder()
             .set_sky_zenith_color(0x010814)
@@ -35,10 +50,16 @@ hyperlinkvr.on_ready(async () => {
         .create();
     await apply_core_pillar_behaviour(created_core);
 
-    hyperlinkvr.finished_loading();
-});
+    const map_markers = await hyperlinkvr.markers.load("map.glb");
+    const tunnels = Array.from(hyperlinkvr.markers.subset(map_markers, /^tunnel_/).values()).map(marker => marker.transform.position);
 
-(globalThis as any).make_zombot = async () => {
-    const created_zombot = await new h.EngineObjectDispatchBuilder(zombot).set_position(0, 0, 5).create();
-    await apply_zombot_behaviour(created_zombot, created_core);
-}
+    hyperlinkvr.finished_loading();
+
+    setInterval(async () => {
+        const tunnel_idx = Math.floor(Math.random() * tunnels.length);
+        const tunnel_pos = tunnels[tunnel_idx]!;
+
+        const created_zombot = await new h.EngineObjectDispatchBuilder(zombot).set_position(tunnel_pos).create();
+        await apply_zombot_behaviour(created_zombot, created_core!);
+    }, 5000);
+});

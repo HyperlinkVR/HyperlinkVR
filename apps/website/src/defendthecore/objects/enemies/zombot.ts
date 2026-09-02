@@ -17,6 +17,14 @@ const face_transform = {
     position: zombot_markers.get("face")!.transform.position
 };
 
+const zombot_face_data = {
+    neutral: { text: "(•_•)", color: 0xffffff },
+    alerted: { text: "!", color: 0xffa500 },
+    fighter: { text: "(ง'̀-'́)ง", color: 0xff0000 },
+    ouch: { text: "(°ロ°)", color: 0xffff00 },
+    attack_core: { text: "\\(°_o)/", color: 0xaae4ff }
+} as const;
+
 const zombot_body = new h.CustomObjectBuilder()
     .set_mesh("zombot_body.glb")
     .set_physics(
@@ -31,6 +39,7 @@ const zombot_body = new h.CustomObjectBuilder()
     .add_interaction("light", new h.PointLightInteractionBuilder()
         .set_intensity(0.25)
         .set_offset(face_transform.position)
+        .set_color(zombot_face_data.neutral.color)
         .build()
     )
     .build();
@@ -38,14 +47,6 @@ const zombot_body = new h.CustomObjectBuilder()
 const zombot_wheels = new h.CustomObjectBuilder()
     .set_mesh("zombot_wheels.glb")
     .build();
-
-const zombot_face_data = {
-    neutral: { text: "(•_•)", color: 0xffffff },
-    alerted: { text: "!", color: 0xffa500 },
-    fighter: { text: "(ง'̀-'́)ง", color: 0xff0000 },
-    ouch: { text: "(°ロ°)", color: 0xffff00 },
-    attack_core: { text: "\\(°_o)/", color: 0xaae4ff }
-} as const;
 
 const zombot_face = new h.FloatingText2DPrefabBuilder()
     .set_text(zombot_face_data.neutral.text)
@@ -60,6 +61,7 @@ export const zombot = new h.ObjectCollectionBuilder(zombot_body, zombot_offset)
 
 export const apply_zombot_behaviour = async (created_zombot: hvr.builders.EngineObjectCollectionHandle, created_core: hvr.builders.EngineObjectCollectionHandle) => {
     const face_idx = created_zombot.children.findIndex(child => child.label === "face");
+    // TODO: have collections build a lookup table of labels on insertion
     const face = created_zombot.children[face_idx]!;
 
     const change_face = async (face_type: keyof typeof zombot_face_data) => {
