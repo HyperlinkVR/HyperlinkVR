@@ -42,10 +42,10 @@ const make_member = (
  * @group Objects
  */
 export class ObjectCollectionBuilder extends BaseBuilder<ObjectCollectionInput> {
-    constructor(parent: EngineObject, transform?: TransformInput, extra?: CollectionMemberExtra) {
+    constructor(parent: EngineObject, collection_transform?: TransformInput, extra?: CollectionMemberExtra) {
         super({
             type: "collection",
-            parent: make_member(parent, transform, extra),
+            parent: make_member(parent, collection_transform, extra),
             children: []
         } as ObjectCollectionInput);
     }
