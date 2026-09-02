@@ -175,6 +175,7 @@ export type EngineObjectType = EngineObject["type"];
 export type EngineObjectOfType<T extends EngineObjectType> = Extract<EngineObject, { type: T }>;
 
 export interface CollectionMember {
+    label?: string;
     object: EngineObject;
     transform: Transform;
     user_data?: Record<string, any>;
@@ -183,6 +184,7 @@ export interface CollectionMember {
     tags?: string[];
 }
 export interface CollectionMemberInput {
+    label?: string;
     object: EngineObjectInput;
     transform?: TransformInput;
     user_data?: Record<string, any>;
@@ -205,6 +207,7 @@ export interface ObjectCollectionInput {
 // lazy, because it references EngineObjectSchema declared below
 export const CollectionMemberSchema: z.ZodType<CollectionMember, CollectionMemberInput> = z.lazy(() =>
     z.object({
+        label: z.string().optional(),
         object: EngineObjectSchema,
         transform: TransformSchema.default({position: [0, 0, 0], rotation: [0, 0, 0], scale: [1, 1, 1]}),
         user_data: z.record(z.string(), z.any()).optional(),

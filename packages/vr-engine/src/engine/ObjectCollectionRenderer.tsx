@@ -7,6 +7,7 @@ import { Group, Matrix4, Quaternion, Vector3 } from "three";
 
 import { useObjectRefs } from "../contexts/ObjectRefsContext";
 import type { RendererComponentProps } from "../types";
+import { collection_child_id, collection_parent_id } from "./collection_ids";
 import { EngineObjectRenderer } from "./EngineObjectRenderer";
 import { sample_live_transform } from "./object_modification";
 import { useObjectReady } from "./object_ready_registry";
@@ -24,7 +25,7 @@ export const ObjectCollectionRenderer = (props: RendererComponentProps<ObjectCol
             triggers: props.parent.triggers,
             // collection tags apply to every member (so tag-filtered hits catch the whole thing), plus the member's own TODO: do we always want this or should it be config
             tags: [...(props.tags ?? []), ...(props.parent.tags ?? [])],
-            id: `${props.id}-parent`
+            id: collection_parent_id(props.id)
         } satisfies CreatedEngineObject;
     }, [props.parent, props.tags]);
 
@@ -58,7 +59,7 @@ export const ObjectCollectionRenderer = (props: RendererComponentProps<ObjectCol
     }, [collection_refs, parent_refs]);
 
     const renderable_children = useMemo(() => {
-        return props.children.map((child) => {
+        return props.children.map((child, index) => {
             return {
                 object: child.object,
                 transform: child.transform ?? {position: [0, 0, 0], rotation: [0, 0, 0], scale: [1, 1, 1]},
@@ -66,7 +67,7 @@ export const ObjectCollectionRenderer = (props: RendererComponentProps<ObjectCol
                 monitors: child.monitors,
                 triggers: child.triggers,
                 tags: [...(props.tags ?? []), ...(child.tags ?? [])],
-                id: `${props.id}-child-${crypto.randomUUID()}`
+                id: collection_child_id(props.id, index)
             } satisfies CreatedEngineObject;
         });
     }, [props.children, props.tags]);

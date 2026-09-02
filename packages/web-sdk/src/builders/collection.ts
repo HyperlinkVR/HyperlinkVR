@@ -16,6 +16,7 @@ import { BaseBuilder } from "./base";
 
 
 export interface CollectionMemberExtra {
+    label?: string;
     tags?: string[];
     user_data?: Record<string, any>;
     // named like a dispatch monitor so triggers can source from it by name
@@ -33,7 +34,8 @@ const make_member = (
     tags: extra?.tags,
     user_data: extra?.user_data,
     monitors: extra?.monitors?.map(({ name, monitor }) => ({ ...monitor, binding: { name } })),
-    triggers: extra?.triggers
+    triggers: extra?.triggers,
+    label: extra?.label
 });
 
 /**

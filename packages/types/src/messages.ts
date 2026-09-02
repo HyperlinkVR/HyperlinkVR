@@ -373,10 +373,28 @@ interface WebSDKRTCOfferReplyMessage extends BaseWebSDKReplyMessage {
     offer: RTCSessionDescriptionInit;
 }
 
+// a collection is a single engine object, but each of its members is rendered under a stable
+// derived id with its own animation channels. the manifest carries those ids + channel lists
+// back so the sdk can hand out per-member animation targets. recursive for nested collections.
+export interface CollectionMemberChannels {
+    id: string;
+    channels: string[];
+    // present only when this member is itself a collection
+    parent?: CollectionMemberChannels;
+    children?: CollectionMemberChannels[];
+}
+
+export interface CollectionChannelManifest {
+    parent: CollectionMemberChannels;
+    children: CollectionMemberChannels[];
+}
+
 interface WebSDKObjectCreatedReplyMessage extends BaseWebSDKReplyMessage {
     for: "HVRSDK_CREATE_ENGINE_OBJECT";
     object: CreatedEngineObject;
     channels?: string[];
+    // only set for collections
+    member_channels?: CollectionChannelManifest;
 }
 
 interface WebSDKObjectDestroyedReplyMessage extends BaseWebSDKReplyMessage {

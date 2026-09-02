@@ -64,8 +64,11 @@ export const EngineObjectRenderer = ({
     // register triggers
     useEffect(() => register_triggers(data.triggers), [data.triggers]);
 
-    // register animation channels for transform
-    useEffect(() => {
+    // register animation channels for transform.
+    // layout effect (not passive) so channels are registered synchronously at commit, before any
+    // frame runs — the object is marked ready from a useFrame, and a collection member's first frame
+    // can otherwise beat the passive effect, leaving its channels missing when they're gathered.
+    useLayoutEffect(() => {
         const object_refs = refs.current;
 
         const write = (

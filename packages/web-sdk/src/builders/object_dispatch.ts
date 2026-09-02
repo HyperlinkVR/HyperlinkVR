@@ -1,29 +1,43 @@
 import type {
     Bindable,
+    CollectionMember,
     CreatedEngineObject,
     EngineObject,
     EngineObjectDispatch,
     EngineObjectDispatchInput,
     EngineObjectModification,
-    EngineObjectModificationInput, EngineObjectType,
+    EngineObjectModificationInput,
+    EngineObjectType,
     ObjectMonitor,
     PartialTransformInput,
     PrefabInput,
     ReportEvent,
-    TransformInput, Trigger,
-    TweenEasingInput, Vector3, Vector4} from "@hyperlinkvr/vr-engine-schemas";
+    TransformInput,
+    Trigger,
+    TweenEasingInput,
+    Vector3,
+    Vector4
+} from "@hyperlinkvr/vr-engine-schemas";
 import {
     EngineObjectDispatchSchema,
     EngineObjectModificationSchema,
-    TweenSchema, Vector3Schema, Vector4Schema
+    TweenSchema,
+    Vector3Schema,
+    Vector4Schema
 } from "@hyperlinkvr/vr-engine-schemas";
-import {BaseBuilder} from "./base";
-import {subscribe_report} from "../event_bus";
-import {send_via_rtc} from "../messenger";
-import {_INTERACTION_API_MAKERS} from "./interactions";
-import {SeekBuilder} from "./seek";
-import type {BindingMap} from "./triggers";
+
+
+
+import type { CollectionMemberChannels } from "@hyperlinkvr/types";
+
+import { subscribe_report } from "../event_bus";
+import { send_via_rtc } from "../messenger";
+import { BaseBuilder } from "./base";
+import { _INTERACTION_API_MAKERS } from "./interactions";
 import { _PREFAB_API_MAKERS } from "./prefabs";
+import { SeekBuilder } from "./seek";
+import type { BindingMap } from "./triggers";
+
 
 interface EngineObjectHandleBase {
     object: CreatedEngineObject;
@@ -48,9 +62,19 @@ export interface EnginePrefabObjectHandle extends EngineObjectHandleBase {
 }
 
 /** @group Objects */
+export interface EngineObjectCollectionChildHandle {
+    label?: string;
+    object: CreatedEngineObject;
+    bindings: BindingMap;
+    channels: string[];
+    children: EngineObjectCollectionChildHandle[];
+}
+
+/** @group Objects */
 export interface EngineObjectCollectionHandle extends EngineObjectHandleBase {
     object: CreatedEngineObject & { type: "collection" }; // override type to collection
-    // TODO: how will command apis be accessed throughout the hierarchy?
+    children: EngineObjectCollectionChildHandle[];
+    // TODO: how will command apis be accessed throughout the hierarchy? hoisted out or via children?
 }
 
 /** @group Objects */
@@ -479,6 +503,48 @@ export class EngineObjectModificationBuilder extends BaseBuilder<EngineObjectMod
     }
 }
 
+// pairs a member's definition with the id + channels the engine assigned it, producing an animation
+// target. node mirrors the member: for a member that is itself a collection, node.parent/children
+// line up with obj.parent/children so the recursion stays in step.
+const build_child_handle = (
+    member: CollectionMember,
+    node: CollectionMemberChannels,
+    binding_ids: BindingMap
+): EngineObjectCollectionChildHandle => {
+    const names: string[] = [];
+    const obj = member.object;
+    if (obj.type === "custom" && obj.interactions) {
+        for (const i of obj.interactions) if (i.binding?.name) names.push(i.binding.name);
+    }
+    if (obj.type === "prefab" && "binding" in obj && obj.binding?.name) names.push(obj.binding.name);
+    for (const m of member.monitors ?? []) if (m.binding?.name) names.push(m.binding.name);
+    const bindings = new Map<string, string>();
+    for (const name of names) {
+        const id = binding_ids.get(name);
+        if (id) bindings.set(name, id);
+    }
+
+    // parent is folded in as the first child handle, matching how the members are laid out
+    let children: EngineObjectCollectionChildHandle[] = [];
+    if (obj.type === "collection" && node.parent && node.children) {
+        const members = [obj.parent, ...obj.children];
+        const member_nodes = [node.parent, ...node.children];
+        children = members.map((child, i) => build_child_handle(child, member_nodes[i]!, binding_ids));
+    }
+
+    const created = {
+        id: node.id,
+        object: obj,
+        transform: member.transform,
+        user_data: member.user_data,
+        monitors: member.monitors,
+        triggers: member.triggers,
+        tags: member.tags
+    } as CreatedEngineObject;
+
+    return { object: Object.freeze(created), bindings, channels: node.channels, children, label: member.label };
+};
+
 /**
  * @group Objects
  *
@@ -859,7 +925,11 @@ export class EngineObjectDispatchBuilder<T extends EngineObject = EngineObject> 
                     }));
 
                     ret_val.object = Object.freeze(refreshed.object);
-                }
+                },
+                children: (built_object.object.type === "collection" && created.member_channels)
+                    ? built_object.object.children.map((c, i) =>
+                        build_child_handle(c, created.member_channels!.children[i]!, binding_ids))
+                    : []
             };
 
             // narrow the reply by the passed in object type, as the engine is going to respond with the same type as was sent, but the type system doesn't know that
@@ -873,4 +943,3 @@ export class EngineObjectDispatchBuilder<T extends EngineObject = EngineObject> 
         }
     }
 }
-
