@@ -69,8 +69,9 @@ export const apply_zombot_behaviour = async (created_zombot: hvr.builders.Engine
     const wheels_idx = created_zombot.children.findIndex(child => child.label === "wheels");
     const wheels = created_zombot.children[wheels_idx]!;
 
-    // wheel rotation animation
-    await new h.AnimationBuilder()
+    // wheel rotation animation when moving
+    const wheel_anim = await new h.AnimationBuilder()
+        .named("wheel_anim") // TODO: do we even need named animation bindings? triggers can just reference the animation handle directly to stop the duplication
         .add_track(h.KeyframeTrackBuilder.rotation(wheels)
             .add_keyframe(0, [0, 0, 0, 1])
             .add_keyframe(250, [Math.sin(Math.PI / 4), 0, 0, Math.cos(Math.PI / 4)])
@@ -80,8 +81,35 @@ export const apply_zombot_behaviour = async (created_zombot: hvr.builders.Engine
             .build()
         )
         .loops()
-        .autoplay()
         .create();
+
+    await created_zombot.modify()
+        // TODO: maybe a way to have axis monitors report falling edge?
+        .add_monitor("moving", new h.LinearVelocityMonitorBuilder()
+            .when("any")
+            .x({min: 0.01})
+            .y({min: 0.01})
+            .z({min: 0.01})
+            .build()
+        )
+        .add_monitor("stopped", new h.LinearVelocityMonitorBuilder()
+            .when("any")
+            .x({max: 0.01})
+            .y({max: 0.01})
+            .z({max: 0.01})
+            .build()
+        )
+        .add_trigger(new h.TriggerBuilder("moving")
+            .add_target(new h.TriggerTargetBuilder({target: wheel_anim, name: "wheel_anim"}, "play").build())
+            .build()
+        )
+        .add_trigger(new h.TriggerBuilder("stopped")
+            .add_target(new h.TriggerTargetBuilder({target: wheel_anim, name: "wheel_anim"}, "stop").build())
+            .build()
+        )
+        .apply();
+
+    // TODO: proper state machine, either here or maybe some engine construct that can be used with fe/re triggers
 
     let ongoing_seek: hvr.builders.SeekHandle | null = null;
     let in_range = 0;

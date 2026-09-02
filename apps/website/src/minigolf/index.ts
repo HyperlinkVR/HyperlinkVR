@@ -1,11 +1,19 @@
+
+
+
 import "@hyperlinkvr/styles/shared.css";
 
+
+
 import type * as hvr from "@hyperlinkvr/web-sdk";
+
+
 
 import { add_player, compute_hole_pars, get_ball_by_object_id, get_ball_of_player, get_owner_of_ball, next_hole, out_of_bounds, scored_on_hole, stroke_at_rest, take_stroke } from "./game_state";
 import { countdown_to_start } from "./hud";
 import { get_custom_marker_subset, get_hole_markers, get_marker, load_all_markers } from "./markers";
 import { calculate_launch_velocity, normalise_vector } from "./util";
+
 
 // offset not used anymore, but may as well keep the constant to ensure markers are always aligned
 const COURSE_POS = [0, 0, 0] as [number, number, number];
@@ -485,7 +493,7 @@ hyperlinkvr.on_ready(async () => {
 
     // the cannon shoots back quickly against the vector, then returns to its original position
     const fire_animation = await new h.AnimationBuilder()
-        .named("fire_anim")
+        .named("fire_anim") // TODO: the need to name animations when the api is on the handle anyway is a little odd
         .add_track(
             h.KeyframeTrackBuilder.position(created_cannon)
                 .add_keyframe(0, cannon_marker.transform.position)
