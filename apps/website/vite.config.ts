@@ -62,7 +62,8 @@ export default defineConfig({
                 home: page("index.html"),
                 clubhouse: page("clubhouse", "index.html"),
                 minigolf: page("minigolf", "index.html"),
-                // TODO: auto collect pages somehow
+                defendthecore: page("defendthecore", "index.html"),
+                // TODO: auto collect pages somehow (could just glob for index.html)
                 download_discord_rpc: page("download", "discord_rpc", "index.html")
             }
         }
