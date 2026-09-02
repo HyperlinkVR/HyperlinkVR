@@ -3,7 +3,7 @@ import { z } from "zod";
 export const SeekTargetSchema = z.discriminatedUnion("kind", [
     z.object({ kind: z.literal("point"),  position: z.tuple([z.number(), z.number(), z.number()]) }),
     z.object({ kind: z.literal("object"), object_id: z.string() }),
-    z.object({ kind: z.literal("player"), username: z.string().optional() }),
+    z.object({ kind: z.literal("player"), username: z.string().nullable() }),
 ]);
 export type SeekTarget = z.infer<typeof SeekTargetSchema>;
 export type SeekTargetInput = z.input<typeof SeekTargetSchema>;

@@ -1,3 +1,5 @@
+import type {SubjectRef} from "./world_monitors";
+
 export interface ReportEventEnvelope<TKind extends string, TPayload> {
     source_id: string; // interaction or monitor id
     object_id: string; // owning object
@@ -139,10 +141,14 @@ export interface ButtonInputMonitorPayload {
 }
 
 export interface DistanceMonitorPayload {
-    // enter fires as the pair moves into the range, leave as it moves back out
-    type: "enter" | "leave";
+    // enter fires as the pair moves into the range, exit as it moves back out
+    type: "enter" | "exit";
     // the measured separation at the moment it crossed, in the monitor's plane
     distance: number;
+    // the concrete pair this event is about. with a wildcard target (e.g. an enemy
+    // vs "any-player") these name which specific subjects crossed.
+    a: SubjectRef;
+    b: SubjectRef;
 }
 
 export type ReportEventPayload =

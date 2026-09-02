@@ -11,3 +11,7 @@ export const register_object_refs = (refs: RefObject<ObjectRefsContextType>) => 
 };
 
 export const get_object_refs = (id: string): RefObject<ObjectRefsContextType> | null => registry.get(id) ?? null;
+
+// used by world monitors to resolve wildcard targets ("any object") against every
+// live object each frame
+export const get_all_object_refs = (): RefObject<ObjectRefsContextType>[] => [...registry.values()];

@@ -33,7 +33,7 @@ const zombot_face_data = {
     neutral: { text: "(•_•)", color: 0xffffff },
     fighter: { text: "(ง'̀-'́)ง", color: 0xff0000 },
     ouch: { text: "(°ロ°)", color: 0xffff00 },
-    attack_core: { text: "¯\\(°_o)/¯", color: 0xaae4ff }
+    attack_core: { text: "\\(°_o)/", color: 0xaae4ff }
 } as const;
 
 const zombot_face = new h.FloatingText2DPrefabBuilder()
@@ -49,7 +49,7 @@ export const zombot = new h.ObjectCollectionBuilder(zombot_body, zombot_offset)
     .add_child(zombot_wheels, undefined, { label: "wheels" })
     .build();
 
-export const animate_zombot = async (created_zombot: hvr.builders.EngineObjectCollectionHandle) => {
+export const apply_zombot_behaviour = async (created_zombot: hvr.builders.EngineObjectCollectionHandle) => {
     const face_idx = created_zombot.children.findIndex(child => child.label === "face");
     const face = created_zombot.children[face_idx]!;
 
@@ -69,45 +69,76 @@ export const animate_zombot = async (created_zombot: hvr.builders.EngineObjectCo
     const wheels_idx = created_zombot.children.findIndex(child => child.label === "wheels");
     const wheels = created_zombot.children[wheels_idx]!;
 
-    // change face and behaviour based on distance to player
-    // TODO: make a scene level monitor that can be used to trigger events based on distance range between entities
-    setInterval(async () => {
-        const player = hyperlinkvr.players.get_current_player();
-        const player_pos = (await player.get_position()).position;
+    // wheel rotation animation
+    await new h.AnimationBuilder()
+        .add_track(h.KeyframeTrackBuilder.rotation(wheels)
+            .add_keyframe(0, [0, 0, 0, 1])
+            .add_keyframe(250, [Math.sin(Math.PI / 4), 0, 0, Math.cos(Math.PI / 4)])
+            .add_keyframe(500, [Math.sin(Math.PI / 2), 0, 0, Math.cos(Math.PI / 2)])
+            .add_keyframe(750, [Math.sin(3 * Math.PI / 4), 0, 0, Math.cos(3 * Math.PI / 4)])
+            .add_keyframe(1000, [Math.sin(Math.PI), 0, 0, Math.cos(Math.PI)])
+            .build()
+        )
+        .loops()
+        .autoplay()
+        .create();
 
-        await created_zombot.refresh();
-        const zombot_pos = created_zombot.object.transform.position;
+    let ongoing_seek: hvr.builders.SeekHandle | null = null;
+    let in_range = 0;
 
-        const distance = Math.sqrt(
-            Math.pow(player_pos[0] - zombot_pos[0], 2) +
-            Math.pow(player_pos[1] - zombot_pos[1], 2) +
-            Math.pow(player_pos[2] - zombot_pos[2], 2)
-        );
+    const monitor_name = `proximity-${created_zombot.object.id}`;
 
-        if (distance < 3) {
-            await change_face("fighter");
+    // change face and behaviour based when distance to a player is less than 3 units
+    hyperlinkvr.world.add_monitor(
+        monitor_name,
 
-            // seek player
-            await created_zombot
-                .seek()
-                .speed(1)
-                .set_distance(1)
-                .toward_player()
-                .start();
+        new h.DistanceMonitorBuilder()
+            .from(created_zombot)
+            .to(h.any_player())
+            // will activate when a player is closer than 4 units, and deactivate when the player is farther than 8 units (4 + 4 hysteresis)
+            .closer_than(4)
+            .hysteresis(4)
+            .build(),
 
-            // wheel rotation animation
-            await new h.AnimationBuilder()
-                .add_track(h.KeyframeTrackBuilder.rotation(wheels)
-                    .add_keyframe(0, [0, 0, 0, 1])
-                    .add_keyframe(250, [Math.sin(Math.PI / 4), 0, 0, Math.cos(Math.PI / 4)])
-                    .add_keyframe(500, [Math.sin(Math.PI / 2), 0, 0, Math.cos(Math.PI / 2)])
-                    .add_keyframe(750, [Math.sin(3 * Math.PI / 4), 0, 0, Math.cos(3 * Math.PI / 4)])
-                    .add_keyframe(1000, [Math.sin(Math.PI), 0, 0, Math.cos(Math.PI)])
-                    .build()
-                )
-                .loops()
-                .autoplay()
-                .create();
+        async (event) => {
+            if (event.kind !== "distance-monitor") {
+                return;
+            }
+
+            const player = event.payload.b;
+            if (player.kind !== "player") {
+                return;
+            }
+
+            if (event.payload.type === "enter") {
+                in_range++;
+
+                change_face("fighter");
+
+                if (ongoing_seek) {
+                    ongoing_seek.stop();
+                }
+
+                // seek player
+                ongoing_seek = await created_zombot
+                    .seek()
+                    .speed(1)
+                    .set_distance(1)
+                    .toward_player(player.username)
+                    .start();
+            } else if (event.payload.type === "exit") {
+                in_range--;
+
+                if (in_range <= 0) {
+                    change_face("neutral");
+                    in_range = 0;
+
+                    if (ongoing_seek) {
+                        ongoing_seek.stop();
+                        ongoing_seek = null;
+                    }
+                }
+            }
         }
-    }, 100);
+    );
 }

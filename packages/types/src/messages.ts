@@ -1,4 +1,4 @@
-import type { Animation, CreatedAnimation, CreatedEngineObject, CreatedHUDElement, EngineObjectDispatch, EngineObjectModification, HUDDispatch, HUDElementModification, PlayerMonitor, ReportEvent, SeekConfig, Tween, VFXStack, WorldEnv, WorldMonitor } from "@hyperlinkvr/vr-engine-schemas";
+import type { Animation, CreatedAnimation, CreatedEngineObject, CreatedHUDElement, EngineObjectDispatch, EngineObjectModification, HUDDispatch, HUDElementModification, PlayerMonitor, ReportEvent, SeekConfig, Trigger, Tween, VFXStack, WorldEnv, WorldMonitor } from "@hyperlinkvr/vr-engine-schemas";
 
 
 
@@ -230,6 +230,18 @@ interface WebSDKWorldRemoveMonitorAction extends BaseWebSDKActionMessage {
     monitor_id: string;
 }
 
+interface WebSDKWorldAddTriggerAction extends BaseWebSDKActionMessage {
+    action: "HVRSDK_WORLD_ADD_TRIGGER";
+    // source.id is resolved to the source monitor's binding by the sdk before sending
+    trigger: Trigger;
+    trigger_id: string;
+}
+
+interface WebSDKWorldRemoveTriggerAction extends BaseWebSDKActionMessage {
+    action: "HVRSDK_WORLD_REMOVE_TRIGGER";
+    trigger_id: string;
+}
+
 interface WebSDKCreateHUDElementAction extends BaseWebSDKActionMessage {
     action: "HVRSDK_CREATE_HUD_ELEMENT";
     element: HUDDispatch;
@@ -288,6 +300,8 @@ export type WebSDKActionMessage =
     | WebSDKPlayerRemoveMonitorAction
     | WebSDKWorldAddMonitorAction
     | WebSDKWorldRemoveMonitorAction
+    | WebSDKWorldAddTriggerAction
+    | WebSDKWorldRemoveTriggerAction
     | WebSDKCreateHUDElementAction
     | WebSDKDestroyHUDElementAction
     | WebSDKUpdateHUDElementAction
@@ -534,6 +548,18 @@ interface WebSDKWorldRemoveMonitorReplyMessage extends BaseWebSDKReplyMessage {
     was_registered: boolean;
 }
 
+interface WebSDKWorldAddTriggerReplyMessage extends BaseWebSDKReplyMessage {
+    for: "HVRSDK_WORLD_ADD_TRIGGER";
+    success: true;
+    trigger_id: string;
+}
+
+interface WebSDKWorldRemoveTriggerReplyMessage extends BaseWebSDKReplyMessage {
+    for: "HVRSDK_WORLD_REMOVE_TRIGGER";
+    success: true;
+    was_registered: boolean;
+}
+
 interface WebSDKHUDElementCreatedReplyMessage extends BaseWebSDKReplyMessage {
     for: "HVRSDK_CREATE_HUD_ELEMENT";
     element: CreatedHUDElement;
@@ -588,6 +614,8 @@ export type WebSDKReplyMessage =
     | WebSDKPlayerRemoveMonitorReplyMessage
     | WebSDKWorldAddMonitorReplyMessage
     | WebSDKWorldRemoveMonitorReplyMessage
+    | WebSDKWorldAddTriggerReplyMessage
+    | WebSDKWorldRemoveTriggerReplyMessage
     | WebSDKHUDElementCreatedReplyMessage
     | WebSDKHUDElementDestroyedReplyMessage
     | WebSDKHUDElementUpdatedReplyMessage

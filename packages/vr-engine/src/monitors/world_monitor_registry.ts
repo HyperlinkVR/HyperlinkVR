@@ -1,4 +1,4 @@
-import type { AxisRange, SubjectRef, WorldMonitor } from "@hyperlinkvr/vr-engine-schemas";
+import type { AxisRange, TargetRef, WorldMonitor } from "@hyperlinkvr/vr-engine-schemas";
 
 // tolerance turning an equals range into a window, since exact float equality on
 // a physics-driven distance is never going to hold. mirrors the object monitor.
@@ -6,8 +6,8 @@ const EQUALS_EPSILON = 1e-4;
 
 export interface CompiledDistanceMonitor {
     source_id: string;
-    a: SubjectRef;
-    b: SubjectRef;
+    a: TargetRef;
+    b: TargetRef;
     plane: "xyz" | "xz" | "y";
 
     // the range compiled to an inclusive window, so the tick never re-checks which
@@ -16,12 +16,13 @@ export interface CompiledDistanceMonitor {
     max: number;
 
     report_enter: boolean;
-    report_leave: boolean;
+    report_exit: boolean;
     hysteresis: number;
 
-    // edge state lives on the entry so the tick never does a map lookup. starts
-    // outside, so a pair that begins in range fires an enter on the first sample.
-    was_inside: boolean;
+    // edge state per concrete (a, b) pair, keyed by the two subject keys. a wildcard
+    // target fans out to many pairs, each of which crosses independently. missing
+    // (default) reads as outside, so a pair that first appears in range fires enter.
+    pair_inside: Map<string, boolean>;
 }
 
 export type CompiledWorldMonitor = CompiledDistanceMonitor;
@@ -56,8 +57,8 @@ const compile_world_monitor = (monitor: WorldMonitor): CompiledWorldMonitor | nu
         return null;
     }
 
-    if (!monitor.report_enter && !monitor.report_leave) {
-        console.warn(`World monitor ${source_id} reports neither enter nor leave, ignoring`);
+    if (!monitor.report_enter && !monitor.report_exit) {
+        console.warn(`World monitor ${source_id} reports neither enter nor exit, ignoring`);
         return null;
     }
 
@@ -71,9 +72,9 @@ const compile_world_monitor = (monitor: WorldMonitor): CompiledWorldMonitor | nu
         min,
         max,
         report_enter: monitor.report_enter,
-        report_leave: monitor.report_leave,
+        report_exit: monitor.report_exit,
         hysteresis: monitor.hysteresis,
-        was_inside: false
+        pair_inside: new Map()
     };
 };
 
