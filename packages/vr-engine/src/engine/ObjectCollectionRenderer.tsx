@@ -89,7 +89,7 @@ export const ObjectCollectionRenderer = (props: RendererComponentProps<ObjectCol
             return;
         }
 
-        if (!parent_refs.current.rigid_body.current?.isValid() && !group.parent.matrixWorld) {
+        if ((!parent_refs.current.rigid_body.current?.isValid() && !parent_refs.current.root.current) || !group.parent.matrixWorld) {
             // not yet ready to sample live transform
             return;
         }

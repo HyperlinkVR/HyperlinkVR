@@ -34,7 +34,7 @@ export const sample_live_transform = (refs: ObjectRefsContextType): Transform =>
             scale
         };
     } else if (body && !body.isValid()) {
-        console.warn("Physics body is invalid or not ready, falling back to group transform");
+        console.warn(`Physics body on ${refs.id} is invalid or not ready, falling back to group transform`);
     }
 
     if (!group) {

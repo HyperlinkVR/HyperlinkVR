@@ -98,6 +98,7 @@ const ObjectReadyPoll = ({
         // custom objects declare physics up front with has_physics, so wait even before the body has mounted
         // prefabs don't declare it but their ObjectPhysics populates refs.rigid_body on mount, so a present body means we should wait on its colliders
         if (has_physics && !body) return;
+        if (body && !body.isValid()) return; // not yet ready to even access safely
         if (body && body.numColliders() === 0) return;
 
         // no physics body expected or present so ready on the first frame, as before
