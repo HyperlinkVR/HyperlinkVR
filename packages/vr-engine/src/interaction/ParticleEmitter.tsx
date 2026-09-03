@@ -1,10 +1,10 @@
-import type { HexColor, ParticleEmitterBehavior, ParticleEmitterColor, ParticleEmitterInteraction, ParticleEmitterRandomisableValue, ParticleEmitterShape, ParticleEmitterVisual } from "@hyperlinkvr/vr-engine-schemas";
+import type { HexColor, ParticleEmitterBehavior, ParticleEmitterColor, ParticleEmitterInteraction, ParticleEmitterRandomisableValue, ParticleEmitterShape, ParticleEmitterVisual, ParticleEmitterVisualAtlasTileWeights } from "@hyperlinkvr/vr-engine-schemas";
 import type { FlexibleColor, ParticleSystemRef } from "quarks.r3f";
 import { ParticleSystem } from "quarks.r3f";
 import { useCallback, useMemo } from "react";
-import type { BufferGeometry, Material} from "three";
+import type { BufferGeometry, Material } from "three";
 import { DoubleSide, Euler, MeshBasicMaterial, PlaneGeometry, SRGBColorSpace, TextureLoader } from "three";
-import type { ColorGenerator, FunctionColorGenerator, FunctionJSON, GeneratorMemory, Vector4 as QuarksVector4} from "three.quarks";
+import type { ColorGenerator, FunctionColorGenerator, FunctionJSON, GeneratorMemory, Vector4 as QuarksVector4, ValueGenerator } from "three.quarks";
 import { ApplyForce, ColorOverLife, ConeEmitter, ConstantValue, EmitterMode, GravityForce, PointEmitter, RenderMode, SphereEmitter, Vector3 } from "three.quarks";
 
 
@@ -51,6 +51,66 @@ export class FadeColorGenerator implements FunctionColorGenerator {
     }
 }
 
+export class AtlasWeightedRandomTileGenerator implements ValueGenerator {
+    type: "value" = "value";
+
+    constructor(
+        public u_tile_count: number,
+        public v_tile_count: number,
+        public tile_weights?: ParticleEmitterVisualAtlasTileWeights
+    ) {}
+
+    startGen(memory: GeneratorMemory): void {}
+
+    genValue(memory: GeneratorMemory): number {
+        const total_tiles = this.u_tile_count * this.v_tile_count;
+
+        // if no weights are provided, just return a random tile index
+        if (!this.tile_weights || Object.keys(this.tile_weights).length === 0) {
+            return Math.floor(Math.random() * total_tiles);
+        }
+
+        // calculate the total weight
+        let total_weight = 0;
+        for (const weight of Object.values(this.tile_weights)) {
+            total_weight += weight;
+        }
+
+        // generate a random number between 0 and total_weight
+        const rand = Math.random() * total_weight;
+
+        // tile weights are given as a partial record keyed by "u:${u},v:${v}"
+        let cumulative_weight = 0;
+        for (let u = 0; u < this.u_tile_count; u++) {
+            for (let v = 0; v < this.v_tile_count; v++) {
+                const key = `u:${u},v:${v}`;
+                const weight = this.tile_weights[key] ?? 1; // default weight is 1 if not specified
+                cumulative_weight += weight;
+
+                if (rand <= cumulative_weight) {
+                    return v * this.u_tile_count + u; // convert (u,v) to tile index
+                }
+            }
+        }
+
+        // fallback, should never reach here
+        return Math.floor(Math.random() * total_tiles);
+    }
+
+    toJSON(): FunctionJSON {
+        return {
+            type: "AtlasWeightedRandomTileGenerator",
+            uTileCount: this.u_tile_count,
+            vTileCount: this.v_tile_count,
+            tileWeights: this.tile_weights
+        } as any;
+    }
+
+    clone(): ValueGenerator {
+        return new AtlasWeightedRandomTileGenerator(this.u_tile_count, this.v_tile_count, this.tile_weights);
+    }
+}
+
 export const ParticleEmitter = ({config, ref = null}: {config: Omit<ParticleEmitterInteraction, "type">, ref?: React.Ref<ParticleSystemRef | null>}) => {
     const convert_randomisable_value = useCallback(
         (value?: ParticleEmitterRandomisableValue) => {
@@ -76,8 +136,12 @@ export const ParticleEmitter = ({config, ref = null}: {config: Omit<ParticleEmit
 
     const generate_color_value = useCallback(
         (color?: ParticleEmitterColor): FlexibleColor | undefined => {
+            if (!color) {
+                return undefined;
+            }
+
             // a straight color (number or string) is just returned converted to rgba
-            if (color === undefined || typeof color === "number" || typeof color === "string") {
+            if (typeof color === "number" || typeof color === "string") {
                 return color_to_rgba(color as HexColor);
             }
 
@@ -170,6 +234,9 @@ export const ParticleEmitter = ({config, ref = null}: {config: Omit<ParticleEmit
             material?: Material,
             geometry?: BufferGeometry,
             render_mode: RenderMode,
+            uTileCount?: number,
+            vTileCount?: number,
+            startTileIndex?: ValueGenerator
         } => {
             if (!visual) {
                 return {render_mode: RenderMode.BillBoard};
@@ -199,6 +266,33 @@ export const ParticleEmitter = ({config, ref = null}: {config: Omit<ParticleEmit
                         }),
                         render_mode: RenderMode.BillBoard
                     };
+                }
+                case "atlas": {
+                    if (maybe_particle_image_url === undefined) {
+                        return {render_mode: RenderMode.BillBoard};
+                    }
+
+                    if (maybe_particle_image_url === null) {
+                        throw new Error("Failed to load particle atlas from asset ref");
+                    }
+
+                    const texture = new TextureLoader().load(maybe_particle_image_url);
+                    texture.colorSpace = SRGBColorSpace;
+                    return {
+                        material: new MeshBasicMaterial({
+                            map: texture,
+                            // always transparent so the texture's own alpha channel is respected
+                            // opacity is a separate global multiplier on top (defaults to 1)
+                            transparent: true,
+                            opacity: visual.alpha,
+                            // overlapping soft particles should blend, not z-cull each other
+                            depthWrite: false
+                        }),
+                        render_mode: RenderMode.BillBoard,
+                        uTileCount: visual.u_tile_count,
+                        vTileCount: visual.v_tile_count,
+                        startTileIndex: new AtlasWeightedRandomTileGenerator(visual.u_tile_count, visual.v_tile_count, visual.tile_weights)
+                    }
                 }
                 case "quad": {
                     return {
@@ -254,13 +348,17 @@ export const ParticleEmitter = ({config, ref = null}: {config: Omit<ParticleEmit
     const emitter_shape = useMemo(() => instance_shape(config.emitter_shape), [config.emitter_shape, instance_shape]);
 
     const maybe_particle_image_url = useAssetURL(
-        config.visual?.type === "image" ? config.visual.url : undefined
+        (config.visual?.type === "image" || config.visual?.type === "atlas") ? config.visual.url : undefined
     );
     const visual = useMemo(() => instance_visual(config.visual, maybe_particle_image_url || undefined), [config.visual, maybe_particle_image_url, instance_visual]);
     const material = useMemo(() => visual.material, [visual]);
 
     const geometry = useMemo(() => visual.geometry, [visual]);
     const render_mode = useMemo(() => visual.render_mode, [visual]);
+    const u_tile_count = useMemo(() => visual.uTileCount, [visual]);
+    const v_tile_count = useMemo(() => visual.vTileCount, [visual]);
+    const start_tile_index = useMemo(() => visual.startTileIndex, [visual]);
+
     const behaviors = useMemo(() => instance_behaviors(config.behaviors), [config.behaviors, instance_behaviors]);
 
     const euler_rot = useMemo(() => {
@@ -296,6 +394,9 @@ export const ParticleEmitter = ({config, ref = null}: {config: Omit<ParticleEmit
                 position={config.offset}
                 rotation={euler_rot}
                 scale={config.scale}
+                uTileCount={u_tile_count}
+                vTileCount={v_tile_count}
+                startTileIndex={start_tile_index}
         />
     );
 }

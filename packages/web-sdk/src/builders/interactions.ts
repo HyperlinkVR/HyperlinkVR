@@ -644,7 +644,7 @@ export class ParticleEmitterInteractionBuilder extends BaseBuilder<ParticleEmitt
     }
 
     set_visual(visual: ParticleEmitterVisualInput) {
-        if (visual.type === "image") {
+        if (visual.type === "image" || visual.type === "atlas") {
             visual.url = asset_url(visual.url);
         }
 

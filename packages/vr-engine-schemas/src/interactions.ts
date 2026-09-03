@@ -199,6 +199,69 @@ export const ParticleEmitterVisualImageSchema = z.object({
 });
 export type ParticleEmitterVisualImage = z.infer<typeof ParticleEmitterVisualImageSchema>;
 export type ParticleEmitterVisualImageInput = z.input<typeof ParticleEmitterVisualImageSchema>;
+
+// TODO: would need to generate atlas on the fly. if plausible in sdk then readd, otherwise dont
+// export const ParticleEmitterVisualRandomImageEntrySchema = z.union([
+//     z.object({
+//         url: AbsoluteAssetURLSchema,
+//         alpha: z.number().min(0).max(1).default(1),
+//         weight: z.number().positive().default(1)
+//     }),
+//     // can specify just a url, which is equivalent to {url, alpha: 1, weight: 1}
+//     AbsoluteAssetURLSchema
+// ]);
+// export type ParticleEmitterVisualRandomImageEntry = z.infer<typeof ParticleEmitterVisualRandomImageEntrySchema>;
+// export type ParticleEmitterVisualRandomImageEntryInput = z.input<typeof ParticleEmitterVisualRandomImageEntrySchema>;
+//
+// export const ParticleEmitterVisualRandomImageSchema = z.object({
+//     type: z.literal("images"),
+//     images: z.array(ParticleEmitterVisualRandomImageEntrySchema).min(2)
+// });
+// export type ParticleEmitterVisualRandomImage = z.infer<typeof ParticleEmitterVisualRandomImageSchema>;
+// export type ParticleEmitterVisualRandomImageInput = z.input<typeof ParticleEmitterVisualRandomImageSchema>;
+
+export const ParticleEmitterVisualAtlasTileWeightsSchema = z.record(z.string().regex(/^u:\d+,v:\d+$/), z.number().positive());
+export type ParticleEmitterVisualAtlasTileWeights = z.infer<typeof ParticleEmitterVisualAtlasTileWeightsSchema>;
+export type ParticleEmitterVisualAtlasTileWeightsInput = z.input<typeof ParticleEmitterVisualAtlasTileWeightsSchema>;
+
+export const ParticleEmitterVisualAtlasSchema = z.object({
+    type: z.literal("atlas"),
+    url: AbsoluteAssetURLSchema,
+    u_tile_count: z.number().int().positive(),
+    v_tile_count: z.number().int().positive(),
+    tile_weights: ParticleEmitterVisualAtlasTileWeightsSchema.optional(),
+    alpha: z.number().min(0).max(1).default(1).optional()
+})
+    .superRefine((obj, ctx) => {
+        const {u_tile_count, v_tile_count, tile_weights} = obj;
+        if (tile_weights) {
+            // don't allow specifying weights for tiles that don't exist
+            for (const key of Object.keys(tile_weights)) {
+                const match = key.match(/^u:(\d+),v:(\d+)$/);
+                if (!match || match.length !== 3) {
+                    ctx.addIssue({
+                        code: "custom",
+                        message: `Invalid tile key format: ${key}. Expected "u:<number>,v:<number>".`,
+                    });
+                    return;
+                }
+
+                const u = parseInt(match[1]!, 10);
+                const v = parseInt(match[2]!, 10);
+
+                if (u >= u_tile_count || v >= v_tile_count) {
+                    ctx.addIssue({
+                        code: "custom",
+                        message: `Tile weight key ${key} is out of bounds. u_tile_count=${u_tile_count}, v_tile_count=${v_tile_count}.`,
+                    });
+                }
+            }
+        }
+    });
+
+export type ParticleEmitterVisualAtlas = z.infer<typeof ParticleEmitterVisualAtlasSchema>;
+export type ParticleEmitterVisualAtlasInput = z.input<typeof ParticleEmitterVisualAtlasSchema>;
+
 export const ParticleEmitterVisualQuadSchema = z.object({
     type: z.literal("quad"),
     width: z.number().positive(),
@@ -210,7 +273,8 @@ export type ParticleEmitterVisualQuad = z.infer<typeof ParticleEmitterVisualQuad
 export type ParticleEmitterVisualQuadInput = z.input<typeof ParticleEmitterVisualQuadSchema>;
 export const ParticleEmitterVisualSchema = z.discriminatedUnion("type", [
     ParticleEmitterVisualImageSchema,
-    ParticleEmitterVisualQuadSchema
+    ParticleEmitterVisualQuadSchema,
+    ParticleEmitterVisualAtlasSchema
 ]);
 export type ParticleEmitterVisual = z.infer<typeof ParticleEmitterVisualSchema>;
 export type ParticleEmitterVisualInput = z.input<typeof ParticleEmitterVisualSchema>;
