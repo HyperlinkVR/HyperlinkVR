@@ -1,5 +1,5 @@
 import type { CreatedEngineObject } from "@hyperlinkvr/vr-engine-schemas";
-import { RefObject, Suspense, useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { memo, RefObject, Suspense, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import type { Group } from "three";
 
 
@@ -17,7 +17,7 @@ import { RENDERERS } from "./renderers";
 import { register_triggers } from "./trigger_registry";
 
 
-export const EngineObjectRenderer = ({
+const EngineObjectRendererInner = ({
     data,
     parent,
     object_id_override,
@@ -178,6 +178,7 @@ export const EngineObjectRenderer = ({
         </ObjectRefsProvider>
     );
 };
+export const EngineObjectRenderer = memo(EngineObjectRendererInner);
 
 /*
 await hyperlinkvr.connect();

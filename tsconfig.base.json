@@ -12,7 +12,7 @@
         "jsx": "react-jsx",
         // TODO: look at updating the resolution, it broke a bunch of stuff last time tho
         "moduleResolution": "node",
-        "ignoreDeprecations": "6.0",
+        //"ignoreDeprecations": "6.0",
         "lib": ["DOM", "DOM.Iterable", "ESNext"],
         "module": "ESNext",
         "target": "ESNext",

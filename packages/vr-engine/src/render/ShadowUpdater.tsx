@@ -1,14 +1,22 @@
-import { useThree } from "@react-three/fiber";
-import { useEffect } from "react";
+import { useFrame, useThree } from "@react-three/fiber";
+import { useEffect, useRef } from "react";
 import { useSetting } from "@hyperlinkvr/react";
 import { shadow_camera_layer_mask } from "./CameraSetup";
+
+// regenerate shadow maps every Nth frame instead of every frame (a lot cheaper and imperceptible)
+const SHADOW_UPDATE_INTERVAL = 2;
 
 export const ShadowUpdater = () => {
     const [shadow_mode] = useSetting("shadows_mode");
     const { scene, gl } = useThree();
+    const frame = useRef(0);
 
     useEffect(() => {
         gl.shadowMap.enabled = shadow_mode !== "off";
+
+        // we will manually trigger shadow map updates
+        gl.shadowMap.autoUpdate = false;
+        gl.shadowMap.needsUpdate = true;
 
         // force all materials to update, so that they will respect the new shadow config
         scene.traverse((child: any) => {
@@ -35,6 +43,13 @@ export const ShadowUpdater = () => {
         };
         return () => { gl.shadowMap.render = original; };
     }, [gl]);
+
+    // update shadow maps every Nth frame
+    useFrame(() => {
+        if (!gl.shadowMap.enabled) return;
+        frame.current = (frame.current + 1) % SHADOW_UPDATE_INTERVAL;
+        if (frame.current === 0) gl.shadowMap.needsUpdate = true;
+    });
 
     return null;
 }

@@ -398,7 +398,7 @@ export class PointLightInteractionBuilder extends BaseBuilder<PointLightInteract
         return this;
     }
 
-    set_cast_shadow(cast_shadow: boolean) {
+    cast_shadow(cast_shadow = true) {
         this._internal.cast_shadow = cast_shadow;
         return this;
     }

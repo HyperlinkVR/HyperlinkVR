@@ -31,7 +31,7 @@ const zombot_body = new h.CustomObjectBuilder()
         new h.PhysicsSystemBuilder()
             .set_rigid_body(
                 new h.KinematicPosRigidBodyBuilder()
-                    .set_collider(new h.ColliderBuilder().auto().build())
+                    .set_collider(new h.ColliderBuilder().box([1, 1.4, 1]).set_offset([0, 0.5, 0]).build())
                     .build()
             )
             .build()

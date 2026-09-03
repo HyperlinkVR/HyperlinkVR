@@ -46,7 +46,7 @@ export const EngineObjectSync = () => {
 
     useEffect(() => {
         const unlisten_create = rtc.on_action("HVRSDK_CREATE_ENGINE_OBJECT", (message, reply) => {
-            const {add_object} = useEngineObjectStore.getState();
+            const {enqueue_object} = useEngineObjectStore.getState();
 
             const {success, data} = safe_parse_and_adopt(EngineObjectDispatchSchema, message.object);
             if (!success) {
@@ -58,8 +58,9 @@ export const EngineObjectSync = () => {
             const id = crypto.randomUUID();
             const created_object = { id, ...data };
             console.log("(+) Creating engine object", created_object);
-            add_object(created_object);
-            console.log("New object count: ", Object.keys(useEngineObjectStore.getState().objects).length)
+
+            // queue rather than mount immediately
+            enqueue_object(created_object);
 
             wait_for_object_ready(id).then(async () => {
                 console.log("(*) Engine object ready", id);

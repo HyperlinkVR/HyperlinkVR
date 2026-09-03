@@ -125,10 +125,8 @@ export const PointLightInteractionSchema = bindable({
     distance: z.number().nonnegative().default(0),
     decay: z.number().nonnegative().default(2),
     offset: z.tuple([z.number(), z.number(), z.number()]).default([0, 0, 0]),
-    // shadows are opt-in per light: casting is comparatively expensive and only a
-    // handful of lights should realistically do it. everything else (map size, bias,
-    // shadow-camera range) is tuned automatically.
-    cast_shadow: z.boolean().default(true),
+    // shadows are opt-in for point lights as cube map shadows are expensive and often unintended
+    cast_shadow: z.boolean().default(false),
 });
 export type PointLightInteraction = z.infer<typeof PointLightInteractionSchema>;
 export type PointLightInteractionInput = z.input<typeof PointLightInteractionSchema>;
