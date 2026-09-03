@@ -66,8 +66,8 @@ const HINTS: Record<HintDevice, Partial<Record<HintAction, InputHint>>> = {
         free_cursor: { glyphs: [key("Alt")], label: "Free cursor" },
         ui_navigate: { glyphs: [key("↑"), key("↓"), key("←"), key("→")], label: "Navigate" },
         ui_accept: { glyphs: [key("Enter")], label: "Accept / interact" },
-        ui_cancel: { glyphs: [key("Esc")], label: "Cancel / back" }
-        // cant close watch directly as tab does nav and esc is contextual
+        ui_cancel: { glyphs: [key("Esc")], label: "Cancel / back" },
+        close_watch: { glyphs: [], label: "Click outside to close" }
     },
 
     // TODO: actually implement these bindings

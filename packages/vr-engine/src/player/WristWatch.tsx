@@ -1,24 +1,17 @@
 import { useSetting } from "@hyperlinkvr/react";
-import {
-    WATCH_UI_HEIGHT,
-    WATCH_UI_WIDTH,
-    WatchUI
-} from "@hyperlinkvr/watch-ui";
+import { WATCH_UI_HEIGHT, WATCH_UI_WIDTH, WatchUI } from "@hyperlinkvr/watch-ui";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Container } from "@react-three/uikit";
-import { Suspense, useMemo, useRef, useState } from "react";
-import type { Group } from "three";
-import { MathUtils, Matrix4, Quaternion, Vector3 } from "three";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import type { Group, Object3D } from "three";
+import { MathUtils, Matrix4, Quaternion, Raycaster, Vector2, Vector3 } from "three";
+
+
 
 import { useSessionMode } from "../../../react/src/contexts/SessionMode";
 import { useHands } from "../input/hands";
-import {
-    FlatWatchUINavDriver,
-    useFlatInputControls,
-    useFlatInputState
-} from "../input/impl/flat/bindings";
-import { Layer, LayerGroup } from "../render";
-
+import { FlatWatchUINavDriver, useFlatInputControls, useFlatInputState } from "../input/impl/flat/bindings";
+import { click_raycast_layer_mask, Layer, LayerGroup } from "../render";
 
 export type WatchMode = "wrist" | "presented" | "detached";
 
@@ -298,6 +291,54 @@ const WatchUIPresentation = ({
     );
 };
 
+// on flat, clicking outside the watch closes it automatically
+const FlatWatchClickOutside = ({ on_close }: { on_close: () => void }) => {
+    const { gl, camera, scene } = useThree();
+
+    useEffect(() => {
+        const canvas = gl.domElement;
+        const raycaster = new Raycaster();
+        raycaster.layers.mask = click_raycast_layer_mask;
+
+        const ndc = new Vector2();
+
+        const is_watch = (object: Object3D): boolean => {
+            let node: Object3D | null = object;
+            while (node) {
+                if (node.name === "WatchUI") return true;
+                node = node.parent;
+            }
+            return false;
+        };
+
+        const on_down = (event: PointerEvent) => {
+            if (event.button !== 0) return;
+            if (document.pointerLockElement === canvas) return; // only when the cursor is free
+
+            const rect = canvas.getBoundingClientRect();
+            ndc.set(
+                ((event.clientX - rect.left) / rect.width) * 2 - 1,
+                -((event.clientY - rect.top) / rect.height) * 2 + 1
+            );
+            raycaster.setFromCamera(ndc, camera);
+
+            // intersections are sorted nearest first so the first visible hit decides
+            for (const hit of raycaster.intersectObjects(scene.children, true)) {
+                if (!hit.object.visible) continue;
+                if (is_watch(hit.object)) return; // clicked the watch, keep it open
+                break; // clicked something else in front of the watch
+            }
+
+            on_close();
+        };
+
+        canvas.addEventListener("pointerdown", on_down);
+        return () => canvas.removeEventListener("pointerdown", on_down);
+    }, [gl, camera, scene, on_close]);
+
+    return null;
+};
+
 export const FlatWatch = () => {
     const input = useFlatInputState();
     const { close_watch } = useFlatInputControls();
@@ -310,6 +351,7 @@ export const FlatWatch = () => {
                 on_request_close={close_watch}
             />
             <FlatWatchUINavDriver />
+            {input.watch_presented && <FlatWatchClickOutside on_close={close_watch} />}
         </>
     );
 };
