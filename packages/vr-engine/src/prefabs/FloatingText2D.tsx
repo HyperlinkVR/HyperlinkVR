@@ -8,6 +8,7 @@ import { useObjectBinding } from "../hooks/useObjectBinding";
 import type { PrefabProps } from "../types";
 import { PrefabRoot } from "./PrefabRoot";
 import { MeshStandardMaterial } from "three";
+import { usePrefabShading } from "./usePrefabShading";
 
 
 export const FloatingText2D = (props: PrefabProps<FloatingText2DPrefab> & {offset?: [number, number, number]}) => {
@@ -45,29 +46,7 @@ export const FloatingText2D = (props: PrefabProps<FloatingText2DPrefab> & {offse
         };
     }, []);
 
-    // TODO: can this be done more optimally
-    const shading_material = useMemo(() => {
-        switch (shading.type) {
-            case "unshaded":
-                // drei defaults to basic mat
-                return undefined;
-            case "standard":
-                return new MeshStandardMaterial({
-                    color: color,
-                    roughness: shading.roughness,
-                    metalness: shading.metalness,
-                });
-            case "emissive":
-                return new MeshStandardMaterial({
-                    color: color,
-                    emissive: shading.emissive_color_override ?? color,
-                    emissiveIntensity: shading.emissive_intensity
-                });
-            default:
-                console.warn("Unknown shading type", shading);
-                return undefined;
-        }
-    }, [shading, color]);
+    const shading_material = usePrefabShading(shading, color);
 
     // TODO: wire up more props like text style. maybe even have a rich text parser that splits it into subcomponents or something. also add a list of builtin typefaces they can pick
     return (

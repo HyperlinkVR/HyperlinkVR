@@ -65,12 +65,44 @@ export const StandardPrefabSchema = z.object({
 export type StandardPrefab = z.infer<typeof StandardPrefabSchema>;
 export type StandardPrefabInput = z.input<typeof StandardPrefabSchema>;
 
+export const PrefabUnshadedShadingSchema = z.object({
+    type: z.literal("unshaded")
+});
+export type PrefabUnshadedShading = z.infer<typeof PrefabUnshadedShadingSchema>;
+export type PrefabUnshadedShadingInput = z.input<typeof PrefabUnshadedShadingSchema>;
+
+export const PrefabStandardShadingSchema = z.object({
+    type: z.literal("standard"),
+    roughness: z.number().min(0).max(1).default(0.5),
+    metalness: z.number().min(0).max(1).default(0.0),
+});
+export type PrefabStandardShading = z.infer<typeof PrefabStandardShadingSchema>;
+export type PrefabStandardShadingInput = z.input<typeof PrefabStandardShadingSchema>;
+
+export const PrefabEmissiveShadingSchema = z.object({
+    type: z.literal("emissive"),
+    emissive_color_override: HexColorSchema.optional(),
+    emissive_intensity: z.number().min(0).default(1.0)
+});
+export type PrefabEmissiveShading = z.infer<typeof PrefabEmissiveShadingSchema>;
+export type PrefabEmissiveShadingInput = z.input<typeof PrefabEmissiveShadingSchema>;
+
+export const PrefabShadingSchema = z.discriminatedUnion("type", [
+    PrefabUnshadedShadingSchema,
+    PrefabStandardShadingSchema,
+    PrefabEmissiveShadingSchema
+]);
+export type PrefabShading = z.infer<typeof PrefabShadingSchema>;
+export type PrefabShadingInput = z.input<typeof PrefabShadingSchema>;
+
 export const ButtonPrefabSchema = bindable({
     type: z.literal("prefab"),
     name: z.literal("button"),
     label: z.string(),
     body_color: HexColorSchema.default(0x00ff00),
     label_color: HexColorSchema.default(0xffffff),
+    body_shading: PrefabShadingSchema.default({type: "standard", roughness: 0.5, metalness: 0.0}),
+    label_shading: PrefabShadingSchema.default({type: "unshaded"}),
     report_press: z.boolean().default(true),
     report_release: z.boolean().default(true),
     grabbable: z.boolean().default(false),
@@ -108,40 +140,10 @@ const TextPrefabBaseSchema = bindable({
 export type TextPrefabBase = z.infer<typeof TextPrefabBaseSchema>;
 export type TextPrefabBaseInput = z.input<typeof TextPrefabBaseSchema>;
 
-export const FloatingTextUnshadedShadingSchema = z.object({
-    type: z.literal("unshaded")
-});
-export type FloatingTextUnshadedShading = z.infer<typeof FloatingTextUnshadedShadingSchema>;
-export type FloatingTextUnshadedShadingInput = z.input<typeof FloatingTextUnshadedShadingSchema>;
-
-export const FloatingTextStandardShadingSchema = z.object({
-    type: z.literal("standard"),
-    roughness: z.number().min(0).max(1).default(0.5),
-    metalness: z.number().min(0).max(1).default(0.0),
-});
-export type FloatingTextStandardShading = z.infer<typeof FloatingTextStandardShadingSchema>;
-export type FloatingTextStandardShadingInput = z.input<typeof FloatingTextStandardShadingSchema>;
-
-export const FloatingTextEmissiveShadingSchema = z.object({
-    type: z.literal("emissive"),
-    emissive_color_override: HexColorSchema.optional(),
-    emissive_intensity: z.number().min(0).default(1.0)
-});
-export type FloatingTextEmissiveShading = z.infer<typeof FloatingTextEmissiveShadingSchema>;
-export type FloatingTextEmissiveShadingInput = z.input<typeof FloatingTextEmissiveShadingSchema>;
-
-export const FloatingTextPrefabShadingSchema = z.discriminatedUnion("type", [
-    FloatingTextUnshadedShadingSchema,
-    FloatingTextStandardShadingSchema,
-    FloatingTextEmissiveShadingSchema
-]);
-export type FloatingTextPrefabShading = z.infer<typeof FloatingTextPrefabShadingSchema>;
-export type FloatingTextPrefabShadingInput = z.input<typeof FloatingTextPrefabShadingSchema>;
-
 export const FloatingText2DPrefabSchema = TextPrefabBaseSchema.extend({
     type: z.literal("prefab"),
     name: z.literal("floating_text_2d"),
-    shading: FloatingTextPrefabShadingSchema.default({type: "unshaded"})
+    shading: PrefabShadingSchema.default({type: "unshaded"})
 });
 export type FloatingText2DPrefab = z.infer<typeof FloatingText2DPrefabSchema>;
 export type FloatingText2DPrefabInput = z.input<typeof FloatingText2DPrefabSchema>;
@@ -150,7 +152,7 @@ export const FloatingText3DPrefabSchema = TextPrefabBaseSchema.extend({
     type: z.literal("prefab"),
     name: z.literal("floating_text_3d"),
     depth: z.number().positive().default(0.05),
-    shading: FloatingTextPrefabShadingSchema.default({type: "standard", roughness: 0.5, metalness: 0.0, transmission: 0.0})
+    shading: PrefabShadingSchema.default({type: "standard", roughness: 0.5, metalness: 0.0})
 });
 export type FloatingText3DPrefab = z.infer<typeof FloatingText3DPrefabSchema>;
 export type FloatingText3DPrefabInput = z.input<typeof FloatingText3DPrefabSchema>;

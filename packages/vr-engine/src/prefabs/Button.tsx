@@ -1,7 +1,7 @@
 import type { ButtonPrefab } from "@hyperlinkvr/vr-engine-schemas";
 import { RoundedBoxGeometry, Text } from "@react-three/drei";
 import { useFrame, type ThreeEvent } from "@react-three/fiber";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ExtrudeGeometry, MathUtils, Shape, Vector3, type Group, type Object3D, type WebXRManager } from "three";
 import { mergeVertices, toCreasedNormals } from "three/examples/jsm/utils/BufferGeometryUtils";
 
@@ -12,6 +12,7 @@ import { useObjectBinding } from "../hooks/useObjectBinding";
 import { Grabbable } from "../interaction";
 import type { PrefabProps } from "../types";
 import { PrefabRoot } from "./PrefabRoot";
+import { usePrefabShading, usePrefabShadingComponent } from "./usePrefabShading";
 
 
 const WIDTH = 0.55;
@@ -71,7 +72,7 @@ type ButtonProps = PrefabProps<ButtonPrefab> & {
 };
 
 export const Button = (props: ButtonProps) => {
-    const {emit_report} = useObjectBinding(props.binding);
+    const {emit_report, on_prefab_command} = useObjectBinding(props.binding);
 
     const geometry = useMemo(() => {
         // The front rounding comes from a positive outward bevel.
@@ -288,6 +289,48 @@ export const Button = (props: ButtonProps) => {
         };
     }, [props.fixed]);
 
+    const [label, setLabel] = useState(props.label);
+    const [label_color, setLabelColor] = useState(props.label_color);
+    const [label_shading, setLabelShading] = useState(props.label_shading);
+    const [body_color, setBodyColor] = useState(props.body_color);
+    const [body_shading, setBodyShading] = useState(props.body_shading);
+
+    useEffect(() => {
+        const unlisten = on_prefab_command(async (command, args) => {
+            switch (command) {
+                case "set_label":
+                    setLabel(args.label);
+                    break;
+                case "set_label_color":
+                    setLabelColor(args.color);
+                    break;
+                case "set_label_shading":
+                    setLabelShading(args.shading);
+                    break;
+                case "set_body_color":
+                    setBodyColor(args.color);
+                    break;
+                case "set_body_shading":
+                    setBodyShading(args.shading);
+                    break;
+                default:
+                    return {
+                        success: false,
+                        error: `Unknown command ${command}`
+                    };
+            }
+
+            return { success: true };
+        });
+
+        return () => {
+            unlisten();
+        };
+    }, [on_prefab_command]);
+
+    const body_shading_component = usePrefabShadingComponent(body_shading, body_color);
+    const label_shading_material = usePrefabShading(label_shading, label_color);
+
     const body = (
         <group ref={housingRef}>
             <mesh position={[0, 0, 0]} scale={[0.66, 0.66, 0.1]} castShadow>
@@ -300,17 +343,18 @@ export const Button = (props: ButtonProps) => {
                 position={[0, 0, REST_Z]}
                 onPointerDown={handleRayDown}>
                 <mesh geometry={geometry} castShadow>
-                    <meshStandardMaterial color={props.body_color} />
+                    {body_shading_component}
                 </mesh>
                 <Text
                     position={[0, 0, 0.055]}
                     fontSize={0.1}
-                    color={props.label_color}
+                    color={label_color}
+                    material={label_shading_material}
                     anchorX="center"
                     anchorY="middle"
                     raycast={ignoreRaycast}
                 >
-                    {props.label}
+                    {label}
                 </Text>
             </group>
         </group>

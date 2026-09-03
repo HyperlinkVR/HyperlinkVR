@@ -1,5 +1,9 @@
 import type * as hvr from "@hyperlinkvr/web-sdk";
-import { create_core } from "./game_loop";
+
+
+
+import { create_core, start_game } from "./game_loop";
+
 
 const h = hyperlinkvr.builders;
 
@@ -48,7 +52,37 @@ hyperlinkvr.on_ready(async () => {
 
     promises.push(create_core());
 
+    const start_button = new h.ButtonPrefabBuilder()
+        .named("start")
+        .set_label("Start")
+        .set_body_shading({type: "emissive", emissive_intensity: 1})
+        .build();
+
     await Promise.all(promises);
+
+
+    let interval_id: NodeJS.Timeout | null = null;
+    const created_button =  await new h.EngineObjectDispatchBuilder(start_button)
+        .set_position([0, 1.5, 2])
+        .on("start", async () => {
+            await start_game();
+            created_button.destroy();
+
+            if (interval_id) {
+                clearInterval(interval_id);
+                interval_id = null;
+            }
+        })
+        .create();
+
+    // blink the start button to draw attention to it
+    let blink_on = true;
+    interval_id = setInterval(() => {
+        blink_on = !blink_on;
+
+        // TODO: custom types for each prefab handle
+        created_button.prefab.set_body_shading!({type: "emissive", emissive_intensity: blink_on ? 1 : 0});
+    }, 1000);
 
     hyperlinkvr.finished_loading();
 });

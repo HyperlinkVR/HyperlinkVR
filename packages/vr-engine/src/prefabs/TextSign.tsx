@@ -29,7 +29,7 @@ export const DefaultTextSign = (props: PrefabProps<TextSignPrefab>) => {
                 <meshStandardMaterial color={bg_color} emissive={bg_color} />
             </mesh>
 
-            <FloatingText2D offset={[0, 0, 0.015]} text={props.text} font_size={0.075} color={props.color} />
+            <FloatingText2D offset={[0, 0, 0.015]} text={props.text} font_size={0.075} color={props.color} shading={{type: "standard", roughness: 0.5, metalness: 0}} />
         </group>
     );
 }

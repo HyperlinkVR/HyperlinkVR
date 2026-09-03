@@ -5,7 +5,7 @@ import type {
     ButtonPrefabInput,
     FloatingText2DPrefab,
     FloatingText3DPrefab,
-    FloatingTextPrefabShading,
+    PrefabShadingInput,
     GolfBallPrefab,
     GolfBallPrefabInput,
     GolfPutterPrefab,
@@ -98,6 +98,16 @@ export class ButtonPrefabBuilder extends BaseBuilder<ButtonPrefabInput> {
         return this;
     }
 
+    set_body_shading(shading: PrefabShadingInput) {
+        this._internal.body_shading = shading;
+        return this;
+    }
+
+    set_label_shading(shading: PrefabShadingInput) {
+        this._internal.label_shading = shading;
+        return this;
+    }
+
     set_reports_press(reports: boolean) {
         this._internal.report_press = reports;
         return this;
@@ -120,6 +130,18 @@ export class ButtonPrefabBuilder extends BaseBuilder<ButtonPrefabInput> {
 
     build(): ButtonPrefab {
         return ButtonPrefabSchema.parse(this._internal);
+    }
+
+
+    /** @internal */
+    static _make_api(object_id: string) {
+        return {
+            set_label: (label: string) => prefab_command(object_id, "set_label", {label}),
+            set_body_color: (color: HexNumericalColor) => prefab_command(object_id, "set_body_color", {color}),
+            set_label_color: (color: HexNumericalColor) => prefab_command(object_id, "set_label_color", {color}),
+            set_body_shading: (shading: PrefabShadingInput) => prefab_command(object_id, "set_body_shading", {shading}),
+            set_label_shading: (shading: PrefabShadingInput) => prefab_command(object_id, "set_label_shading", {shading}),
+        };
     }
 }
 
@@ -175,7 +197,7 @@ export class ReflectiveMirrorPrefabBuilder extends BaseBuilder<ReflectiveMirrorP
     }
 }
 
-class TextPrefabBuilderBase extends BaseBuilder<TextPrefabBaseInput & {depth?: number, style?: string, style_parameters?: Record<string, any>, shading?: FloatingTextPrefabShading}> {
+class TextPrefabBuilderBase extends BaseBuilder<TextPrefabBaseInput & {depth?: number, style?: string, style_parameters?: Record<string, any>, shading?: PrefabShadingInput}> {
     constructor(type: "floating_text_2d" | "floating_text_3d" | "text_sign") {
         super({type: "prefab", name: type} as unknown as TextPrefabBaseInput);
     }
@@ -212,7 +234,7 @@ export class FloatingText2DPrefabBuilder extends TextPrefabBuilderBase {
         super("floating_text_2d");
     }
 
-    set_shading(shading: FloatingTextPrefabShading) {
+    set_shading(shading: PrefabShadingInput) {
         this._internal.shading = shading;
         return this;
     }
@@ -226,7 +248,7 @@ export class FloatingText2DPrefabBuilder extends TextPrefabBuilderBase {
     static override _make_api(object_id: string) {
         return {
             ...super._make_api(object_id),
-            set_shading: (shading: FloatingTextPrefabShading) => prefab_command(object_id, "set_shading", {shading})
+            set_shading: (shading: PrefabShadingInput) => prefab_command(object_id, "set_shading", {shading})
         };
     }
 }
@@ -242,7 +264,7 @@ export class FloatingText3DPrefabBuilder extends TextPrefabBuilderBase {
         return this;
     }
 
-    set_shading(shading: FloatingTextPrefabShading) {
+    set_shading(shading: PrefabShadingInput) {
         this._internal.shading = shading;
         return this;
     }
@@ -257,7 +279,7 @@ export class FloatingText3DPrefabBuilder extends TextPrefabBuilderBase {
         return {
             ...super._make_api(object_id),
             set_depth: (depth: number) => prefab_command(object_id, "set_depth", {depth}),
-            set_shading: (shading: FloatingTextPrefabShading) => prefab_command(object_id, "set_shading", {shading})
+            set_shading: (shading: PrefabShadingInput) => prefab_command(object_id, "set_shading", {shading})
         };
     }
 }
@@ -379,6 +401,7 @@ export class GolfPutterPrefabBuilder extends BaseBuilder<GolfPutterPrefabInput> 
 
 /** @internal **/
 export const _PREFAB_API_MAKERS = {
+    "button": ButtonPrefabBuilder._make_api,
     "floating_text_2d": FloatingText2DPrefabBuilder._make_api,
     "floating_text_3d": FloatingText3DPrefabBuilder._make_api,
     "text_sign": TextSignPrefabBuilder._make_api,

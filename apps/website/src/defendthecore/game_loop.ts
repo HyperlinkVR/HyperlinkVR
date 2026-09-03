@@ -36,3 +36,9 @@ const spawn_zombot = async () => {
     const created_zombot = await new h.EngineObjectDispatchBuilder(zombot).set_position(tunnel_pos).create();
     await apply_zombot_behaviour(created_zombot, created_core);
 }
+
+
+
+export const start_game = async () => {
+
+}
