@@ -23,8 +23,15 @@ const loader_layer_mask = compute_layer_mask([
     Layer.Loader
 ]);
 
+export const click_raycast_layer_mask = compute_layer_mask([
+    Layer.Default,
+    Layer.ThirdPerson_ForceHide,
+    Layer.NoVFX
+]);
+
+
 export const CameraSetup = () => {
-    const { gl, camera } = useThree();
+    const { gl, camera, raycaster } = useThree();
     const listener = useAudioListener();
     const loading = useWorldLoadingStateStore((store) => store.loading);
 
@@ -48,6 +55,11 @@ export const CameraSetup = () => {
             head_camera.remove(listener);
         };
     }, [gl, camera, listener, loading]);
+
+    // while we're here, set the mask on the global raycaster
+    useEffect(() => {
+        raycaster.layers.mask = click_raycast_layer_mask;
+    }, [raycaster]);
 
     return null;
 }

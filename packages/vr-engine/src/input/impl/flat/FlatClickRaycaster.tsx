@@ -2,6 +2,7 @@ import { useThree } from "@react-three/fiber";
 import { useEffect } from "react";
 import type { Object3D} from "three";
 import { Raycaster, Vector2 } from "three";
+import { click_raycast_layer_mask } from "../../../render";
 
 type R3FHandlers = Record<string, ((event: unknown) => void) | undefined>;
 
@@ -59,6 +60,8 @@ export const FlatClickRaycaster = () => {
         const canvas = gl.domElement;
         const raycaster = new Raycaster();
         const screen_center = new Vector2(0, 0);
+
+        raycaster.layers.mask = click_raycast_layer_mask;
 
         // The object that received pointerdown, so pointerup goes to the same place
         // even if the crosshair has since drifted off it.
