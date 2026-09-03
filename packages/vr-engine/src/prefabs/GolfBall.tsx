@@ -19,7 +19,7 @@ import { PrefabRoot } from "./PrefabRoot";
 
 const MESH_URL = new URL("../../assets/prefabs/golf_ball/golf_ball.glb", import.meta.url).href;
 // @ts-ignore
-const PUTT_SOUNDS = import.meta.glob("../../assets/prefabs/golf_ball/sfx/putt_*.opus", {eager: true, as: "url"});
+const PUTT_SOUNDS = import.meta.glob("../../assets/prefabs/golf_ball/sfx/putt_*.opus", {eager: true, query: "?url", import: "default"});
 
 // the material has this colour baked in, so no work required if the user doesn't specify a colour
 const DEFAULT_ALBEDO = 0xd9d9d9;
