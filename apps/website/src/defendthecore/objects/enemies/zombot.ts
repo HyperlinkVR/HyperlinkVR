@@ -1,4 +1,5 @@
 import type * as hvr from "@hyperlinkvr/web-sdk";
+import { damage_core, get_core } from "../../core_state";
 
 
 
@@ -13,6 +14,11 @@ const zombot_offset = {
 let zombot_speed = 0.75;
 export const set_global_zombot_speed = (speed: number) => {
     zombot_speed = speed;
+};
+
+let zombot_damage = 5;
+export const set_global_zombot_damage = (damage: number) => {
+    zombot_damage = damage;
 };
 
 const zombot_markers = await hyperlinkvr.markers.load("zombot_body.glb");
@@ -90,7 +96,9 @@ export const zombot = new h.ObjectCollectionBuilder(zombot_body, zombot_offset)
     .add_child(zombot_wheels, undefined, { label: "wheels" })
     .build();
 
-export const apply_zombot_behaviour = async (created_zombot: hvr.builders.EngineObjectCollectionHandle, created_core: hvr.builders.EngineObjectCollectionHandle) => {
+export const apply_zombot_behaviour = async (created_zombot: hvr.builders.EngineObjectCollectionHandle) => {
+    const created_core = get_core();
+
     const face_idx = created_zombot.children.findIndex(child => child.label === "face");
     // TODO: have collections build a lookup table of labels on insertion
     const face = created_zombot.children[face_idx]!;
@@ -229,6 +237,8 @@ export const apply_zombot_behaviour = async (created_zombot: hvr.builders.Engine
 
                 // TODO: improve explode anim with dynamic gibs, and maybe add a way to set invis on an object without destruction for these effects
                 created_zombot.destroy();
+
+                damage_core(zombot_damage);
 
                 // destroy the explosion dummy after a short delay to let the particles play out
                 setTimeout(async () => {

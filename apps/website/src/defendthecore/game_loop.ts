@@ -1,9 +1,8 @@
 import type * as hvr from "@hyperlinkvr/web-sdk";
 
 
-
-import { apply_core_pillar_behaviour, core_pillar } from "./objects/core_pillar";
 import { apply_zombot_behaviour, zombot } from "./objects/enemies/zombot";
+import { on_core_damaged } from "./core_state";
 
 
 const h = hyperlinkvr.builders;
@@ -12,21 +11,7 @@ const map_markers = await hyperlinkvr.markers.load("map.glb");
 const tunnels = Array.from(hyperlinkvr.markers.subset(map_markers, /^tunnel_/).values())
     .map((marker) => marker.transform.position);
 
-let created_core: hvr.builders.EngineObjectCollectionHandle | null = null;
-
-export const create_core = async () => {
-    created_core = await new h.EngineObjectDispatchBuilder(core_pillar)
-        .create();
-
-    await apply_core_pillar_behaviour(created_core);
-}
-
 const spawn_zombot = async (tunnel_idx: number) => {
-    if (!created_core) {
-        console.warn("Cannot spawn zombot: core not created yet");
-        return;
-    }
-
     if (tunnel_idx < 0 || tunnel_idx >= tunnels.length) {
         console.error(`Cannot spawn zombot: invalid tunnel index ${tunnel_idx}`);
         return;
@@ -35,7 +20,7 @@ const spawn_zombot = async (tunnel_idx: number) => {
     const tunnel_pos = tunnels[tunnel_idx]!;
 
     const created_zombot = await new h.EngineObjectDispatchBuilder(zombot).set_position(tunnel_pos).create();
-    await apply_zombot_behaviour(created_zombot, created_core);
+    await apply_zombot_behaviour(created_zombot);
 }
 
 
@@ -93,6 +78,8 @@ type SpawnWaveBlock = SpawnWaveSingleSpawnBlock | SpawnWaveMultiSpawnBlock | Spa
 
 // waves defined as a sequence of blocks, where each block contains a set of enemies to spawn in parallel
 type SpawnWave = SpawnWaveBlock[];
+
+// TODO: add speed and damage control? or just keep it as separate classes / fixed difficulty setting
 
 // fixed wave definitions. any left undefined will be randomly generated depending on the wave number
 const FIXED_WAVES = {
@@ -213,6 +200,17 @@ const run_spawn_wave = async (wave: SpawnWave) => {
 }
 
 export const start_game = async () => {
+    // TODO; progress bar hud element
+    const health_hud = await h.hud_text("health", "Core health: 100").set_font_size(30).set_slot("top-center").create();
+
+    on_core_damaged((new_health => {
+        health_hud.set_text(`Core health: ${new_health}`);
+
+        if (new_health <= 0) {
+            console.log("Game over");
+        }
+    }));
+
     // will run just first wave for now since no kill tracking yet or even the concept of killing (so they would all run at once!)
     run_spawn_wave(FIXED_WAVES[1] ?? generate_random_wave(1));
 }

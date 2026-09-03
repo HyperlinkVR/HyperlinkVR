@@ -1,8 +1,7 @@
 import type * as hvr from "@hyperlinkvr/web-sdk";
 
-
-
-import { create_core, start_game } from "./game_loop";
+import { create_core } from "./core_state";
+import { start_game } from "./game_loop";
 
 
 const h = hyperlinkvr.builders;
