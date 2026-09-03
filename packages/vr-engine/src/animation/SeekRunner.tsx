@@ -46,6 +46,7 @@ export const SeekRunner = () => {
                 cancel_active_seek(id);
                 continue;
             }
+            if (!refs.rigid_body.current || !refs.rigid_body.current.isValid()) continue;
             if (!read_position(refs, cur)) continue;
             if (!resolve_target(seek, tgt)) {
                 cancel_active_seek(id);

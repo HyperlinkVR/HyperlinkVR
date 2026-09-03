@@ -48,7 +48,7 @@ const take = (pool: Vector3[], index: number): Vector3 =>
 // writes an object's current world position into `out`, false if not mountable yet
 const sample_object = (refs: ObjectRefsContextType, out: Vector3): boolean => {
     const body = refs.rigid_body.current;
-    if (body) {
+    if (body && body.isValid()) {
         const translation = body.translation();
         out.set(translation.x, translation.y, translation.z);
         return true;
