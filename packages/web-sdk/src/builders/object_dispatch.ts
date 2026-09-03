@@ -646,7 +646,7 @@ export class EngineObjectDispatchBuilder<T extends EngineObject = EngineObject> 
         super({object} as EngineObjectDispatchInput);
     }
 
-    set_position(x_or_vect: number, y?: number, z?: number) {
+    set_position(x_or_vect: number | Vector3, y?: number, z?: number) {
         if (!this._internal.transform) {
             this._internal.transform = {};
         }
