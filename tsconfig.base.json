@@ -10,9 +10,7 @@
         "sourceMap": true,
         // "composite": true, // its a pita, and turborepo does it already
         "jsx": "react-jsx",
-        // TODO: look at updating the resolution, it broke a bunch of stuff last time tho
-        "moduleResolution": "node",
-        //"ignoreDeprecations": "6.0",
+        "moduleResolution": "bundler",
         "lib": ["DOM", "DOM.Iterable", "ESNext"],
         "module": "ESNext",
         "target": "ESNext",
