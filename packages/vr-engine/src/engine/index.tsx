@@ -66,6 +66,8 @@ import { SDKWorldEnvironmentProvider, useWorldEnvironment, WORLD_ENV_DEFAULT, WO
 import { EngineObjectSpawner } from "./EngineObjectSpawner";
 import { EngineObjectSync } from "./EngineObjectSync";
 import { FlatLoadingScreen, VRLoadingScreen } from "./LoadingScreen";
+import { useHUDStore } from "../stores/HUDStore";
+import { useVFXStore } from "../stores/VFXStore";
 
 
 configureTextBuilder({
@@ -317,6 +319,8 @@ const WorldSessionListener = () => {
     const set_world_ready = useWorldLoadingStateStore((store) => store.set_world_ready);
     const reset_for_new_document = useWorldLoadingStateStore((store) => store.reset_for_new_document);
     const clear_all_objects = useEngineObjectStore((store) => store.clear_all_objects);
+    const clear_hud = useHUDStore((store) => store.reset);
+    const clear_vfx = useVFXStore((store) => store.clear);
 
     useEffect(() => {
         const unlisten = on_action("HVRSDK_LOADING_FINISHED", (_message, reply) => {
@@ -343,9 +347,11 @@ const WorldSessionListener = () => {
 
         // reset world
         clear_all_objects();
+        clear_hud();
+        clear_vfx();
         reset_for_new_document();
         clear_collider_collision_info();
-    }, [doc_generation, support, clear_all_objects, reset_for_new_document]);
+    }, [doc_generation, support, clear_all_objects, reset_for_new_document, clear_hud, clear_vfx]);
 
     return null;
 };
