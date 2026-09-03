@@ -25,7 +25,7 @@ export const sample_live_transform = (refs: ObjectRefsContextType): Transform =>
         scale = [scratch_scale.x, scratch_scale.y, scratch_scale.z];
     }
 
-    if (body) {
+    if (body && body.isValid()) {
         const translation = body.translation();
         const rotation = body.rotation();
         return {
@@ -33,6 +33,8 @@ export const sample_live_transform = (refs: ObjectRefsContextType): Transform =>
             rotation: [rotation.x, rotation.y, rotation.z, rotation.w],
             scale
         };
+    } else if (body && !body.isValid()) {
+        console.warn("Physics body is invalid or not ready, falling back to group transform");
     }
 
     if (!group) {

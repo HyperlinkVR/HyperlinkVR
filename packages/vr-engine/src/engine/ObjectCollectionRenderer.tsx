@@ -89,6 +89,11 @@ export const ObjectCollectionRenderer = (props: RendererComponentProps<ObjectCol
             return;
         }
 
+        if (!parent_refs.current.rigid_body.current?.isValid() && !group.parent.matrixWorld) {
+            // not yet ready to sample live transform
+            return;
+        }
+
         const live = sample_live_transform(parent_refs.current);
 
         // map world pose to child group local pose
