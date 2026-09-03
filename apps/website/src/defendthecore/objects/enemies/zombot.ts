@@ -42,6 +42,10 @@ const zombot_body = new h.CustomObjectBuilder()
         .set_color(zombot_face_data.neutral.color)
         .build()
     )
+    .add_interaction("alerted_sfx", new h.PositionalAudioInteractionBuilder()
+        .set_url("alerted.opus")
+        .build()
+    )
     .build();
 
 const zombot_wheels = new h.CustomObjectBuilder()
@@ -138,6 +142,7 @@ export const apply_zombot_behaviour = async (created_zombot: hvr.builders.Engine
     await surprise_anim.stop(); // TODO: why is it held before start?
 
     const play_surprise_anim = async () => {
+        created_zombot.parent.interactions!.alerted_sfx!.play!();
         await surprise_anim.seek(0);
         await surprise_anim.play();
 
