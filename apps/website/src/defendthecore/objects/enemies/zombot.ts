@@ -46,6 +46,22 @@ const zombot_body = new h.CustomObjectBuilder()
         .set_url("alerted.opus")
         .build()
     )
+    .add_interaction("explode_particles", new h.ParticleEmitterInteractionBuilder()
+        .set_visual({type: "image", url: "scorch_03.png"})
+        .set_color([
+            0xff0000,
+            0xffff00,
+            0xffa500,
+        ])
+        .set_lifetime(1)
+        .set_behaviors([
+            {type: "fade-over-life", fade_out_ratio: 0.25},
+        ])
+        .set_per_second(100)
+        .set_emitter_shape({type: "sphere", radius: 0.25})
+        .set_speed(2)
+        .build()
+    )
     .build();
 
 const zombot_wheels = new h.CustomObjectBuilder()
@@ -142,6 +158,8 @@ export const apply_zombot_behaviour = async (created_zombot: hvr.builders.Engine
     await surprise_anim.stop(); // TODO: why is it held before start?
 
     const play_surprise_anim = async () => {
+        await change_face("alerted");
+
         created_zombot.parent.interactions!.alerted_sfx!.play!();
         await surprise_anim.seek(0);
         await surprise_anim.play();
@@ -154,24 +172,61 @@ export const apply_zombot_behaviour = async (created_zombot: hvr.builders.Engine
         });
     }
 
+    // shake violently, slowly rising, then explode (will be a particle)
+    const attack_core_anim = await new h.AnimationBuilder()
+        .named("attack_core_anim")
+        .add_track(h.KeyframeTrackBuilder.position(created_zombot)
+            .relative()
+            .add_keyframe(0, [0, 0, 0])
+            .add_keyframe(100, [0, 0, 0.1])
+            .add_keyframe(200, [0, 0, -0.1])
+            .add_keyframe(300, [0, 0, 0.1])
+            .add_keyframe(400, [0, 0, -0.1])
+            .add_keyframe(500, [0, 0, 0.1])
+            .add_keyframe(600, [0, 0.4, -0.1])
+            .add_keyframe(700, [0, 0.8, 0.1])
+            .add_keyframe(800, [0, 1.2, -0.1])
+            .add_keyframe(900, [0, 1.6, 0.1])
+            .add_keyframe(1000, [0, 2, -0.1])
+            .build()
+        )
+        .create();
+    await attack_core_anim.stop(); // TODO: why is it held before start?
+
+    const play_attack_core_anim = async () => {
+        await change_face("attack_core");
+        await attack_core_anim.seek(0);
+        await attack_core_anim.play();
+
+        // TODO: no finished report yet so just use a timeout for now
+        return new Promise<void>((resolve) => {
+            setTimeout(() => {
+                resolve();
+            }, 900);
+        });
+    }
+
     // TODO: proper state machine, either here or maybe some engine construct that can be used with fe/re triggers
 
     let ongoing_seek: hvr.builders.SeekHandle | null = null;
     let in_range = 0;
+    let in_attack_phase = false;
 
     const seek_core = async () => {
+        if (in_attack_phase) {
+            return;
+        }
+
         ongoing_seek = await created_zombot.seek()
             .toward_object(created_core.object.id)
-            .set_distance(3)
+            .set_distance(3, true)
             .speed(zombot_speed)
             .start();
     }
 
-    const monitor_name = `proximity-${created_zombot.object.id}`;
-
     // change face and behaviour based when distance to a player is less than 3 units
-    hyperlinkvr.world.add_monitor(
-        monitor_name,
+    const player_prox_cleanup = hyperlinkvr.world.add_monitor(
+        `player-proximity-${created_zombot.object.id}`,
 
         new h.DistanceMonitorBuilder()
             .from(created_zombot)
@@ -182,6 +237,10 @@ export const apply_zombot_behaviour = async (created_zombot: hvr.builders.Engine
             .build(),
 
         async (event) => {
+            if (in_attack_phase) {
+                return;
+            }
+
             if (event.kind !== "distance-monitor") {
                 return;
             }
@@ -200,7 +259,6 @@ export const apply_zombot_behaviour = async (created_zombot: hvr.builders.Engine
 
                 if (in_range === 1) {
                     // rising edge, play surprise anim first
-                    await change_face("alerted");
                     await play_surprise_anim();
                 }
 
@@ -222,6 +280,48 @@ export const apply_zombot_behaviour = async (created_zombot: hvr.builders.Engine
 
                     seek_core();
                 }
+            }
+        }
+    );
+
+    // when in the final range of the core, attack it and die
+    const core_prox_cleanup = hyperlinkvr.world.add_monitor(
+        `core-proximity-${created_zombot.object.id}`,
+
+        new h.DistanceMonitorBuilder()
+            .from(created_zombot)
+            .to(created_core)
+            .closer_than(3.05)
+            .build(),
+
+        async (event) => {
+            if (in_attack_phase) {
+                return;
+            }
+
+            if (event.kind !== "distance-monitor") {
+                return;
+            }
+
+            if (event.payload.type === "enter") {
+                in_attack_phase = true;
+
+                if (ongoing_seek) {
+                    ongoing_seek.stop();
+                }
+
+                // can cleanup prox monitors now
+                // TODO: possible to autocleanup world monitors? and also check if object bound monitors and triggers are already cleaned up
+                (await player_prox_cleanup)();
+                (await core_prox_cleanup)();
+
+                await play_attack_core_anim();
+
+                // TODO: improve explode anim with dynamic gibs, and maybe add a way to set invis on an object without destruction for these effects
+                created_zombot.parent.interactions!.explode_particles!.play!();
+                setTimeout(async () => {
+                    await created_zombot.destroy();
+                }, 1000);
             }
         }
     );
