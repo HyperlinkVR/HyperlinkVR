@@ -198,9 +198,10 @@ const run_spawn_wave = async (wave: SpawnWave) => {
 
     // TODO: wait for all enemies to be killed before returning
 }
-
+// TODO: distribute spawned along tunnel face (configurable to make bosses and batches go in center, or perhaps they always do)
 export const start_game = async () => {
     // TODO; progress bar hud element
+    // TODO: option to exclude hud elements from vfx
     const health_hud = await h.hud_text("health", "Core health: 100").set_font_size(30).set_slot("top-center").create();
 
     on_core_damaged((new_health => {
