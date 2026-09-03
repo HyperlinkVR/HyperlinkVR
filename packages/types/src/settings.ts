@@ -22,6 +22,7 @@ export type StringWidget<V extends string> =
           max_length?: number;
           subtype_hint?: "url" | "email" | "password"; // note: best effort only
           validation_regex?: RegExp;
+          width?: "short" | "medium" | "long";
       }
     | { type: "color" }
     | { type: "select"; options: Array<{ label: string; value: V }> };
@@ -430,6 +431,39 @@ export const settings_def = build_settings({
                 },
                 breadcrumbs: ["Discord"],
                 conditional: (settings) => settings.discord_rpc === true
+            }
+        }
+    },
+
+    service_override: {
+        default_value: false as boolean,
+        ui: {
+            flat: {
+                label: "Override services (don't use unless you know what you're doing)",
+                description: "Override the services HyperlinkVR loads from",
+                widget: {
+                    type: "switch"
+                },
+                breadcrumbs: ["Services"],
+                conditional: (_, mode) => !mode || mode === "flat"
+            }
+        }
+    },
+
+    service_featured: {
+        default_value: "https://hyperlink.surf/featured-worlds.json",
+        ui: {
+            flat: {
+                label: "Featured worlds URL",
+                description: "URL to fetch the list of featured worlds from",
+                widget: {
+                    type: "text",
+                    placeholder: "https://hyperlink.surf/featured-worlds.json",
+                    subtype_hint: "url",
+                    width: "long"
+                },
+                breadcrumbs: ["Services"],
+                conditional: (settings) => settings.service_override === true
             }
         }
     },

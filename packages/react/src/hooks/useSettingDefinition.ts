@@ -9,6 +9,7 @@ export const useSettingsTree = (platform: "flat" | "watch") => {
     return useMemo(() => build_breadcrumb_settings_tree(settings_def, platform), [platform]);
 }
 
+// TODO: why is this even a hook lol
 export const useSettingDefinition = (key: SettingKey) => {
     return useMemo(() => settings_def[key], [key]);
 }

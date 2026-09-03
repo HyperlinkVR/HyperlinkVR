@@ -1,4 +1,12 @@
-import { DiscordPresenceProvider, WorldSessionProvider, useSetting, useStorage, useWorldSession, useDiscordPresence } from "@hyperlinkvr/react";
+import {
+    DiscordPresenceProvider,
+    useDiscordPresence,
+    useSetting,
+    useStorage,
+    useWorldMetadata,
+    useWorldSession,
+    WorldSessionProvider
+} from "@hyperlinkvr/react";
 import { SoftShadows, Stats, Text } from "@react-three/drei";
 import type { RootState } from "@react-three/fiber";
 import { Canvas } from "@react-three/fiber";
@@ -8,19 +16,13 @@ import { createXRStore, XR } from "@react-three/xr";
 import { QuarksProvider } from "quarks.r3f";
 import { memo, Suspense, useCallback, useEffect, useImperativeHandle, useMemo, useRef } from "react";
 import { ErrorBoundary, getErrorMessage, type FallbackProps } from "react-error-boundary";
-import type {
-    Group} from "three";
-import {
-    ACESFilmicToneMapping,
-    HalfFloatType,
-    Mesh,
-    MeshBasicMaterial,
-    WebGLRenderer
-} from "three";
+import type { Group } from "three";
+import { ACESFilmicToneMapping, HalfFloatType, Mesh, MeshBasicMaterial, WebGLRenderer } from "three";
 import { configureTextBuilder } from "troika-three-text";
 
 
 
+import { SessionModeProvider } from "../../../react/src/contexts/SessionMode";
 import { AnimationRunner } from "../animation/AnimationRunner";
 import { AnimationSync } from "../animation/AnimationSync";
 import { SeekRunner } from "../animation/SeekRunner";
@@ -30,7 +32,6 @@ import { DOMMirror } from "../browser/DOMMirror";
 import { URLBar } from "../browser/URLBar";
 import { AvatarProvider, PlayerOriginProvider, useWebSDKMessaging } from "../contexts";
 import { AudioListenerProvider } from "../contexts/AudioListenerContext";
-import { SessionModeProvider } from "../../../react/src/contexts/SessionMode";
 import { WebSDKMessagingProvider } from "../contexts/WebSDKMessagingContext";
 import { SceneDebug } from "../debug/SceneDebug";
 import { HUDSync } from "../hud/HUDSync";
@@ -57,6 +58,8 @@ import { ShadowUpdater } from "../render/ShadowUpdater";
 import { SSAO } from "../render/SSAO";
 import { LocalAssetWarningBanner } from "../security/LocalAssetWarningBanner";
 import { useEngineObjectStore } from "../stores/EngineObjectStore";
+import { useHUDStore } from "../stores/HUDStore";
+import { useVFXStore } from "../stores/VFXStore";
 import { useWorldLoadingStateStore } from "../stores/WorldLoadingStateStore";
 import { VFXPasses } from "../vfx/VFXPasses";
 import { VFXSync } from "../vfx/VFXSync";
@@ -66,8 +69,6 @@ import { SDKWorldEnvironmentProvider, useWorldEnvironment, WORLD_ENV_DEFAULT, WO
 import { EngineObjectSpawner } from "./EngineObjectSpawner";
 import { EngineObjectSync } from "./EngineObjectSync";
 import { FlatLoadingScreen, VRLoadingScreen } from "./LoadingScreen";
-import { useHUDStore } from "../stores/HUDStore";
-import { useVFXStore } from "../stores/VFXStore";
 
 
 configureTextBuilder({
@@ -358,7 +359,8 @@ const WorldSessionListener = () => {
 
 const DiscordPresenceSync = () => {
     const [show_world] = useSetting("discord_show_world");
-    const {url, world_metadata} = useWorldSession();
+    const {url} = useWorldSession();
+    const world_metadata = useWorldMetadata(url);
     const {set_activity} = useDiscordPresence();
 
     useEffect(() => {

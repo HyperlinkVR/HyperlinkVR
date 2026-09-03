@@ -12,6 +12,7 @@
         "@hyperlinkvr/core": "workspace:*",
         "@hyperlinkvr/react": "workspace:*",
         "@hyperlinkvr/types": "workspace:*",
+        "@hyperlinkvr/vr-engine-schemas": "workspace:*",
         "react": "catalog:",
         "react-dom": "catalog:",
         "three": "catalog:",
@@ -21,6 +22,7 @@
         "@react-three/uikit": "catalog:",
         "@react-three/uikit-default": "catalog:",
         "@react-three/uikit-lucide": "catalog:",
+        "react-error-boundary": "catalog:",
         "troika-three-text": "catalog:"
     },
     "devDependencies": {

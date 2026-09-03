@@ -1,19 +1,20 @@
-import { Container } from "@react-three/uikit";
-import type {ReactNode} from "react";
-import { useCallback, useMemo} from "react";
+import { Container, Text } from "@react-three/uikit";
+import { Maximize2, Minimize2, Settings } from "@react-three/uikit-lucide";
+import { ReactNode, useCallback, useEffect, useMemo } from "react";
+import { ErrorBoundary, FallbackProps } from "react-error-boundary";
 import { DoubleSide, MeshBasicMaterial } from "three";
 import { configureTextBuilder } from "troika-three-text";
 
 
 
-import type { ScreenName} from "./screens";
+import { Crossfader, useCrossfadeOpacity } from "./animation/Crossfader";
+import { FocusableButton } from "./components/FocusableButton";
+import { FocusNavProvider } from "./contexts/FocusNavContext";
+import { NavStateProvider, useNavState } from "./contexts/NavStateContext";
+import { Header } from "./layout/Header";
+import type { ScreenName } from "./screens";
 import { screens } from "./screens";
-import {NavStateProvider, useNavState} from "./contexts/NavStateContext";
-import {Crossfader, useCrossfadeOpacity} from "./animation/Crossfader";
-import {Maximize2, Minimize2, Settings} from "@react-three/uikit-lucide";
-import {Header} from "./layout/Header";
-import {FocusNavProvider} from "./contexts/FocusNavContext";
-import {FocusableButton} from "./components/FocusableButton";
+
 
 export {dispatch_ui_nav} from "./contexts/FocusNavContext";
 
@@ -57,9 +58,26 @@ const EndButtons = ({ current, change_screen }: { current: ScreenName | null, ch
     );
 }
 
+const WatchErrorFallback = ({ error, resetErrorBoundary }: FallbackProps) => {
+    useEffect(() => {
+        console.error("Error in watch UI:", error);
+    }, []);
+    
+    return (
+        <Container width="100%" height="100%" flexDirection="column" alignItems="center" justifyContent="center" gap={16} backgroundColor="#ff0000">
+            <Text fontSize={24} fontWeight="bold" color="white">Doh!</Text>
+            <Text fontSize={16} color="white">Something went wrong with this page.</Text>
+
+            <FocusableButton variant="link" color="white" on_press={resetErrorBoundary} marginTop={16}>
+                <Text fontSize={16} color="white">Go home</Text>
+            </FocusableButton>
+        </Container>
+    );
+}
+
 const CurrentScreen = () => {
     const state = useNavState();
-    const { current, change_screen } = state;
+    const { current, current_args, change_screen } = state;
 
     const ScreenContent = useMemo(() => {
         if (!current) return () => null;
@@ -67,6 +85,11 @@ const CurrentScreen = () => {
         if (!screen) return () => null;
         return screen;
     }, [current]);
+
+    const content_key = useMemo(() => {
+        if (!current) return "none";
+        return `${current}-${JSON.stringify(current_args)}`;
+    }, [current, current_args]);
 
     return (
         <Container width="100%" maxWidth="100%" height="100%" flexDirection="column" gap={12}>
@@ -81,10 +104,14 @@ const CurrentScreen = () => {
                 scrollbarColor="rgba(255, 255, 255, 0.35)"
                 scrollbarBorderRadius={3}
             >
-                <Crossfader content_key={current || "none"} width="100%" flexShrink={0}>
-                    <Container width="100%" maxWidth="100%" flexDirection="column" gap={16}>
-                        <ScreenContent />
-                    </Container>
+                <Crossfader content_key={content_key} width="100%" flexShrink={0}>
+                    <ErrorBoundary FallbackComponent={WatchErrorFallback} onReset={() => {
+                        change_screen("home");
+                    }}>
+                        <Container width="100%" maxWidth="100%" flexDirection="column" gap={16}>
+                            <ScreenContent args={current_args} />
+                        </Container>
+                    </ErrorBoundary>
                 </Crossfader>
             </Container>
         </Container>

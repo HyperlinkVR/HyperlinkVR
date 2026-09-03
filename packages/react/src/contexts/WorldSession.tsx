@@ -7,7 +7,6 @@ import {
 import { createContext, useContext, useEffect, useState } from "react";
 
 
-
 import { useMessageEngine } from "./engines";
 import { useWindowArguments } from "./windowing";
 
@@ -50,7 +49,6 @@ export const WorldSessionProvider = ({children}: { children: React.ReactNode; })
     } | null>(null);
     const [support, setSupport] = useState<SupportMeta | null>(null);
     const [doc_generation, setDocGeneration] = useState(0);
-    const [world_metadata, setWorldMetadata] = useState<WorldMetadata | null>(null);
 
     useEffect(() => {
         const channel = messenger.connect<never, EventMessage>(`hvr-tab-session:${tab}`);
@@ -89,28 +87,6 @@ export const WorldSessionProvider = ({children}: { children: React.ReactNode; })
         };
     }, [messenger, tab]);
 
-    useEffect(() => {
-        // when url changes, try to fetch the world metadata (located at worldurl/hvr-world.json, if world url is a file like index.html then same dir)
-        if (url) {
-            const world_metadata_url = new URL("hvr-world.json", url).toString();
-            fetch(world_metadata_url)
-                .then((response) => {
-                    if (!response.ok) {
-                        throw new Error(`Failed to fetch world metadata: ${response.statusText}`);
-                    }
-                    return response.json();
-                })
-                .then((data: WorldMetadata) => {
-                    console.log("Fetched world metadata:", data);
-                    setWorldMetadata(data);
-                })
-                .catch((error) => {
-                    console.error("Error fetching world metadata:", error);
-                    setWorldMetadata(null);
-                });
-        }
-    }, [url]);
-
     return (
         <WorldSessionContext.Provider
             value={{
@@ -118,8 +94,7 @@ export const WorldSessionProvider = ({children}: { children: React.ReactNode; })
                 url,
                 tab_dimensions,
                 support,
-                doc_generation,
-                world_metadata
+                doc_generation
             }}>
             {children}
         </WorldSessionContext.Provider>

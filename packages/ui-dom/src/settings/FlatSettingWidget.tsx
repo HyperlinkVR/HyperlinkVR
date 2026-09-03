@@ -12,6 +12,7 @@ import { useMemo } from "react";
 import { Dropdown } from "./Dropdown";
 import { SmartSlider } from "./SmartSlider";
 import { ToggleSwitch } from "./ToggleSwitch";
+import { TextInput } from "./TextInput";
 
 
 type WidgetLookup<V extends SettingValueType> = {
@@ -21,7 +22,8 @@ type WidgetLookup<V extends SettingValueType> = {
 const widget_lookup: Partial<WidgetLookup<any>> = {
     "range": SmartSlider,
     "switch": ToggleSwitch,
-    "select": Dropdown
+    "select": Dropdown,
+    "text": TextInput
 }
 
 export const FlatSettingWidget = ({setting_key, enabled = true}: {setting_key: SettingKey, enabled?: boolean}) => {

@@ -2,7 +2,7 @@ import { useMessageEngine, useSetting } from "@hyperlinkvr/react";
 import type { SettingKeyReturning, WindowIntent } from "@hyperlinkvr/types";
 import { ToggleSwitch } from "@hyperlinkvr/ui-dom/settings";
 import { WATCH_UI_HEIGHT, WATCH_UI_WIDTH } from "@hyperlinkvr/watch-ui";
-import { Earth, UserKey, Watch } from "lucide-react";
+import { Earth, Trophy, UserKey, Watch } from "lucide-react";
 
 const bg = new URL("../../node_modules/@hyperlinkvr/assets/bg.webp", import.meta.url).href;
 
@@ -116,6 +116,10 @@ export const DevToolsPage = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
                     <ToolGroup title="Generators">
+                        <h3 className="text-white text-lg font-title font-light">
+                            World authoring
+                        </h3>
+
                         <ToolWindowButton
                             label={<>
                                 <Earth />
@@ -131,6 +135,10 @@ export const DevToolsPage = () => {
                             height={800}
                         />
 
+                        <h3 className="text-white text-lg font-title font-light mt-4">
+                            Authentication hosts
+                        </h3>
+
                         <ToolWindowButton
                             label={<>
                                 <UserKey />
@@ -144,6 +152,25 @@ export const DevToolsPage = () => {
                             }}
                             width={400}
                             height={800}
+                        />
+
+                        <h3 className="text-white text-lg font-title font-light mt-4">
+                            Service hosts
+                        </h3>
+
+                        <ToolWindowButton
+                            label={<>
+                                <Trophy />
+                                Open featured worlds generator
+                            </>}
+                            intent="DEVTOOLS_FORM"
+                            args={{
+                                schema: "FeaturedWorlds",
+                                format: "json",
+                                filename: "featured-worlds"
+                            }}
+                            width={800}
+                            height={600}
                         />
                     </ToolGroup>
 

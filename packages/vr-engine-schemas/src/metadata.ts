@@ -190,6 +190,33 @@ export const WorldMetadataSchema = z.object({
 export type WorldMetadata = z.infer<typeof WorldMetadataSchema>;
 export type WorldMetadataInput = z.input<typeof WorldMetadataSchema>;
 
+export const FeaturedWorldsRowSchema = z.object({
+    title: z.string().max(64).optional(),
+    description: z.string().max(128).optional(),
+    worlds: z.array(z.url({
+        protocol: /^https?$/,
+        hostname: z.regexes.domain
+    })).min(1).max(32)
+});
+export type FeaturedWorldsRow = z.infer<typeof FeaturedWorldsRowSchema>;
+export type FeaturedWorldsRowInput = z.input<typeof FeaturedWorldsRowSchema>;
+
+const FeaturedWorldsSchema_VERSION = 1;
+export const FeaturedWorldsSchema = z.object({
+    $schema: z
+        .string()
+        .optional()
+        .default(
+            `https://hyperlink.surf/schemas/FeaturedWorlds_v${FeaturedWorldsSchema_VERSION}.json`
+        ),
+    version: z.number().int().min(1).max(FeaturedWorldsSchema_VERSION),
+
+    rows: z.array(FeaturedWorldsRowSchema).max(16)
+});
+export type FeaturedWorlds = z.infer<typeof FeaturedWorldsSchema>;
+export type FeaturedWorldsInput = z.input<typeof FeaturedWorldsSchema>;
+
 export const METADATA_EXPORT_TO_JSON = [
-    WorldMetadataSchema
+    WorldMetadataSchema,
+    FeaturedWorldsSchema
 ];

@@ -39,7 +39,7 @@
         "quarks.r3f": "^0.17.1",
         "react": "catalog:",
         "react-dom": "catalog:",
-        "react-error-boundary": "^6.1.2",
+        "react-error-boundary": "catalog:",
         "three": "catalog:",
         "three.quarks": "^0.17.1",
         "troika-three-text": "catalog:",

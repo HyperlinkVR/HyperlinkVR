@@ -1,8 +1,14 @@
 import { AuthManifestSchema, sign_with_private_key, verify_signature } from "@hyperlinkvr/auth";
 import { useAuthSession, useStorageEngine } from "@hyperlinkvr/react";
 import { LoadingSpinner } from "@hyperlinkvr/ui-dom";
-import { WorldMetadataSchema } from "@hyperlinkvr/vr-engine-schemas";
+import {
+    FeaturedWorldsSchema,
+    WorldMetadataSchema
+} from "@hyperlinkvr/vr-engine-schemas";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
+
+
+
 
 
 // lazy load schema form to avoid loading css on wrong pages / bundle bloat
@@ -163,6 +169,10 @@ const SCHEMAS = {
             // rendered automatically by SchemaForm's generic UnionField, so it no
             // longer needs a custom override here.
         }
+    },
+    FeaturedWorlds: {
+        schema: FeaturedWorldsSchema,
+        title: "Featured Worlds Generator"
     }
 } as Record<string, { schema: any; title: string, field_overrides?: Record<string, React.ComponentType<any>> }>;
 

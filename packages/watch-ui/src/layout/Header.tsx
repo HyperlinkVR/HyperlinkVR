@@ -17,7 +17,7 @@ const BackButton = ({nav_state}: {nav_state: ReturnType<typeof useNavState>}) =>
         backwards.length !== 0 && (
             <Button variant="link" color="white" onPointerDown={back} opacity={opacity} gap={16}>
                 <ArrowLeft />
-                <Text color={0xdddddd} fontSize={16}>{name_to_title(backwards[backwards.length - 1]!)}</Text>
+                <Text color={0xdddddd} fontSize={16}>{name_to_title(backwards[backwards.length - 1]!.name)}</Text>
             </Button>
         )
     );
@@ -28,7 +28,7 @@ export const Header = ({nav_state, end_buttons = null}: HeaderProps) => {
         return null;
     }
 
-    const {current, backwards, name_to_title} = nav_state;
+    const {current, backwards, current_title} = nav_state;
 
     return (
         <Container height="10%" width="100%" flexDirection="row" alignItems="center" justifyContent="space-between">
@@ -38,7 +38,7 @@ export const Header = ({nav_state, end_buttons = null}: HeaderProps) => {
 
             <Crossfader content_key={current || "none"} width="50%" height="100%" alignItems="center" justifyContent="center">
                 <Text color="white" fontSize={32} fontWeight="bold">
-                    {name_to_title(current)}
+                    {current_title}
                 </Text>
             </Crossfader>
 
