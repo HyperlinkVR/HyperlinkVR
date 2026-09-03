@@ -10,7 +10,10 @@ const zombot_offset = {
     position: [0, 0.25, 0] as [number, number, number],
 };
 
-const zombot_speed = 0.75;
+let zombot_speed = 0.75;
+export const set_global_zombot_speed = (speed: number) => {
+    zombot_speed = speed;
+};
 
 const zombot_markers = await hyperlinkvr.markers.load("zombot_body.glb");
 const face_transform = {
@@ -36,30 +39,16 @@ const zombot_body = new h.CustomObjectBuilder()
             )
             .build()
     )
-    .add_interaction("light", new h.PointLightInteractionBuilder()
-        .set_intensity(0.25)
-        .set_offset(face_transform.position)
-        .set_color(zombot_face_data.neutral.color)
-        .build()
-    )
+    // turns out even without shadow casting, spawning point lights is just plain expensive. will use new text emissive shading option instead
+    //.add_interaction("light", new h.PointLightInteractionBuilder()
+    //    .set_intensity(0.25)
+    //    .set_offset(face_transform.position)
+    //    .set_color(zombot_face_data.neutral.color)
+    //    .build()
+    //)
     .add_interaction("alerted_sfx", new h.PositionalAudioInteractionBuilder()
         .set_url("alerted.opus")
-        .build()
-    )
-    .add_interaction("explode_particles", new h.ParticleEmitterInteractionBuilder()
-        .set_visual({type: "image", url: "scorch_03.png"})
-        .set_color([
-            0xff0000,
-            0xffff00,
-            0xffa500,
-        ])
-        .set_lifetime(1)
-        .set_behaviors([
-            {type: "fade-over-life", fade_out_ratio: 0.25},
-        ])
-        .set_per_second(100)
-        .set_emitter_shape({type: "sphere", radius: 0.25})
-        .set_speed(2)
+        .set_max_distance(0.5)
         .build()
     )
     .build();
@@ -71,7 +60,29 @@ const zombot_wheels = new h.CustomObjectBuilder()
 const zombot_face = new h.FloatingText2DPrefabBuilder()
     .set_text(zombot_face_data.neutral.text)
     .set_color(zombot_face_data.neutral.color)
+    .set_shading({type: "emissive", emissive_intensity: 2})
     .set_font_size(0.2)
+    .build();
+
+const explosion_particles_dummy = new h.CustomObjectBuilder()
+    .add_interaction("explode_particles", new h.ParticleEmitterInteractionBuilder()
+        .set_visual({type: "image", url: "scorch_03.png"})
+        .set_color([
+            {color: 0xffa500, weight: 1, alpha: 0.75},
+            {color: 0xff0000, weight: 1, alpha: 0.75},
+            {color: 0x000000, weight: 1, alpha: 0.5},
+        ])
+        .set_lifetime(0.5)
+        .set_behaviors([
+            {type: "fade-over-life", fade_out_ratio: 0.25},
+        ])
+        .set_per_second(400)
+        .set_emitter_shape({type: "sphere", radius: 0.25, mode: "burst"})
+        .set_particle_rotation({min: 0, max: 2 * Math.PI})
+        .set_particle_size({min: 0.5, max: 1.25})
+        .set_speed(1.5)
+        .build()
+    )
     .build();
 
 export const zombot = new h.ObjectCollectionBuilder(zombot_body, zombot_offset)
@@ -89,7 +100,7 @@ export const apply_zombot_behaviour = async (created_zombot: hvr.builders.Engine
 
         face.prefab!.set_text!(face_data.text);
         face.prefab!.set_color!(face_data.color);
-        created_zombot.parent.interactions!.light!.set_color!(face_data.color);
+        //created_zombot.parent.interactions!.light!.set_color!(face_data.color);
     }
 
     const wheels_idx = created_zombot.children.findIndex(child => child.label === "wheels");
@@ -194,6 +205,15 @@ export const apply_zombot_behaviour = async (created_zombot: hvr.builders.Engine
     await attack_core_anim.stop(); // TODO: why is it held before start?
 
     const play_attack_core_anim = async () => {
+        // create the explosion dummy 2 units above the zombot
+        await created_zombot.refresh();
+
+        const pos = [...created_zombot.object.transform.position] as [number, number, number];
+        pos[1] += 2;
+        const explosion_dummy = await new h.EngineObjectDispatchBuilder(explosion_particles_dummy)
+            .set_position(pos)
+            .create();
+
         await change_face("attack_core");
         await attack_core_anim.seek(0);
         await attack_core_anim.play();
@@ -201,6 +221,20 @@ export const apply_zombot_behaviour = async (created_zombot: hvr.builders.Engine
         // TODO: no finished report yet so just use a timeout for now
         return new Promise<void>((resolve) => {
             setTimeout(() => {
+                explosion_dummy.interactions!.explode_particles!.play!();
+                // TODO: not sure why burst doesnt work as expected
+                setTimeout(() => {
+                    explosion_dummy.interactions!.explode_particles!.stop!();
+                }, 333);
+
+                // TODO: improve explode anim with dynamic gibs, and maybe add a way to set invis on an object without destruction for these effects
+                created_zombot.destroy();
+
+                // destroy the explosion dummy after a short delay to let the particles play out
+                setTimeout(async () => {
+                    await explosion_dummy.destroy();
+                }, 1000);
+
                 resolve();
             }, 900);
         });
@@ -316,12 +350,6 @@ export const apply_zombot_behaviour = async (created_zombot: hvr.builders.Engine
                 (await core_prox_cleanup)();
 
                 await play_attack_core_anim();
-
-                // TODO: improve explode anim with dynamic gibs, and maybe add a way to set invis on an object without destruction for these effects
-                created_zombot.parent.interactions!.explode_particles!.play!();
-                setTimeout(async () => {
-                    await created_zombot.destroy();
-                }, 1000);
             }
         }
     );

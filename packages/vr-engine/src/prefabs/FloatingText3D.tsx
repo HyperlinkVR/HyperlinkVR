@@ -1,6 +1,6 @@
 import type { FloatingText3DPrefab } from "@hyperlinkvr/vr-engine-schemas";
 import { Text3D } from "@react-three/drei";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 
 
@@ -16,6 +16,7 @@ export const FloatingText3D = (props: PrefabProps<FloatingText3DPrefab>) => {
     const [color, setColor] = useState(props.color);
     const [font_size, setFontSize] = useState(props.font_size);
     const [depth, setDepth] = useState(props.depth);
+    const [shading, setShading] = useState(props.shading);
 
     const { on_prefab_command } = useObjectBinding(props.binding);
 
@@ -34,6 +35,9 @@ export const FloatingText3D = (props: PrefabProps<FloatingText3DPrefab>) => {
                 case "set_depth":
                     setDepth(args.depth);
                     break;
+                case "set_shading":
+                    setShading(args.shading);
+                    break;
                 default:
                     return {
                         success: false,
@@ -49,6 +53,21 @@ export const FloatingText3D = (props: PrefabProps<FloatingText3DPrefab>) => {
         };
     }, []);
 
+    // TODO: can this be done more optimally
+    const shading_material = useMemo(() => {
+        switch (shading.type) {
+            case "unshaded":
+                return <meshBasicMaterial color={color} />;
+            case "standard":
+                return <meshStandardMaterial color={color} roughness={shading.roughness} metalness={shading.metalness} />;
+            case "emissive":
+                return <meshStandardMaterial color={color} emissive={shading.emissive_color_override ?? color} emissiveIntensity={shading.emissive_intensity} />;
+            default:
+                console.warn("Unknown shading type", shading);
+                return undefined;
+        }
+    }, [shading, color]);
+
     // TODO: wire up more props like text style. maybe even have a rich text parser that splits it into subcomponents or something. also add a list of builtin typefaces they can pick
     // TODO: option to use meshbasicmaterial to ignore light. maybe option for texture url too
     // TODO: option to make it have physics
@@ -57,7 +76,7 @@ export const FloatingText3D = (props: PrefabProps<FloatingText3DPrefab>) => {
         <PrefabRoot {...props}>
             <Text3D font={Roboto} size={font_size} height={depth} castShadow receiveShadow>
                 {text}
-                <meshStandardMaterial color={color} />
+                {shading_material}
             </Text3D>
         </PrefabRoot>
     );

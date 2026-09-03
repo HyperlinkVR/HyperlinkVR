@@ -1,15 +1,18 @@
-import {z} from "zod";
-import {PhysicsSystemSchema} from "./physics";
-import {bindable} from "./binding";
-import {InteractionSchema} from "./interactions";
-import {HexColorSchema} from "./colors";
-import {AbsoluteAssetURLSchema} from "./assets";
-import {TransformSchema} from "./transforms";
-import type {Transform, TransformInput} from "./transforms";
-import {ObjectMonitorSchema} from "./object_monitors";
-import type {ObjectMonitor, ObjectMonitorInput} from "./object_monitors";
-import {TriggerSchema} from "./triggers";
-import type {Trigger, TriggerInput} from "./triggers";
+import { z } from "zod";
+
+
+
+import { AbsoluteAssetURLSchema } from "./assets";
+import { bindable } from "./binding";
+import { HexColorSchema } from "./colors";
+import { InteractionSchema } from "./interactions";
+import { ObjectMonitorSchema } from "./object_monitors";
+import type { ObjectMonitor, ObjectMonitorInput } from "./object_monitors";
+import { PhysicsSystemSchema } from "./physics";
+import { TransformSchema } from "./transforms";
+import type { Transform, TransformInput } from "./transforms";
+import { TriggerSchema } from "./triggers";
+import type { Trigger, TriggerInput } from "./triggers";
 
 
 // export const MaterialAlbedoColorSchema = z.object({
@@ -105,9 +108,40 @@ const TextPrefabBaseSchema = bindable({
 export type TextPrefabBase = z.infer<typeof TextPrefabBaseSchema>;
 export type TextPrefabBaseInput = z.input<typeof TextPrefabBaseSchema>;
 
+export const FloatingTextUnshadedShadingSchema = z.object({
+    type: z.literal("unshaded")
+});
+export type FloatingTextUnshadedShading = z.infer<typeof FloatingTextUnshadedShadingSchema>;
+export type FloatingTextUnshadedShadingInput = z.input<typeof FloatingTextUnshadedShadingSchema>;
+
+export const FloatingTextStandardShadingSchema = z.object({
+    type: z.literal("standard"),
+    roughness: z.number().min(0).max(1).default(0.5),
+    metalness: z.number().min(0).max(1).default(0.0),
+});
+export type FloatingTextStandardShading = z.infer<typeof FloatingTextStandardShadingSchema>;
+export type FloatingTextStandardShadingInput = z.input<typeof FloatingTextStandardShadingSchema>;
+
+export const FloatingTextEmissiveShadingSchema = z.object({
+    type: z.literal("emissive"),
+    emissive_color_override: HexColorSchema.optional(),
+    emissive_intensity: z.number().min(0).default(1.0)
+});
+export type FloatingTextEmissiveShading = z.infer<typeof FloatingTextEmissiveShadingSchema>;
+export type FloatingTextEmissiveShadingInput = z.input<typeof FloatingTextEmissiveShadingSchema>;
+
+export const FloatingTextPrefabShadingSchema = z.discriminatedUnion("type", [
+    FloatingTextUnshadedShadingSchema,
+    FloatingTextStandardShadingSchema,
+    FloatingTextEmissiveShadingSchema
+]);
+export type FloatingTextPrefabShading = z.infer<typeof FloatingTextPrefabShadingSchema>;
+export type FloatingTextPrefabShadingInput = z.input<typeof FloatingTextPrefabShadingSchema>;
+
 export const FloatingText2DPrefabSchema = TextPrefabBaseSchema.extend({
     type: z.literal("prefab"),
     name: z.literal("floating_text_2d"),
+    shading: FloatingTextPrefabShadingSchema.default({type: "unshaded"})
 });
 export type FloatingText2DPrefab = z.infer<typeof FloatingText2DPrefabSchema>;
 export type FloatingText2DPrefabInput = z.input<typeof FloatingText2DPrefabSchema>;
@@ -116,6 +150,7 @@ export const FloatingText3DPrefabSchema = TextPrefabBaseSchema.extend({
     type: z.literal("prefab"),
     name: z.literal("floating_text_3d"),
     depth: z.number().positive().default(0.05),
+    shading: FloatingTextPrefabShadingSchema.default({type: "standard", roughness: 0.5, metalness: 0.0, transmission: 0.0})
 });
 export type FloatingText3DPrefab = z.infer<typeof FloatingText3DPrefabSchema>;
 export type FloatingText3DPrefabInput = z.input<typeof FloatingText3DPrefabSchema>;

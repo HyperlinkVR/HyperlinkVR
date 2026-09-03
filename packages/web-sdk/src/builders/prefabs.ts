@@ -1,5 +1,38 @@
-import type { BasketballHoopPrefab, BasketballHoopPrefabInput, ButtonPrefab, ButtonPrefabInput, FloatingText2DPrefab, FloatingText3DPrefab, GolfBallPrefab, GolfBallPrefabInput, GolfPutterPrefab, GolfPutterPrefabInput, HexColor, HexNumericalColor, ReflectiveMirrorPrefab, ReflectiveMirrorPrefabInput, StandardPrefab, StandardPrefabInput, StandardPrefabName, TextPrefabBaseInput, TextSignPrefab } from "@hyperlinkvr/vr-engine-schemas";
-import { BasketballHoopPrefabSchema, ButtonPrefabSchema, FloatingText2DPrefabSchema, FloatingText3DPrefabSchema, GolfBallPrefabSchema, GolfPutterPrefabSchema, HexColorSchema, HexNumericalColorSchema, ReflectiveMirrorPrefabSchema, StandardPrefabSchema, TextSignPrefabSchema } from "@hyperlinkvr/vr-engine-schemas";
+import type {
+    BasketballHoopPrefab,
+    BasketballHoopPrefabInput,
+    ButtonPrefab,
+    ButtonPrefabInput,
+    FloatingText2DPrefab,
+    FloatingText3DPrefab,
+    FloatingTextPrefabShading,
+    GolfBallPrefab,
+    GolfBallPrefabInput,
+    GolfPutterPrefab,
+    GolfPutterPrefabInput,
+    HexColor,
+    HexNumericalColor,
+    ReflectiveMirrorPrefab,
+    ReflectiveMirrorPrefabInput,
+    StandardPrefab,
+    StandardPrefabInput,
+    StandardPrefabName,
+    TextPrefabBaseInput,
+    TextSignPrefab
+} from "@hyperlinkvr/vr-engine-schemas";
+import {
+    BasketballHoopPrefabSchema,
+    ButtonPrefabSchema,
+    FloatingText2DPrefabSchema,
+    FloatingText3DPrefabSchema,
+    GolfBallPrefabSchema,
+    GolfPutterPrefabSchema,
+    HexColorSchema,
+    HexNumericalColorSchema,
+    ReflectiveMirrorPrefabSchema,
+    StandardPrefabSchema,
+    TextSignPrefabSchema
+} from "@hyperlinkvr/vr-engine-schemas";
 
 
 
@@ -142,7 +175,7 @@ export class ReflectiveMirrorPrefabBuilder extends BaseBuilder<ReflectiveMirrorP
     }
 }
 
-class TextPrefabBuilderBase extends BaseBuilder<TextPrefabBaseInput & {depth?: number, style?: string, style_parameters?: Record<string, any>}> {
+class TextPrefabBuilderBase extends BaseBuilder<TextPrefabBaseInput & {depth?: number, style?: string, style_parameters?: Record<string, any>, shading?: FloatingTextPrefabShading}> {
     constructor(type: "floating_text_2d" | "floating_text_3d" | "text_sign") {
         super({type: "prefab", name: type} as unknown as TextPrefabBaseInput);
     }
@@ -179,8 +212,22 @@ export class FloatingText2DPrefabBuilder extends TextPrefabBuilderBase {
         super("floating_text_2d");
     }
 
+    set_shading(shading: FloatingTextPrefabShading) {
+        this._internal.shading = shading;
+        return this;
+    }
+
     build(): FloatingText2DPrefab {
         return FloatingText2DPrefabSchema.parse(this._internal);
+    }
+
+
+    /** @internal */
+    static override _make_api(object_id: string) {
+        return {
+            ...super._make_api(object_id),
+            set_shading: (shading: FloatingTextPrefabShading) => prefab_command(object_id, "set_shading", {shading})
+        };
     }
 }
 
@@ -195,6 +242,11 @@ export class FloatingText3DPrefabBuilder extends TextPrefabBuilderBase {
         return this;
     }
 
+    set_shading(shading: FloatingTextPrefabShading) {
+        this._internal.shading = shading;
+        return this;
+    }
+
     build(): FloatingText3DPrefab {
         return FloatingText3DPrefabSchema.parse(this._internal);
     }
@@ -204,7 +256,8 @@ export class FloatingText3DPrefabBuilder extends TextPrefabBuilderBase {
     static override _make_api(object_id: string) {
         return {
             ...super._make_api(object_id),
-            set_depth: (depth: number) => prefab_command(object_id, "set_depth", {depth})
+            set_depth: (depth: number) => prefab_command(object_id, "set_depth", {depth}),
+            set_shading: (shading: FloatingTextPrefabShading) => prefab_command(object_id, "set_shading", {shading})
         };
     }
 }

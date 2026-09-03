@@ -347,7 +347,7 @@ const WorldSessionListener = () => {
 
         // reset world
         clear_all_objects();
-        clear_hud();
+        clear_hud(undefined);
         clear_vfx();
         reset_for_new_document();
         clear_collider_collision_info();
