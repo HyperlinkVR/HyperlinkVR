@@ -1,14 +1,24 @@
 import { useSetting } from "@hyperlinkvr/react";
-import { WATCH_UI_HEIGHT, WATCH_UI_WIDTH, WatchUI } from "@hyperlinkvr/watch-ui";
+import {
+    WATCH_UI_HEIGHT,
+    WATCH_UI_WIDTH,
+    WatchUI
+} from "@hyperlinkvr/watch-ui";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Container } from "@react-three/uikit";
 import { Suspense, useMemo, useRef, useState } from "react";
-import type { Group} from "three";
+import type { Group } from "three";
 import { MathUtils, Matrix4, Quaternion, Vector3 } from "three";
 
 import { useSessionMode } from "../../../react/src/contexts/SessionMode";
 import { useHands } from "../input/hands";
-import {FlatWatchUINavDriver, useFlatInputControls, useFlatInputState} from "../input/impl/flat/bindings";
+import {
+    FlatWatchUINavDriver,
+    useFlatInputControls,
+    useFlatInputState
+} from "../input/impl/flat/bindings";
+import { Layer, LayerGroup } from "../render";
+
 
 export type WatchMode = "wrist" | "presented" | "detached";
 
@@ -271,7 +281,7 @@ const WatchUIPresentation = ({
             </group>
 
             <group ref={ui_group_ref}>
-                <group name="WatchUI">
+                <LayerGroup name="WatchUI" layers={[Layer.NoVFX]} dynamic>
                     <Container
                         width={WATCH_UI_WIDTH}
                         height={WATCH_UI_HEIGHT}
@@ -282,7 +292,7 @@ const WatchUIPresentation = ({
                             <WatchUI on_request_close={on_request_close} detached={mode === "detached"} set_detach={set_detach} detachable={detachable} />
                         </Suspense>
                     </Container>
-                </group>
+                </LayerGroup>
             </group>
         </>
     );

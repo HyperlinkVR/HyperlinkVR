@@ -48,7 +48,7 @@ import { clear_collider_collision_info, filter_contact_pair } from "../physics/c
 import { FlatAvatarHands, XRAvatarHand } from "../player/AvatarHand";
 import { Player } from "../player/Player";
 import { AvatarMirror } from "../prefabs/AvatarMirror";
-import { SceneRenderPass } from "../render/BasePasses";
+import { NoVFXBufferOverlayRenderPass, SceneRenderPass } from "../render/BasePasses";
 import { CameraSetup } from "../render/CameraSetup";
 import { CanvasResizer } from "../render/CanvasResizer";
 import { GraphicsPipeline } from "../render/GraphicsPipeline";
@@ -518,8 +518,8 @@ const EngineHostInternal = memo(
                                                 <GraphicsPipeline>
                                                     <SceneRenderPass />
                                                     <VFXPasses />
+                                                    <NoVFXBufferOverlayRenderPass />
                                                     <QualityPasses />
-                                                    {/*<SRGBOutputPass />*/}
                                                 </GraphicsPipeline>
 
                                                 <SoftShadows size={soft_shadows_props.size} samples={soft_shadows_props.samples} focus={soft_shadows_props.focus} />

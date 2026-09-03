@@ -9,7 +9,8 @@ export enum Layer {
     ThirdPerson_ForceHide,
     Vignette,
     Loader,
-    HUD
+    HUD,
+    NoVFX
 }
 
 export const compute_layer_mask = (layers: Layer[]): number => {
