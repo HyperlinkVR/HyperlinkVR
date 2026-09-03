@@ -70,7 +70,6 @@ const HINTS: Record<HintDevice, Partial<Record<HintAction, InputHint>>> = {
         close_watch: { glyphs: [], label: "Click outside to close" }
     },
 
-    // TODO: actually implement these bindings
     xbox: {
         move: { glyphs: [pf("analog-l-any")], label: "Move" },
         jump: { glyphs: [pf("xbox-a")], label: "Jump" },
