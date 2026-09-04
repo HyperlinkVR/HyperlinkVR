@@ -13,7 +13,9 @@
         "@hyperlinkvr/auth": "workspace:*",
         "@hyperlinkvr/types": "workspace:*",
         "@hyperlinkvr/vr-engine-schemas": "workspace:*",
-        "react": "catalog:"
+        "@hyperlinkvr/search-client": "workspace:*",
+        "react": "catalog:",
+        "zustand": "catalog:"
     },
     "devDependencies": {
         "@types/react": "catalog:"

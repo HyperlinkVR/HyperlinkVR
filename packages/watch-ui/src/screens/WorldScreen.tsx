@@ -1,17 +1,23 @@
-import { useSignatureVerification, useWorldMetadataWithFallback } from "@hyperlinkvr/react";
+import { canonicalise_url } from "@hyperlinkvr/auth";
+import {
+    useSearchStore,
+    useSignatureVerification,
+    useSlugByURL,
+    useWorldMetadataWithFallback
+} from "@hyperlinkvr/react";
 import { Container, Text } from "@react-three/uikit";
+import { UserCheck } from "@react-three/uikit-lucide";
 import { useEffect, useMemo } from "react";
 
 
 
+import { useCrossfadeOpacity } from "../animation/Crossfader";
 import { FocusableButton } from "../components/FocusableButton";
 import { WorldThumbnail } from "../components/WorldThumbnail";
 import { useNavState } from "../contexts/NavStateContext";
-import type { ScreenProps } from "./index";
 import { get_clear_fg_color } from "../util/color";
-import { canonicalise_url } from "@hyperlinkvr/auth";
-import { UserCheck } from "@react-three/uikit-lucide";
-import { useCrossfadeOpacity } from "../animation/Crossfader";
+import type { ScreenProps } from "./index";
+
 
 export const WorldScreen = ({args}: ScreenProps) => {
     const {change_title, current} = useNavState();
@@ -32,6 +38,8 @@ export const WorldScreen = ({args}: ScreenProps) => {
     });
 
     const on_theme_color = useMemo(() => get_clear_fg_color(theme_color || 0xffffff), [theme_color]);
+    const slug = useSlugByURL(args.url);
+    const is_slug_loading = useSearchStore((state) => state.is_slug_loading);
 
     const opacity = useCrossfadeOpacity();
 
@@ -70,10 +78,22 @@ export const WorldScreen = ({args}: ScreenProps) => {
                 </>) : <Text fontWeight="bold">No tags provided.</Text>}
             </Container>
 
-            <Container width="100%" flexDirection="row" alignItems="center" justifyContent="flex-start" gap={10}>
-                <Text fontWeight="bold">URL:</Text>
-                <Text>{args.url}</Text>
+            <Container width="100%" flexDirection="row" alignItems="center" justifyContent="space-between" gap={10}>
+                <Container flexDirection="row" alignItems="center" justifyContent="flex-start" gap={10}>
+                    <Text fontWeight="bold">URL:</Text>
+                    <Text>{args.url}</Text>
+                </Container>
+
+                 <Container flexDirection="row" alignItems="center" justifyContent="flex-start" gap={10}>
+                     {(slug || is_slug_loading) && (
+                         <>
+                             <Text fontWeight="bold">Shortcode:</Text>
+                             <Text>{is_slug_loading ? "Loading..." : (slug && `^${slug}`)}</Text>
+                         </>
+                    )}
+                 </Container>
             </Container>
+
 
             <Container marginTop="auto" width="100%" height="15%" flexDirection="row" alignItems="center" justifyContent="flex-start" gap={10}>
                 <FocusableButton width="100%" height="100%" backgroundColor={theme_color || 0xffffff} opacity={opacity}>

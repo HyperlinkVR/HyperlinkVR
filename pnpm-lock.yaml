@@ -489,6 +489,9 @@ importers:
       '@hyperlinkvr/core':
         specifier: workspace:*
         version: link:../core
+      '@hyperlinkvr/search-client':
+        specifier: workspace:*
+        version: link:../search-client
       '@hyperlinkvr/types':
         specifier: workspace:*
         version: link:../types
@@ -498,6 +501,9 @@ importers:
       react:
         specifier: 'catalog:'
         version: 19.2.7
+      zustand:
+        specifier: 'catalog:'
+        version: 5.0.14(@types/react@19.2.3)(react@19.2.7)(use-sync-external-store@1.6.0(react@19.2.7))
     devDependencies:
       '@types/react':
         specifier: 'catalog:'
@@ -536,6 +542,12 @@ importers:
       tailwind-preset-mantine:
         specifier: 'catalog:'
         version: 4.1.0(@mantine/core@7.17.8(@mantine/hooks@7.17.8(react@19.2.7))(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(tailwindcss@4.3.1)
+
+  packages/search-client:
+    dependencies:
+      minisearch:
+        specifier: ^7.2.0
+        version: 7.2.0
 
   packages/styles:
     dependencies:
@@ -664,6 +676,9 @@ importers:
 
   packages/watch-ui:
     dependencies:
+      '@hyperlinkvr/auth':
+        specifier: workspace:*
+        version: link:../auth
       '@hyperlinkvr/core':
         specifier: workspace:*
         version: link:../core
@@ -7062,6 +7077,9 @@ packages:
         optional: true
       uglify-js:
         optional: true
+
+  minisearch@7.2.0:
+    resolution: {integrity: sha512-dqT2XBYUOZOiC5t2HRnwADjhNS2cecp9u+TJRiJ1Qp/f5qjkeT5APcGPjHw+bz89Ms8Jp+cG4AlE+QZ/QnDglg==}
 
   mlly@1.8.2:
     resolution: {integrity: sha512-d+ObxMQFmbt10sretNDytwt85VrbkhhUA/JBGm1MPaWJ65Cl4wOgLaB1NYvJSZ0Ef03MMEU/0xpPMXUIQ29UfA==}
@@ -17066,6 +17084,8 @@ snapshots:
       esbuild: 0.28.1
       postcss: 8.5.26
     optional: true
+
+  minisearch@7.2.0: {}
 
   mlly@1.8.2:
     dependencies:

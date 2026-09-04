@@ -454,7 +454,7 @@ export const settings_def = build_settings({
         default_value: "https://hyperlink.surf/featured-worlds.json",
         ui: {
             flat: {
-                label: "Featured worlds URL",
+                label: "Featured worlds file",
                 description: "URL to fetch the list of featured worlds from",
                 widget: {
                     type: "text",
@@ -467,6 +467,25 @@ export const settings_def = build_settings({
             }
         }
     },
+
+    service_search: {
+        default_value: "https://search.hyperlink.surf",
+        ui: {
+            flat: {
+                label: "Search service (WARNING: changing this will change where ^shortcodes link to!)",
+                description: "URL to fetch the search index from",
+                widget: {
+                    type: "text",
+                    placeholder: "https://search.hyperlink.surf",
+                    subtype_hint: "url",
+                    width: "long"
+                },
+                breadcrumbs: ["Services"],
+                conditional: (settings) => settings.service_override === true
+            }
+        }
+    },
+    // TODO: put all default urls, repos, etc in a root consts file
 
     debug_ray_hits: {
         default_value: false,

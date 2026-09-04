@@ -13,6 +13,7 @@
         "@hyperlinkvr/react": "workspace:*",
         "@hyperlinkvr/types": "workspace:*",
         "@hyperlinkvr/vr-engine-schemas": "workspace:*",
+        "@hyperlinkvr/auth": "workspace:*",
         "react": "catalog:",
         "react-dom": "catalog:",
         "three": "catalog:",
