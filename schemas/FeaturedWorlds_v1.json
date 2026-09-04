@@ -1,0 +1,51 @@
+{
+    "$id": "https://hyperlink.surf/schemas/FeaturedWorlds_v1.json",
+    "version": 1,
+    "title": "HyperlinkVR - Featured Worlds Definition (version 1)",
+    "description": "Metadata for a service provider to set rows of featured worlds. This schema is version 1.",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+        "$schema": {
+            "default": "https://hyperlink.surf/schemas/FeaturedWorlds_v1.json",
+            "type": "string"
+        },
+        "version": {
+            "type": "integer",
+            "const": 1
+        },
+        "rows": {
+            "maxItems": 16,
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "maxLength": 64
+                    },
+                    "description": {
+                        "type": "string",
+                        "maxLength": 128
+                    },
+                    "worlds": {
+                        "minItems": 1,
+                        "maxItems": 32,
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uri"
+                        }
+                    }
+                },
+                "required": [
+                    "worlds"
+                ]
+            }
+        }
+    },
+    "required": [
+        "version",
+        "rows"
+    ]
+}

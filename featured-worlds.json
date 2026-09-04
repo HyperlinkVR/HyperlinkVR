@@ -1,0 +1,14 @@
+{
+    "$schema": "https://hyperlink.surf/schemas/FeaturedWorlds_v1.json",
+    "version": 1,
+    "rows": [
+        {
+            "title": "HyperlinkVR Originals",
+            "worlds": [
+                "https://hyperlink.surf/clubhouse",
+                "https://hyperlink.surf/minigolf",
+                "https://hyperlink.surf/defendthecore"
+            ]
+        }
+    ]
+}
