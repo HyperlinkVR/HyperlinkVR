@@ -373,6 +373,9 @@ export const XRAvatarHand = () => {
 };
 
 export const FlatAvatarHands = () => {
+    const [devtools_photo_mode] = useSetting("devtools_flat_photo_mode");
+    if (devtools_photo_mode) return null;
+
     const hands = useHands();
     return (
         <>

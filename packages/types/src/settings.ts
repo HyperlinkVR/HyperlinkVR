@@ -530,6 +530,11 @@ export const settings_def = build_settings({
     devtools_dangerously_allow_localhost_fetch: {
         default_value: false,
         local_only: true // TODO: store this in session storage so they have to re-enable it every time
+    },
+
+    devtools_flat_photo_mode: {
+        default_value: false,
+        local_only: true
     }
 });
 

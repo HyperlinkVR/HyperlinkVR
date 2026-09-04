@@ -1,13 +1,14 @@
-import { Suspense, useEffect, useMemo} from "react";
-import {Container, Text} from "@react-three/uikit";
-import type {
-    HUDSlot,
-    HUDVRAnchor,
-} from "@hyperlinkvr/vr-engine-schemas";
+import { useSetting } from "@hyperlinkvr/react";
+import type { HUDSlot, HUDVRAnchor } from "@hyperlinkvr/vr-engine-schemas";
+import { Container, Text } from "@react-three/uikit";
+import { Suspense, useEffect, useMemo } from "react";
 
-import type { ResolvedHUDElement as StoreResolvedHUDElement} from "../stores/HUDStore";
-import {useHUDStore} from "../stores/HUDStore";
-import {mark_hud_element_ready} from "./hud_ready_registry";
+
+
+import type { ResolvedHUDElement as StoreResolvedHUDElement } from "../stores/HUDStore";
+import { useHUDStore } from "../stores/HUDStore";
+import { mark_hud_element_ready } from "./hud_ready_registry";
+
 
 export const HUD_CANVAS_WIDTH = 1920;
 export const HUD_CANVAS_HEIGHT = 1080;
@@ -133,6 +134,9 @@ export const HUDSurface = ({
 
         return grouped;
     }, [elements, username, anchor]);
+
+    const [devtools_photo_mode] = useSetting("devtools_flat_photo_mode");
+    if (devtools_photo_mode) return null;
 
     return (
         <Suspense fallback={null}>

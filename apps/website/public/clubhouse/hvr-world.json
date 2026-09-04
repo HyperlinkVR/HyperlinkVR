@@ -3,13 +3,12 @@
     "version": 1,
     "title": "Clubhouse",
     "category": "social",
-    "tags": [
-        "hangout"
-    ],
+    "tags": ["hangout"],
     "author": {
         "username": "ollie@hyperlink.surf",
         "signature": "xwPFXFVYUAA+ytWmsu1HMzBMkisOMa1AH3P8ZuiDaWf+OPWZXeqph7KqLWO1ARiVO/L9Js7FSZXCMjMoTT2qAQ=="
     },
+    "thumbnail": "https://hyperlink.surf/clubhouse/thumbnail.png",
     "additional_contributors": [],
     "gallery": [],
     "theme_color": 10499793,
@@ -25,8 +24,6 @@
     "content_flags": [],
     "vr_comfort": "comfortable",
     "preloads": [],
-    "endorsements": [
-        "https://hyperlink.surf/minigolf"
-    ],
+    "endorsements": ["https://hyperlink.surf/minigolf"],
     "homepage": "https://hyperlink.surf"
 }

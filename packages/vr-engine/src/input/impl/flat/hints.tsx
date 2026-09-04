@@ -10,6 +10,7 @@ import {
     type ReactNode,
     type SetStateAction, useMemo, useCallback
 } from "react";
+import { useSetting } from "@hyperlinkvr/react";
 
 export type HintDevice = "kbm" | "xbox" | "playstation" | "switch";
 
@@ -206,6 +207,10 @@ const glyph_key = (spec: HintGlyphSpec): string => spec.kind === "pf" ? `pf:${sp
 
 export const HintGlyph = ({ action, merge_same_label = true, show_label = true, className = "", glyph_className = "" }: { action: HintAction; merge_same_label?: boolean, show_label?: boolean, className?: string, glyph_className?: string }) => {
     const {device} = useHintState();
+
+    const [devtools_photo_mode] = useSetting("devtools_flat_photo_mode");
+    if (devtools_photo_mode) return null;
+
     const hint = HINTS[device][action];
     if (!hint) return null;
 

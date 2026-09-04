@@ -14,6 +14,9 @@ const PITCH_LIMIT = Math.PI / 2 - 0.01;
 
 const TURN_FRAME_LIMIT = Math.PI / 3;
 
+const PHOTO_FLY_SPEED = 4; // units/sec, sprint multiplies this
+const PHOTO_SPRINT_MULT = 5;
+
 const wrap_angle = (angle: number): number => {
     const two_pi = Math.PI * 2;
     let wrapped = (angle + Math.PI) % two_pi;
@@ -34,7 +37,14 @@ export const FlatCameraRig = ({ origin }: { origin: React.RefObject<Group | null
     const [player_height_cm] = useSetting("player_height_cm");
     const [sensitivity] = useSetting("flat_sensitivity");
 
-    useFrame(() => {
+    const [devtools_photo_mode] = useSetting("devtools_flat_photo_mode");
+    // TODO: fov control
+
+    // free-fly camera position for photo mode, seeded from the live camera on entry
+    const fly_pos = useMemo(() => new Vector3(), []);
+    const fly_ready = useRef(false);
+
+    useFrame((_, delta) => {
         if (!origin.current) return;
 
         const mult = BASE_YAW_RADIANS * sensitivity;
@@ -53,8 +63,8 @@ export const FlatCameraRig = ({ origin }: { origin: React.RefObject<Group | null
         origin.current.rotation.y -= yaw_delta;
         input.look.x = 0;
 
-        // clamp yaw range relative to seat if set, otherwise leave free
-        const seat = get_active_seat();
+        // clamp yaw range relative to seat if set, otherwise leave free (seating is ignored while flying)
+        const seat = devtools_photo_mode ? null : get_active_seat();
         if (seat && seat.yaw_range_rad) {
             seat.anchor.updateWorldMatrix(true, false);
             seat_quat.setFromRotationMatrix(seat.anchor.matrixWorld);
@@ -77,7 +87,32 @@ export const FlatCameraRig = ({ origin }: { origin: React.RefObject<Group | null
 
         // still need to apply the yaw to the camera as it isn't a child of the origin
         // TODO: is this problematic? maybe we should be parenting? using a separate camera? it means hud etc doesnt need to manually copy cam position, fine for now but worth investigating
-        camera.rotation.set(pitch.current, origin.current.rotation.y, 0, "YXZ");
+        const yaw = origin.current.rotation.y;
+        camera.rotation.set(pitch.current, yaw, 0, "YXZ");
+
+        if (devtools_photo_mode) {
+            // detach from the body and free-fly. reuse the rig's look handling above,
+            // only the position integration differs from the grounded path
+            if (!fly_ready.current) {
+                fly_pos.copy(camera.position);
+                fly_ready.current = true;
+            }
+
+            const speed = PHOTO_FLY_SPEED * delta * (input.sprint ? PHOTO_SPRINT_MULT : 1);
+
+            // planar move is yaw-relative only, so flight stays level even when looking up/down
+            fly_pos.x += (Math.cos(yaw) * input.move.x - Math.sin(yaw) * input.move.y) * speed;
+            fly_pos.z += (-Math.sin(yaw) * input.move.x - Math.cos(yaw) * input.move.y) * speed;
+
+            // vertical: jump/use ascends, grab descends (temp bindings until crouch exists)
+            if (input.jump || input.use) fly_pos.y += speed;
+            if (input.grab) fly_pos.y -= speed;
+
+            camera.position.copy(fly_pos);
+            return;
+        }
+
+        fly_ready.current = false;
 
         origin.current.getWorldPosition(head);
         head.y += (player_height_cm / 100) - 0.15;

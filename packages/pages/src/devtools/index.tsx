@@ -223,6 +223,13 @@ export const DevToolsPage = () => {
                         />
                     </ToolGroup>
 
+                    <ToolGroup title="Photo Mode">
+                        <ToolSettingSwitch
+                            label="Enable photo mode (flat only)"
+                            setting_key="devtools_flat_photo_mode"
+                        />
+                    </ToolGroup>
+
                     <ToolGroup title="Expressions">
                         <ToolSettingSwitch
                             label="Show expression test UI"

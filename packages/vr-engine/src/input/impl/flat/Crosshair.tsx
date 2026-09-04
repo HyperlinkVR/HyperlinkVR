@@ -1,6 +1,7 @@
 // import { useFlatInputState } from "./bindings";
 
 import { useEffect, useState } from "react";
+import { useSetting } from "@hyperlinkvr/react";
 
 export const Crosshair = () => {
     // annoying to manage provider for this, just read from dom instead
@@ -25,6 +26,9 @@ export const Crosshair = () => {
             document.removeEventListener("pointerlockchange", handle_pointer_lock_change);
         };
     }, []);
+
+    const [devtools_photo_mode] = useSetting("devtools_flat_photo_mode");
+    if (devtools_photo_mode) return null;
 
     if (!visible) {
         return null;

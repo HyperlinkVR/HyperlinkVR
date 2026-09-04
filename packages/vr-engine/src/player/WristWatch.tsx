@@ -340,6 +340,9 @@ const FlatWatchClickOutside = ({ on_close }: { on_close: () => void }) => {
 };
 
 export const FlatWatch = () => {
+    const [devtools_photo_mode] = useSetting("devtools_flat_photo_mode");
+    if (devtools_photo_mode) return null;
+
     const input = useFlatInputState();
     const { close_watch } = useFlatInputControls();
 
