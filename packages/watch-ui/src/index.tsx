@@ -63,14 +63,38 @@ const EndButtons = ({ current, change_screen }: { current: ScreenName | null, ch
     );
 }
 
+const ERROR_TITLES = [
+    "Doh!",
+    "Fiddlesticks!",
+    "Aw crud!",
+    "Oh no!",
+    "Whoopsie!",
+    "Yikes!",
+    "Uh oh!",
+    "Dang it!",
+    "Rats!",
+    "Bummer!",
+    "Drat!",
+    "Blast!",
+    "Oh snap!",
+    "Holy moly!",
+    "Good grief!",
+    "Mercy me!",
+    ":("
+];
 const WatchErrorFallback = ({ error, resetErrorBoundary }: FallbackProps) => {
     useEffect(() => {
         console.error("Error in watch UI:", error);
     }, []);
+
+    const title = useMemo(() => {
+        const index = Math.floor(Math.random() * ERROR_TITLES.length);
+        return ERROR_TITLES[index]!;
+    }, []);
     
     return (
         <Container width="100%" height="100%" flexDirection="column" alignItems="center" justifyContent="center" gap={16} backgroundColor="#ff0000">
-            <Text fontSize={24} fontWeight="bold" color="white">Doh!</Text>
+            <Text fontSize={24} fontWeight="bold" color="white">{title}</Text>
             <Text fontSize={16} color="white">Something went wrong with this page.</Text>
 
             <FocusableButton variant="link" color="white" on_press={resetErrorBoundary} marginTop={16}>
