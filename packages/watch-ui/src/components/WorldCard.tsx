@@ -1,6 +1,5 @@
 import { useWorldMetadataWithFallback } from "@hyperlinkvr/react";
-import { Container, Image, Text } from "@react-three/uikit";
-import { ImageOff } from "@react-three/uikit-lucide";
+import { Container, Text } from "@react-three/uikit";
 import { ellipsis_truncate } from "../util/text";
 
 
@@ -33,7 +32,7 @@ export const WorldCard = ({ url, on_press }: WorldCardProps) => {
             flexShrink={0}
             flexDirection="column"
             alignItems="center"
-            borderRadius={8}
+            borderRadius="5%"
             backgroundColor="#ffffff"
             overflow="hidden"
             on_press={on_press}
@@ -41,9 +40,19 @@ export const WorldCard = ({ url, on_press }: WorldCardProps) => {
         >
             <WorldThumbnail
                 thumbnail={thumbnail}
-                width="100%"
-                height="60%"
-                borderTopRadius={8}
+                container_props={{
+                    width: "100%",
+                    height: "60%",
+                    borderTopRadius: "5%",
+                }}
+                image_props={{
+                    // no idea why the borders are being a pain to match (container isnt masking it), whatever, this is close enough
+                    borderTopRadius: 15.875,
+
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover"
+                }}
             />
 
             <Container flexDirection="column" gap={2} padding={8} alignItems="flex-start" justifyContent="flex-start" width="100%" height="40%">

@@ -56,8 +56,18 @@ export const WorldScreen = ({args}: ScreenProps) => {
             <Container width="100%" height="50%" flexDirection="row" alignItems="flex-start" justifyContent="flex-start" gap={16} marginTop={16}>
                 <WorldThumbnail
                     thumbnail={thumbnail}
-                    height="100%"
-                    aspectRatio={16/9}
+                    container_props={{
+                        width: "40%",
+                        aspectRatio: 16/9,
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                    }}
+                    image_props={{
+                        height: "100%",
+                        width: "100%",
+                        objectFit: "cover"
+                    }}
                 />
 
                 <Container flexDirection="column" gap={16} alignItems="flex-start" justifyContent="flex-start" width="60%" height="100%">
