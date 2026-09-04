@@ -68,7 +68,7 @@ class NoVFXBufferOverlayPass extends Pass {
         this.scene.background = null;
 
         renderer.setRenderTarget(readBuffer);
-        renderer.clearDepth();
+        // depth buffer is preserved so novfx objects still respect depth
         this.camera.layers.set(Layer.NoVFX);
         renderer.render(this.scene, this.camera);
 
