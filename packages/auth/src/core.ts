@@ -303,5 +303,35 @@ export const verify_signature = async (
     }
 }
 
+export const verify_from_username = async (
+    data: string,
+    signature: string,
+    username: string,
+    storage: StorageEngine<"local">
+): Promise<boolean> => {
+    const identity_parse = parse_identity(username);
+    if (!identity_parse.success) {
+        throw new Error(`Invalid username: ${identity_parse.error}`);
+    }
+
+    const identity = identity_parse.identity;
+    const resolution = await resolve_identity(identity, storage);
+
+    if (!resolution.resolved) {
+        throw new Error(`Failed to resolve identity: ${resolution.error}`);
+    }
+
+    if (resolution.public_key && resolution.public_key.key) {
+        return await verify_signature(
+            data,
+            signature,
+            resolution.public_key.key as JsonWebKey,
+            resolution.public_key.method
+        );
+    } else {
+        throw new Error("No public key available for verification");
+    }
+};
+
 // TODO: force impls to expose a fixed interface (e.g. signup, try_login etc)
 // TODO: force lowercase names? any other restrictions? and dont forget to normalise the host part to lowercase as well

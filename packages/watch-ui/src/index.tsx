@@ -14,6 +14,7 @@ import { NavStateProvider, useNavState } from "./contexts/NavStateContext";
 import { Header } from "./layout/Header";
 import type { ScreenName } from "./screens";
 import { screens } from "./screens";
+import { WorldFavouriteButton } from "./components/WorldFavouriteButton";
 
 
 export {dispatch_ui_nav} from "./contexts/FocusNavContext";
@@ -38,7 +39,7 @@ class DoubleSidedSolidPanel extends MeshBasicMaterial {
 }
 
 const EndButtons = ({ current, change_screen }: { current: ScreenName | null, change_screen: (screen_name: ScreenName) => void }) => {
-    const {detachable, detached, set_detach} = useNavState();
+    const {detachable, detached, set_detach, current_args} = useNavState();
     const opacity = useCrossfadeOpacity();
 
     return (
@@ -47,6 +48,10 @@ const EndButtons = ({ current, change_screen }: { current: ScreenName | null, ch
                 <FocusableButton variant="link" color="white" on_press={() => change_screen("settings")} opacity={opacity}>
                     <Settings />
                 </FocusableButton>
+            )}
+
+            {current === "world" && current_args.url && (
+                <WorldFavouriteButton url={current_args.url} color="white" />
             )}
 
             {detachable && (

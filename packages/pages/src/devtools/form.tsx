@@ -1,4 +1,4 @@
-import { AuthManifestSchema, sign_with_private_key, verify_signature } from "@hyperlinkvr/auth";
+import { AuthManifestSchema, canonicalise_url, sign_with_private_key, verify_signature } from "@hyperlinkvr/auth";
 import { useAuthSession, useStorageEngine } from "@hyperlinkvr/react";
 import { LoadingSpinner } from "@hyperlinkvr/ui-dom";
 import {
@@ -113,14 +113,10 @@ const SCHEMAS = {
                                     cursor: "pointer"
                                 }}
                                 onClick={async () => {
-                                    // strip trailing slash from world_url if present
-                                    let stripped_world_url = world_url;
-                                    if (stripped_world_url.endsWith("/")) {
-                                        stripped_world_url = stripped_world_url.slice(0, -1);
-                                    }
-                                    setWorldURL(stripped_world_url);
+                                    const canonical_url = canonicalise_url(world_url);
+                                    setWorldURL(canonical_url);
 
-                                    const signature = await sign_with_private_key(stripped_world_url, local_storage, auth!.identity, auth!.method);
+                                    const signature = await sign_with_private_key(canonical_url, local_storage, auth!.identity, auth!.method);
 
                                     if (!signature) {
                                         alert("Failed to sign world. Try logging in again.");

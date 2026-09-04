@@ -6,6 +6,7 @@ import { ellipsis_truncate } from "../util/text";
 
 import { FocusableButton } from "./FocusableButton";
 import { WorldThumbnail } from "./WorldThumbnail";
+import { useCrossfadeOpacity } from "../animation/Crossfader";
 
 
 export type WorldCardProps = {
@@ -13,10 +14,11 @@ export type WorldCardProps = {
     on_press?: () => void;
 };
 
-const CARD_WIDTH = 250;
-const CARD_HEIGHT = 200;
+export const CARD_WIDTH = 250;
+export const CARD_HEIGHT = 200;
 
 export const WorldCard = ({ url, on_press }: WorldCardProps) => {
+    const opacity = useCrossfadeOpacity();
     const { title, author, description, thumbnail } = useWorldMetadataWithFallback(url);
     // TODO: handle with asset url privacy (might need to become its own package, then could also forcibly wrap the metadata thumbnail url in a ref)
 
@@ -35,6 +37,7 @@ export const WorldCard = ({ url, on_press }: WorldCardProps) => {
             backgroundColor="#ffffff"
             overflow="hidden"
             on_press={on_press}
+            opacity={opacity}
         >
             <WorldThumbnail
                 thumbnail={thumbnail}
