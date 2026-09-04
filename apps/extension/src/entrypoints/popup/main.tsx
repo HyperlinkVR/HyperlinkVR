@@ -208,7 +208,7 @@ Enable this option to use Chrome's debugger to inject raw inputs directly.`}
                         <a
                             target="_blank"
                             rel="noreferrer noopener"
-                            href="https://github.com/obfuscatedgenerated/HyperlinkVR"
+                            href="https://github.com/HyperlinkVR/HyperlinkVR"
                             className="underline hover:text-white transition">
                             GitHub
                         </a>{" "}

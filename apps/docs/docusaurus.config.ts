@@ -79,7 +79,7 @@ const config: Config = {
 
     // GitHub pages deployment config.
     // If you aren't using GitHub pages, you don't need these.
-    organizationName: "obfuscatedgenerated", // Usually your GitHub org/user name.
+    organizationName: "HyperlinkVR", // Usually your GitHub org/user name.
     projectName: "HyperlinkVR", // Usually your repo name.
 
     onBrokenLinks: "throw",
@@ -150,7 +150,7 @@ const config: Config = {
                     label: "Glossary"
                 },
                 {
-                    href: "https://github.com/obfuscatedgenerated/HyperlinkVR",
+                    href: "https://github.com/HyperlinkVR/HyperlinkVR",
                     label: "GitHub",
                     position: "right"
                 }
@@ -181,7 +181,7 @@ const config: Config = {
                     items: [
                         {
                             label: "GitHub",
-                            href: "https://github.com/obfuscatedgenerated/HyperlinkVR"
+                            href: "https://github.com/HyperlinkVR/HyperlinkVR"
                         }
                     ]
                 }
