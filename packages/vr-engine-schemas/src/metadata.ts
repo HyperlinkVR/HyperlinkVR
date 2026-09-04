@@ -212,7 +212,14 @@ export const FeaturedWorldsSchema = z.object({
     version: z.number().int().min(1).max(FeaturedWorldsSchema_VERSION),
 
     rows: z.array(FeaturedWorldsRowSchema).max(16)
+}).meta({
+    name: "FeaturedWorlds",
+    version: FeaturedWorldsSchema_VERSION,
+    title: "HyperlinkVR - Featured Worlds Definition",
+    description: "Metadata for a service provider to set rows of featured worlds."
 });
+
+
 export type FeaturedWorlds = z.infer<typeof FeaturedWorldsSchema>;
 export type FeaturedWorldsInput = z.input<typeof FeaturedWorldsSchema>;
 
