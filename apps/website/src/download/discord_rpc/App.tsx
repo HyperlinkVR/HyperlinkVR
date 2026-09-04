@@ -4,8 +4,8 @@ import { useMemo, useState } from "react";
 import { ArrowDown } from "lucide-react";
 
 
-const RELEASE_BASE = "https://github.com/obfuscatedgenerated/HyperlinkVR/releases/latest/download/hyperlinkvr_discord_rpc-";
-const SOURCE_URL = "https://github.com/obfuscatedgenerated/HyperlinkVR/tree/main/apps/discord_rpc";
+const RELEASE_BASE = "https://github.com/HyperlinkVR/discord_rpc/releases/latest/download/hyperlinkvr_discord_rpc-";
+const SOURCE_URL = "https://github.com/HyperlinkVR/discord_rpc";
 
 const DownloadButton = ({ platform }: { platform: string }) => {
     const download_link = useMemo(() => {
