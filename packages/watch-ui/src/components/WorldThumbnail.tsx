@@ -7,7 +7,7 @@ interface WorldThumbnailProps extends React.ComponentProps<typeof Container> {
 
 export const WorldThumbnail = ({thumbnail, ...rest}: WorldThumbnailProps) => (
     <Container
-        backgroundColor="#e5e5e5"
+        backgroundColor={thumbnail ? "transparent" : "#e5e5e5"}
         flexDirection="row"
         alignItems="center"
         justifyContent="center"

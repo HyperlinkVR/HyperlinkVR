@@ -7,23 +7,19 @@
         "low_power": "maybe",
         "teleport": true
     },
-    "languages": [
-        "en"
-    ],
+    "languages": ["en"],
     "max_players": 8,
     "recommended_players": 4,
     "title": "Minigolf",
     "category": "game",
-    "tags": [
-        "golf",
-        "ball"
-    ],
+    "tags": ["golf", "ball"],
     "author": {
         "username": "ollie@hyperlink.surf",
         "signature": "gEiFq2uw9GJITlXigu3xcIa9DufJkpUWKPb9Mzsgw8t682C7eMo+Gv1CTBXNoZkvHUrDcbU78kcApkFq+5JADA=="
     },
     "additional_contributors": [],
     "gallery": [],
+    "thumbnail": "https://hyperlink.surf/minigolf/thumbnail.jpg",
     "content_flags": [],
     "vr_comfort": "moderate",
     "preloads": [],
