@@ -44,6 +44,8 @@ const get_manifest = async (override_base?: string): Promise<any> => {
     return cached_manifest;
 };
 
+// TODO: short ttl on manifest to check for updates, need to reinit indices when it changes too
+
 export const init_slugs = async (override_base?: string): Promise<void> => {
     if (override_base) configure_search({ base_url: override_base });
     if (is_slugs_loaded) return;
