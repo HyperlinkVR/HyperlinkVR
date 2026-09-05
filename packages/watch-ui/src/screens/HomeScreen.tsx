@@ -1,13 +1,21 @@
-import { useServiceURLs, useStorage, useWorldSession } from "@hyperlinkvr/react";
+import {
+    useServiceURLs,
+    useStorage,
+    useWorldSession
+} from "@hyperlinkvr/react";
 import { FeaturedWorlds, FeaturedWorldsSchema } from "@hyperlinkvr/vr-engine-schemas";
 import { Container, Text } from "@react-three/uikit";
-import { useEffect,  useState } from "react";
+import { useEffect, useState } from "react";
 
 
+
+import { HorizontalRule } from "../components/HorizontalRule";
+import { SearchBarUI } from "../components/SearchBarUI";
 import { WorldCarousel } from "../components/WorldCarousel";
-import { useNavState } from "../contexts/NavStateContext";
-import type { ScreenProps } from "./index";
 import { WorldFavouriteButton } from "../components/WorldFavouriteButton";
+import { useNavState } from "../contexts/NavStateContext";
+import { ScreenProps } from "./index";
+
 
 export const HomeScreen = ({}: ScreenProps) => {
     const session = useWorldSession();
@@ -35,28 +43,46 @@ export const HomeScreen = ({}: ScreenProps) => {
     const [favourite_worlds] = useStorage("sync", "favourite_worlds", [] as string[]);
     const [_recent_worlds] = useStorage("local", "recent_worlds", [] as string[]);
 
+    const [search_mode, setSearchMode] = useState(false);
+
     return (
         <Container width="100%" height="100%" flexDirection="column" alignItems="center" justifyContent="flex-start" gap={16} padding={16} overflow="scroll">
-            <Container width="100%" flexDirection="row" alignItems="center" gap={8} marginBottom={16} backgroundColor="#ffffff" padding={12} borderRadius={6} flexShrink={0}>
-                <Text fontWeight="bold">Current world:</Text>
-                <Text>{session.url}</Text>
+            <Container
+                display={search_mode ? "none" : "flex"}
+                flexShrink={0}
+                flexDirection="column"
+                alignItems="flex-start"
+                justifyContent="flex-start"
+                gap={8}
+                width="100%"
+            >
+                <Container height={50} width="100%" flexDirection="row" alignItems="center" gap={8} marginBottom={16} backgroundColor="#ffffff" padding={12} borderRadius={6} flexShrink={0}>
+                    <Text fontWeight="bold">Current world:</Text>
+                    <Text>{session.url}</Text>
 
-                <WorldFavouriteButton url={session.url || undefined} color="black" marginLeft="auto" />
+                    <WorldFavouriteButton url={session.url || undefined} color="black" marginLeft="auto" />
+                </Container>
+
+                <HorizontalRule />
             </Container>
 
-            {favourite_worlds.length > 0 && (
-                <WorldCarousel worlds={favourite_worlds} title="Favourite worlds" on_select={(url) => {
-                    change_screen("world", {url});
-                }} />
-            )}
+            <SearchBarUI search_mode={search_mode} set_search_mode={setSearchMode} />
 
-            {loading_featured_worlds && <Text color="white">Loading featured worlds...</Text>}
-            {!loading_featured_worlds && featured_worlds && featured_worlds.rows.map((row => (
-                <WorldCarousel worlds={row.worlds} title={row.title} on_select={(url) => {
-                    change_screen("world", {url});
-                }} />
-            )))}
-            {!loading_featured_worlds && !featured_worlds && <Text color="white">Failed to load featured worlds.</Text>}
+            <Container display={search_mode ? "none" : "flex"} flexDirection="column" alignItems="flex-start" justifyContent="flex-start" gap={16} width="100%">
+                {favourite_worlds.length > 0 && (
+                    <WorldCarousel worlds={favourite_worlds} title="Favourite worlds" on_select={(url) => {
+                        change_screen("world", {url});
+                    }} />
+                )}
+
+                {loading_featured_worlds && <Text color="white">Loading featured worlds...</Text>}
+                {!loading_featured_worlds && featured_worlds && featured_worlds.rows.map((row => (
+                    <WorldCarousel worlds={row.worlds} title={row.title} on_select={(url) => {
+                        change_screen("world", {url});
+                    }} />
+                )))}
+                {!loading_featured_worlds && !featured_worlds && <Text color="white">Failed to load featured worlds.</Text>}
+            </Container>
         </Container>
     );
 };

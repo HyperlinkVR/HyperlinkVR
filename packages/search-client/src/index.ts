@@ -86,6 +86,14 @@ export const search_worlds = (query: string, options?: any) => {
     return search_index.search(query, options);
 };
 
+export const slug_prefix_search = (query: string) => {
+    if (!query.trim()) return [];
+    const lower_query = query.toLowerCase();
+    return Object.entries(by_slug_map)
+        .filter(([slug, world]) => slug.toLowerCase().startsWith(lower_query))
+        .map(([slug, world]) => ({ slug, ...world }));
+};
+
 export const get_world_by_slug = (slug: string) => {
     if (!slug) return null;
     return by_slug_map[slug] ?? null;

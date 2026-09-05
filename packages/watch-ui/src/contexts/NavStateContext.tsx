@@ -19,8 +19,11 @@ interface NavStateContextType {
     name_to_title: (screen_name: ScreenName | null) => string;
     current_title: string;
     change_title: (title: string) => void;
+    replace_args: (args: ScreenArguments) => void;
     back: () => void;
     forward: () => void;
+
+    counter: number;
 
     set_detach?: (detached: boolean) => void;
     detached?: boolean;
@@ -36,6 +39,8 @@ export const NavStateProvider = ({ children, options }: { children: React.ReactN
     const [current_screen, setCurrentScreen] = useState<ScreenName | null>("home");
     const [current_args, setCurrentArgs] = useState<ScreenArguments>({});
     const [current_title, setCurrentTitle] = useState<string>(screen_titles[current_screen!] || current_screen!);
+
+    const [counter, setCounter] = useState<number>(0);
 
     const name_to_title = useCallback((screen_name: ScreenName | null) => {
         if (!screen_name) {
@@ -64,6 +69,8 @@ export const NavStateProvider = ({ children, options }: { children: React.ReactN
 
             setCurrentScreen(screen_name);
             setCurrentArgs(args);
+
+            setCounter((prev) => prev + 1);
         },
         [current_screen, current_args]
     );
@@ -79,6 +86,8 @@ export const NavStateProvider = ({ children, options }: { children: React.ReactN
 
         setCurrentScreen(new_current.name);
         setCurrentArgs(new_current.args);
+
+        setCounter((prev) => prev + 1);
     }, [backwards, current_screen, current_args]);
 
     const forward = useCallback(() => {
@@ -92,10 +101,27 @@ export const NavStateProvider = ({ children, options }: { children: React.ReactN
 
         setCurrentScreen(new_current.name);
         setCurrentArgs(new_current.args);
+
+        setCounter((prev) => prev + 1);
     }, [forwards, current_screen, current_args]);
 
     return (
-        <NavStateContext.Provider value={{ backwards, forwards, current: current_screen, current_args, change_screen, back, forward, name_to_title, current_title, change_title: setCurrentTitle, ...options}}>
+        <NavStateContext.Provider value={{
+            backwards,
+            forwards,
+            current: current_screen,
+            current_args,
+            replace_args: setCurrentArgs,
+            change_screen,
+            back,
+            forward,
+            name_to_title,
+            current_title,
+            change_title:
+            setCurrentTitle,
+            counter,
+            ...options}}
+        >
             {children}
         </NavStateContext.Provider>
     );

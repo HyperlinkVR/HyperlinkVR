@@ -1,4 +1,4 @@
-import { get_slug_by_url, get_world_by_slug, init_search, init_slugs, search_worlds } from "@hyperlinkvr/search-client";
+import { get_slug_by_url, get_world_by_slug, init_search, init_slugs, search_worlds, slug_prefix_search } from "@hyperlinkvr/search-client";
 import { useCallback, useEffect, useState } from "react";
 import { create } from "zustand";
 
@@ -14,6 +14,7 @@ interface SearchState {
     preload_slugs: (search_index: string) => Promise<void>;
     preload_search: (search_index: string) => Promise<void>;
     search: (search_index: string, query: string, options?: any) => Promise<any[]>;
+    slug_prefix_search: (search_index: string, query: string) => Promise<any[]>;
 
     get_world_by_slug: (search_index: string, slug: string) => Promise<any | null>;
     get_slug_by_url: (search_index: string, url: string) => Promise<string | null>;
@@ -62,6 +63,13 @@ export const useSearchStore = create<SearchState>((set, get) => ({
         return search_worlds(query, options);
     },
 
+    slug_prefix_search: async (search_index: string, query: string) => {
+        if (!get().is_slug_loaded) {
+            await get().preload_slugs(search_index);
+        }
+        return slug_prefix_search(query);
+    },
+
     get_world_by_slug: async (search_index: string, slug: string) => {
         if (!get().is_slug_loaded) {
             await get().preload_slugs(search_index);
@@ -80,7 +88,7 @@ export const useSearchStore = create<SearchState>((set, get) => ({
 // using the below hooks is technically less efficient than using the store directly as loading state will cause re-renders,
 // but in practice is likely to be desired anyway, a component can still use the store if it truly doesn't care about loading state and wants to avoid re-renders
 
-export const useSearch = () => {
+export const useFuzzySearch = () => {
     const { search: search_url } = useServiceURLs();
 
     const store_preload_search = useSearchStore((state) => state.preload_search);
@@ -111,6 +119,7 @@ export const useSlugLookup = () => {
     const store_preload_slugs = useSearchStore((state) => state.preload_slugs);
     const store_get_slug_by_url = useSearchStore((state) => state.get_slug_by_url);
     const store_get_world_by_slug = useSearchStore((state) => state.get_world_by_slug);
+    const store_slug_prefix_search = useSearchStore((state) => state.slug_prefix_search);
 
     const preload_slugs = useCallback(
         async () => {
@@ -136,7 +145,15 @@ export const useSlugLookup = () => {
         [search_url, store_get_world_by_slug]
     );
 
-    return { preload_slugs, get_slug_by_url, get_world_by_slug };
+    const slug_prefix_search = useCallback(
+        async (query: string) => {
+            if (!search_url) return [];
+            return await store_slug_prefix_search(search_url, query);
+        },
+        [search_url, store_slug_prefix_search]
+    );
+
+    return { preload_slugs, get_slug_by_url, get_world_by_slug, slug_prefix_search };
 }
 
 export const useSlugByURL = (url?: string) => {

@@ -106,7 +106,7 @@ const WatchErrorFallback = ({ error, resetErrorBoundary }: FallbackProps) => {
 
 const CurrentScreen = () => {
     const state = useNavState();
-    const { current, current_args, change_screen } = state;
+    const { current, current_args, change_screen, counter } = state;
 
     const ScreenContent = useMemo(() => {
         if (!current) return () => null;
@@ -114,11 +114,6 @@ const CurrentScreen = () => {
         if (!screen) return () => null;
         return screen;
     }, [current]);
-
-    const content_key = useMemo(() => {
-        if (!current) return "none";
-        return `${current}-${JSON.stringify(current_args)}`;
-    }, [current, current_args]);
 
     return (
         <Container width="100%" maxWidth="100%" height="100%" flexDirection="column" gap={12}>
@@ -133,7 +128,7 @@ const CurrentScreen = () => {
                 scrollbarColor="rgba(255, 255, 255, 0.35)"
                 scrollbarBorderRadius={3}
             >
-                <Crossfader content_key={content_key} width="100%" flexShrink={0}>
+                <Crossfader content_key={counter} width="100%" flexShrink={0}>
                     <ErrorBoundary FallbackComponent={WatchErrorFallback} onReset={() => {
                         change_screen("home");
                     }}>
