@@ -67,6 +67,17 @@ interface NavigateAction extends BaseActionMessage {
     tab: number; // TODO sbr
 }
 
+interface NavConsentAction extends BaseActionMessage {
+    action: "HVR_NAV_CONSENT";
+    url: string;
+    tab: number; // TODO sbr
+}
+
+interface NavBackAction extends BaseActionMessage {
+    action: "HVR_NAV_BACK";
+    tab: number; // TODO sbr
+}
+
 interface WebSDKAuthQueryAction extends BaseWebSDKActionMessage {
     action: "HVRSDK_AUTH_QUERY";
     identity: Identity;
@@ -314,6 +325,8 @@ export type ActionMessage =
     ClickAction |
     CreateWindowAction |
     NavigateAction |
+    NavConsentAction |
+    NavBackAction |
     WebSDKActionMessage;
 
 
@@ -334,6 +347,7 @@ interface URLUpdateEvent extends BaseEventMessage {
     type: "HVR_URL_UPDATE";
     tab: number; // TODO sbr
     url: string;
+    authorised?: boolean;
 }
 
 interface MetaUpdateEvent extends BaseEventMessage {

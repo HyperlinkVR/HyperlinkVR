@@ -84,6 +84,90 @@ export default defineBackground(() => {
         }
     };
 
+    // navigation consent tracking
+    // the extension is the only thing that can legitimately move a session tab between worlds (via HVR_NAVIGATE)
+    // a world's own page script can still set window.location directly, bypassing consent, so we track the last consented url per tab
+    const consented_url = new Map<number, string>();
+    const nav_grace = new Set<number>();
+
+    const awaiting_consent = new Set<number>();
+
+    const strip_hash = (url: string): string => {
+        try {
+            const u = new URL(url);
+            u.hash = "";
+            return u.href;
+        } catch {
+            return url;
+        }
+    };
+
+    // determine if navigation was authorised
+    const classify_nav = (tab_id: number, url: string): boolean => {
+        if (active_session?.tab_id !== tab_id) {
+            return true;
+        }
+
+        const stripped = strip_hash(url);
+        const consented = consented_url.get(tab_id);
+
+        // first url we see for the session is where the user launched
+        if (consented === undefined) {
+            consented_url.set(tab_id, stripped);
+            return true;
+        }
+
+        // same document (reload / hash / query-only change) already consented
+        if (stripped === consented) {
+            return true;
+        }
+
+        // part of a navigation the extension started (covers 3xx redirect chains)
+        if (nav_grace.has(tab_id)) {
+            consented_url.set(tab_id, stripped);
+            return true;
+        }
+
+        // the page navigated itself, not authorised
+        return false;
+    };
+
+    const classify_document_load = (tab_id: number, url: string | undefined) => {
+        if (!url) return;
+
+        const authorised = classify_nav(tab_id, url);
+        if (authorised) {
+            awaiting_consent.delete(tab_id);
+        } else {
+            awaiting_consent.add(tab_id);
+        }
+
+        console.log("[nav] document load", {
+            tab_id,
+            url,
+            authorised,
+            active_tab: active_session?.tab_id ?? null,
+            consented: consented_url.get(tab_id) ?? null,
+            graced: nav_grace.has(tab_id)
+        });
+
+        post_to_tab_sessions(tab_id, {
+            type: "HVR_URL_UPDATE",
+            tab: tab_id,
+            url,
+            authorised
+        });
+    };
+
+    const post_same_document_url = (tab_id: number, url: string) => {
+        post_to_tab_sessions(tab_id, {
+            type: "HVR_URL_UPDATE",
+            tab: tab_id,
+            url,
+            authorised: true
+        });
+    };
+
     const resolve_real_host_url = () => new URL(VR_HOST_URL, location.href).href;
     const REAL_HOST_URL = resolve_real_host_url();
 
@@ -178,6 +262,11 @@ export default defineBackground(() => {
             return;
         }
 
+        // the world's session stays shut until the user consents to this arrival
+        if (awaiting_consent.has(tab_id)) {
+            return;
+        }
+
         active_session.ready_notified = true;
 
         console.log("Notifying content script that HyperlinkVR is ready for tab", tab_id, tab_meta.get(tab_id));
@@ -239,11 +328,9 @@ export default defineBackground(() => {
             chrome.tabs.get(tab_id, (tab) => {
                 if (chrome.runtime.lastError || !tab) return;
 
-                port.postMessage({
-                    type: "HVR_URL_UPDATE",
-                    tab: tab_id,
-                    url: tab.url
-                });
+                // hydrate a newly connected host: classify the document it's landing on
+                // so a reconnect onto an unconsented page keeps the gate up
+                classify_document_load(tab_id, tab.url);
 
                 port.postMessage({
                     type: "HVR_DIMENSIONS_UPDATE",
@@ -279,6 +366,13 @@ export default defineBackground(() => {
                 // do NOT let the host consume the raw page broadcast anymore.
                 if (!active_session || active_session.tab_id !== sender.tab?.id) {
                     console.warn("Rejecting RTC message from non-session tab", sender.tab?.id);
+                    dropped = false;
+                    return;
+                }
+
+                // don't let an unconsented world announce the player into a room
+                if (awaiting_consent.has(sender.tab.id)) {
+                    console.warn("Rejecting RTC message while awaiting consent", sender.tab.id);
                     dropped = false;
                     return;
                 }
@@ -340,7 +434,8 @@ export default defineBackground(() => {
                     active_session &&
                     active_session.tab_id === sender.tab?.id &&
                     active_session.ready_port !== null &&
-                    !active_session.ready_notified
+                    !active_session.ready_notified &&
+                    !awaiting_consent.has(sender.tab.id)
                 ) {
                     active_session.ready_notified = true;
                     chrome.tabs.sendMessage(sender.tab.id!, { type: "HVRSDK_READY" });
@@ -367,6 +462,15 @@ export default defineBackground(() => {
 
                 launch_vr_host(tab_id);
                 sendResponse({ launching: true });
+                dropped = false;
+                return;
+            }
+
+            // hold everything else - crucially auth/identity - until the user consents
+            // to this arrival, so merely being navigated to a world can't leak who you are
+            if (sender.tab?.id !== undefined && awaiting_consent.has(sender.tab.id)) {
+                console.warn("[nav] refusing SDK action while awaiting consent", msg.action, sender.tab.id);
+                sendResponse({ error: "Awaiting user consent to enter this world" });
                 dropped = false;
                 return;
             }
@@ -480,8 +584,36 @@ export default defineBackground(() => {
                 return;
             }
 
+            // this navigation is coming through the extension, so trust the load it triggers
+            nav_grace.add(msg.tab);
+
             // tabs.onUpdated fires with the new url and pushes it down the session port
             chrome.tabs.update(msg.tab, { url: msg.url });
+
+            dropped = false;
+        } else if (msg.action === "HVR_NAV_CONSENT") {
+            if (!msg.tab || !msg.url) {
+                console.error("No tab or url specified for HVR_NAV_CONSENT");
+                return;
+            }
+
+            // the user approved this arrival, consent is not sticky and will be re-checked on the next unauthorised navigation
+            awaiting_consent.delete(msg.tab);
+            try_notify_ready(msg.tab);
+
+            dropped = false;
+        } else if (msg.action === "HVR_NAV_BACK") {
+            if (!msg.tab) {
+                console.error("No tab specified for HVR_NAV_BACK");
+                return;
+            }
+
+            // returning to the previous entry (the world we came from)
+            // it's still the consented url, but grace it too in case it redirects on the way back
+            nav_grace.add(msg.tab);
+            chrome.tabs.goBack(msg.tab).catch((err) => {
+                console.error("Failed to go back for HVR_NAV_BACK:", err);
+            });
 
             dropped = false;
         }
@@ -524,18 +656,24 @@ export default defineBackground(() => {
 
     // alert the vr host of changes in url
     chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-        if (changeInfo.status === "loading" && active_session?.tab_id === tabId) {
-            // the tab is loading a new document (navigation or reload)
-            // allow HVRSDK_READY to be sent again so the content script is notified
-            active_session.ready_notified = false;
+        if (changeInfo.status === "loading") {
+            // a real document is committing (navigation or reload). this fires before
+            // the page's content scripts run, so gating here beats the QUERY_READY race.
+            // reloads may omit changeInfo.url, so classify off tab.url.
+            if (active_session?.tab_id === tabId) {
+                active_session.ready_notified = false;
+            }
+            classify_document_load(tabId, tab.url);
+        } else if (changeInfo.url) {
+            // url changed without a document load = same-document (hash / pushState).
+            // inform the host but leave the consent gate untouched.
+            post_same_document_url(tabId, changeInfo.url);
         }
 
-        if (changeInfo.url) {
-            post_to_tab_sessions(tabId, {
-                type: "HVR_URL_UPDATE",
-                tab: tabId,
-                url: changeInfo.url
-            });
+        // the document finished loading: any extension-initiated grace is spent, so a
+        // later navigation is the page moving itself and must be re-checked
+        if (changeInfo.status === "complete") {
+            nav_grace.delete(tabId);
         }
     });
 
@@ -547,7 +685,9 @@ export default defineBackground(() => {
         });
 
         tab_meta.delete(tabId);
-        tabs_ready_notified.delete(tabId);
+        consented_url.delete(tabId);
+        nav_grace.delete(tabId);
+        awaiting_consent.delete(tabId);
 
         if (active_session?.tab_id === tabId) {
             active_session = null;

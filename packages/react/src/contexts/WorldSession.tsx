@@ -1,10 +1,5 @@
 import type { EventMessage } from "@hyperlinkvr/types";
-import {
-    WorldMetadata,
-    WorldMetadataInput,
-    WorldMetadataSchema
-} from "@hyperlinkvr/vr-engine-schemas";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 
 
 import { useMessageEngine } from "./engines";
@@ -25,7 +20,8 @@ export interface WorldSessionContextValue {
     // meta value itself is unchanged. effect on this to reset world state.
     doc_generation: number;
 
-    world_metadata: WorldMetadata | null;
+    // false for navigations not initiated by the user or extension
+    nav_authorised: boolean;
 }
 
 const WorldSessionContext = createContext<WorldSessionContextValue | null>(null);
@@ -50,6 +46,9 @@ export const WorldSessionProvider = ({children}: { children: React.ReactNode; })
     const [support, setSupport] = useState<SupportMeta | null>(null);
     const [doc_generation, setDocGeneration] = useState(0);
 
+    const [nav_authorised, setNavAuthorised] = useState(true);
+    const nav_authorised_live = useRef(true);
+
     useEffect(() => {
         const channel = messenger.connect<never, EventMessage>(`hvr-tab-session:${tab}`);
 
@@ -62,6 +61,9 @@ export const WorldSessionProvider = ({children}: { children: React.ReactNode; })
 
             if (msg.type === "HVR_URL_UPDATE") {
                 setUrl(msg.url);
+
+                // no flag defaults to authorised
+                nav_authorised_live.current = msg.authorised ?? true;
             }
 
             if (msg.type === "HVR_DIMENSIONS_UPDATE") {
@@ -70,13 +72,11 @@ export const WorldSessionProvider = ({children}: { children: React.ReactNode; })
 
             if (msg.type === "HVR_META_UPDATE") {
                 setSupport(msg.content);
-                // a replay is the background re-sending the cached meta to a
-                // newly connected window (hydration). the meta value still needs
-                // to update, but it is not a new document, so don't bump the
-                // generation - otherwise it would clobber a world env the game
-                // already customised (see WorldEnvironment reset effect).
+                // a replay is the background re-sending the cached meta to a newly connected window (hydration)
+                // the meta value still needs to update, but it is not a new document, so don't bump the generation
                 if (!msg.replay) {
                     setDocGeneration((previous) => previous + 1);
+                    setNavAuthorised(nav_authorised_live.current);
                 }
             }
         });
@@ -94,7 +94,8 @@ export const WorldSessionProvider = ({children}: { children: React.ReactNode; })
                 url,
                 tab_dimensions,
                 support,
-                doc_generation
+                doc_generation,
+                nav_authorised,
             }}>
             {children}
         </WorldSessionContext.Provider>
@@ -118,55 +119,7 @@ export const MockWorldSessionProvider = ({
     tab_dimensions = { width: 800, height: 600 },
     support = null,
     doc_generation = 0,
-    world_metadata = {
-        version: 1,
-        title: "Mock World",
-        description: "Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.",
-        category: "utility",
-        tags: [
-            "fake",
-            "test"
-        ],
-        author: {
-            username: "ollie@hyperlink.surf",
-            signature: "4iiM/d0XS6Lx4qG07/knLmxoi79/uDFdKBMMKz27IfvhjYnnZc4KAg6Eg+PPqLHzGC7apxggRKC9fHvlj8EpCg=="
-        },
-        additional_contributors: [
-            {
-                username: "johndoe@example.com",
-                role: "contributor"
-            }
-        ],
-        thumbnail: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Cat_August_2010-4.jpg/500px-Cat_August_2010-4.jpg",
-        gallery: [
-            "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Cat_August_2010-4.jpg/500px-Cat_August_2010-4.jpg",
-            "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Cat_August_2010-4.jpg/500px-Cat_August_2010-4.jpg",
-            "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Cat_August_2010-4.jpg/500px-Cat_August_2010-4.jpg"
-        ],
-        theme_color: 16711935,
-        supports: {
-            vr: "yes",
-            flat: "no",
-            low_power: "maybe",
-            teleport: true
-        },
-        languages: [
-            "en",
-            "zh"
-        ],
-        max_players: 32,
-        recommended_players: 8,
-        content_flags: [
-            "drugs"
-        ],
-        vr_comfort: "intense",
-        preloads: [
-            "https://example.com/image.png"
-        ],
-        endorsements: [
-            "https://hyperlink.surf/minigolf"
-        ]
-    }
+    nav_authorised = true,
 }: {
     children: React.ReactNode;
     id?: number;
@@ -174,7 +127,7 @@ export const MockWorldSessionProvider = ({
     tab_dimensions?: { width: number; height: number };
     support?: SupportMeta | null;
     doc_generation?: number;
-    world_metadata?: WorldMetadataInput | null;
+    nav_authorised?: boolean;
 }) => {
     return (
         <WorldSessionContext.Provider
@@ -184,7 +137,7 @@ export const MockWorldSessionProvider = ({
                 tab_dimensions,
                 support,
                 doc_generation,
-                world_metadata: WorldMetadataSchema.parse(world_metadata),
+                nav_authorised,
             }}>
             {children}
         </WorldSessionContext.Provider>

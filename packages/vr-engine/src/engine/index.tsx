@@ -69,6 +69,7 @@ import { SDKWorldEnvironmentProvider, useWorldEnvironment, WORLD_ENV_DEFAULT, WO
 import { EngineObjectSpawner } from "./EngineObjectSpawner";
 import { EngineObjectSync } from "./EngineObjectSync";
 import { FlatLoadingScreen, VRLoadingScreen } from "./LoadingScreen";
+import { FlatNavConsentGate, useNavConsent, VRNavConsentGate } from "./NavConsentGate";
 
 
 configureTextBuilder({
@@ -300,6 +301,25 @@ const SceneContents = ({
     );
 };
 
+// holds the world's SceneContents from mounting until the user has consented to an arrival (if the extension didn't initiate)
+const GatedSceneContents = ({
+    mode,
+    player_ref,
+    extra_in_origin
+}: {
+    mode: "vr" | "flat";
+    player_ref?: React.RefObject<Group | null>;
+    extra_in_origin?: React.ReactNode;
+}) => {
+    const { blocked } = useNavConsent();
+
+    if (blocked) {
+        return mode === "vr" ? <VRNavConsentGate /> : null;
+    }
+
+    return <SceneContents player_ref={player_ref} extra_in_origin={extra_in_origin} />;
+};
+
 const WorldPhysics = ({children}: {children: React.ReactNode}) => {
     const {world_env} = useWorldEnvironment();
     const [show_colliders] = useSetting("debug_colliders");
@@ -506,6 +526,7 @@ const EngineHostInternal = memo(
                                     )}
 
                                     {loading && <FlatLoadingScreen />}
+                                    {mode === "flat" && <FlatNavConsentGate />}
 
                                     <AvatarProvider>
                                         <PlayerOriginProvider value={player_ref}>
@@ -548,7 +569,8 @@ const EngineHostInternal = memo(
                                                                                 onReset={() =>
                                                                                     window.location.reload()
                                                                                 }>
-                                                                                <SceneContents
+                                                                                <GatedSceneContents
+                                                                                    mode="vr"
                                                                                     player_ref={player_ref}
                                                                                     extra_in_origin={
                                                                                         <Suspense fallback={null}>
@@ -570,7 +592,7 @@ const EngineHostInternal = memo(
                                                                             <FlatInputProvider>
                                                                                 <FlatClickRaycaster />
                                                                                 <FlatAvatarHands />
-                                                                                <SceneContents player_ref={player_ref} />
+                                                                                <GatedSceneContents mode="flat" player_ref={player_ref} />
                                                                             </FlatInputProvider>
                                                                         </ErrorBoundary>
                                                                     )}
