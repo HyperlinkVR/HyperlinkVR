@@ -22,6 +22,9 @@ export interface WorldSessionContextValue {
 
     // false for navigations not initiated by the user or extension
     nav_authorised: boolean;
+
+    // true while a devtools spy window is open; gates the host's own spy emissions
+    spy_active: boolean;
 }
 
 const WorldSessionContext = createContext<WorldSessionContextValue | null>(null);
@@ -49,6 +52,8 @@ export const WorldSessionProvider = ({children}: { children: React.ReactNode; })
     const [nav_authorised, setNavAuthorised] = useState(true);
     const nav_authorised_live = useRef(true);
 
+    const [spy_active, setSpyActive] = useState(false);
+
     useEffect(() => {
         const channel = messenger.connect<never, EventMessage>(`hvr-tab-session:${tab}`);
 
@@ -68,6 +73,10 @@ export const WorldSessionProvider = ({children}: { children: React.ReactNode; })
 
             if (msg.type === "HVR_DIMENSIONS_UPDATE") {
                 setTabDimensions({ width: msg.width, height: msg.height });
+            }
+
+            if (msg.type === "HVR_SPY_STATE") {
+                setSpyActive(msg.active);
             }
 
             if (msg.type === "HVR_META_UPDATE") {
@@ -96,6 +105,7 @@ export const WorldSessionProvider = ({children}: { children: React.ReactNode; })
                 support,
                 doc_generation,
                 nav_authorised,
+                spy_active,
             }}>
             {children}
         </WorldSessionContext.Provider>
@@ -120,6 +130,7 @@ export const MockWorldSessionProvider = ({
     support = null,
     doc_generation = 0,
     nav_authorised = true,
+    spy_active = false,
 }: {
     children: React.ReactNode;
     id?: number;
@@ -128,6 +139,7 @@ export const MockWorldSessionProvider = ({
     support?: SupportMeta | null;
     doc_generation?: number;
     nav_authorised?: boolean;
+    spy_active?: boolean;
 }) => {
     return (
         <WorldSessionContext.Provider
@@ -138,6 +150,7 @@ export const MockWorldSessionProvider = ({
                 support,
                 doc_generation,
                 nav_authorised,
+                spy_active,
             }}>
             {children}
         </WorldSessionContext.Provider>

@@ -2,7 +2,8 @@ import { useMessageEngine, useSetting } from "@hyperlinkvr/react";
 import type { SettingKeyReturning, WindowIntent } from "@hyperlinkvr/types";
 import { ToggleSwitch } from "@hyperlinkvr/ui-dom/settings";
 import { WATCH_UI_HEIGHT, WATCH_UI_WIDTH } from "@hyperlinkvr/watch-ui";
-import { Earth, Trophy, UserKey, Watch } from "lucide-react";
+import { Earth, MailSearch, Trophy, UserKey, Watch } from "lucide-react";
+
 
 const bg = new URL("../../node_modules/@hyperlinkvr/assets/bg.webp", import.meta.url).href;
 
@@ -107,9 +108,9 @@ const ToolSettingSwitch = ({
 export const DevToolsPage = () => {
     return (
         <main
-            className="text-white w-full h-screen bg-cover bg-center font-sans"
+            className="text-white w-full min-h-screen bg-cover bg-center bg-fixed font-sans"
             style={{ backgroundImage: `url(${bg})` }}>
-            <div className="w-full h-full p-6 bg-black/50 backdrop-blur-md">
+            <div className="w-full min-h-screen p-6 bg-black/50 backdrop-blur-md">
                 <h1 className="text-4xl font-bold font-title">
                     HyperlinkVR DevTools
                 </h1>
@@ -186,6 +187,18 @@ export const DevToolsPage = () => {
                         />
                     </ToolGroup>
 
+                    <ToolGroup title="Diagnostics">
+                        <ToolWindowButton
+                            label={<>
+                                <MailSearch />
+                                Open message spy
+                            </>}
+                            intent="DEVTOOLS_SPY"
+                            width={1000}
+                            height={640}
+                        />
+                    </ToolGroup>
+
                     <ToolGroup title="Input Interception">
                         <ToolSettingSwitch
                             label="Debug click points"
@@ -245,4 +258,3 @@ export const DevToolsPage = () => {
         </main>
     );
 };
-

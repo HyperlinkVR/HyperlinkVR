@@ -1,16 +1,15 @@
 import type { MessageChannel } from "@hyperlinkvr/core";
 import { useMessageEngine, useStorageEngines, useWorldSession } from "@hyperlinkvr/react";
-import type { NamedAction, NamedReply, WebSDKActionMessage, WebSDKActionName, WebSDKErrorReply, WebSDKEventMessage } from "@hyperlinkvr/types";
+import type { NamedAction, NamedEvent, NamedReply, WebSDKActionMessage, WebSDKActionName, WebSDKErrorReply, WebSDKEventMessage } from "@hyperlinkvr/types";
 import type { HandlerData } from "@hyperlinkvr/web-sdk-handlers";
 import { builtin_handlers, handle_web_sdk } from "@hyperlinkvr/web-sdk-handlers";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 
+
+
+import { clear_collider_collision_info } from "../physics/collision_hooks";
 import { useEngineObjectStore } from "../stores/EngineObjectStore";
 import { useWorldLoadingStateStore } from "../stores/WorldLoadingStateStore";
-import { clear_collider_collision_info } from "../physics/collision_hooks";
-
-
-
 
 
 interface WebSDKMessagingContextType {
@@ -32,20 +31,55 @@ const WebSDKMessagingContext = createContext<WebSDKMessagingContextType | null>(
 export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode}) => {
     const messenger = useMessageEngine();
 
-    const {id} = useWorldSession();
+    const {id, spy_active} = useWorldSession();
 
     const peer_connection_ref = useRef<RTCPeerConnection | null>(null);
     const data_channel_ref = useRef<RTCDataChannel | null>(null);
     const ready_port_ref = useRef<MessageChannel | null>(null);
+    const sdk_origin_ref = useRef<string | undefined>(undefined);
     const [connected, setConnected] = useState(false);
 
     const storage = useStorageEngines();
 
+    // the data channel callbacks are memoised with stable deps so a spy opening/closing
+    // doesn't tear down the RTC connection; they read the live value through this ref
+    const spy_ref = useRef(spy_active);
+    useEffect(() => { spy_ref.current = spy_active; }, [spy_active]);
+
     const action_map_ref = useRef<Map<WebSDKActionName, Set<(message: NamedAction<any>, reply: (message: NamedReply<any> | WebSDKErrorReply) => void) => void>>>(new Map());
     const pending_actions_ref = useRef<Map<WebSDKActionName, any[]>>(new Map());
 
+    const sdk_peer = () => sdk_origin_ref.current ? { sdk_origin: sdk_origin_ref.current } : "vr-host";
+
+    const send_over_data_channel = useCallback((message: any) => {
+        if (spy_ref.current) {
+            messenger.send<NamedEvent<"HVR_SPY">>({
+                type: "HVR_SPY",
+                context: "sdk",
+                from: "vr-host",
+                to: sdk_peer(),
+                message,
+                ts: Date.now()
+            });
+        }
+
+        data_channel_ref.current?.send(JSON.stringify(message));
+    }, []);
+
     const handle_data_channel_message = useCallback((event: MessageEvent) => {
         const data = JSON.parse(event.data) as any;
+
+        if (spy_ref.current) {
+            messenger.send<NamedEvent<"HVR_SPY">>({
+                type: "HVR_SPY",
+                context: "sdk",
+                from: sdk_peer(),
+                to: "vr-host",
+                message: data as any,
+                ts: Date.now()
+            });
+        }
+
         if (!("action" in data)) {
             return;
         }
@@ -54,7 +88,7 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
         if (handlers && handlers.size > 0) {
             handlers.forEach((handler) => {
                 handler(data, (reply_message: NamedReply<any> | WebSDKErrorReply) => {
-                    data_channel_ref.current?.send(JSON.stringify({ ...reply_message, correlation_id: data.correlation_id }));
+                    send_over_data_channel({ ...reply_message, correlation_id: data.correlation_id });
                 });
             });
             return;
@@ -81,6 +115,10 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
             }
 
             if (data.action === "HVRSDK_RTC_REQUEST") {
+                // the background stamps the page's origin onto forwarded RTC messages
+                // remember it so spy events can attribute this data channel's traffic
+                sdk_origin_ref.current = (data as any).origin;
+
                 // a navigation or reconnect supersedes any existing connection.
                 // single-session in the background guarantees this request is for
                 // our tab, so there's no url/tab gate needed here.
@@ -223,7 +261,7 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
                 pending_actions_ref.current.delete(action_filter);
                 for (const data of pending) {
                     handler(data, (reply_message: NamedReply<any> | WebSDKErrorReply) => {
-                        data_channel_ref.current?.send(JSON.stringify({ ...reply_message, correlation_id: data.correlation_id }));
+                        send_over_data_channel({ ...reply_message, correlation_id: data.correlation_id });
                     });
                 }
             }
@@ -254,7 +292,7 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
             throw new Error("No connection established");
         }
 
-        data_channel_ref.current.send(JSON.stringify(message));
+        send_over_data_channel(message);
     }, []);
 
     return (

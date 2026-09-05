@@ -14,7 +14,7 @@ import { check_url_allowed, URL_PATTERNS } from "~/util/url_patterns";
 // TODO: this whole script deserves a rewrite
 
 
-export default defineBackground(() => {
+export default defineBackground(async () => {
     const VR_HOST_URL = "./vr_host.html";
 
     const VR_HOST_WIDTH = 750;
@@ -30,7 +30,8 @@ export default defineBackground(() => {
         LOGIN: "/login.html",
         DEVTOOLS: "/devtools.html",
         DEVTOOLS_FORM: "/devtools-form.html",
-        DEVTOOLS_WATCH_UI: "/devtools-watch.html"
+        DEVTOOLS_WATCH_UI: "/devtools-watch.html",
+        DEVTOOLS_SPY: "/devtools-spy.html"
     } as Record<WindowIntent, string>;
 
     const get_window_url = (
@@ -71,9 +72,44 @@ export default defineBackground(() => {
     // launched after the page loaded still learns the page's declared mode
     const tab_meta = new Map<number, string>();
 
+    // message spying is presence-driven: it's on exactly while a spy window holds an
+    // hvr-spy port open, and off the moment that port disconnects (close or crash).
+    const spy_ports = new Set<chrome.runtime.Port>();
+    const is_spy_active = () => spy_ports.size > 0;
+
+    // the background is the spy hub: every HVR_SPY event (its own, and ones forwarded
+    // from the vr-host) is delivered only down the open spy port(s), never broadcast
+    const post_to_spy_ports = (event: unknown) => {
+        for (const port of spy_ports) {
+            try {
+                port.postMessage(event);
+            } catch {
+                // dead port, removed by its own onDisconnect
+            }
+        }
+    };
+
+    // tell every connected vr-host session whether a spy is currently watching, so it
+    // can gate its own (data channel) spy emissions to match
+    const broadcast_spy_state = () => {
+        const message = { type: "HVR_SPY_STATE", active: is_spy_active() };
+        for (const ports of tab_session_ports.values()) {
+            for (const port of ports) {
+                try {
+                    port.postMessage(message);
+                } catch {
+                    // dead port, removed by its own onDisconnect
+                }
+            }
+        }
+    };
+
     const post_to_tab_sessions = (tab_id: number, message: unknown) => {
         const ports = tab_session_ports.get(tab_id);
         if (!ports) return;
+
+        // session ports are opened by the vr-host's TabSessionProvider
+        spy_message(message, "vr-host");
 
         for (const port of ports) {
             try {
@@ -270,7 +306,7 @@ export default defineBackground(() => {
         active_session.ready_notified = true;
 
         console.log("Notifying content script that HyperlinkVR is ready for tab", tab_id, tab_meta.get(tab_id));
-        chrome.tabs.sendMessage(tab_id, { type: "HVRSDK_READY" }).catch(() => {
+        send_message_with_spy({ type: "HVRSDK_READY" }, "cs", tab_id).catch(() => {
             // probably not ready yet, clear the flag so we can try again later
             if (active_session?.tab_id === tab_id) {
                 active_session.ready_notified = false;
@@ -281,6 +317,19 @@ export default defineBackground(() => {
     // hvr-ready:<tab_id>: opened by the VR host's WebSDKMessagingProvider for the duration of its RTC session to signal it is ready to receive connections
     // hvr-tab-session:<tab_id>: opened by TabSessionProvider on mount; session state (url, dimensions, meta) is pushed down these ports
     chrome.runtime.onConnect.addListener((port) => {
+        // hvr-spy: opened by a devtools spy window for its lifetime. its mere presence
+        // turns spying on; its disconnect (window closed or crashed) turns it back off.
+        if (port.name === "hvr-spy") {
+            spy_ports.add(port);
+            broadcast_spy_state();
+
+            port.onDisconnect.addListener(() => {
+                spy_ports.delete(port);
+                broadcast_spy_state();
+            });
+            return;
+        }
+
         const ready_match = port.name.match(/^hvr-ready:(\d+)$/);
         if (ready_match) {
             const tab_id = parseInt(ready_match[1], 10);
@@ -325,6 +374,9 @@ export default defineBackground(() => {
                 }
             });
 
+            // a host mounting after a spy window is already open needs the current state
+            port.postMessage({ type: "HVR_SPY_STATE", active: is_spy_active() });
+
             chrome.tabs.get(tab_id, (tab) => {
                 if (chrome.runtime.lastError || !tab) return;
 
@@ -332,31 +384,106 @@ export default defineBackground(() => {
                 // so a reconnect onto an unconsented page keeps the gate up
                 classify_document_load(tab_id, tab.url);
 
-                port.postMessage({
+                const dimensions_update = {
                     type: "HVR_DIMENSIONS_UPDATE",
                     tab: tab_id,
                     width: tab.width,
                     height: tab.height
-                });
+                };
+                spy_message(dimensions_update, "vr-host");
+                port.postMessage(dimensions_update);
 
                 const cached_meta = tab_meta.get(tab_id);
                 if (cached_meta !== undefined) {
-                    port.postMessage({
+                    const meta_update = {
                         type: "HVR_META_UPDATE",
                         tab: tab_id,
                         content: cached_meta,
                         // hydration for a newly connected window, not a new document
                         replay: true
-                    });
+                    };
+                    spy_message(meta_update, "vr-host");
+                    port.postMessage(meta_update);
                 }
             });
             return;
         }
     });
 
+    const is_sdk_message = (msg: any): boolean => {
+        return (
+            (msg.action && msg.action.startsWith("HVRSDK_")) ||
+            (msg.type && msg.type.startsWith("HVRSDK_")) ||
+            (msg.for && msg.for.startsWith("HVRSDK_"))
+        );
+    };
+
+    const get_sender_info = (sender: chrome.runtime.MessageSender) => {
+        if (sender.url && sender.url.startsWith(REAL_HOST_URL)) {
+            return "vr-host";
+        }
+
+        return {
+            tab: sender.tab?.id,
+            url: sender.url
+        }
+    }
+
+    const spy_message = (message: any, to: "vr-host" | "cs") => {
+        if (!is_spy_active() || message?.type === "HVR_SPY") return;
+        post_to_spy_ports({
+            type: "HVR_SPY",
+            message,
+            context: is_sdk_message(message) ? "sdk" : "backend",
+            from: "backend",
+            to,
+            ts: Date.now()
+        });
+    };
+
+    const send_message_with_spy = (
+        message: any,
+        to: "vr-host" | "cs",
+        tab_id?: number
+    ): Promise<any> => {
+        spy_message(message, to);
+
+        return tab_id !== undefined
+            ? chrome.tabs.sendMessage(tab_id, message)
+            : chrome.runtime.sendMessage(message);
+    };
+
+    // spy a reply before handing it back to the sender (always a content script)
+    const respond_with_spy = (
+        sendResponse: (response: any) => void,
+        response: any
+    ) => {
+        spy_message(response, "cs");
+        sendResponse(response);
+    };
+
     chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         let dropped = true;
         console.table([msg, sender.url]);
+
+        // spy events emitted by other contexts (the vr-host's data channel) arrive here
+        // so the background can funnel them down the spy port(s); never processed further
+        if (msg.type === "HVR_SPY") {
+            post_to_spy_ports(msg);
+            return;
+        }
+
+        if (is_spy_active()) {
+            post_to_spy_ports({
+                type: "HVR_SPY",
+                message: msg,
+                context: is_sdk_message(msg) ? "sdk" : "backend",
+                from: get_sender_info(sender),
+                // the message has arrived here; any onward hop is a separate outbound spy event
+                to: "backend",
+                ts: Date.now()
+            });
+        }
 
         // handle web sdk messages (which expect direct replies for correlation)
         if (msg.action && msg.action.startsWith("HVRSDK_") && msg.target !== "cs") {
@@ -382,13 +509,13 @@ export default defineBackground(() => {
                     origin = sender.origin ?? (sender.url ? new URL(sender.url).origin : undefined);
                 } catch { origin = undefined; }
 
-                chrome.runtime.sendMessage({
+                send_message_with_spy({
                     ...msg,
                     target: "vr-host",
                     stamped: true,
                     tab: sender.tab.id,
                     origin
-                });
+                }, "vr-host");
 
                 dropped = false;
                 return;
@@ -438,7 +565,7 @@ export default defineBackground(() => {
                     !awaiting_consent.has(sender.tab.id)
                 ) {
                     active_session.ready_notified = true;
-                    chrome.tabs.sendMessage(sender.tab.id!, { type: "HVRSDK_READY" });
+                    send_message_with_spy({ type: "HVRSDK_READY" }, "cs", sender.tab.id!);
                 }
 
                 dropped = false;
@@ -461,7 +588,7 @@ export default defineBackground(() => {
                 }
 
                 launch_vr_host(tab_id);
-                sendResponse({ launching: true });
+                respond_with_spy(sendResponse, { launching: true });
                 dropped = false;
                 return;
             }
@@ -470,7 +597,7 @@ export default defineBackground(() => {
             // to this arrival, so merely being navigated to a world can't leak who you are
             if (sender.tab?.id !== undefined && awaiting_consent.has(sender.tab.id)) {
                 console.warn("[nav] refusing SDK action while awaiting consent", msg.action, sender.tab.id);
-                sendResponse({ error: "Awaiting user consent to enter this world" });
+                respond_with_spy(sendResponse, { error: "Awaiting user consent to enter this world" });
                 dropped = false;
                 return;
             }
@@ -482,10 +609,10 @@ export default defineBackground(() => {
             })
                 .then((response) => {
                     if (response) {
-                        sendResponse(response);
+                        respond_with_spy(sendResponse, response);
                     } else {
                         // we were asked to handle a message which should be deferred to the vr host over rtc
-                        sendResponse({ error: "Message must be sent over RTC" });
+                        respond_with_spy(sendResponse, { error: "Message must be sent over RTC" });
                     }
                 })
                 .catch((error) => {
@@ -496,7 +623,7 @@ export default defineBackground(() => {
                         "Error:",
                         error
                     );
-                    sendResponse({ error: error.message || "Unknown error" });
+                    respond_with_spy(sendResponse, { error: error.message || "Unknown error" });
                 });
             dropped = false;
 
@@ -512,11 +639,11 @@ export default defineBackground(() => {
                 (stream_id) => {
                     if (stream_id) {
                         chrome.tabs.get(msg.tab, (tab) => {
-                            chrome.runtime.sendMessage({
+                            send_message_with_spy({
                                 type: "HVR_STREAM",
                                 stream: stream_id,
                                 tab: tab.id
-                            });
+                            }, "vr-host");
 
                             post_to_tab_sessions(tab.id!, {
                                 type: "HVR_DIMENSIONS_UPDATE",
@@ -620,7 +747,7 @@ export default defineBackground(() => {
 
         // TODO: subscription based routing
         if (msg.target === "cs" && sender.url?.startsWith(REAL_HOST_URL)) {
-            chrome.tabs.sendMessage(msg.tab, msg);
+            send_message_with_spy(msg, "cs", msg.tab);
             dropped = false;
         }
 
@@ -628,7 +755,7 @@ export default defineBackground(() => {
             msg.target === "vr-host" &&
             !sender.url?.startsWith(REAL_HOST_URL)
         ) {
-            chrome.runtime.sendMessage(msg);
+            send_message_with_spy(msg, "vr-host");
             dropped = false;
         }
 
@@ -710,7 +837,7 @@ export default defineBackground(() => {
                 console.error("not yet implemented!!!!!");
             } else {
                 // forward event to the active tab's content script
-                chrome.tabs.sendMessage(msg.tab, msg);
+                send_message_with_spy(msg, "cs", msg.tab);
             }
         });
     };

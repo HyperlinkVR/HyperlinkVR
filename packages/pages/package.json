@@ -8,6 +8,7 @@
         "./settings": "./src/settings.tsx",
         "./devtools": "./src/devtools/index.tsx",
         "./devtools/watch": "./src/devtools/watch.tsx",
+        "./devtools/spy": "./src/devtools/spy.tsx",
         "./devtools/form": "./src/devtools/form.tsx"
     },
     "scripts": {

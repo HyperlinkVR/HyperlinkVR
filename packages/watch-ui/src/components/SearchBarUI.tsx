@@ -1,6 +1,6 @@
 import { useDebounce, useSearchStore, useServiceURLs } from "@hyperlinkvr/react";
 import { Container, Text } from "@react-three/uikit";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 
 
@@ -21,10 +21,7 @@ export const SearchBarUI = ({search_mode, set_search_mode}: {search_mode: boolea
     const preload_slugs = useSearchStore((state) => state.preload_slugs);
 
     const is_search_loading = useSearchStore((state) => state.is_search_loading);
-    const is_search_loaded = useSearchStore((state) => state.is_search_loaded);
-
     const is_slug_loading = useSearchStore((state) => state.is_slug_loading);
-    const is_slug_loaded = useSearchStore((state) => state.is_slug_loaded);
 
     const search = useSearchStore((state) => state.search);
     const slug_prefix_search = useSearchStore((state) => state.slug_prefix_search);

@@ -364,6 +364,22 @@ interface TabClosedEvent extends BaseEventMessage { // TODO: rename to sessioncl
     tab: number; // TODO sbr
 }
 
+interface DevtoolsMessageSpyEvent extends BaseEventMessage {
+    type: "HVR_SPY";
+    message: Message;
+    context: "backend" | "sdk";
+    from: "backend" | "vr-host" | { tab?: number, url?: string } | {sdk_origin: string};
+    to?: "backend" | "vr-host" | "cs" | { tab?: number, url?: string } | {sdk_origin: string};
+    ts: number;
+}
+
+// pushed to the vr-host when a spy window opens/closes, so it only emits spy
+// events while something is actually watching. spying is presence-driven, not a setting.
+interface DevtoolsSpyStateEvent extends BaseEventMessage {
+    type: "HVR_SPY_STATE";
+    active: boolean;
+}
+
 interface WebSDKReadyEventMessage extends BaseWebSDKEventMessage {
     type: "HVRSDK_READY";
 }
@@ -396,6 +412,8 @@ export type EventMessage =
     URLUpdateEvent |
     MetaUpdateEvent |
     TabClosedEvent |
+    DevtoolsMessageSpyEvent |
+    DevtoolsSpyStateEvent |
     WebSDKEventMessage;
 
 interface WebSDKAuthQueryReplyMessage extends BaseWebSDKReplyMessage {
