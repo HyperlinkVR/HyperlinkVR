@@ -25,13 +25,15 @@
         "@hyperlinkvr/vr-engine": "workspace:*",
         "@hyperlinkvr/watch-ui": "workspace:*",
         "@hyperlinkvr/web-sdk": "workspace:*",
-        "@hyperlinkvr/web-sdk-handlers": "workspace:*",
+        "@hyperlinkvr/backend": "workspace:*",
         "lucide-react": "catalog:",
         "react": "catalog:",
         "react-dom": "catalog:",
-        "zod": "catalog:"
+        "zod": "catalog:",
+        "webextension-polyfill": "^0.12.0"
     },
     "devDependencies": {
+        "@types/webextension-polyfill": "^0.12.5",
         "@tailwindcss/vite": "catalog:",
         "@types/chrome": "^0.2.7",
         "@types/node": "catalog:",

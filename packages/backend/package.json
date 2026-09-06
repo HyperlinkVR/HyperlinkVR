@@ -1,5 +1,5 @@
 {
-    "name": "@hyperlinkvr/web-sdk-handlers",
+    "name": "@hyperlinkvr/backend",
     "version": "0.0.1",
     "private": true,
     "main": "src/index.ts",
@@ -11,6 +11,6 @@
     "dependencies": {
         "@hyperlinkvr/types": "workspace:*",
         "@hyperlinkvr/core": "workspace:*",
-        "@hyperlinkvr/auth": "workspace:*"
+        "@hyperlinkvr/web-sdk-handlers": "workspace:*"
     }
 }

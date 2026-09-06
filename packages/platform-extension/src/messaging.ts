@@ -1,14 +1,24 @@
-import browser from "webextension-polyfill";
-import type { MessageEngine, MessageChannel } from "@hyperlinkvr/core";
+import type { MessageChannel, MessageEngine, SenderInfo } from "@hyperlinkvr/core";
+import browser, { Runtime } from "webextension-polyfill";
+
+import MessageSender = Runtime.MessageSender;
+
 
 export class ExtensionMessageEngine implements MessageEngine {
     async send<Tx, Rx>(action: Tx): Promise<Rx> {
         return browser.runtime.sendMessage(action);
     }
 
-    listen<Rx>(handler: (event: Rx) => Promise<void> | void): () => void {
-        const listener = (message: any) => {
-            return handler(message as Rx);
+    listen<Rx, Tx>(handler: (event: Rx, sender: SenderInfo) => Promise<Tx | void>): () => void {
+        const listener = (message: any, sender: MessageSender, reply: (message: any) => void): true => {
+            handler(message as Rx, {...sender, tab_id: sender.tab?.id}).then(response => {
+                if (response) {
+                    reply(response);
+                }
+            })
+
+            // tell browser the response will be async if any
+            return true;
         };
 
         browser.runtime.onMessage.addListener(listener);
@@ -19,6 +29,7 @@ export class ExtensionMessageEngine implements MessageEngine {
         const port = browser.runtime.connect({ name: channel_name });
 
         return {
+            name: channel_name,
             send: async (payload: Tx) => {
                 port.postMessage(payload);
             },
@@ -36,12 +47,13 @@ export class ExtensionMessageEngine implements MessageEngine {
     }
 
     on_connect<Tx, Rx>(
-        channel_name: string,
+        channel_name: string | undefined,
         handler: (channel: MessageChannel<Rx, Tx>) => void
     ): () => void {
         const listener = (port: browser.Runtime.Port) => {
-            if (port.name === channel_name) {
+            if (!channel_name || port.name === channel_name) {
                 const channel: MessageChannel<Rx, Tx> = {
+                    name: port.name,
                     send: async (payload: Rx) => {
                         port.postMessage(payload);
                     },
