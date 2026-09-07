@@ -1,5 +1,5 @@
 import type { MessageChannel, MessageEngine, SenderInfo, StorageEngine, StorageKind } from "@hyperlinkvr/core";
-import type { Message, NamedEvent, NamedReply, WindowIntent } from "@hyperlinkvr/types";
+import type { ActionMessage, EventMessage, Message, NamedEvent, NamedReply, WebSDKActionMessage, WindowIntent } from "@hyperlinkvr/types";
 
 
 import { handle_web_sdk } from "@hyperlinkvr/web-sdk-handlers";
@@ -39,7 +39,7 @@ export abstract class BackendIntegrationEngine {
     abstract navigate_tab_back(tab_id: number): void;
 
     // should return window id
-    abstract create_window(params: {intent: WindowIntent; args?: Record<string, any>; width: number; height: number}): Promise<number>;
+    abstract create_window(params: {intent: WindowIntent; args?: Record<string, any>; width?: number; height?: number}): Promise<number>;
     abstract focus_window(window_id: number): void;
 
     abstract is_from_vr_host(sender: SenderInfo): boolean;
@@ -63,6 +63,13 @@ const is_sdk_message = (msg: Message): boolean => {
         ("for" in msg && msg.for && msg.for.startsWith("HVRSDK_"))
     );
 };
+
+const has_action = (msg: Message): msg is ActionMessage => "action" in msg;
+const is_event = (msg: Message): msg is EventMessage => "type" in msg;
+const is_web_sdk_action = (msg: Message): msg is WebSDKActionMessage =>
+    "action" in msg &&
+    typeof msg.action === "string" &&
+    msg.action.startsWith("HVRSDK_");
 
 export type HookPhase = "before" | /*"after" |*/ "alongside";
 export type HookPhasedEvent = "message" | "connect";
@@ -485,8 +492,8 @@ export class Backend {
             const dimensions_update = {
                 type: "HVR_DIMENSIONS_UPDATE",
                 tab: tab_id,
-                width: tab.width,
-                height: tab.height
+                width: tab.width ?? 0,
+                height: tab.height ?? 0
             } satisfies NamedEvent<"HVR_DIMENSIONS_UPDATE">;
 
             this.#spy_message(dimensions_update, "vr-host");
@@ -528,7 +535,7 @@ export class Backend {
 
                 // spy events emitted by other contexts (the vr-host's data channel) arrive here
                 // so the background can funnel them down the spy port(s); never processed further
-                if (msg.type === "HVR_SPY") {
+                if (is_event(msg) && msg.type === "HVR_SPY") {
                     this.#post_to_spy_ports(msg);
                     return;
                 }
@@ -546,12 +553,7 @@ export class Backend {
                 }
 
                 // handle web sdk messages (which expect direct replies for correlation)
-                if (
-                    "action" in msg &&
-                    msg.action &&
-                    msg.action.startsWith("HVRSDK_") &&
-                    msg.target !== "cs"
-                ) {
+                if (is_web_sdk_action(msg) && msg.target !== "cs") {
                     // any rtc lifecycle messages should be deferred to the rtc host instead to facilitate direct connection
                     if (msg.action.startsWith("HVRSDK_RTC_")) {
                         // authorize + stamp, then forward to the host explicitly.
@@ -720,7 +722,9 @@ export class Backend {
 
                         dropped = false;
                         return {
-                            error: error.message || "Unknown error"
+                            error:
+                                (error instanceof Error && error.message) ||
+                                "Unknown error"
                         };
                     }
 
@@ -730,7 +734,7 @@ export class Backend {
 
                 // handle messages meant directly for the background script
                 // TODO: clean up and use switch/command pattern
-                if (msg.action === "HVR_START_STREAM") {
+                if (has_action(msg) && msg.action === "HVR_START_STREAM") {
                     if (!this.#engines.backend_integration.start_screenshare) {
                         return {
                             success: false,
@@ -752,18 +756,20 @@ export class Backend {
                     this.#post_to_tab_sessions(msg.tab, {
                         type: "HVR_DIMENSIONS_UPDATE",
                         tab: msg.tab,
-                        width: tab.width,
-                        height: tab.height
+                        width: tab.width ?? 0,
+                        height: tab.height ?? 0
                     });
 
-                    this.#post_to_tab_sessions(msg.tab, {
-                        type: "HVR_URL_UPDATE",
-                        tab: msg.tab,
-                        url: tab.url
-                    });
+                    if (tab.url !== undefined) {
+                        this.#post_to_tab_sessions(msg.tab, {
+                            type: "HVR_URL_UPDATE",
+                            tab: msg.tab,
+                            url: tab.url
+                        });
+                    }
 
                     dropped = false;
-                } else if (msg.action === "HVR_LAUNCH") {
+                } else if (has_action(msg) && msg.action === "HVR_LAUNCH") {
                     if (!("tab" in msg) || !msg.tab) {
                         console.error("No tab specified for HVR_LAUNCH");
                         return;
@@ -781,13 +787,13 @@ export class Backend {
                     this.launch_vr_host(msg.tab);
 
                     dropped = false;
-                } else if (msg.action === "HVR_CLICK") {
+                } else if (has_action(msg) && msg.action === "HVR_CLICK") {
                     this.#handle_click(msg);
                     dropped = false;
-                } else if (msg.action === "HVR_CREATE_WINDOW") {
+                } else if (has_action(msg) && msg.action === "HVR_CREATE_WINDOW") {
                     this.#engines.backend_integration.create_window(msg);
                     dropped = false;
-                } else if (msg.action === "HVR_NAVIGATE") {
+                } else if (has_action(msg) && msg.action === "HVR_NAVIGATE") {
                     if (!msg.url || !msg.tab) {
                         console.error(
                             "No url or tab specified for HVR_NAVIGATE"
@@ -801,7 +807,7 @@ export class Backend {
                     this.#engines.backend_integration.navigate_tab(msg.tab, msg.url);
 
                     dropped = false;
-                } else if (msg.action === "HVR_NAV_CONSENT") {
+                } else if (has_action(msg) && msg.action === "HVR_NAV_CONSENT") {
                     if (!msg.tab || !msg.url) {
                         console.error(
                             "No tab or url specified for HVR_NAV_CONSENT"
@@ -814,7 +820,7 @@ export class Backend {
                     this.#try_notify_ready(msg.tab);
 
                     dropped = false;
-                } else if (msg.action === "HVR_NAV_BACK") {
+                } else if (has_action(msg) && msg.action === "HVR_NAV_BACK") {
                     if (!msg.tab) {
                         console.error("No tab specified for HVR_NAV_BACK");
                         return;
@@ -869,10 +875,12 @@ export class Backend {
         });
     };
 
-    notify_navigation = (tab: { id: number; url: string }) => {
+    notify_navigation = (tab: { id?: number; url?: string }) => {
         // a real document is committing (navigation or reload). this fires before
         // the page's content scripts run, so gating here beats the QUERY_READY race.
         // reloads may omit changeInfo.url, so classify off tab.url.
+        if (tab.id === undefined) return;
+
         if (this.#active_session?.tab_id === tab.id) {
             this.#active_session.ready_notified = false;
         }

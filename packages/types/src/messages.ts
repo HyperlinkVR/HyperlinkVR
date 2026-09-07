@@ -7,7 +7,11 @@ import type { WindowArguments, WindowIntent } from "./windowing";
 
 
 interface BaseMessage {
-
+    // optional backend routing. best effort request only
+    target?: "cs" | "vr-host" | "backend";
+    stamped?: boolean;
+    origin?: string;
+    tab?: number;
 }
 
 
@@ -91,6 +95,11 @@ interface WebSDKAuthWhoAmIAction extends BaseWebSDKActionMessage {
 
 interface WebSDKRTCRequestAction extends BaseWebSDKActionMessage {
     action: "HVRSDK_RTC_REQUEST";
+}
+
+interface WebSDKQueryReadyAction extends BaseWebSDKActionMessage {
+    // pull, for late-loading content scripts: is the VR host ready for this tab yet?
+    action: "HVRSDK_QUERY_READY";
 }
 
 interface WebSDKRTCIceCandidateAction extends BaseWebSDKActionMessage {
@@ -285,6 +294,7 @@ export type WebSDKActionMessage =
     WebSDKAuthQueryAction
     | WebSDKAuthWhoAmIAction
     | WebSDKRTCRequestAction
+    | WebSDKQueryReadyAction
     | WebSDKRTCIceCandidateAction
     | WebSDKRTCAnswerAction
     | WebSDKCreateEngineObjectAction
@@ -332,7 +342,7 @@ export type ActionMessage =
 
 interface StreamEvent extends BaseEventMessage {
     type: "HVR_STREAM";
-    stream: number;
+    stream: string; // platform stream id (e.g. chrome.desktopCapture)
     tab: number; // TODO sbr
 }
 

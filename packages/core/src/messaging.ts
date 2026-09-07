@@ -5,7 +5,8 @@ export interface MessageChannel<Tx = ActionMessage, Rx = EventMessage> {
 
     send(payload: Tx): Promise<void>;
 
-    listen(handler: (payload: Rx) => void): void;
+    // returns a function to remove the listener
+    listen(handler: (payload: Rx) => void): () => void;
 
     on_disconnect(handler: () => void): () => void;
 
