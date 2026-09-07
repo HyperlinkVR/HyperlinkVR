@@ -27,7 +27,7 @@ Singleplayer, to support a handful of games
 
 ## Epic A - Browser runtime
 
-- [ ] Make extension background script a generic package where platform specific impls are slotted in, making porting easy (RTC signaling/host-discovery. etc)
+- [x] Make extension background script a generic package where platform specific impls are slotted in, making porting easy (RTC signaling/host-discovery. etc)
 - [ ] BrowserMessageEngine implementing MessageEngine, slotted beside ExtensionMessageEngine
 - [ ] Publish @hyperlinkvr/web-sdk to npm (runtime + TS declarations in the package)
 - [ ] Version the SDK message/schema contract (vr-engine-schemas) explicitly
