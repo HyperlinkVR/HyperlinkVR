@@ -48,7 +48,7 @@ export default defineBackground(async () => {
         return url.href;
     };
 
-    class ExtensionBackendIntegration extends BackendIntegrationEngine {
+    class ExtensionBackendIntegration implements BackendIntegrationEngine {
         #args_strategy = new URLParamsWindowArgumentsStrategy();
 
         async create_window(params: {
@@ -63,12 +63,8 @@ export default defineBackground(async () => {
                 throw new Error(`Unknown intent ${params.intent}`);
             }
 
-            const serialised_args = params.args
-                ? "?" + this.#args_strategy.serialise(params.args)
-                : "";
-
             const win = await browser.windows.create({
-                url: `${url}${serialised_args}`,
+                url: params.args ? this.#args_strategy.serialise(params.args, {url}) : url,
                 type: "popup",
                 width: params.width,
                 height: params.height

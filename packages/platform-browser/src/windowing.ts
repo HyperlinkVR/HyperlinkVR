@@ -6,8 +6,13 @@ export class URLParamsWindowArgumentsStrategy implements WindowArgumentsStrategy
         return window.location.search.substring(1);
     }
     
-    serialise(args: WindowArguments): string {
-        return new URLSearchParams(args).toString();
+    serialise(args: WindowArguments, opts?: {url?: string}): string {
+        const serialised = new URLSearchParams(args).toString();
+        if (!opts?.url) {
+            return serialised;
+        }
+
+        return `${opts.url}?${serialised}`;
     }
     
     deserialise(serialised: string): WindowArguments {

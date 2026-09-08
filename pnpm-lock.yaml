@@ -306,6 +306,9 @@ importers:
 
   apps/website:
     dependencies:
+      '@hyperlinkvr/backend':
+        specifier: workspace:*
+        version: link:../../packages/backend
       '@hyperlinkvr/core':
         specifier: workspace:*
         version: link:../../packages/core
@@ -321,6 +324,9 @@ importers:
       '@hyperlinkvr/styles':
         specifier: workspace:*
         version: link:../../packages/styles
+      '@hyperlinkvr/types':
+        specifier: workspace:*
+        version: link:../../packages/types
       '@hyperlinkvr/ui-dom':
         specifier: workspace:*
         version: link:../../packages/ui-dom
