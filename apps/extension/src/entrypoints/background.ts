@@ -20,10 +20,10 @@ export default defineBackground(async () => {
     const WINDOW_INTENTS = {
         VR_HOST: "/vr_host.html",
         LOGIN: "/login.html",
-        DEVTOOLS: "/devtools/index.html",
-        DEVTOOLS_FORM: "/devtools/form.html",
-        DEVTOOLS_WATCH_UI: "/devtools/watch.html",
-        DEVTOOLS_SPY: "/devtools/spy.html"
+        DEVTOOLS: "/devtools.html",
+        DEVTOOLS_FORM: "/devtools-form.html",
+        DEVTOOLS_WATCH_UI: "/devtools-watch.html",
+        DEVTOOLS_SPY: "/devtools-spy.html"
     } as Record<WindowIntent, string>;
 
     const REAL_HOST_URL = new URL(WINDOW_INTENTS.VR_HOST, location.href).href;
