@@ -2,7 +2,7 @@ import "~/shared.css";
 
 import {
     ExtensionMessageEngine,
-    ExtensionStorage
+    ExtensionStorageEngine
 } from "@hyperlinkvr/platform-extension";
 import { useSettingWithEngines } from "@hyperlinkvr/react";
 import {ProfileButton} from "@hyperlinkvr/ui-dom";
@@ -29,9 +29,9 @@ const Popup = () => {
         setTimeout(() => setActive(true), 100);
     }, []);
 
-    const local_storage = useMemo(() => new ExtensionStorage("local"), []);
-    const sync_storage = useMemo(() => new ExtensionStorage("sync"), []);
-    const session_storage = useMemo(() => new ExtensionStorage("session"), []);
+    const local_storage = useMemo(() => new ExtensionStorageEngine("local"), []);
+    const sync_storage = useMemo(() => new ExtensionStorageEngine("sync"), []);
+    const session_storage = useMemo(() => new ExtensionStorageEngine("session"), []);
     const storage_engines = useMemo(
         () => ({
             local: local_storage,

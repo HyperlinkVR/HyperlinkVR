@@ -5,7 +5,7 @@ import browser from "webextension-polyfill";
 
 
 
-export class ExtensionStorage<T extends StorageKind> implements StorageEngine {
+export class ExtensionStorageEngine<T extends StorageKind> implements StorageEngine {
     readonly kind: T;
 
     constructor(kind: T) {

@@ -15,6 +15,11 @@
     "dependencies": {
         "@hyperlinkvr/ui-dom": "workspace:*",
         "@hyperlinkvr/styles": "workspace:*",
+        "@hyperlinkvr/react": "workspace:*",
+        "@hyperlinkvr/vr-engine": "workspace:*",
+        "@hyperlinkvr/platform-browser": "workspace:*",
+        "@hyperlinkvr/core": "workspace:*",
+        "@hyperlinkvr/pages": "workspace:*",
         "react": "catalog:",
         "react-dom": "catalog:",
         "lucide-react": "catalog:"

@@ -1,7 +1,7 @@
 import { Backend, BackendIntegrationEngine } from "@hyperlinkvr/backend";
 import type { SenderInfo } from "@hyperlinkvr/core";
 import { URLParamsWindowArgumentsStrategy } from "@hyperlinkvr/platform-browser";
-import { ExtensionMessageEngine, ExtensionStorage } from "@hyperlinkvr/platform-extension";
+import { ExtensionMessageEngine, ExtensionStorageEngine } from "@hyperlinkvr/platform-extension";
 import type { Message, WindowIntent } from "@hyperlinkvr/types";
 import { defineBackground } from "#imports";
 import browser from "webextension-polyfill";
@@ -20,10 +20,10 @@ export default defineBackground(async () => {
     const WINDOW_INTENTS = {
         VR_HOST: "/vr_host.html",
         LOGIN: "/login.html",
-        DEVTOOLS: "/devtools.html",
-        DEVTOOLS_FORM: "/devtools-form.html",
-        DEVTOOLS_WATCH_UI: "/devtools-watch.html",
-        DEVTOOLS_SPY: "/devtools-spy.html"
+        DEVTOOLS: "/devtools/index.html",
+        DEVTOOLS_FORM: "/devtools/form.html",
+        DEVTOOLS_WATCH_UI: "/devtools/watch.html",
+        DEVTOOLS_SPY: "/devtools/spy.html"
     } as Record<WindowIntent, string>;
 
     const REAL_HOST_URL = new URL(WINDOW_INTENTS.VR_HOST, location.href).href;
@@ -136,9 +136,9 @@ export default defineBackground(async () => {
     const integration = new ExtensionBackendIntegration();
 
     const storage_engines = {
-        local: new ExtensionStorage("local"),
-        sync: new ExtensionStorage("sync"),
-        session: new ExtensionStorage("session")
+        local: new ExtensionStorageEngine("local"),
+        sync: new ExtensionStorageEngine("sync"),
+        session: new ExtensionStorageEngine("session")
     };
 
     const message_engine = new ExtensionMessageEngine();

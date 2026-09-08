@@ -1,8 +1,8 @@
-import "~/shared.css";
+import "~shared.css";
 
 import { DevToolsWatchPage } from "@hyperlinkvr/pages/devtools/watch";
 import ReactDOM from "react-dom/client";
-import { DefaultContextProviders } from "~/contexts/DefaultContextProviders";
+import { DefaultContextProviders } from "~contexts/DefaultContextProviders.tsx";
 
 const DevToolsWatchUI = () => {
     return (

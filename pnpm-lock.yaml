@@ -306,12 +306,27 @@ importers:
 
   apps/website:
     dependencies:
+      '@hyperlinkvr/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@hyperlinkvr/pages':
+        specifier: workspace:*
+        version: link:../../packages/pages
+      '@hyperlinkvr/platform-browser':
+        specifier: workspace:*
+        version: link:../../packages/platform-browser
+      '@hyperlinkvr/react':
+        specifier: workspace:*
+        version: link:../../packages/react
       '@hyperlinkvr/styles':
         specifier: workspace:*
         version: link:../../packages/styles
       '@hyperlinkvr/ui-dom':
         specifier: workspace:*
         version: link:../../packages/ui-dom
+      '@hyperlinkvr/vr-engine':
+        specifier: workspace:*
+        version: link:../../packages/vr-engine
       lucide-react:
         specifier: 'catalog:'
         version: 1.21.0(react@19.2.7)

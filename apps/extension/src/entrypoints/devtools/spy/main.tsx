@@ -1,8 +1,8 @@
-import "~/shared.css";
+import "~shared.css";
 
 import { DevToolsSpyPage } from "@hyperlinkvr/pages/devtools/spy";
 import ReactDOM from "react-dom/client";
-import { DefaultContextProviders } from "~/contexts/DefaultContextProviders";
+import { DefaultContextProviders } from "~contexts/DefaultContextProviders.tsx";
 
 const DevToolsSpyUI = () => {
     return (
