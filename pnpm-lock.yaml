@@ -333,6 +333,9 @@ importers:
       '@hyperlinkvr/vr-engine':
         specifier: workspace:*
         version: link:../../packages/vr-engine
+      '@hyperlinkvr/web-sdk':
+        specifier: workspace:*
+        version: link:../../packages/web-sdk
       lucide-react:
         specifier: 'catalog:'
         version: 1.21.0(react@19.2.7)
@@ -343,9 +346,6 @@ importers:
         specifier: 'catalog:'
         version: 19.2.7(react@19.2.7)
     devDependencies:
-      '@hyperlinkvr/web-sdk':
-        specifier: workspace:*
-        version: link:../../packages/web-sdk
       '@tailwindcss/vite':
         specifier: 'catalog:'
         version: 4.3.1(vite@8.1.0(esbuild@0.28.1)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.26))(terser@5.51.2)(tsx@4.22.4)(yaml@2.9.0))

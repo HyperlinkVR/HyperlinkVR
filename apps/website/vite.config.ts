@@ -72,7 +72,7 @@ export default defineConfig({
                 play_devtools: page("play", "windows", "devtools", "index.html"),
                 play_devtools_form: page("play", "windows", "devtools", "form", "index.html"),
                 play_devtools_spy: page("play", "windows", "devtools", "spy", "index.html"),
-                play_devtools_watch: page("play", "windows", "devtools", "watch", "index.html"),
+                play_devtools_watch: page("play", "windows", "devtools", "watch", "index.html")
             }
         }
     }

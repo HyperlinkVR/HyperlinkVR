@@ -6,9 +6,9 @@
     "description": "Static site and official worlds.",
     "scripts": {
         "sync:ui-dom": "turbo run build:web --filter=@hyperlinkvr/ui-dom && shx cp -r ../../packages/ui-dom/dist/. ./public/ui-dom/",
-        "dev": "pnpm run sync:ui-dom && vite",
-        "build": "pnpm run sync:ui-dom && vite build",
-        "build:web": "vite build",
+        "dev": "pnpm run sync:ui-dom && node build.js --dev",
+        "build": "pnpm run sync:ui-dom && node build.js",
+        "build:web": "node build.js",
         "preview": "vite preview",
         "typecheck": "tsc --noEmit"
     },
@@ -22,6 +22,7 @@
         "@hyperlinkvr/core": "workspace:*",
         "@hyperlinkvr/types": "workspace:*",
         "@hyperlinkvr/pages": "workspace:*",
+        "@hyperlinkvr/web-sdk": "workspace:*",
         "react": "catalog:",
         "react-dom": "catalog:",
         "lucide-react": "catalog:"

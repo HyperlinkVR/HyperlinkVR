@@ -9,7 +9,7 @@ export const get_args_strategy = () => new URLParamsWindowArgumentsStrategy();
 
 // only supports 1 hypothetical tab for now. could support more in future but doesnt make much sense ux wise
 // TODO: although, do the tab functions ever get called for stuff like devtools windows? double check first
-const SINGLE_TAB_ID = -1;
+export const SINGLE_TAB_ID = -1;
 
 // executed in order, with the first to return a value the ultimate response
 // TODO: is there a smarter way? should it be filtered by type? or should the app decide?
@@ -167,12 +167,14 @@ class BrowserBackendIntegration implements BackendIntegrationEngine {
     // TODO: explore screensharing options that wont need prompt (or could be granted once off) or perhaps use the extension as a thin assistant
 }
 
+export const message_engine = new BrowserMessageEngine();
+
 export const backend = new Backend({
     storage: {
         local: new BrowserStorageEngine("local"),
         sync: new BrowserStorageEngine("sync"),
         session: new BrowserStorageEngine("session")
     },
-    message: new BrowserMessageEngine(),
+    message: message_engine,
     backend_integration: new BrowserBackendIntegration()
 });

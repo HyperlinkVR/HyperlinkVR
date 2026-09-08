@@ -83,54 +83,49 @@ export type HookSpec = HookPhasedSpec | HookOneshotSpec;
 
 export class Backend {
     readonly #engines: Engines;
-    readonly #hooks: Partial<Record<HookSpec, Set<Function>>>;
+    readonly #hooks: Partial<Record<HookSpec, Set<Function>>> = {};
 
     constructor(
         engines: Engines,
-        hooks: Partial<Record<HookSpec, Set<Function>>> = {}
     ) {
         this.#engines = engines;
 
         // bind listeners
         this.#engines.message.on_connect(undefined, this.#on_connect);
         this.#engines.message.listen(this.#on_message);
-
-        this.#hooks = hooks;
-        Object.entries(hooks).forEach(([spec, callbacks]) => {
-            if (spec.startsWith("alongside")) {
-                callbacks.forEach((callback) =>
-                    this.#bind_alongside_hook(
-                        spec.replace("alongside-", "") as HookPhasedEvent,
-                        callback
-                    )
-                );
-            }
-        });
     }
 
     #bind_alongside_hook = (event: HookPhasedEvent, callback: Function) => {
         switch (event) {
             case "message":
-                this.#engines.message.listen(callback as any);
-                break;
+                return this.#engines.message.listen(callback as any);
             case "connect":
-                this.#engines.message.on_connect(undefined, callback as any);
-                break;
+                return this.#engines.message.on_connect(undefined, callback as any);
         }
     };
 
     add_hook = (spec: HookSpec, callback: Function) => {
         if (!this.#hooks[spec]) {
-            this.#hooks[spec] = new Set<Function>();
+            this.#hooks[spec] = new Set();
         }
-        this.#hooks[spec]!.add(callback);
 
+        let cleanup: (() => void) | undefined = undefined;
         if (spec.startsWith("alongside")) {
-            this.#bind_alongside_hook(
+            cleanup = this.#bind_alongside_hook(
                 spec.replace("alongside-", "") as HookPhasedEvent,
                 callback
             );
         }
+
+        this.#hooks[spec]!.add(callback);
+
+        return () => {
+            if (cleanup) {
+                cleanup();
+            }
+
+            this.#hooks[spec]!.delete(callback);
+        };
     };
 
     // only one vr host is allowed at a time to prevent sync issues

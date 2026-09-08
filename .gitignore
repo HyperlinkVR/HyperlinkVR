@@ -46,3 +46,4 @@ dist/
 schemas
 
 apps/website/public/ui-dom/
+!apps/website/build.js

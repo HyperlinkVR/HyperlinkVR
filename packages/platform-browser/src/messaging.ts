@@ -99,7 +99,7 @@ const wrap_message_port = <Tx, Rx>(
 };
 
 export class BrowserMessageEngine implements MessageEngine {
-    readonly #target_window: Window;
+    #target_window: Window;
     readonly #target_origin: string;
 
     constructor(
@@ -108,6 +108,10 @@ export class BrowserMessageEngine implements MessageEngine {
     ) {
         this.#target_window = target_window;
         this.#target_origin = target_origin;
+    }
+
+    set_target_window = (target: Window) => {
+        this.#target_window = target;
     }
 
     send = async <Tx, Rx>(action: Tx): Promise<Rx> => {
