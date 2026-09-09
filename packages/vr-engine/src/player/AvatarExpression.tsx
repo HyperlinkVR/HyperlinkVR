@@ -1,17 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader";
-import type { GLTF} from "three/examples/jsm/loaders/GLTFLoader";
+import type { GLTF } from "three/examples/jsm/loaders/GLTFLoader";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 
 
 
-import { useAvatarMaterials } from "../contexts";
 import type { ExpressionEyes} from "../contexts/PlayerExpressionContext";
 import { expression_eyes_options, expression_mouth_options, usePlayerExpression } from "../contexts/PlayerExpressionContext";
 import { Layer, LayerGroup } from "../render";
+import { DRACO_DECODER_PATH } from "../loader-config";
+import { useAvatarMaterials } from "../contexts";
 
-
-const decompressor = new DRACOLoader();
+const decompressor = new DRACOLoader().setDecoderPath(DRACO_DECODER_PATH);
 const loader = new GLTFLoader().setDRACOLoader(decompressor);
 const load_glbs = async (url_map: Record<string, string>, glb_names: readonly string[]) => {
     const glb_promises: Promise<GLTF>[] = [];
