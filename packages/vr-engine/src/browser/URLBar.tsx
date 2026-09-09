@@ -4,11 +4,6 @@ import { configureTextBuilder } from "troika-three-text";
 
 import { useWorldSession } from "@hyperlinkvr/react";
 
-// its not happy! turn off web workers
-configureTextBuilder({
-    useWorker: false
-});
-
 export const URLBar = ({position, height, height_of_dom_mirror}: {position: [number, number, number]; height: number; height_of_dom_mirror: number}) => {
     const session = useWorldSession();
     const [width, setWidth] = useState(0);

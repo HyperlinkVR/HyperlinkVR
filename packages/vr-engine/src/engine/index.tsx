@@ -71,10 +71,7 @@ import { EngineObjectSync } from "./EngineObjectSync";
 import { FlatLoadingScreen, VRLoadingScreen } from "./LoadingScreen";
 import { FlatNavConsentGate, useNavConsent, VRNavConsentGate } from "./NavConsentGate";
 
-
-configureTextBuilder({
-    useWorker: false
-});
+import "../loader-config";
 
 export const xr_store = createXRStore({
     controller: XRAvatarHand,
