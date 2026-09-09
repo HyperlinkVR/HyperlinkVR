@@ -22,6 +22,7 @@
         "@hyperlinkvr/core": "workspace:*",
         "@hyperlinkvr/types": "workspace:*",
         "@hyperlinkvr/pages": "workspace:*",
+        "@hyperlinkvr/sdk-forwarder": "workspace:*",
         "@hyperlinkvr/web-sdk": "workspace:*",
         "react": "catalog:",
         "react-dom": "catalog:",

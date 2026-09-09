@@ -1,18 +1,18 @@
 import { Backend, type BackendIntegrationEngine } from "@hyperlinkvr/backend";
 import type { SenderInfo } from "@hyperlinkvr/core";
 import { BrowserMessageEngine, BrowserStorageEngine, URLParamsWindowArgumentsStrategy } from "@hyperlinkvr/platform-browser";
+import { create_sdk_forwarder } from "@hyperlinkvr/sdk-forwarder";
 import type { Message, WindowIntent } from "@hyperlinkvr/types";
 
 
+const args_strategy = new URLParamsWindowArgumentsStrategy();
 
-
-
-export const get_args_strategy = () => new URLParamsWindowArgumentsStrategy();
+export const get_args_strategy = () => args_strategy;
 
 
 // only supports 1 hypothetical tab for now. could support more in future but doesnt make much sense ux wise
 // TODO: although, do the tab functions ever get called for stuff like devtools windows? double check first
-export const SINGLE_TAB_ID = -1;
+export const SINGLE_TAB_ID = 1;
 
 let current_url: string | undefined = undefined;
 let width: number | undefined = undefined;
@@ -34,33 +34,117 @@ export const set_navigate_back_callback = (callback: () => void) => {
     navigate_back_callback = callback;
 }
 
-interface CreateWindowParams {
-    intent: WindowIntent;
-    args?: Record<string, any>;
-    width?: number;
-    height?: number;
-}
+const WINDOW_INTENTS: Partial<Record<WindowIntent, string>> = {
+    VR_HOST: "/play/windows/vr_host/",
+    DEVTOOLS: "/play/windows/devtools/",
+    DEVTOOLS_FORM: "/play/windows/devtools/form/",
+    DEVTOOLS_WATCH_UI: "/play/windows/devtools/watch/",
+    DEVTOOLS_SPY: "/play/windows/devtools/spy/"
+    // LOGIN has no play window as signing in will happen on the real site
+};
 
-let create_window_callback: ((params: CreateWindowParams) => Promise<number>) | null = null;
+const window_url = (intent: WindowIntent, args?: Record<string, any>): string | null => {
+    const path = WINDOW_INTENTS[intent];
+    if (!path) {
+        console.error("No play window for intent:", intent);
+        return null;
+    }
 
-export const set_create_window_callback = (callback: (params: CreateWindowParams) => Promise<number>) => {
-    create_window_callback = callback;
-}
+    const url = new URL(path, location.href).href;
+    return args ? args_strategy.serialise(args, { url }) : url;
+};
 
-let focus_window_callback: ((window_id: number) => void) | null = null;
+const VR_HOST_URL = window_url("VR_HOST")!;
 
-export const set_focus_window_callback = (callback: (window_id: number) => void) => {
-    focus_window_callback = callback;
-}
+export const host_message_engine = new BrowserMessageEngine({
+    sender: { url: VR_HOST_URL, origin: location.origin }
+});
 
-// TODO: are these callbacks a smell? should the integration class be decomposed somehow (or replaced fully wiht callbacks)
-// or worst case should it be passed in to a function that defers creation of backend (but may as well just pass the integration class atp
-// lets just wait to see how the browser port gets implemented to decide
+export const attach_host_window = (host_window: Window) => {
+    host_message_engine.set_target_window(host_window);
+};
 
-const VR_HOST_URL = new URL("/play/windows/vr_host", location.href).href;
+let next_window_id = 1;
+const open_windows = new Map<number, Window>();
+let window_watch: ReturnType<typeof setInterval> | null = null;
 
-export const content_message_engine = new BrowserMessageEngine();
-export const host_message_engine = new BrowserMessageEngine();
+const watch_open_windows = () => {
+    if (window_watch !== null) return;
+
+    window_watch = setInterval(() => {
+        for (const [id, win] of open_windows) {
+            if (!win.closed) continue;
+
+            open_windows.delete(id);
+            host_message_engine.remove_peer(win);
+            backend.notify_window_closed(id);
+        }
+
+        if (open_windows.size === 0 && window_watch !== null) {
+            clearInterval(window_watch);
+            window_watch = null;
+        }
+    }, 1000);
+};
+
+
+let content_window: Window | null = null;
+
+const content_page_handlers = new Set<(data: unknown) => void>();
+const backend_page_handlers = new Set<(message: Message) => void>();
+
+window.addEventListener("message", (event) => {
+    // any origin, but only ever the one frame we handed to the user
+    if (!content_window || event.source !== content_window) {
+        return;
+    }
+
+    content_page_handlers.forEach((handler) => handler(event.data));
+});
+
+const content_sender = (): SenderInfo => {
+    let origin: string | undefined;
+    try {
+        origin = current_url ? new URL(current_url).origin : undefined;
+    } catch {
+        origin = undefined;
+    }
+
+    return { tab_id: SINGLE_TAB_ID, url: current_url, origin };
+};
+
+const forwarder = create_sdk_forwarder({
+    on_page_message: (handler) => {
+        content_page_handlers.add(handler);
+        return () => content_page_handlers.delete(handler);
+    },
+
+    post_to_page: (message) => {
+        content_window?.postMessage(message, "*");
+    },
+
+    send_to_backend: (message) => host_message_engine.deliver(message, content_sender()),
+
+    on_backend_message: (handler) => {
+        backend_page_handlers.add(handler);
+        return () => backend_page_handlers.delete(handler);
+    },
+
+    page_url: () => current_url
+});
+
+export const attach_content_window = (win: Window) => {
+    content_window = win;
+};
+
+export const notify_content_loaded = () => {
+    // any grace we granted for this navigation is spent, so the next one is re-checked
+    backend.notify_document_finished_loading(SINGLE_TAB_ID);
+
+    // the host may already be up, in which case the ready edge fired before this document existed
+    forwarder.query_ready();
+};
+
 
 class BrowserBackendIntegration implements BackendIntegrationEngine {
     async get_tab_info(
@@ -84,8 +168,10 @@ class BrowserBackendIntegration implements BackendIntegrationEngine {
             return null;
         }
 
-        // just use the content message engine as it'll already point to the right tab
-        return content_message_engine.send(message);
+        backend_page_handlers.forEach((handler) => handler(message));
+
+        // a cross-origin frame has no reply path for pushes like this, and nothing awaits one
+        return null;
     }
 
     navigate_tab(tab_id: number, new_url: string): void {
@@ -120,33 +206,53 @@ class BrowserBackendIntegration implements BackendIntegrationEngine {
         width?: number;
         height?: number;
     }): Promise<number> {
+        // TODO: window.open not ideal, might be better to handle in dom contextually
+        // tbh the windowing could be optional, the game doenst call this, just the extension, so could just handle via links manually
+
         if (params.intent === "VR_HOST") {
             console.warn("Dropping create for VR_HOST intent");
             return -1;
         }
 
-        if (!create_window_callback) {
-            throw new Error("No callback set for windowing");
+        const url = window_url(params.intent, params.args);
+        if (!url) {
+            throw new Error(`Unknown intent ${params.intent}`);
         }
 
-        return create_window_callback(params);
+        const features = [
+            "popup=yes",
+            params.width ? `width=${params.width}` : "",
+            params.height ? `height=${params.height}` : ""
+        ]
+            .filter(Boolean)
+            .join(",");
+
+        const win = window.open(url, "_blank", features);
+        if (!win) {
+            throw new Error("Failed to create window (likely blocked by the popup blocker)");
+        }
+
+        const id = next_window_id++;
+        open_windows.set(id, win);
+
+        host_message_engine.add_peer(win, { url, origin: location.origin });
+        watch_open_windows();
+
+        return id;
     }
 
     focus_window(window_id: number): void {
-        if (window_id === -1) {
-            console.warn("Dropping focus for bogus window ID");
+        const win = open_windows.get(window_id);
+        if (!win) {
+            console.warn("Dropping focus for unknown window ID", window_id);
             return;
         }
 
-        if (!focus_window_callback) {
-            throw new Error("No callback set for window focusing");
-        }
-
-        focus_window_callback(window_id);
+        win.focus();
     }
 
     is_from_vr_host(sender: SenderInfo): boolean {
-        return (sender.url && sender.url === VR_HOST_URL) || false;
+        return (sender.url && sender.url.startsWith(VR_HOST_URL)) || false;
     }
     // TODO: explore screensharing options that wont need prompt (or could be granted once off) or perhaps use the extension as a thin assistant
 }
@@ -167,4 +273,9 @@ backend.launch_vr_host(SINGLE_TAB_ID);
 export const set_current_url = (url: string) => {
     current_url = url;
     backend.notify_navigation({id: SINGLE_TAB_ID, url});
+};
+
+export const navigate_from_ui = (url: string) => {
+    backend.grant_navigation_grace(SINGLE_TAB_ID);
+    navigate_callback?.(url);
 };

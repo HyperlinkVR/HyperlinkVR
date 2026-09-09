@@ -233,6 +233,9 @@ importers:
       '@hyperlinkvr/react':
         specifier: workspace:*
         version: link:../../packages/react
+      '@hyperlinkvr/sdk-forwarder':
+        specifier: workspace:*
+        version: link:../../packages/sdk-forwarder
       '@hyperlinkvr/styles':
         specifier: workspace:*
         version: link:../../packages/styles
@@ -321,6 +324,9 @@ importers:
       '@hyperlinkvr/react':
         specifier: workspace:*
         version: link:../../packages/react
+      '@hyperlinkvr/sdk-forwarder':
+        specifier: workspace:*
+        version: link:../../packages/sdk-forwarder
       '@hyperlinkvr/styles':
         specifier: workspace:*
         version: link:../../packages/styles
@@ -581,6 +587,12 @@ importers:
       tailwind-preset-mantine:
         specifier: 'catalog:'
         version: 4.1.0(@mantine/core@7.17.8(@mantine/hooks@7.17.8(react@19.2.7))(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(tailwindcss@4.3.1)
+
+  packages/sdk-forwarder:
+    dependencies:
+      '@hyperlinkvr/types':
+        specifier: workspace:*
+        version: link:../types
 
   packages/search-client:
     dependencies:

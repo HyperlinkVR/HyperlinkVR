@@ -9,3 +9,5 @@ export type WindowIntent =
 
 // TODO: type per intent
 export type WindowArguments = Record<string, any>;
+
+export const CONTENT_FRAME_NAME = "hvr-content-frame";

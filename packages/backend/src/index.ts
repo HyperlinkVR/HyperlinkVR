@@ -870,6 +870,10 @@ export class Backend {
         });
     };
 
+    grant_navigation_grace = (tab_id: number) => {
+        this.#nav_grace.add(tab_id);
+    };
+
     notify_navigation = (tab: { id?: number; url?: string }) => {
         // a real document is committing (navigation or reload). this fires before
         // the page's content scripts run, so gating here beats the QUERY_READY race.

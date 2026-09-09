@@ -1,3 +1,4 @@
+import { CONTENT_FRAME_NAME } from "@hyperlinkvr/types";
 import type {
     NamedWebSDKAction,
     NamedWebSDKEvent,
@@ -8,6 +9,15 @@ import type {
     WithCorrelation
 } from "@hyperlinkvr/types";
 
+
+// where outbound sdk messages go. under the extension a content script shares this window and
+// relays, so posting to ourselves is right. in the browser port we're a cross-origin frame that
+// nothing can be injected into, so the forwarder lives in the parent and we post up to it.
+// replies come back into this window either way, so only the send target ever differs.
+const message_target = (): Window =>
+    window.parent !== window && window.name === CONTENT_FRAME_NAME
+        ? window.parent
+        : window;
 
 let rtc_data_channel: RTCDataChannel | null = null;
 export const send_via_messaging = async <T extends WebSDKActionName>(
@@ -41,7 +51,7 @@ export const send_via_messaging = async <T extends WebSDKActionName>(
         };
 
         window.addEventListener("message", handle_message);
-        window.postMessage(message_with_correlation, "*");
+        message_target().postMessage(message_with_correlation, "*");
     });
 };
 
