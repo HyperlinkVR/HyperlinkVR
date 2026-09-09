@@ -1,4 +1,4 @@
-import { CONTENT_FRAME_NAME } from "@hyperlinkvr/types";
+import { CONTENT_FRAME_NAME } from "@hyperlinkvr/types/windowing";
 import type {
     NamedWebSDKAction,
     NamedWebSDKEvent,
@@ -53,6 +53,13 @@ export const send_via_messaging = async <T extends WebSDKActionName>(
         window.addEventListener("message", handle_message);
         message_target().postMessage(message_with_correlation, "*");
     });
+};
+
+// oneshot without correlation TODO: move other stuff that doesnt need correl here
+export const notify_via_messaging = <T extends WebSDKActionName>(
+    message: NamedWebSDKAction<T>
+) => {
+    message_target().postMessage(message, "*");
 };
 
 type EventListenerMap = {

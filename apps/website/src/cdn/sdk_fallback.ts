@@ -1,4 +1,4 @@
-import { CONTENT_FRAME_NAME } from "@hyperlinkvr/types";
+import { CONTENT_FRAME_NAME } from "@hyperlinkvr/types/windowing";
 
 const global_window = window as { hyperlinkvr?: unknown };
 

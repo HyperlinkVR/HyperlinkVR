@@ -9,6 +9,7 @@ export * as markers from "./re-exports/markers";
 export * as players from "./re-exports/players";
 export * as world from "./world";
 
+import { report_meta } from "./meta";
 import { bind_rtc_event, facilitate_rtc, send_via_messaging, send_via_rtc } from "./messenger";
 import { _dispatch_spawn as dispatch_player_spawn } from "./players";
 
@@ -57,6 +58,8 @@ export const _bind_messages = () => {
             configurable: false,
         });
     });
+
+    report_meta();
 }
 
 export const wait_for_ready = (): Promise<void> => {

@@ -278,7 +278,10 @@ export class BrowserMessageEngine implements MessageEngine {
         const id = Math.random().toString(36).substring(2) + Date.now().toString(36);
 
         return new Promise<Rx>((resolve) => {
-            let timer: ReturnType<typeof setTimeout>;
+            const timer = setTimeout(() => {
+                console.warn("Timed out waiting for a reply to:", action);
+                settle(undefined as Rx);
+            }, this.#send_timeout_ms);
 
             const settle = (value: Rx) => {
                 clearTimeout(timer);
@@ -299,11 +302,6 @@ export class BrowserMessageEngine implements MessageEngine {
             };
 
             window.addEventListener("message", on_message);
-
-            timer = setTimeout(() => {
-                console.warn("Timed out waiting for a reply to:", action);
-                settle(undefined as Rx);
-            }, this.#send_timeout_ms);
 
             const req: MessageEnvelope = {
                 __protocol: protocol_key,
