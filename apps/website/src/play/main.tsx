@@ -1,6 +1,3 @@
-
-
-
 import "./shared.css";
 
 
@@ -10,8 +7,8 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import ReactDOM from "react-dom/client";
 
 import {
-    backend,
-    message_engine,
+    backend, content_message_engine,
+    host_message_engine,
     set_current_url,
     set_dimensions,
     set_navigate_callback,
@@ -50,13 +47,18 @@ const App = () => {
         set_navigate_callback(setURL);
     }, []);
 
+    const host_iframe_ref = useRef<HTMLIFrameElement>(null);
+    const handle_host_iframe_load = useCallback(
+        () => {
+            host_message_engine.set_target_window(host_iframe_ref.current!.contentWindow!);
+        },
+        []
+    );
+
     const content_iframe_ref = useRef<HTMLIFrameElement>(null);
     const handle_content_iframe_load = useCallback(
         () => {
-            message_engine.set_target_window(content_iframe_ref.current!.contentWindow!);
-            message_engine.send({
-                type: "INJECT_IF_NEEDED"
-            });
+            content_message_engine.set_target_window(content_iframe_ref.current!.contentWindow!);
         },
         []
     );
@@ -67,8 +69,8 @@ const App = () => {
         <main className="h-screen w-screen flex flex-col">
             {!loaded && <p>Loading...</p>}
             <input type="url" value={input_url} onChange={(e) => setInputURL(e.target.value)} onBlur={() => setURL(input_url)} />
-            <iframe src={`./windows/vr_host?tab=${SINGLE_TAB_ID}`} allowFullScreen className="flex-1" />
-            <iframe ref={content_iframe_ref} src={url} className="hidden" onLoad={handle_content_iframe_load} />
+            <iframe name="hvr-host-frame" ref={host_iframe_ref} src={`./windows/vr_host?tab=${SINGLE_TAB_ID}`} allowFullScreen className="flex-1" onLoad={handle_host_iframe_load} />
+            <iframe name="hvr-content-frame" ref={content_iframe_ref} src={url} className="hidden" onLoad={handle_content_iframe_load} />
         </main>
     );
 }

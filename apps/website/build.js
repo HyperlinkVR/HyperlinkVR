@@ -1,22 +1,45 @@
 import { build, createServer } from "vite";
 
+
+
+
+
 const is_dev = process.argv.includes("--dev");
 
-const cdn_config = {
+const make_cdn_config = (entry, file_name, is_first) => ({
     configFile: false,
     publicDir: false,
+    define: {
+        "import.meta.url": "document.currentScript?.src"
+    },
     build: {
+        target: "es2020",
         watch: is_dev ? {} : undefined,
         outDir: "public/cdn",
-        emptyOutDir: true,
+        emptyOutDir: is_first,
         rollupOptions: {
-            input: "./src/sdk_fallback.ts",
+            input: entry,
             output: {
-                entryFileNames: "sdk_fallback.js"
+                format: "iife",
+                entryFileNames: file_name
             }
         }
     }
-};
+});
+
+// fallback loader for non ext context
+const loader_config = make_cdn_config(
+    "./src/cdn/sdk_fallback.ts",
+    "sdk_fallback.js",
+    true
+);
+
+// the actual sdk, pulled by the fallback loader only in host mode
+const sdk_config = make_cdn_config(
+    "./src/cdn/sdk.ts",
+    "sdk.js",
+    false
+);
 
 const run = async () => {
     if (is_dev) {
@@ -30,13 +53,15 @@ const run = async () => {
         server.printUrls();
 
         // cdn build watched
-        await build(cdn_config);
+        await build(loader_config);
+        await build(sdk_config);
     } else {
         // build web
         await build();
 
         // build cdn
-        await build(cdn_config);
+        await build(loader_config);
+        await build(sdk_config);
     }
 }
 

@@ -4,6 +4,9 @@ import { BrowserMessageEngine, BrowserStorageEngine, URLParamsWindowArgumentsStr
 import type { Message, WindowIntent } from "@hyperlinkvr/types";
 
 
+
+
+
 export const get_args_strategy = () => new URLParamsWindowArgumentsStrategy();
 
 
@@ -11,23 +14,9 @@ export const get_args_strategy = () => new URLParamsWindowArgumentsStrategy();
 // TODO: although, do the tab functions ever get called for stuff like devtools windows? double check first
 export const SINGLE_TAB_ID = -1;
 
-// executed in order, with the first to return a value the ultimate response
-// TODO: is there a smarter way? should it be filtered by type? or should the app decide?
-const message_handlers: ((message: Message) => Promise<{next: true} | {value: any}>)[] = [];
-export const add_message_handler = (handler: (message: Message) => Promise<{next: true} | {value: any}>)=> {
-    const idx = message_handlers.push(handler);
-    return () => {
-        message_handlers.splice(idx);
-    }
-}
-
 let current_url: string | undefined = undefined;
 let width: number | undefined = undefined;
 let height: number | undefined = undefined;
-
-export const set_current_url = (url: string) => {
-    current_url = url;
-}
 
 export const set_dimensions = (new_width: number, new_height: number) => {
     width = new_width;
@@ -70,6 +59,9 @@ export const set_focus_window_callback = (callback: (window_id: number) => void)
 
 const VR_HOST_URL = new URL("/play/windows/vr_host", location.href).href;
 
+export const content_message_engine = new BrowserMessageEngine();
+export const host_message_engine = new BrowserMessageEngine();
+
 class BrowserBackendIntegration implements BackendIntegrationEngine {
     async get_tab_info(
         tab_id: number
@@ -92,16 +84,8 @@ class BrowserBackendIntegration implements BackendIntegrationEngine {
             return null;
         }
 
-        for (const handler of message_handlers) {
-            const ret = await handler(message);
-            if ("value" in ret) {
-                return ret.value;
-            }
-
-            // continue otherwise
-        }
-
-        // no more handlers, so return nothing
+        // just use the content message engine as it'll already point to the right tab
+        return content_message_engine.send(message);
     }
 
     navigate_tab(tab_id: number, new_url: string): void {
@@ -167,14 +151,20 @@ class BrowserBackendIntegration implements BackendIntegrationEngine {
     // TODO: explore screensharing options that wont need prompt (or could be granted once off) or perhaps use the extension as a thin assistant
 }
 
-export const message_engine = new BrowserMessageEngine();
-
 export const backend = new Backend({
     storage: {
         local: new BrowserStorageEngine("local"),
         sync: new BrowserStorageEngine("sync"),
         session: new BrowserStorageEngine("session")
     },
-    message: message_engine,
+    message: host_message_engine,
     backend_integration: new BrowserBackendIntegration()
 });
+
+// pretend the vr host is launched, as its statically in an iframe so wont matter (just need the active session)
+backend.launch_vr_host(SINGLE_TAB_ID);
+
+export const set_current_url = (url: string) => {
+    current_url = url;
+    backend.notify_navigation({id: SINGLE_TAB_ID, url});
+};
