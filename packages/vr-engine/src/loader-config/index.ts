@@ -4,7 +4,7 @@ import draco_wrapper_url from "three/examples/jsm/libs/draco/gltf/draco_wasm_wra
 import { configureTextBuilder } from "troika-three-text";
 
 const NOTO_SANS_URL = new URL(
-    "../../assets/fonts/NotoSans-Regular.woff",
+    "../../assets/font2d/NotoSans-Regular.woff",
     import.meta.url
 ).href;
 

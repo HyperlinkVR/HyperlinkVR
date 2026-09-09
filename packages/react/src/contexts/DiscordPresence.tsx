@@ -1,5 +1,12 @@
 import { DiscordRPCActivity, DiscordRPCEngine } from "@hyperlinkvr/core";
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import {
+    createContext,
+    useCallback,
+    useContext,
+    useEffect,
+    useMemo,
+    useState
+} from "react";
 
 
 
@@ -10,16 +17,18 @@ import { useDiscordRPCEngineOptional } from "./engines";
 type DiscordPresenceContextType = Omit<DiscordRPCEngine, "connect" | "disconnect" | "request_permission" | "setup">;
 const DiscordPresenceContext = createContext<DiscordPresenceContextType | null>(null);
 
+const NOOP_ENGINE = {
+    is_connected: async () => false,
+    set_activity: async () => {},
+    clear_activity: async () => {},
+    has_permission: async () => false,
+    connect: async () => {},
+    disconnect: async () => {},
+    _is_noop: true
+};
+
 export const DiscordPresenceProvider = ({children, initial_activity}: {children: React.ReactNode, initial_activity?: DiscordRPCActivity}) => {
-    const engine = useDiscordRPCEngineOptional() || {
-        is_connected: async () => false,
-        set_activity: async () => {},
-        clear_activity: async () => {},
-        has_permission: async () => false,
-        connect: async () => {},
-        disconnect: async () => {},
-        _is_noop: true
-    };
+    const engine = useDiscordRPCEngineOptional() || NOOP_ENGINE;
     const [enabled] = useSetting("discord_rpc");
 
     const [current_activity, setCurrentActivity] = useState<DiscordRPCActivity | null>(initial_activity || null);
@@ -79,15 +88,20 @@ export const DiscordPresenceProvider = ({children, initial_activity}: {children:
                 await engine.disconnect();
             }
         })();
-    }, [engine, enabled]);
+    }, [engine, enabled, send_current_activity]);
 
-    return (
-        <DiscordPresenceContext.Provider value={{
+    const value = useMemo(
+        () => ({
             has_permission: engine.has_permission,
             is_connected: engine.is_connected,
             set_activity,
             clear_activity
-        }}>
+        }),
+        [engine, set_activity, clear_activity]
+    );
+
+    return (
+        <DiscordPresenceContext.Provider value={value}>
             {children}
         </DiscordPresenceContext.Provider>
     )
