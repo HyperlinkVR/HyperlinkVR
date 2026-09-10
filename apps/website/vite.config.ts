@@ -64,15 +64,7 @@ export default defineConfig({
                 minigolf: page("minigolf", "index.html"),
                 defendthecore: page("defendthecore", "index.html"),
                 // TODO: auto collect pages somehow (could just glob for index.html)
-                download_discord_rpc: page("download", "discord_rpc", "index.html"),
-
-                play: page("play", "index.html"),
-                play_vr_host: page("play", "windows", "vr_host", "index.html"),
-                play_settings: page("play", "windows", "settings", "index.html"),
-                play_devtools: page("play", "windows", "devtools", "index.html"),
-                play_devtools_form: page("play", "windows", "devtools", "form", "index.html"),
-                play_devtools_spy: page("play", "windows", "devtools", "spy", "index.html"),
-                play_devtools_watch: page("play", "windows", "devtools", "watch", "index.html")
+                download_discord_rpc: page("download", "discord_rpc", "index.html")
             }
         }
     }

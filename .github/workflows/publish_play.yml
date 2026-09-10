@@ -1,0 +1,43 @@
+name: Deploy play to its own gh-pages repo
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'apps/play/**'
+      - 'packages/**'
+      - 'pnpm-lock.yaml'
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build play
+        run: pnpm build:play
+
+      - name: Deploy to the play repo's gh-pages branch
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          deploy_key: ${{ secrets.PLAY_DEPLOY_KEY }}
+          external_repository: HyperlinkVR/play.hyperlink.surf
+          publish_branch: gh-pages
+          publish_dir: ./apps/play/dist
+          cname: play.hyperlink.surf

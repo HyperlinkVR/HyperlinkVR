@@ -95,5 +95,5 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     </React.StrictMode>
 );
 
-// TODO: split play to a diff package / subdomain, it adds a lot of deps to the web build
 // TODO: why is world env iffy?
+// TODO: iwer shimming

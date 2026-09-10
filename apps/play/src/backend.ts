@@ -35,12 +35,12 @@ export const set_navigate_back_callback = (callback: () => void) => {
 }
 
 const WINDOW_INTENTS: Partial<Record<WindowIntent, string>> = {
-    VR_HOST: "/play/windows/vr_host/",
-    SETTINGS: "/play/windows/settings/",
-    DEVTOOLS: "/play/windows/devtools/",
-    DEVTOOLS_FORM: "/play/windows/devtools/form/",
-    DEVTOOLS_WATCH_UI: "/play/windows/devtools/watch/",
-    DEVTOOLS_SPY: "/play/windows/devtools/spy/"
+    VR_HOST: "/windows/vr_host/",
+    SETTINGS: "/windows/settings/",
+    DEVTOOLS: "/windows/devtools/",
+    DEVTOOLS_FORM: "/windows/devtools/form/",
+    DEVTOOLS_WATCH_UI: "/windows/devtools/watch/",
+    DEVTOOLS_SPY: "/windows/devtools/spy/"
     // LOGIN has no play window as signing in will happen on the real site
 };
 

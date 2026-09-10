@@ -11,6 +11,7 @@
         "build:extension": "cd apps/extension && pnpm build",
         "build:schema": "tsx scripts/build_json_schema.ts",
         "build:website": "cd apps/website && pnpm build",
+        "build:play": "turbo run build:play",
         "build:docs": "cd apps/docs && pnpm build",
         "build:ui-dom-deact": "cd packages/ui-dom && pnpm run build:deact",
         "build:web-all": "turbo run build:web //#build:schema && pnpm run copy:web-all",

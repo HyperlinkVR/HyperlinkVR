@@ -9,6 +9,9 @@
             "dependsOn": ["@hyperlinkvr/deact#build"],
             "outputs": ["build/**", "dist/**"]
         },
+        "build:play": {
+            "outputs": ["dist/**"]
+        },
         "//#build:schema": {
             "outputs": ["schemas/**"]
         },
