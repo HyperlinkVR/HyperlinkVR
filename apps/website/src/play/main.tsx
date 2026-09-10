@@ -40,7 +40,13 @@ const App = () => {
         }
     }, []);
 
-    const [url, setURL] = useState(location.origin);
+    const [url, setURL] = useState(location.hash ? location.hash.substring(1) : location.origin);
+
+    // TODO: should there be a confirm prompt if navigating from hash or is it obvious enough
+
+    useEffect(() => {
+        location.hash = `#${url}`;
+    }, [url]);
 
     useEffect(() => {
         set_dimensions(1920, 1080);
