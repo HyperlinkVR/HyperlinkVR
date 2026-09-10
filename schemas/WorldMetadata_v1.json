@@ -137,6 +137,7 @@
                 "vr": "maybe",
                 "flat": "maybe",
                 "low_power": "maybe",
+                "browser": true,
                 "teleport": true
             },
             "type": "object",
@@ -167,6 +168,10 @@
                         "maybe",
                         "yes"
                     ]
+                },
+                "browser": {
+                    "default": true,
+                    "type": "boolean"
                 },
                 "teleport": {
                     "default": true,
