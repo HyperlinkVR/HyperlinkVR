@@ -81,7 +81,7 @@ const App = () => {
                 <LoadingSpinner className="text-white" />
             </div>}
 
-            <NavigationBar commit_url={navigate_from_ui} initial_url={url} />
+            <NavigationBar on_url_submit={navigate_from_ui} initial_url={url} />
 
             <iframe name="hvr-host-frame" ref={handle_host_iframe} src={`./windows/vr_host/?tab=${SINGLE_TAB_ID}`} allowFullScreen className="flex-1" />
             <iframe name={CONTENT_FRAME_NAME} ref={handle_content_iframe} src={url} className="hidden" onLoad={notify_content_loaded} />

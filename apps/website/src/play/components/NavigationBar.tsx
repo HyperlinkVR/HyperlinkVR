@@ -1,5 +1,5 @@
 import { Settings, Terminal } from "lucide-react";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 
 
 
@@ -8,7 +8,7 @@ import { backend_integration } from "../backend";
 
 interface NavigationBarProps {
     initial_url?: string;
-    commit_url: (url: string) => void;
+    on_url_submit: (url: string) => void;
 }
 
 const SquareButton = ({label, title, className = "", on_click}: {label: React.ReactNode; title?: string; className?: string; on_click: () => void}) => {
@@ -19,12 +19,21 @@ const SquareButton = ({label, title, className = "", on_click}: {label: React.Re
     );
 }
 
-export const NavigationBar = ({initial_url = "", commit_url}: NavigationBarProps) => {
+export const NavigationBar = ({initial_url = "", on_url_submit}: NavigationBarProps) => {
     const [input_url, setInputURL] = useState(initial_url);
+    const [committed_url, setCommittedURL] = useState(initial_url);
+
+    const commit_url = useCallback(
+        (url: string) => {
+            setCommittedURL(url);
+            on_url_submit(url);
+        },
+        [on_url_submit]
+    );
 
     return (
         <div className="flex items-center justify-stretch">
-            <input className="flex-1 mx-2" type="url" value={input_url} onChange={(e) => setInputURL(e.target.value)} />
+            <input className={`flex-1 mx-2 ${committed_url !== input_url ? "opacity-60" : ""}`} type="url" value={input_url} onChange={(e) => setInputURL(e.target.value)} onSubmit={() => commit_url(input_url)} />
             <button className="bg-blue-500 text-white px-5 py-1 cursor-pointer" onClick={() => commit_url(input_url)}>Go</button>
             <SquareButton label={<Settings />} title="Open settings" on_click={() => backend_integration.create_window({intent: "SETTINGS"}, false)} className="bg-emerald-600" />
             <SquareButton label={<Terminal />} title="Open devtools" on_click={() => backend_integration.create_window({intent: "DEVTOOLS"}, false)} className="bg-gray-600" />
