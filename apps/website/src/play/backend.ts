@@ -206,9 +206,11 @@ class BrowserBackendIntegration implements BackendIntegrationEngine {
         args?: Record<string, any>;
         width?: number;
         height?: number;
-    }): Promise<number> {
-        // TODO: window.open not ideal, might be better to handle in dom contextually
+    }, as_window = true): Promise<number> {
+        // TODO: window.open popup not ideal, might be better to handle in dom contextually
         // tbh the windowing could be optional, the game doenst call this, just the extension, so could just handle via links manually
+
+        // TODO: either delegate to currnetly open window to stop popup blocker firing, or just never use popup mode
 
         if (params.intent === "VR_HOST") {
             console.warn("Dropping create for VR_HOST intent");
@@ -221,7 +223,7 @@ class BrowserBackendIntegration implements BackendIntegrationEngine {
         }
 
         const features = [
-            "popup=yes",
+            as_window ? "popup=yes" : "",
             params.width ? `width=${params.width}` : "",
             params.height ? `height=${params.height}` : ""
         ]

@@ -26,8 +26,8 @@ export const NavigationBar = ({initial_url = "", commit_url}: NavigationBarProps
         <div className="flex items-center justify-stretch">
             <input className="flex-1 mx-2" type="url" value={input_url} onChange={(e) => setInputURL(e.target.value)} />
             <button className="bg-blue-500 text-white px-5 py-1 cursor-pointer" onClick={() => commit_url(input_url)}>Go</button>
-            <SquareButton label={<Settings />} title="Open settings" on_click={() => backend_integration.create_window({intent: "SETTINGS", width: 900, height: 500})} className="bg-emerald-600" />
-            <SquareButton label={<Terminal />} title="Open devtools" on_click={() => backend_integration.create_window({intent: "DEVTOOLS", width: 900, height: 500})} className="bg-gray-600" />
+            <SquareButton label={<Settings />} title="Open settings" on_click={() => backend_integration.create_window({intent: "SETTINGS"}, false)} className="bg-emerald-600" />
+            <SquareButton label={<Terminal />} title="Open devtools" on_click={() => backend_integration.create_window({intent: "DEVTOOLS"}, false)} className="bg-gray-600" />
         </div>
     );
 }
