@@ -1,25 +1,19 @@
+
+
+
 import "./shared.css";
 
 
 
 import type { MessageChannel } from "@hyperlinkvr/core";
 import { CONTENT_FRAME_NAME } from "@hyperlinkvr/types";
+import { LoadingSpinner } from "@hyperlinkvr/ui-dom";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import ReactDOM from "react-dom/client";
 
-import {
-    attach_content_window,
-    attach_host_window,
-    backend,
-    navigate_from_ui,
-    notify_content_loaded,
-    set_current_url,
-    set_dimensions,
-    set_navigate_back_callback,
-    set_navigate_callback,
-    SINGLE_TAB_ID
-} from "./backend";
-import { LoadingSpinner } from "@hyperlinkvr/ui-dom";
+
+
+import { attach_content_window, attach_host_window, backend, navigate_from_ui, notify_content_loaded, set_current_url, set_dimensions, set_navigate_back_callback, set_navigate_callback, SINGLE_TAB_ID } from "./backend";
 import { NavigationBar } from "./components/NavigationBar";
 
 
@@ -102,3 +96,4 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 );
 
 // TODO: split play to a diff package / subdomain, it adds a lot of deps to the web build
+// TODO: why is world env iffy?

@@ -33,10 +33,12 @@ export const NavigationBar = ({initial_url = "", on_url_submit}: NavigationBarPr
 
     return (
         <div className="flex items-center justify-stretch">
-            <input className={`flex-1 mx-2 ${committed_url !== input_url ? "opacity-60" : ""}`} type="url" value={input_url} onChange={(e) => setInputURL(e.target.value)} onSubmit={() => commit_url(input_url)} />
+            <input className={`flex-1 mx-2 ${committed_url !== input_url ? "opacity-60" : ""}`} type="url" value={input_url} onChange={(e) => setInputURL(e.target.value)} onKeyUp={(e) => e.key === "Enter" && commit_url(input_url)} />
             <button className="bg-blue-500 text-white px-5 py-1 cursor-pointer" onClick={() => commit_url(input_url)}>Go</button>
             <SquareButton label={<Settings />} title="Open settings" on_click={() => backend_integration.create_window({intent: "SETTINGS"}, false)} className="bg-emerald-600" />
             <SquareButton label={<Terminal />} title="Open devtools" on_click={() => backend_integration.create_window({intent: "DEVTOOLS"}, false)} className="bg-gray-600" />
         </div>
     );
 }
+
+// TODO: allow shortcodes?
