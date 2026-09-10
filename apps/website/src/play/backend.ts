@@ -36,6 +36,7 @@ export const set_navigate_back_callback = (callback: () => void) => {
 
 const WINDOW_INTENTS: Partial<Record<WindowIntent, string>> = {
     VR_HOST: "/play/windows/vr_host/",
+    SETTINGS: "/play/windows/settings/",
     DEVTOOLS: "/play/windows/devtools/",
     DEVTOOLS_FORM: "/play/windows/devtools/form/",
     DEVTOOLS_WATCH_UI: "/play/windows/devtools/watch/",
@@ -257,6 +258,8 @@ class BrowserBackendIntegration implements BackendIntegrationEngine {
     // TODO: explore screensharing options that wont need prompt (or could be granted once off) or perhaps use the extension as a thin assistant
 }
 
+export const backend_integration = new BrowserBackendIntegration();
+
 export const backend = new Backend({
     storage: {
         local: new BrowserStorageEngine("local"),
@@ -264,7 +267,7 @@ export const backend = new Backend({
         session: new BrowserStorageEngine("session")
     },
     message: host_message_engine,
-    backend_integration: new BrowserBackendIntegration()
+    backend_integration
 });
 
 // pretend the vr host is launched, as its statically in an iframe so wont matter (just need the active session)

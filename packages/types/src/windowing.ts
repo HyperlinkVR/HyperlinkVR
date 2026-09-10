@@ -1,5 +1,6 @@
 export type WindowIntent =
     "VR_HOST"
+    | "SETTINGS"
     | "LOGIN"
     | "DEVTOOLS"
     | "DEVTOOLS_FORM"

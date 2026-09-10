@@ -20,6 +20,7 @@ import {
     SINGLE_TAB_ID
 } from "./backend";
 import { LoadingSpinner } from "@hyperlinkvr/ui-dom";
+import { NavigationBar } from "./components/NavigationBar";
 
 
 const App = () => {
@@ -74,16 +75,14 @@ const App = () => {
         }
     }, []);
 
-    const [input_url, setInputURL] = useState(url);
-
-    const commit_url = useCallback(() => navigate_from_ui(input_url), [input_url]);
-
     return (
         <main className="h-screen w-screen flex flex-col">
             {!loaded && <div className="h-screen w-screen fixed inset-0 bg-slate-800 flex flex-col items-center justify-center">
                 <LoadingSpinner className="text-white" />
             </div>}
-            <input type="url" value={input_url} onChange={(e) => setInputURL(e.target.value)} onBlur={commit_url} />
+
+            <NavigationBar commit_url={navigate_from_ui} initial_url={url} />
+
             <iframe name="hvr-host-frame" ref={handle_host_iframe} src={`./windows/vr_host/?tab=${SINGLE_TAB_ID}`} allowFullScreen className="flex-1" />
             <iframe name={CONTENT_FRAME_NAME} ref={handle_content_iframe} src={url} className="hidden" onLoad={notify_content_loaded} />
         </main>

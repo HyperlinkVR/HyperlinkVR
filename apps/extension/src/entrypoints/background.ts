@@ -19,6 +19,7 @@ export default defineBackground(async () => {
 
     const WINDOW_INTENTS = {
         VR_HOST: "/vr_host.html",
+        SETTINGS: "/settings.html",
         LOGIN: "/login.html",
         DEVTOOLS: "/devtools.html",
         DEVTOOLS_FORM: "/devtools-form.html",
