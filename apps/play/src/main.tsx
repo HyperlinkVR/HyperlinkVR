@@ -97,3 +97,4 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 
 // TODO: why is world env iffy?
 // TODO: iwer shimming
+// TODO: svg nest error again on published only? but the dep should be patched?
