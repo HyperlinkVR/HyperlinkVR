@@ -53,7 +53,9 @@ export const WorldPlatformSupportSchema = z.object({
     flat: PlatformSupportSchema.default("maybe"),
 
     low_power: PlatformSupportSchema.default("maybe"),
-    teleport: z.boolean().default(true)
+    browser: z.boolean().default(true),
+
+    teleport: z.boolean().default(true),
 });
 export type WorldPlatformSupport = z.infer<typeof WorldPlatformSupportSchema>;
 export type WorldPlatformSupportInput = z.input<typeof WorldPlatformSupportSchema>;
@@ -128,6 +130,7 @@ export const WorldMetadataSchema = z.object({
         vr: "maybe",
         flat: "maybe",
         low_power: "maybe",
+        browser: true,
         teleport: true
     }),
 
