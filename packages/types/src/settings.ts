@@ -535,6 +535,57 @@ export const settings_def = build_settings({
     devtools_flat_photo_mode: {
         default_value: false,
         local_only: true
+    },
+
+    // TODO: "service" mode once the multiplayer service exists
+    devtools_network_mode: {
+        default_value: "off" as "off" | "local",
+        local_only: true,
+        ui: {
+            flat: {
+                label: "Network mode",
+                widget: {
+                    type: "select",
+                    options: [
+                        { label: "Off", value: "off" },
+                        { label: "Local (windows in this browser)", value: "local" }
+                    ]
+                }
+            }
+        }
+    },
+
+    devtools_network_latency: {
+        default_value: 0,
+        local_only: true,
+        ui: {
+            flat: {
+                label: "Simulated latency",
+                widget: { type: "range", min: 0, max: 2000, slider_max: 500, precision_dp: 0, unit: "ms" }
+            }
+        }
+    },
+
+    devtools_network_jitter: {
+        default_value: 0,
+        local_only: true,
+        ui: {
+            flat: {
+                label: "Simulated jitter",
+                widget: { type: "range", min: 0, max: 1000, slider_max: 200, precision_dp: 0, unit: "ms" }
+            }
+        }
+    },
+
+    devtools_network_drop: {
+        default_value: 0,
+        local_only: true,
+        ui: {
+            flat: {
+                label: "Simulated packet loss (unreliable only)",
+                widget: { type: "range", min: 0, max: 100, precision_dp: 0, unit: "%" }
+            }
+        }
     }
 });
 

@@ -1,6 +1,7 @@
-import {
+import type {
     DiscordRPCEngine,
     MessageEngine,
+    NetworkEngine,
     StorageEngine,
     StorageKind
 } from "@hyperlinkvr/core";
@@ -106,4 +107,25 @@ export const useDiscordRPCEngine = (): DiscordRPCEngine => {
 export const useDiscordRPCEngineOptional = (): DiscordRPCEngine | null => {
     const context = useContext(DiscordRPCEngineContext);
     return context;
+};
+
+// null (or no provider) means multiplayer is unavailable
+const NetworkEngineContext = createContext<NetworkEngine | null>(null);
+
+export const NetworkEngineProvider = ({
+    children,
+    engine
+}: {
+    children: React.ReactNode;
+    engine: NetworkEngine | null;
+}) => {
+    return (
+        <NetworkEngineContext.Provider value={engine}>
+            {children}
+        </NetworkEngineContext.Provider>
+    );
+};
+
+export const useNetworkEngineOptional = (): NetworkEngine | null => {
+    return useContext(NetworkEngineContext);
 };

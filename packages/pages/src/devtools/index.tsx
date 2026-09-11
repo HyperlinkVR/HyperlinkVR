@@ -1,6 +1,6 @@
 import { useMessageEngine, useSetting } from "@hyperlinkvr/react";
 import type { SettingKeyReturning, WindowIntent } from "@hyperlinkvr/types";
-import { ToggleSwitch } from "@hyperlinkvr/ui-dom/settings";
+import { FlatSettingWidget, ToggleSwitch } from "@hyperlinkvr/ui-dom/settings";
 import { WATCH_UI_HEIGHT, WATCH_UI_WIDTH } from "@hyperlinkvr/watch-ui";
 import { Earth, MailSearch, Trophy, UserKey, Watch } from "lucide-react";
 
@@ -102,6 +102,24 @@ const ToolSettingSwitch = ({
             on_change={setEnabled}
             label={label}
         />
+    );
+};
+
+const NetworkTools = () => {
+    const [mode] = useSetting("devtools_network_mode");
+
+    return (
+        <>
+            <FlatSettingWidget setting_key="devtools_network_mode" />
+
+            {mode !== "off" && (
+                <>
+                    <FlatSettingWidget setting_key="devtools_network_latency" />
+                    <FlatSettingWidget setting_key="devtools_network_jitter" />
+                    <FlatSettingWidget setting_key="devtools_network_drop" />
+                </>
+            )}
+        </>
     );
 };
 
@@ -241,6 +259,10 @@ export const DevToolsPage = () => {
                             label="Enable photo mode (flat only)"
                             setting_key="devtools_flat_photo_mode"
                         />
+                    </ToolGroup>
+
+                    <ToolGroup title="Multiplayer">
+                        <NetworkTools />
                     </ToolGroup>
 
                     <ToolGroup title="Expressions">

@@ -47,6 +47,8 @@ import { ObjectMonitorRunner } from "../monitors/ObjectMonitorRunner";
 import { WorldMonitorRunner } from "../monitors/WorldMonitorRunner";
 import { clear_collider_collision_info, filter_contact_pair } from "../physics/collision_hooks";
 import { reset_authority } from "../net/authority";
+import { NetSessionProvider } from "../net/NetSession";
+import { NetSessionOverlay } from "../net/NetSessionOverlay";
 import { FlatAvatarHands, XRAvatarHand } from "../player/AvatarHand";
 import { Player } from "../player/Player";
 import { AvatarMirror } from "../prefabs/AvatarMirror";
@@ -484,6 +486,7 @@ const EngineHostInternal = memo(
         return (
             <SessionModeProvider value={mode}>
                 <WorldSessionProvider>
+                    <NetSessionProvider>
                     <WebSDKMessagingProvider>
                         <HintStateProvider>
                             <DiscordPresenceProvider initial_activity={{
@@ -505,6 +508,7 @@ const EngineHostInternal = memo(
                                     ref={canvas_container_ref}
                                 >
                                     {mode === "vr" && <LogoOverlay />}
+                                    <NetSessionOverlay />
                                     {mode === "flat" && (
                                         <>
                                             <AutoHintGlyphs
@@ -607,6 +611,7 @@ const EngineHostInternal = memo(
                             </DiscordPresenceProvider>
                         </HintStateProvider>
                     </WebSDKMessagingProvider>
+                    </NetSessionProvider>
                 </WorldSessionProvider>
             </SessionModeProvider>
         );

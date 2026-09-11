@@ -1,6 +1,6 @@
 import "@hyperlinkvr/vr-engine/dev-hook";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ReactDOM from "react-dom/client";
 
 import "../../shared.css";
@@ -9,9 +9,26 @@ import { LoadingSpinner, ProfilePicture} from "@hyperlinkvr/ui-dom";
 import { EngineHost, xr_store } from "@hyperlinkvr/vr-engine";
 
 import { DefaultContextProviders } from "../../contexts/DefaultContextProviders";
-import {useAuthSession} from "@hyperlinkvr/react";
+import {NetworkEngineProvider, useAuthSession, useSetting} from "@hyperlinkvr/react";
+import {LocalNetworkEngine} from "@hyperlinkvr/platform-browser";
 
 type LoadPhase = "idle" | "starting" | "started";
+
+// TODO: service mode, resolving the multiplayer service's carrier
+const DevNetworkEngineProvider = ({children}: {children: React.ReactNode}) => {
+    const [mode] = useSetting("devtools_network_mode");
+    const [latency_ms] = useSetting("devtools_network_latency");
+    const [jitter_ms] = useSetting("devtools_network_jitter");
+    const [drop_percent] = useSetting("devtools_network_drop");
+
+    const engine = useMemo(() => (mode === "local" ? new LocalNetworkEngine() : null), [mode]);
+
+    useEffect(() => {
+        engine?.set_conditions({latency_ms, jitter_ms, drop_rate: drop_percent / 100});
+    }, [engine, latency_ms, jitter_ms, drop_percent]);
+
+    return <NetworkEngineProvider engine={engine}>{children}</NetworkEngineProvider>;
+};
 
 // TODO: rename page to engine or host
 
@@ -144,7 +161,9 @@ const SpectatorUI = () => {
                     </div>
                 )}
                 <div className="h-screen w-screen bg-black flex items-center justify-center">
-                    <EngineHost mode={mode} on_xr_ready={handle_xr_ready} />
+                    <DevNetworkEngineProvider>
+                        <EngineHost mode={mode} on_xr_ready={handle_xr_ready} />
+                    </DevNetworkEngineProvider>
                 </div>
             </main>
         </DefaultContextProviders>

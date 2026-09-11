@@ -399,6 +399,11 @@ export class LocalNetworkEngine implements NetworkEngine {
         this.#options = { ...DEFAULT_OPTIONS, ...options };
     }
 
+    // rooms share the options object, so this applies to open rooms without rejoining
+    set_conditions(conditions: Pick<LocalNetworkOptions, "latency_ms" | "jitter_ms" | "drop_rate">) {
+        Object.assign(this.#options, conditions);
+    }
+
     async join(key: RoomKey, hello: PeerHello): Promise<NetworkRoom> {
         const self: PeerInfo = {
             ...hello,
