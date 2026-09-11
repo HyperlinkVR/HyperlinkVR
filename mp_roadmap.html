@@ -1,0 +1,69 @@
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+<main class="m-6">
+<h2 class="mt-6 mb-2 font-semibold text-2xl" data-streamdown="heading-2">✅ Done</h2>
+<ul class="list-inside list-disc whitespace-normal [li_&amp;]:pl-6" data-streamdown="unordered-list">
+    <li class="py-1 [&amp;>p]:inline" data-streamdown="list-item">Transport interface (<code class="rounded bg-muted px-1.5 py-0.5 font-mono text-sm" data-streamdown="inline-code">NetworkEngine</code> / <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-sm" data-streamdown="inline-code">NetworkRoom</code>)</li>
+    <li class="py-1 [&amp;>p]:inline" data-streamdown="list-item">Local <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-sm" data-streamdown="inline-code">BroadcastChannel</code> carrier, with simulated latency, jitter and packet loss</li>
+    <li class="py-1 [&amp;>p]:inline" data-streamdown="list-item">Authority registry, and the report/trigger outbox that checks it</li>
+    <li class="py-1 [&amp;>p]:inline" data-streamdown="list-item"><code class="rounded bg-muted px-1.5 py-0.5 font-mono text-sm" data-streamdown="inline-code">NetSession</code> (join after consent, host election, leave on navigation) and the peer list overlay</li>
+    <li class="py-1 [&amp;>p]:inline" data-streamdown="list-item">Devtools network settings</li>
+    <li class="py-1 [&amp;>p]:inline" data-streamdown="list-item">Presence: poses, appearance, interpolated remote avatars</li>
+</ul>
+<h2 class="mt-6 mb-2 font-semibold text-2xl" data-streamdown="heading-2">Phase A: the forwarding node</h2>
+<ol class="list-inside list-decimal whitespace-normal [li_&amp;]:pl-6" data-streamdown="ordered-list">
+    <li class="py-1 [&amp;>p]:inline" data-streamdown="list-item"><span class="font-semibold" data-streamdown="strong">Node server [M].</span> A WebSocket server that:
+        <ul class="list-inside list-disc whitespace-normal [li_&amp;]:pl-6" data-streamdown="unordered-list">
+            <li class="py-1 [&amp;>p]:inline" data-streamdown="list-item">assigns peer IDs and join order, and elects the oldest peer as host</li>
+            <li class="py-1 [&amp;>p]:inline" data-streamdown="list-item">forwards frames to one peer, everyone else, or the host</li>
+            <li class="py-1 [&amp;>p]:inline" data-streamdown="list-item">notices peers leaving when their socket closes or goes quiet, and cleans up empty rooms</li>
+            <li class="py-1 [&amp;>p]:inline" data-streamdown="list-item">uses a versioned wire protocol</li>
+        </ul>
+    </li>
+    <li class="py-1 [&amp;>p]:inline" data-streamdown="list-item"><span class="font-semibold" data-streamdown="strong"><code class="rounded bg-muted px-1.5 py-0.5 font-mono text-sm" data-streamdown="inline-code">WebSocketNetworkEngine</code> carrier [S].</span> It reports <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-sm" data-streamdown="inline-code">capabilities.unreliable = false</code>, and a dropped connection closes the room with <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-sm" data-streamdown="inline-code">connection-lost</code> (for v1, rejoining just means joining as a new peer).</li>
+    <li class="py-1 [&amp;>p]:inline" data-streamdown="list-item"><span class="font-semibold" data-streamdown="strong">Service mode [S].</span> A <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-sm" data-streamdown="inline-code">service_multiplayer</code> setting, a descriptor fetch, a <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-sm" data-streamdown="inline-code">ServiceNetworkEngine</code> that picks the right carrier, and <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-sm" data-streamdown="inline-code">"service"</code> added to the devtools mode.</li>
+    <li class="py-1 [&amp;>p]:inline" data-streamdown="list-item"><span class="font-semibold" data-streamdown="strong">Extension VR host provides a network engine [S].</span> Presence then works in the extension too, not just play.</li>
+    <li class="py-1 [&amp;>p]:inline" data-streamdown="list-item"><span class="font-semibold" data-streamdown="strong">Identity rules [M, can wait until before public testing].</span> A signed identity handshake, so the node can reject guests and duplicate accounts.</li>
+</ol>
+<p><span class="font-semibold" data-streamdown="strong">Milestone: presence between real machines and browsers.</span></p>
+<h2 class="mt-6 mb-2 font-semibold text-2xl" data-streamdown="heading-2">Phase B: groundwork, all still singleplayer</h2>
+<ol class="list-inside list-decimal whitespace-normal [li_&amp;]:pl-6" data-streamdown="ordered-list" start="6">
+    <li class="py-1 [&amp;>p]:inline" data-streamdown="list-item"><span class="font-semibold" data-streamdown="strong">Players identified by peer ID [M].</span> <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-sm" data-streamdown="inline-code">Player.id</code>, <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-sm" data-streamdown="inline-code">target_player</code> in messages, the spawn event carries the ID, the engine's player registry is keyed by ID, and minigolf is re-keyed.</li>
+    <li class="py-1 [&amp;>p]:inline" data-streamdown="list-item"><span class="font-semibold" data-streamdown="strong">Per-world multiplayer mode [S].</span> <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-sm" data-streamdown="inline-code">solo</code> / <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-sm" data-streamdown="inline-code">presence</code> / <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-sm" data-streamdown="inline-code">shared</code> in the meta tag, with <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-sm" data-streamdown="inline-code">presence</code> as the default. Solo worlds don't join a room.</li>
+    <li class="py-1 [&amp;>p]:inline" data-streamdown="list-item"><span class="font-semibold" data-streamdown="strong">Command bus [L].</span> Every SDK action handler (objects, HUD, VFX, world environment, animations, seeks, monitors, triggers) stops caring whether a command came from the page or the network. It accepts IDs minted by the host, and keeps a compacted log of commands for late joiners.</li>
+    <li class="py-1 [&amp;>p]:inline" data-streamdown="list-item"><span class="font-semibold" data-streamdown="strong">Session clock sync [S].</span> So tweens and animations can start at the same moment everywhere.</li>
+</ol>
+<h2 class="mt-6 mb-2 font-semibold text-2xl" data-streamdown="heading-2">Phase C: shared mode</h2>
+<ol class="list-inside list-decimal whitespace-normal [li_&amp;]:pl-6" data-streamdown="ordered-list" start="10">
+    <li class="py-1 [&amp;>p]:inline" data-streamdown="list-item"><span class="font-semibold" data-streamdown="strong">Roles [S].</span> The engine knows if it's host. In shared worlds, clients hand world-level authority (world monitors) to the host.</li>
+    <li class="py-1 [&amp;>p]:inline" data-streamdown="list-item"><span class="font-semibold" data-streamdown="strong">Command replication [M].</span> The host broadcasts every command it applies on a reliable channel, and clients apply them.</li>
+    <li class="py-1 [&amp;>p]:inline" data-streamdown="list-item"><span class="font-semibold" data-streamdown="strong">Client page lifecycle [S].</span> In shared worlds, client pages never get <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-sm" data-streamdown="inline-code">READY</code>, and the host's "loading finished" is replicated to everyone.</li>
+    <li class="py-1 [&amp;>p]:inline" data-streamdown="list-item"><span class="font-semibold" data-streamdown="strong">Late join [M].</span> A newcomer gets the command log replayed, and holds a loading screen until it's caught up.</li>
+    <li class="py-1 [&amp;>p]:inline" data-streamdown="list-item"><span class="font-semibold" data-streamdown="strong">Report routing [M].</span> Client engines send reports to the host's page with <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-sm" data-streamdown="inline-code">player</code> attached. Player-targeted actions (teleport, send to world, player monitors) go to that player's engine.</li>
+    <li class="py-1 [&amp;>p]:inline" data-streamdown="list-item"><span class="font-semibold" data-streamdown="strong">Per-player HUD and effects [S].</span> Using the scope the HUD already has.</li>
+    <li class="py-1 [&amp;>p]:inline" data-streamdown="list-item"><span class="font-semibold" data-streamdown="strong">SDK [S].</span> <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-sm" data-streamdown="inline-code">e.player</code>, <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-sm" data-streamdown="inline-code">players.on_spawn</code> fires for remote players on the host, <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-sm" data-streamdown="inline-code">players.list()</code> and <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-sm" data-streamdown="inline-code">on_leave</code>, and <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-sm" data-streamdown="inline-code">.create()</code> throws on clients.</li>
+    <li class="py-1 [&amp;>p]:inline" data-streamdown="list-item"><span class="font-semibold" data-streamdown="strong">Host leaves [S].</span> For v1, the instance simply ends.</li>
+    <li class="py-1 [&amp;>p]:inline" data-streamdown="list-item"><span class="font-semibold" data-streamdown="strong">Games [S].</span> Port clubhouse, or a button and score world, to <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-sm" data-streamdown="inline-code">shared</code>.</li>
+</ol>
+<p><span class="font-semibold" data-streamdown="strong">Milestone: button, score and HUD games are multiplayer.</span></p>
+<h2 class="mt-6 mb-2 font-semibold text-2xl" data-streamdown="heading-2">Phase D: physics</h2>
+<ol class="list-inside list-decimal whitespace-normal [li_&amp;]:pl-6" data-streamdown="ordered-list" start="19">
+    <li class="py-1 [&amp;>p]:inline" data-streamdown="list-item"><span class="font-semibold" data-streamdown="strong"><code class="rounded bg-muted px-1.5 py-0.5 font-mono text-sm" data-streamdown="inline-code">ObjectPhysics</code> honours authority [M].</span> A body simulated by another engine becomes kinematic and follows the stream.</li>
+    <li class="py-1 [&amp;>p]:inline" data-streamdown="list-item"><span class="font-semibold" data-streamdown="strong">Host physics streaming [M].</span> The host streams the pose and velocity of every dynamic body that's moving. It reuses the pose buffer, and stops sending once a body comes to rest.</li>
+    <li class="py-1 [&amp;>p]:inline" data-streamdown="list-item"><span class="font-semibold" data-streamdown="strong">Grab handoff [L].</span> A grab claims the object through the host (optimistically, with the host settling conflicts). The holder streams it, and letting go hands it back to the host with its velocity. This is the part that needs the most feel-tuning.</li>
+    <li class="py-1 [&amp;>p]:inline" data-streamdown="list-item"><span class="font-semibold" data-streamdown="strong">Held objects run their own triggers [M].</span> Triggers and reports for a held object run on the holder's engine. Other engines replay the visuals only, with reports suppressed.</li>
+    <li class="py-1 [&amp;>p]:inline" data-streamdown="list-item"><span class="font-semibold" data-streamdown="strong">Pinned ownership [S].</span> <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-sm" data-streamdown="inline-code">set_ownership(player)</code>, needed for minigolf balls.</li>
+    <li class="py-1 [&amp;>p]:inline" data-streamdown="list-item"><span class="font-semibold" data-streamdown="strong">Remote avatar colliders [S].</span> So players can push things, and raycasts can hit them.</li>
+    <li class="py-1 [&amp;>p]:inline" data-streamdown="list-item"><span class="font-semibold" data-streamdown="strong">Games [M].</span> Minigolf, basketball, defendthecore.</li>
+</ol>
+<p><span class="font-semibold" data-streamdown="strong">Milestone: physics games are multiplayer. At this point it's "fully working".</span></p>
+<h2 class="mt-6 mb-2 font-semibold text-2xl" data-streamdown="heading-2">Phase E: optional, after that</h2>
+<ol class="list-inside list-decimal whitespace-normal [li_&amp;]:pl-6" data-streamdown="ordered-list" start="26">
+    <li class="py-1 [&amp;>p]:inline" data-streamdown="list-item">The local escape hatch: <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-sm" data-streamdown="inline-code">hyperlinkvr.local()</code>, <code class="rounded bg-muted px-1.5 py-0.5 font-mono text-sm" data-streamdown="inline-code">me.create()</code>, message channels</li>
+    <li class="py-1 [&amp;>p]:inline" data-streamdown="list-item"><code class="rounded bg-muted px-1.5 py-0.5 font-mono text-sm" data-streamdown="inline-code">net.state</code> and host migration</li>
+    <li class="py-1 [&amp;>p]:inline" data-streamdown="list-item">Voice chat (its own project)</li>
+    <li class="py-1 [&amp;>p]:inline" data-streamdown="list-item">Presence polish: syncing facial expressions, an interpolation delay that adapts to conditions, binary encoding</li>
+    <li class="py-1 [&amp;>p]:inline" data-streamdown="list-item">Robustness: reconnects, node rate limits and room caps, invites and instance selection (Discord join button), a peer list in the watch UI</li>
+</ol>
+<p>Phases A and B don't depend on each other, so you can do them in either order or interleave them. C needs both, and D needs C.</p>
+</main>
