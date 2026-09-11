@@ -65,16 +65,28 @@ export const attach_host_window = (host_window: Window) => {
     host_message_engine.set_target_window(host_window);
 };
 
+// the real window has to be kept (not wrapped) as the message engine matches peers against event.source by identity
+export interface OpenWindow {
+    win: Window;
+    is_closed: () => boolean;
+}
+
+let iframe_window_handler: ((url: string) => OpenWindow) | null = null;
+
+export const set_iframe_window_handler = (handler: (url: string) => OpenWindow) => {
+    iframe_window_handler = handler;
+}
+
 let next_window_id = 1;
-const open_windows = new Map<number, Window>();
+const open_windows = new Map<number, OpenWindow>();
 let window_watch: ReturnType<typeof setInterval> | null = null;
 
 const watch_open_windows = () => {
     if (window_watch !== null) return;
 
     window_watch = setInterval(() => {
-        for (const [id, win] of open_windows) {
-            if (!win.closed) continue;
+        for (const [id, { win, is_closed }] of open_windows) {
+            if (!is_closed()) continue;
 
             open_windows.delete(id);
             host_message_engine.remove_peer(win);
@@ -206,12 +218,7 @@ class BrowserBackendIntegration implements BackendIntegrationEngine {
         args?: Record<string, any>;
         width?: number;
         height?: number;
-    }, as_window = true): Promise<number> {
-        // TODO: window.open popup not ideal, might be better to handle in dom contextually
-        // tbh the windowing could be optional, the game doenst call this, just the extension, so could just handle via links manually
-
-        // TODO: either delegate to currnetly open window to stop popup blocker firing, or just never use popup mode
-
+    }, as_popup = true): Promise<number> {
         if (params.intent === "VR_HOST") {
             console.warn("Dropping create for VR_HOST intent");
             return -1;
@@ -222,36 +229,48 @@ class BrowserBackendIntegration implements BackendIntegrationEngine {
             throw new Error(`Unknown intent ${params.intent}`);
         }
 
-        const features = [
-            as_window ? "popup=yes" : "",
-            params.width ? `width=${params.width}` : "",
-            params.height ? `height=${params.height}` : ""
-        ]
-            .filter(Boolean)
-            .join(",");
+        let opened: OpenWindow;
+        if (as_popup) {
+            const features = [
+                "popup=yes",
+                params.width ? `width=${params.width}` : "",
+                params.height ? `height=${params.height}` : ""
+            ]
+                .filter(Boolean)
+                .join(",");
 
-        const win = window.open(url, "_blank", features);
-        if (!win) {
-            throw new Error("Failed to create window (likely blocked by the popup blocker)");
+            const win = window.open(url, "_blank", features);
+            if (!win) {
+                throw new Error("Failed to create window (likely blocked by the popup blocker)");
+            }
+
+            opened = { win, is_closed: () => win.closed };
+        } else {
+            // tell the play window to make an iframe for it
+            if (!iframe_window_handler) {
+                throw new Error("No iframe window handler");
+            }
+
+            opened = iframe_window_handler(url);
         }
 
         const id = next_window_id++;
-        open_windows.set(id, win);
+        open_windows.set(id, opened);
 
-        host_message_engine.add_peer(win, { url, origin: location.origin });
+        host_message_engine.add_peer(opened.win, { url, origin: location.origin });
         watch_open_windows();
 
         return id;
     }
 
     focus_window(window_id: number): void {
-        const win = open_windows.get(window_id);
-        if (!win) {
+        const opened = open_windows.get(window_id);
+        if (!opened) {
             console.warn("Dropping focus for unknown window ID", window_id);
             return;
         }
 
-        win.focus();
+        opened.win.focus();
     }
 
     is_from_vr_host(sender: SenderInfo): boolean {
