@@ -1,5 +1,5 @@
 import { useFrame } from "@react-three/fiber";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect } from "react";
 import type { DistanceMonitorPayload, ReportEvent, SubjectRef, TargetRef } from "@hyperlinkvr/vr-engine-schemas";
 import { TriggerSchema, WorldMonitorSchema } from "@hyperlinkvr/vr-engine-schemas";
 import { Vector3 } from "three";
@@ -7,7 +7,8 @@ import { Vector3 } from "three";
 import type { ObjectRefsContextType } from "../contexts/ObjectRefsContext";
 import { useWebSDKMessaging } from "../contexts/WebSDKMessagingContext";
 import { get_all_object_refs, get_object_refs } from "../engine/object_ref_registry";
-import { register_triggers, run_triggers } from "../engine/trigger_registry";
+import { fire_triggers, has_report_sink, publish_reports } from "../engine/report_outbox";
+import { register_triggers } from "../engine/trigger_registry";
 import { get_player_position } from "../player/player_position_registry";
 import type { CompiledWorldMonitor } from "./world_monitor_registry";
 import {
@@ -140,8 +141,7 @@ const separation = (entry: CompiledWorldMonitor, a: Vector3, b: Vector3): number
     }
 };
 
-// a crossing fires its triggers whether or not an sdk is connected (matching
-// interaction reports), and only queues a report for the sdk when there is one
+// a crossing fires its triggers whether or not anything is listening (matching interaction reports), and only queues a report when there is
 const emit_crossing = (
     source_id: string,
     type: "enter" | "exit",
@@ -149,13 +149,13 @@ const emit_crossing = (
     a: SubjectRef,
     b: SubjectRef,
     ts: number,
-    connected: boolean
+    listening: boolean
 ) => {
     const payload: DistanceMonitorPayload = { type, distance, a, b };
 
-    run_triggers(source_id, payload);
+    fire_triggers(source_id, "", payload);
 
-    if (connected) {
+    if (listening) {
         pending_reports.push({
             source_id,
             // world monitors have no owning object; routing is by source_id
@@ -168,13 +168,7 @@ const emit_crossing = (
 };
 
 export const WorldMonitorRunner = () => {
-    const { emit_event, connected, on_action } = useWebSDKMessaging();
-
-    const connected_ref = useRef(connected);
-    connected_ref.current = connected;
-
-    const emit_ref = useRef(emit_event);
-    emit_ref.current = emit_event;
+    const { on_action } = useWebSDKMessaging();
 
     useEffect(() => {
         const off_add = on_action("HVRSDK_WORLD_ADD_MONITOR", (message, reply) => {
@@ -274,9 +268,8 @@ export const WorldMonitorRunner = () => {
             return;
         }
 
-        // triggers must run even with no sdk connected, so the tick is not gated on
-        // the connection; reports are simply not queued while disconnected
-        const connected = connected_ref.current;
+        // triggers must run even with nothing listening
+        const listening = has_report_sink();
         const now = performance.now();
 
         for (const entry of entries) {
@@ -315,9 +308,9 @@ export const WorldMonitorRunner = () => {
                     const exited = !inside && was_inside;
 
                     if (entered && entry.report_enter) {
-                        emit_crossing(entry.source_id, "enter", distance, a.ref, b.ref, now, connected);
+                        emit_crossing(entry.source_id, "enter", distance, a.ref, b.ref, now, listening);
                     } else if (exited && entry.report_exit) {
-                        emit_crossing(entry.source_id, "exit", distance, a.ref, b.ref, now, connected);
+                        emit_crossing(entry.source_id, "exit", distance, a.ref, b.ref, now, listening);
                     }
                 }
             }
@@ -338,15 +331,7 @@ export const WorldMonitorRunner = () => {
             return;
         }
 
-        try {
-            emit_ref.current({
-                type: "HVRSDK_ENGINE_OBJECT_REPORT_BATCH",
-                reports: pending_reports.slice()
-            });
-        } catch (error) {
-            console.warn("Failed to emit world monitor reports", error);
-        }
-
+        publish_reports(pending_reports.slice());
         pending_reports.length = 0;
     }, []);
 

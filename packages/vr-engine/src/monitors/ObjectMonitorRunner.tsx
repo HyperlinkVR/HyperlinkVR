@@ -1,12 +1,12 @@
 import { useFrame } from "@react-three/fiber";
 import { useAfterPhysicsStep } from "@react-three/rapier";
-import { useCallback, useRef } from "react";
+import { useCallback } from "react";
 import type { ReportEvent } from "@hyperlinkvr/vr-engine-schemas";
 import { Euler, Quaternion, Vector3 } from "three";
 
 import type { ObjectRefsContextType } from "../contexts/ObjectRefsContext";
-import { useWebSDKMessaging } from "../contexts/WebSDKMessagingContext";
 import { get_object_refs } from "../engine/object_ref_registry";
+import { has_report_sink, publish_reports } from "../engine/report_outbox";
 import type {
     CompiledMonitor} from "./object_monitor_registry";
 import {
@@ -84,20 +84,12 @@ const sample_into = (
 };
 
 export const ObjectMonitorRunner = () => {
-    const { emit_event, connected } = useWebSDKMessaging();
-
-    const connected_ref = useRef(connected);
-    connected_ref.current = connected;
-
-    const emit_ref = useRef(emit_event);
-    emit_ref.current = emit_event;
-
     // want_body splits the work between the two passes
     // body-backed objects are sampled after the physics step (since only rapier affects them)
     // group-backed objects are sampled on the frame (since only the engine/tweens affect them)
     const run_pass = useCallback((want_body: boolean) => {
         const entries = get_monitor_entries();
-        if (entries.length === 0 || !connected_ref.current) {
+        if (entries.length === 0 || !has_report_sink()) {
             return;
         }
 
@@ -161,15 +153,7 @@ export const ObjectMonitorRunner = () => {
             return;
         }
 
-        try {
-            emit_ref.current({
-                type: "HVRSDK_ENGINE_OBJECT_REPORT_BATCH",
-                reports: pending_reports.slice()
-            });
-        } catch (error) {
-            console.warn("Failed to emit monitor reports", error);
-        }
-
+        publish_reports(pending_reports.slice());
         pending_reports.length = 0;
     }, []);
 

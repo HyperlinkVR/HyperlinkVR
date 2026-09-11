@@ -46,6 +46,7 @@ import { InputMonitorRunner } from "../monitors/InputMonitorRunner";
 import { ObjectMonitorRunner } from "../monitors/ObjectMonitorRunner";
 import { WorldMonitorRunner } from "../monitors/WorldMonitorRunner";
 import { clear_collider_collision_info, filter_contact_pair } from "../physics/collision_hooks";
+import { reset_authority } from "../net/authority";
 import { FlatAvatarHands, XRAvatarHand } from "../player/AvatarHand";
 import { Player } from "../player/Player";
 import { AvatarMirror } from "../prefabs/AvatarMirror";
@@ -369,6 +370,7 @@ const WorldSessionListener = () => {
         clear_vfx();
         reset_for_new_document();
         clear_collider_collision_info();
+        reset_authority();
     }, [doc_generation, support, clear_all_objects, reset_for_new_document, clear_hud, clear_vfx]);
 
     return null;

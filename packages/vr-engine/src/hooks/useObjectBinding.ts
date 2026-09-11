@@ -3,14 +3,15 @@ import {useCallback, useEffect, useRef} from "react";
 
 import {useObjectRefsOptional} from "../contexts/ObjectRefsContext";
 import { useWebSDKMessaging } from "../contexts/WebSDKMessagingContext";
-import {register_command_handler, run_triggers} from "../engine/trigger_registry";
+import {fire_triggers, publish_reports} from "../engine/report_outbox";
+import {register_command_handler} from "../engine/trigger_registry";
 import type {AnimationChannel} from "../animation/channel_registry";
 import { register_animation_channels} from "../animation/channel_registry";
 
 type ReportBody = Pick<ReportEvent, "kind" | "payload">;
 
 export const useObjectBinding = (binding: BindingConfig | undefined) => {
-    const { emit_event, connected, on_action } = useWebSDKMessaging();
+    const { on_action } = useWebSDKMessaging();
 
     const obj_refs = useObjectRefsOptional();
     const object_id = obj_refs?.id;
@@ -29,28 +30,19 @@ export const useObjectBinding = (binding: BindingConfig | undefined) => {
                 return;
             }
 
-            // run triggers regardless of if the sdk is connected
-            run_triggers(source_id, body.payload);
+            // run triggers regardless of if anything is listening
+            fire_triggers(source_id, object_id, body.payload);
 
-            if (!connected) {
-                return;
-            }
-
-            try {
-                emit_event({
-                    type: "HVRSDK_ENGINE_OBJECT_REPORT",
-                    report: {
-                        source_id,
-                        object_id,
-                        ts: performance.now(),
-                        ...body
-                    } as ReportEvent
-                });
-            } catch (error) {
-                console.warn("Failed to emit report event", error);
-            }
+            publish_reports([
+                {
+                    source_id,
+                    object_id,
+                    ts: performance.now(),
+                    ...body
+                } as ReportEvent
+            ]);
         },
-        [source_id, object_id, connected, emit_event]
+        [source_id, object_id]
     );
 
     const interaction_command_callback = useRef<(command: string, args?: any) => Promise<any> | null>(null);
@@ -66,7 +58,7 @@ export const useObjectBinding = (binding: BindingConfig | undefined) => {
                 interaction_command_callback.current = null;
             }
         }
-    }, []);
+    }, [source_id]);
 
     const prefab_command_callback = useRef<(command: string, args?: any) => Promise<any> | null>(null);
 
@@ -81,7 +73,7 @@ export const useObjectBinding = (binding: BindingConfig | undefined) => {
                 prefab_command_callback.current = null;
             }
         }
-    }, []);
+    }, [source_id]);
 
     // listen for interaction commands tied to the interaction id
     useEffect(() => {

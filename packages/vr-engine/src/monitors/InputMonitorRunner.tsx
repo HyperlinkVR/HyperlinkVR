@@ -2,10 +2,9 @@ import {useFrame} from "@react-three/fiber";
 import {useXRInputSourceState} from "@react-three/xr";
 import {useCallback, useEffect, useRef} from "react";
 import type {ReportEvent} from "@hyperlinkvr/vr-engine-schemas";
-import {useSetting} from "@hyperlinkvr/react";
+import {useSetting, useSessionMode} from "@hyperlinkvr/react";
 
-import {useWebSDKMessaging} from "../contexts/WebSDKMessagingContext";
-import {useSessionMode} from "../../../react/src/contexts/SessionMode";
+import {has_report_sink, publish_reports} from "../engine/report_outbox";
 import {useHands} from "../input/hands";
 import {useFlatFrameInput} from "../input/impl/flat/bindings";
 import {StandardControllerInput} from "../input/impl/flat/bindings";
@@ -320,17 +319,10 @@ const XRControllerBridge = ({target}: {target: React.RefObject<ControllerStates>
 };
 
 const InputMonitorTicker = ({controllers}: {controllers: React.RefObject<ControllerStates>}) => {
-    const {emit_event, connected} = useWebSDKMessaging();
     const session_mode = useSessionMode();
     const hands = useHands();
     const flat_input = useFlatFrameInput();
     const [locomotion_hand] = useSetting("vr_locomotion_hand");
-
-    const connected_ref = useRef(connected);
-    connected_ref.current = connected;
-
-    const emit_ref = useRef(emit_event);
-    emit_ref.current = emit_event;
 
     const context_ref = useRef<SampleContext>({
         session_mode,
@@ -378,7 +370,7 @@ const InputMonitorTicker = ({controllers}: {controllers: React.RefObject<Control
 
     const tick = useCallback(() => {
         const entries = get_input_monitor_entries();
-        if (entries.length === 0 || !connected_ref.current) {
+        if (entries.length === 0 || !has_report_sink()) {
             return;
         }
 
@@ -497,15 +489,7 @@ const InputMonitorTicker = ({controllers}: {controllers: React.RefObject<Control
             return;
         }
 
-        try {
-            emit_ref.current({
-                type: "HVRSDK_ENGINE_OBJECT_REPORT_BATCH",
-                reports: pending_reports.slice()
-            });
-        } catch (error) {
-            console.warn("Failed to emit input monitor reports", error);
-        }
-
+        publish_reports(pending_reports.slice());
         pending_reports.length = 0;
     }, [controllers]);
 

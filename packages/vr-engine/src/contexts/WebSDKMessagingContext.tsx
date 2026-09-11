@@ -7,6 +7,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 
 
 
+import { add_report_sink } from "../engine/report_outbox";
 import { clear_collider_collision_info } from "../physics/collision_hooks";
 import { useEngineObjectStore } from "../stores/EngineObjectStore";
 import { useWorldLoadingStateStore } from "../stores/WorldLoadingStateStore";
@@ -64,7 +65,7 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
         }
 
         data_channel_ref.current?.send(JSON.stringify(message));
-    }, []);
+    }, [messenger]);
 
     const handle_data_channel_message = useCallback((event: MessageEvent) => {
         const data = JSON.parse(event.data) as any;
@@ -98,7 +99,7 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
         const pending = pending_actions_ref.current.get(data.action) || [];
         pending.push(data);
         pending_actions_ref.current.set(data.action, pending);
-    }, []);
+    }, [messenger, send_over_data_channel]);
 
     // TODO: this code kinda sucks, same for how the background handles it. but it works :)
 
@@ -217,7 +218,7 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
                 peer_connection_ref.current = null;
             }
         };
-    }, [id, handle_data_channel_message]);
+    }, [id, handle_data_channel_message, messenger]);
 
     useEffect(() => {
         // add built in handlers
@@ -241,7 +242,7 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
         return () => {
             action_map_ref.current.clear();
         };
-    }, []);
+    }, [storage]);
 
     const on_action = useCallback(
         <M extends WebSDKActionName>(action_filter: M, callback: (message: NamedAction<M>, reply: (message: NamedReply<M> | WebSDKErrorReply<M>) => void) => void) => {
@@ -272,7 +273,7 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
                     handlers.delete(handler);
                 }
             };
-        }, []);
+        }, [send_over_data_channel]);
 
     const wait_for_action = useCallback(
         <M extends WebSDKActionName>(action_filter: M) => {
@@ -293,7 +294,21 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
         }
 
         send_over_data_channel(message);
-    }, []);
+    }, [send_over_data_channel]);
+
+    useEffect(() => {
+        if (!connected) {
+            return;
+        }
+
+        return add_report_sink((reports) => {
+            if (reports.length === 1) {
+                emit_event({ type: "HVRSDK_ENGINE_OBJECT_REPORT", report: reports[0]! });
+            } else {
+                emit_event({ type: "HVRSDK_ENGINE_OBJECT_REPORT_BATCH", reports });
+            }
+        });
+    }, [connected, emit_event]);
 
     return (
         <WebSDKMessagingContext.Provider value={{ wait_for_action, on_action, emit_event, connected }}>
