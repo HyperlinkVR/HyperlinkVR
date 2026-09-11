@@ -49,6 +49,7 @@ import { clear_collider_collision_info, filter_contact_pair } from "../physics/c
 import { reset_authority } from "../net/authority";
 import { NetSessionProvider } from "../net/NetSession";
 import { NetSessionOverlay } from "../net/NetSessionOverlay";
+import { PresenceSync } from "../net/PresenceSync";
 import { FlatAvatarHands, XRAvatarHand } from "../player/AvatarHand";
 import { Player } from "../player/Player";
 import { AvatarMirror } from "../prefabs/AvatarMirror";
@@ -265,6 +266,7 @@ const SceneContents = ({
             <fog attach="fog" args={[fog.color, fog.near, fog.far]} />
 
             <Player can_move={!show_loader} ref={internal_ref} />
+            <PresenceSync />
 
             {show_default_world && (
                 <>

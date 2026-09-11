@@ -16,6 +16,8 @@ import { AvatarHair } from "./AvatarHair";
 
 const head = new URL("../../assets/player/head/head.glb", import.meta.url).href;
 
+export const HEAD_MODEL_URL = head;
+
 export const AvatarHead = () => {
     const {scene: head_scene} = useGLTF(head);
     const anchor_ref = useRef<Group>(null);

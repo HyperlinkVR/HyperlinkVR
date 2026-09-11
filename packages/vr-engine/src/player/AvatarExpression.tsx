@@ -56,7 +56,8 @@ const mouth_urls = Object.fromEntries(
     Object.entries(mouth_modules).map(([path, url]) => [get_name(path), url])
 );
 
-export const AvatarExpression = () => {
+// the local head layer is hidden from the player's own camera, so other players' faces pass their own
+export const AvatarExpression = ({ layers = [Layer.PlayerModel_Head] }: { layers?: Layer[] }) => {
     const [eyes_glbs, setEyesGlbs] = useState<Record<
         ExpressionEyes,
         GLTF
@@ -96,7 +97,7 @@ export const AvatarExpression = () => {
     }
 
     return (
-        <LayerGroup layers={[Layer.PlayerModel_Head]} name="AvatarExpression">
+        <LayerGroup layers={layers} name="AvatarExpression">
             <primitive object={eye.scene} />
             <primitive object={mouth.scene} />
         </LayerGroup>

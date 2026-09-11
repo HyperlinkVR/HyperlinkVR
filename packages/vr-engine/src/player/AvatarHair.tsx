@@ -6,6 +6,8 @@ import { Group } from "three";
 
 const hair = new URL("../../assets/player/hair/0.glb", import.meta.url).href;
 
+export const HAIR_MODEL_URL = hair;
+
 export const AvatarHair = () => {
     const {scene: hair_scene} = useGLTF(hair);
 

@@ -141,6 +141,16 @@ export const AvatarProvider = ({ children }: { children: React.ReactNode }) => {
     );
 }
 
+// a fixed avatar for the subtree, e.g. another player's
+export const StaticAvatarProvider = ({ avatar, children }: { avatar: StoredAvatar; children: React.ReactNode }) => {
+    const value = useMemo(
+        () => ({ avatar: stored_to_retrieved_avatar(avatar), setAvatar: () => {} }),
+        [avatar]
+    );
+
+    return <AvatarContext.Provider value={value}>{children}</AvatarContext.Provider>;
+};
+
 export const useAvatar = () => {
     const context = useContext(AvatarContext);
     if (!context) {
@@ -184,9 +194,11 @@ export const useRetrievedAvatarProperty = <K extends keyof RetrievedAvatar>(prop
 export const useAvatarMaterials = (scene?: Object3D | null) => {
     const [avatar] = useAvatar();
 
+    // named after what they replace, so a clone of an already-skinned scene can be re-skinned
     const skin_material = useMemo(
         () =>
             new MeshStandardMaterial({
+                name: "Mat_Skin",
                 color: 0x000000,
                 roughness: 0.7
             }),
@@ -203,6 +215,7 @@ export const useAvatarMaterials = (scene?: Object3D | null) => {
     const hair_material = useMemo(
         () =>
             new MeshStandardMaterial({
+                name: "Mat_Hair",
                 color: 0x000000,
                 roughness: 0.4,
             }),
@@ -219,6 +232,7 @@ export const useAvatarMaterials = (scene?: Object3D | null) => {
     const pencil_material = useMemo(
         () =>
             new MeshBasicMaterial({
+                name: "Mat_Pencil",
                 color: 0x000000,
             }),
         []

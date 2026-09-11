@@ -36,42 +36,45 @@ interface ChainLink {
 // TODO: disable ray when touch has a hit
 // TODO: prevent double touch when passing through watch
 
-const pose_to_curl = (p: Hand["pose"]["current"]): number => {
+export const pose_to_curl = (p: Hand["pose"]["current"]): number => {
     if (p.kind === "curl") return p.amount;
     return p.name === "fist" ? 1.2 : 0;
 };
 
+export const HAND_MODEL_URLS = { left: left_hand, right: right_hand } as const;
+
+const CURL_SMOOTHING = 1 - Math.pow(0.0001, 0.016);
+
+// eases the displayed curl towards the target each frame
+export const smooth_curl = (current: number, target: number) => current + (target - current) * CURL_SMOOTHING;
+
 const TOUCH_HOVER_RADIUS = 0.04;
 const TOUCH_DOWN_RADIUS = 0.01;
 
-const AvatarHandModel = ({
-    hand,
-    handedness,
-    touch_origin_ref,
-    on_touch_glue,
-    children,
-    auto_position = true
-}: {
-    hand: Hand | null;
-    handedness: "left" | "right";
-    touch_origin_ref?: React.RefObject<Group | null>;
-    on_touch_glue?: (index_tip_bone: Object3D) => void;
-    children?: React.ReactNode;
-    auto_position?: boolean;
-}) => {
-    const { scene: hand_scene } = useGLTF(
-        handedness === "left" ? left_hand : right_hand
-    );
-    useAvatarMaterials(hand_scene);
+// cloned scenes carry userData through JSON, so a captured quaternion comes back as an array
+const to_quaternion = (value: Quaternion | number[]) =>
+    Array.isArray(value) ? new Quaternion().fromArray(value) : value.clone();
 
-    const curlRef = useRef(0);
+const to_vector = (value: Vector3 | { x: number; y: number; z: number }) =>
+    new Vector3(value.x, value.y, value.z);
+
+const make_link = (bone: Object3D): ChainLink => {
+    const bindQuat = to_quaternion(bone.userData.initialQuaternion);
+    return {
+        bone,
+        bindQuat,
+        bindQuatInverse: bindQuat.clone().invert(),
+        bindPos: to_vector(bone.userData.initialPosition)
+    };
+};
+
+// fk finger folding, returns a function that poses the hand for a curl amount
+export const useFingerCurl = (hand_scene: Object3D) => {
     const chainsRef = useRef<Record<string, ChainLink[]> | null>(null);
     const thumbChainRef = useRef<ChainLink[] | null>(null);
 
     // bind-pose capture + FK chain build
     useEffect(() => {
-        if (!hand_scene) return;
-
         hand_scene.traverse((node: any) => {
             if (node.isBone && !node.userData.initialQuaternion) {
                 node.userData.initialQuaternion = node.quaternion.clone();
@@ -89,37 +92,19 @@ const AvatarHandModel = ({
                 hand_scene.getObjectByName(`${finger}-finger-phalanx-${seg}`)
             );
             if (bones.some((b) => !b)) return;
-            chains[finger] = bones.map((bone: any) => {
-                const bindQuat = bone.userData.initialQuaternion.clone();
-                return {
-                    bone,
-                    bindQuat,
-                    bindQuatInverse: bindQuat.clone().invert(),
-                    bindPos: bone.userData.initialPosition.clone()
-                };
-            });
+            chains[finger] = bones.map((bone) => make_link(bone!));
         });
         chainsRef.current = chains;
         const thumbBones = ["proximal", "distal"].map((seg) =>
             hand_scene.getObjectByName(`thumb-phalanx-${seg}`)
         );
         thumbChainRef.current = thumbBones.every(Boolean)
-            ? thumbBones.map((bone: any) => {
-                  const bindQuat = bone.userData.initialQuaternion.clone();
-                  return {
-                      bone,
-                      bindQuat,
-                      bindQuatInverse: bindQuat.clone().invert(),
-                      bindPos: bone.userData.initialPosition.clone()
-                  };
-              })
+            ? thumbBones.map((bone) => make_link(bone!))
             : null;
     }, [hand_scene]);
 
     const math = useMemo(
         () => ({
-            rayPos: new Vector3(),
-            rayQuat: new Quaternion(),
             delta: new Quaternion(),
             localDeltaWorld: new Quaternion(),
             cumulative: new Quaternion(),
@@ -129,38 +114,8 @@ const AvatarHandModel = ({
         []
     );
 
-    const root_ref = useRef<Group | null>(null);
-    useFrame(() => {
-        if (!hand_scene || !chainsRef.current) return;
-
-        // follow the world-space grip node, and write world matrix directly so being a child of the origin doesn't double-apply the origin transform
-        const render_root = root_ref.current;
-        const grip_node = hand?.grip.current ?? null;
-        if (auto_position && render_root && grip_node) {
-            grip_node.updateWorldMatrix(true, false);
-            render_root.matrixAutoUpdate = false;
-            if (render_root.parent) {
-                render_root.parent.updateWorldMatrix(true, false);
-                render_root.matrix
-                    .copy(render_root.parent.matrixWorld)
-                    .invert()
-                    .multiply(grip_node.matrixWorld);
-            } else {
-                render_root.matrix.copy(grip_node.matrixWorld);
-            }
-            render_root.matrixWorldNeedsUpdate = true;
-        }
-
-        if (touch_origin_ref?.current && on_touch_glue) {
-            const index_tip_bone = hand_scene.getObjectByName("index-finger-phalanx-distal");
-            if (index_tip_bone) on_touch_glue(index_tip_bone);
-        }
-
-        // curl comes from hand pose, but smoothed to animate
-        const target = hand ? pose_to_curl(hand.pose.current) : 0;
-        const smoothing = 1 - Math.pow(0.0001, 0.016);
-        curlRef.current += (target - curlRef.current) * smoothing;
-        const curl = curlRef.current;
+    return useCallback((curl: number) => {
+        if (!chainsRef.current) return;
 
         // fold fingers
         Object.values(chainsRef.current).forEach((chain) => {
@@ -228,6 +183,58 @@ const AvatarHandModel = ({
                 }
             );
         }
+    }, [math]);
+};
+
+const AvatarHandModel = ({
+    hand,
+    handedness,
+    touch_origin_ref,
+    on_touch_glue,
+    children,
+    auto_position = true
+}: {
+    hand: Hand | null;
+    handedness: "left" | "right";
+    touch_origin_ref?: React.RefObject<Group | null>;
+    on_touch_glue?: (index_tip_bone: Object3D) => void;
+    children?: React.ReactNode;
+    auto_position?: boolean;
+}) => {
+    const { scene: hand_scene } = useGLTF(HAND_MODEL_URLS[handedness]);
+    useAvatarMaterials(hand_scene);
+
+    const apply_curl = useFingerCurl(hand_scene);
+    const curlRef = useRef(0);
+
+    const root_ref = useRef<Group | null>(null);
+    useFrame(() => {
+        // follow the world-space grip node, and write world matrix directly so being a child of the origin doesn't double-apply the origin transform
+        const render_root = root_ref.current;
+        const grip_node = hand?.grip.current ?? null;
+        if (auto_position && render_root && grip_node) {
+            grip_node.updateWorldMatrix(true, false);
+            render_root.matrixAutoUpdate = false;
+            if (render_root.parent) {
+                render_root.parent.updateWorldMatrix(true, false);
+                render_root.matrix
+                    .copy(render_root.parent.matrixWorld)
+                    .invert()
+                    .multiply(grip_node.matrixWorld);
+            } else {
+                render_root.matrix.copy(grip_node.matrixWorld);
+            }
+            render_root.matrixWorldNeedsUpdate = true;
+        }
+
+        if (touch_origin_ref?.current && on_touch_glue) {
+            const index_tip_bone = hand_scene.getObjectByName("index-finger-phalanx-distal");
+            if (index_tip_bone) on_touch_glue(index_tip_bone);
+        }
+
+        // curl comes from hand pose, but smoothed to animate
+        curlRef.current = smooth_curl(curlRef.current, hand ? pose_to_curl(hand.pose.current) : 0);
+        apply_curl(curlRef.current);
     });
 
     return (

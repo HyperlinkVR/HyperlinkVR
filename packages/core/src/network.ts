@@ -60,7 +60,7 @@ export interface NetworkRoom {
     // never loops back to self
     send(target: SendTarget, channel: string, payload: Payload, delivery?: Delivery): void;
 
-    // returns a function to remove the listener
+    // returns a function to remove the listener. messages arriving with no listener are dropped, so listen before announcing
     on_message(handler: (message: IncomingMessage) => void): () => void;
 
     // returns a function to remove the listener
