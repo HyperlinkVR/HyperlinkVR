@@ -13,8 +13,11 @@ import ReactDOM from "react-dom/client";
 
 
 
-import { attach_content_window, attach_host_window, backend, navigate_from_ui, notify_content_loaded, set_current_url, set_dimensions, set_navigate_back_callback, set_navigate_callback, SINGLE_TAB_ID } from "./backend";
+import { attach_content_window, attach_host_window, backend, navigate_from_ui, notify_content_loaded, set_current_url, set_dimensions,
+    set_iframe_window_handler, set_navigate_back_callback, set_navigate_callback, SINGLE_TAB_ID } from "./backend";
 import { NavigationBar } from "./components/NavigationBar";
+import { SquareButton } from "./components/SquareButton";
+import { X } from "lucide-react";
 
 
 const App = () => {
@@ -75,6 +78,27 @@ const App = () => {
         }
     }, []);
 
+    // TODO: split to component
+    const window_iframe_ref = useRef<HTMLIFrameElement>(null);
+    const window_closed = useRef(true);
+    const [window_iframe_url, setWindowIFrameURL] = useState<string | null>(null);
+    const on_iframe_window_requested = useCallback(
+        (url: string) => {
+            setWindowIFrameURL(url);
+            window_closed.current = false;
+
+            return {
+                win: window_iframe_ref.current!.contentWindow!,
+                is_closed: () => window_closed.current
+            };
+        },
+        []
+    );
+
+    useEffect(() => {
+        set_iframe_window_handler(on_iframe_window_requested);
+    }, [on_iframe_window_requested]);
+
     return (
         <main className="h-screen w-screen flex flex-col">
             {!loaded && <div className="h-screen w-screen fixed inset-0 bg-slate-800 flex flex-col items-center justify-center">
@@ -85,6 +109,11 @@ const App = () => {
 
             <iframe name="hvr-host-frame" ref={handle_host_iframe} src={`./windows/vr_host/?tab=${SINGLE_TAB_ID}`} allowFullScreen className="flex-1" />
             <iframe name={CONTENT_FRAME_NAME} ref={handle_content_iframe} src={url} className="hidden" onLoad={notify_content_loaded} />
+
+            <div className={`h-screen w-screen fixed inset-0 bg-slate-800 ${window_iframe_url ? "flex flex-col items-end justify-center" : "hidden"}`} aria-hidden={!window_iframe_url} role="dialog">
+                <SquareButton label={<X />} on_click={() => {window_closed.current = true; setWindowIFrameURL(null)}} title="Close window" className=" h-10 transition bg-gray-500 hover:bg-red-600" />
+                <iframe name="hvr-window-frame" ref={window_iframe_ref} src={window_iframe_url || "about:blank"} className="w-full h-full" />
+            </div>
         </main>
     );
 }
