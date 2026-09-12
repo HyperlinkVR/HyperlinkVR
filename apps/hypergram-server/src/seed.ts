@@ -35,8 +35,23 @@ const sample_posts = (): Post[] => {
     }));
 };
 
+const sample_pictures = () => {
+    const seeds: { author: string; seed: string }[] = [
+        { author: "ada@example.com", seed: "ada" },
+        { author: "grace@example.com", seed: "grace" },
+        { author: "john@example.com", seed: "john" }
+    ];
+
+    return seeds.map((s) => ({
+        author: s.author,
+        high_res_url: `https://picsum.photos/seed/${s.seed}/512`,
+        low_res_url: `https://picsum.photos/seed/${s.seed}/64`
+    }));
+};
+
 export const seed = async (store: SiteStore) => {
     const posts = sample_posts();
-    await publish_site(store, { manifest: dev_manifest, posts, pictures: [] });
+    const pictures = sample_pictures();
+    await publish_site(store, { manifest: dev_manifest, posts, pictures });
     return { manifest: dev_manifest, posts };
 };
