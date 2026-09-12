@@ -16,7 +16,7 @@ export const api_v1_contract = c.router(
     {
         get_post: {
             method: "GET",
-            path: "/posts/:id",
+            path: "/v1/posts/:id",
 
             responses: {
                 200: PostSchema
@@ -27,7 +27,7 @@ export const api_v1_contract = c.router(
 
         get_profile_picture: {
             method: "GET",
-            path: "/users/:user/picture",
+            path: "/v1/users/:user/picture",
 
             responses: {
                 200: FileSchema
@@ -39,7 +39,7 @@ export const api_v1_contract = c.router(
 
         get_recent_posts: {
             method: "GET",
-            path: "/feeds/recent",
+            path: "/v1/feeds/recent",
 
             query: z.object({
                 timestamp: z.number()
@@ -56,7 +56,7 @@ export const api_v1_contract = c.router(
 
         get_user_posts: {
             method: "GET",
-            path: "/feeds/user/:user",
+            path: "/v1/feeds/user/:user",
 
             query: z.object({
                 timestamp: z.number()
@@ -73,7 +73,7 @@ export const api_v1_contract = c.router(
 
         upload_post: {
             method: "POST",
-            path: "/posts",
+            path: "/v1/posts",
             contentType: "multipart/form-data",
 
             // TODO: auth handling
@@ -92,7 +92,7 @@ export const api_v1_contract = c.router(
 
         edit_post: {
             method: "PUT",
-            path: "/posts/:id",
+            path: "/v1/posts/:id",
             contentType: "application/json",
 
             // TODO: auth handling
@@ -108,7 +108,7 @@ export const api_v1_contract = c.router(
 
         delete_post: {
             method: "DELETE",
-            path: "/posts/:id",
+            path: "/v1/posts/:id",
 
             // TODO: auth handling
 
@@ -121,7 +121,7 @@ export const api_v1_contract = c.router(
 
         change_profile_picture: {
             method: "PUT",
-            path: "/users/me/picture",
+            path: "/v1/users/me/picture",
             contentType: "multipart/form-data",
 
             // TODO: auth handling
@@ -139,7 +139,7 @@ export const api_v1_contract = c.router(
 
         remove_profile_picture: {
             method: "DELETE",
-            path: "/users/me/picture",
+            path: "/v1/users/me/picture",
 
             // TODO: auth handling
 
