@@ -501,6 +501,12 @@ importers:
         specifier: ^7.0.2
         version: 7.0.2
 
+  packages/hypergram-schemas:
+    dependencies:
+      zod:
+        specifier: 'catalog:'
+        version: 4.4.3
+
   packages/pages:
     dependencies:
       '@hyperlinkvr/assets':
