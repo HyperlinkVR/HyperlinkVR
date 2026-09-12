@@ -19,6 +19,7 @@ catalog:
   '@types/react-dom': 19.2.3
   '@types/three': ^0.185.0
   '@wxt-dev/auto-icons': ^1.1.2
+  '@ts-rest/core': ^3.53.0-rc.1
   react-error-boundary: ^6.1.4
   lucide-react: 1.21.0
   react: 19.2.7

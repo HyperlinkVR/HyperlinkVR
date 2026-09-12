@@ -22,11 +22,11 @@ export type ActionResponseInput = z.input<typeof ActionResponseSchema>;
 
 
 // upload request will just be a standard file POST with whichever auth headers, alongside this metadata
-export const UploadRequestSchema = z.object({
+export const UploadRequestMetadataSchema = z.object({
     caption: z.string().min(1).max(512).optional()
 });
-export type UploadRequest = z.infer<typeof UploadRequestSchema>;
-export type UploadRequestInput = z.input<typeof UploadRequestSchema>;
+export type UploadRequestMetadata = z.infer<typeof UploadRequestMetadataSchema>;
+export type UploadRequestMetadataInput = z.input<typeof UploadRequestMetadataSchema>;
 
 // profile picture upload just a standard file PUT without metadata to a special route
 // it can be DELETEd but not edited (as it'll already upsert with PUT and has no caption etc)

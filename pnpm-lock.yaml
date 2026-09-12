@@ -33,6 +33,9 @@ catalogs:
     '@tailwindcss/vite':
       specifier: 4.3.1
       version: 4.3.1
+    '@ts-rest/core':
+      specifier: ^3.53.0-rc.1
+      version: 3.53.0-rc.1
     '@types/node':
       specifier: 20.11.5
       version: 20.11.5
@@ -503,6 +506,9 @@ importers:
 
   packages/hypergram-schemas:
     dependencies:
+      '@ts-rest/core':
+        specifier: 'catalog:'
+        version: 3.53.0-rc.1(@types/node@20.11.5)
       zod:
         specifier: 'catalog:'
         version: 4.4.3
@@ -4253,6 +4259,14 @@ packages:
   '@topcli/prompts@4.0.0':
     resolution: {integrity: sha512-kkKYPb4k/6kRdnESt77B5vJrrYnYHIYczwv0P1c+tfN/IWEx3KZeKEHoUq7sImIyBEXWdA2uakIroD9pmRJziQ==}
     engines: {node: '>=22.0.0'}
+
+  '@ts-rest/core@3.53.0-rc.1':
+    resolution: {integrity: sha512-hDMXqKHSys6w+kXFW1Q6EvN8QgRvtXKXJ2TpYByKI4TquaPjiTOv99aLD26X4LNRzdna8Ci1PVyzr0jYZv0oNQ==}
+    peerDependencies:
+      '@types/node': ^18.18.7 || >=20.8.4
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
 
   '@turbo/darwin-64@2.10.12':
     resolution: {integrity: sha512-9nKgKoF6ZOUsM+or0OtNf+TTJSfGvDNP7ZFv/ZGWVwOSCkumyctQiTeHwB4UNljHTnC41AqylgbunLDHoccNrA==}
@@ -13781,6 +13795,10 @@ snapshots:
       vite: 8.1.0(esbuild@0.28.1)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.26))(terser@5.51.2)(tsx@4.22.4)(yaml@2.9.0)
 
   '@topcli/prompts@4.0.0': {}
+
+  '@ts-rest/core@3.53.0-rc.1(@types/node@20.11.5)':
+    optionalDependencies:
+      '@types/node': 20.11.5
 
   '@turbo/darwin-64@2.10.12':
     optional: true
