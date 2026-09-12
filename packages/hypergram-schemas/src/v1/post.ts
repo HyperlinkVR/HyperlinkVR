@@ -8,7 +8,6 @@ export const PostSchema = z.object({
     ts: z.number().int(), // ms since epoch, set by the host when it publishes (not the uploader's clock) as feeds are ordered by it
     image_url: URLSchema,
     thumb_url: URLSchema,
-    post_url: URLSchema.optional(), // canonical url of this post's webpage
     caption: CaptionSchema.optional()
 });
 export type Post = z.infer<typeof PostSchema>;

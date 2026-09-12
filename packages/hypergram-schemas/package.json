@@ -2,6 +2,7 @@
     "name": "@hyperlinkvr/hypergram-schemas",
     "version": "0.0.1",
     "private": true,
+    "type": "module",
     "exports": {
         "./v1": "./src/v1/index.ts"
     },

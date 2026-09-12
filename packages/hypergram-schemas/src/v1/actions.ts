@@ -1,14 +1,13 @@
 import { z } from "zod";
 
-import { CaptionSchema, PostIDSchema, URLSchema } from "./common";
+import { CaptionSchema, PostIDSchema } from "./common";
 
 // all requests enacted restfully on the post entity, authenticated with one of the host's write auth methods (see auth.ts)
 
 export const SuccessfulActionResponseSchema = z.object({
     success: z.literal(true),
     // pending when the host publishes asynchronously (e.g. a github action rebuilding pages), so the result may take a few minutes to appear
-    status: z.enum(["published", "pending"]),
-    post_url: URLSchema.optional() // for upload and edit
+    status: z.enum(["published", "pending"])
 });
 
 export const FailedActionResponseSchema = z.object({
