@@ -359,6 +359,37 @@ importers:
         specifier: ^8.1.0
         version: 8.1.0(esbuild@0.28.1)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.26))(terser@5.51.2)(tsx@4.22.4)(yaml@2.9.0)
 
+  apps/hypergram-server:
+    dependencies:
+      '@hono/node-server':
+        specifier: ^2.1.1
+        version: 2.1.1(hono@4.13.7)
+      '@hyperlinkvr/hypergram-host':
+        specifier: workspace:*
+        version: link:../../packages/hypergram-host
+      '@hyperlinkvr/hypergram-schemas':
+        specifier: workspace:*
+        version: link:../../packages/hypergram-schemas
+      '@ts-rest/core':
+        specifier: 'catalog:'
+        version: 3.53.0-rc.1(@types/node@20.11.5)
+      '@ts-rest/serverless':
+        specifier: 3.53.0-rc.1
+        version: 3.53.0-rc.1(@ts-rest/core@3.53.0-rc.1(@types/node@20.11.5))
+      hono:
+        specifier: ^4.13.7
+        version: 4.13.7
+      zod:
+        specifier: 'catalog:'
+        version: 4.4.3
+    devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 20.11.5
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+
   apps/play:
     dependencies:
       '@hyperlinkvr/backend':
@@ -552,6 +583,18 @@ importers:
       typescript:
         specifier: ^7.0.2
         version: 7.0.2
+
+  packages/hypergram-host:
+    dependencies:
+      '@hyperlinkvr/hypergram-schemas':
+        specifier: workspace:*
+        version: link:../hypergram-schemas
+      '@ts-rest/core':
+        specifier: 'catalog:'
+        version: 3.53.0-rc.1(@types/node@20.11.5)
+      zod:
+        specifier: 'catalog:'
+        version: 4.4.3
 
   packages/hypergram-schemas:
     dependencies:
@@ -2624,6 +2667,12 @@ packages:
   '@hapi/topo@5.1.0':
     resolution: {integrity: sha512-foQZKJig7Ob0BMAYBfcJk8d77QtOe7Wo4ox7ff1lQYoNNAb6jwcY1ncdoy2e9wQZzvNy7ODZCYJkK8kzmcAnAg==}
 
+  '@hono/node-server@2.1.1':
+    resolution: {integrity: sha512-ELuehkj5VCBdgEw9zs+ivkKwyzzUCSQuE96YmiPvn1ECBoZCczbFXJLeEGMTYjphP6gydh4pHMqEYPVMYUVgQg==}
+    engines: {node: '>=20'}
+    peerDependencies:
+      hono: ^4
+
   '@hookform/resolvers@3.10.0':
     resolution: {integrity: sha512-79Dv+3mDF7i+2ajj7SkypSKHhl1cbln1OGavqrsF7p6mbUv11xpqpacPsGDCTRvCSjEEIez2ef1NveSVL3b0Ag==}
     peerDependencies:
@@ -4315,6 +4364,21 @@ packages:
       '@types/node': ^18.18.7 || >=20.8.4
     peerDependenciesMeta:
       '@types/node':
+        optional: true
+
+  '@ts-rest/serverless@3.53.0-rc.1':
+    resolution: {integrity: sha512-MtwjH3GqGXx4r4Tyqb381JNN5W7tKZt491Yp0OSAxU2cdduJ3s9lNZV4+AFbDTdY+ZyInlQntCIr94+VBSr+TA==}
+    peerDependencies:
+      '@azure/functions': ^4.0.0
+      '@ts-rest/core': 3.53.0-rc.1
+      '@types/aws-lambda': ^8.10.115
+      next: ^12.0.0 || ^13.0.0 || ^14.0.0
+    peerDependenciesMeta:
+      '@azure/functions':
+        optional: true
+      '@types/aws-lambda':
+        optional: true
+      next:
         optional: true
 
   '@turbo/darwin-64@2.10.12':
@@ -6275,6 +6339,10 @@ packages:
   hoist-non-react-statics@3.3.2:
     resolution: {integrity: sha512-/gGivxi8JPKWNm/W0jSmzcMPpfpPLc3dY/6GxhX2hQ9iGj3aDfklV4ET7NjKpSinLpJ5vafa9iiGIEZg10SfBw==}
 
+  hono@4.13.7:
+    resolution: {integrity: sha512-c8/gF9ac8Y78/agExVocyLevgR+JlpNB444Py0FSX8pJoPdYUfUzRcXtYEYGwt6l19qIlVZPN5Mfsw9jFShmQQ==}
+    engines: {node: '>=16.9.0'}
+
   hookable@6.1.1:
     resolution: {integrity: sha512-U9LYDy1CwhMCnprUfeAZWZGByVbhd54hwepegYTK7Pi5NvqEj63ifz5z+xukznehT7i6NIZRu89Ay1AZmRsLEQ==}
 
@@ -6615,6 +6683,9 @@ packages:
     resolution: {integrity: sha512-KLViCmWx94zOvpLwSlsx6yOCeMhZYaxrJV87Po5k/FoZzcPSahvK5qJ7fYhS61sZi5ikmh2S3Hz55A2l3U69ng==}
     peerDependencies:
       react: ^19.0.0
+
+  itty-router@5.0.24:
+    resolution: {integrity: sha512-PXij1qGKtE6jg3dLgrTRdh/Frovl5Wc4Av67sD2xfhDPrgNt4u79++/il8/c/OfZGkhD/8uYJub8tjo+H165rA==}
 
   iwer@2.2.1:
     resolution: {integrity: sha512-TBGgUlOpYsJpYmBCDRrW2KDHC70XZeFrlOwlDNiso+dp83wwRyCLaeN50/qo4JRIKyn08+cD6iaw5+t+D7U+uQ==}
@@ -12246,6 +12317,10 @@ snapshots:
     dependencies:
       '@hapi/hoek': 9.3.0
 
+  '@hono/node-server@2.1.1(hono@4.13.7)':
+    dependencies:
+      hono: 4.13.7
+
   '@hookform/resolvers@3.10.0(react-hook-form@7.80.0(react@19.2.7))':
     dependencies:
       react-hook-form: 7.80.0(react@19.2.7)
@@ -13848,6 +13923,11 @@ snapshots:
   '@ts-rest/core@3.53.0-rc.1(@types/node@20.11.5)':
     optionalDependencies:
       '@types/node': 20.11.5
+
+  '@ts-rest/serverless@3.53.0-rc.1(@ts-rest/core@3.53.0-rc.1(@types/node@20.11.5))':
+    dependencies:
+      '@ts-rest/core': 3.53.0-rc.1(@types/node@20.11.5)
+      itty-router: 5.0.24
 
   '@turbo/darwin-64@2.10.12':
     optional: true
@@ -16060,6 +16140,8 @@ snapshots:
     dependencies:
       react-is: 16.13.1
 
+  hono@4.13.7: {}
+
   hookable@6.1.1: {}
 
   hpack.js@2.1.6:
@@ -16350,6 +16432,8 @@ snapshots:
       react: 19.2.7
     transitivePeerDependencies:
       - '@types/react'
+
+  itty-router@5.0.24: {}
 
   iwer@2.2.1:
     dependencies:
