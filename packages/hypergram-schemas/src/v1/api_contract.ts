@@ -4,83 +4,100 @@ import { z } from "zod";
 
 
 import { EditRequestSchema, FailedActionResponseSchema, SuccessfulActionResponseSchema, UploadRequestMetadataSchema } from "./actions";
+import { IdentitySchema, PostIDSchema } from "./common";
 import { PostPageSchema } from "./feeds";
+import { HostManifestSchema } from "./manifest";
 import { PostSchema } from "./post";
+import { ProfilePictureSchema } from "./profile_picture";
 
 
 const c = initContract();
 
 export const FileSchema = z.custom<File | Blob>((val) => typeof val !== "string", "Expected a file");
 
-export const api_v1_contract = c.router(
+// reads must be servable as plain static files (e.g. github pages), so:
+//  - every path is a fixed file with an extension (params sit in a directory, as ts-rest would treat ":id.json" as a param named "id.json")
+//  - no query strings, anything beyond the feed heads is reached by following PostPage.next
+//  - no auth and no "me", reads are always public
+// a 404 from a static host won't have a json body, so reads only declare 200
+
+export const api_v1_read_contract = c.router({
+    get_manifest: {
+        method: "GET",
+        path: "/v1/manifest.json",
+
+        responses: {
+            200: HostManifestSchema
+        },
+
+        summary: "Get the manifest describing this host"
+    },
+
+    get_recent_feed: {
+        method: "GET",
+        path: "/v1/feeds/recent.json",
+
+        responses: {
+            200: PostPageSchema
+        },
+
+        summary: "Get the head of the feed of recent posts on this host, follow next for older pages"
+    },
+
+    get_user_feed: {
+        method: "GET",
+        path: "/v1/users/:identity/feed.json",
+        pathParams: z.object({
+            identity: IdentitySchema
+        }),
+
+        responses: {
+            200: PostPageSchema
+        },
+
+        summary: 'Get the head of the feed of posts on this host by a given identity (e.g. "foo@bar.com"), follow next for older pages'
+    },
+
+    get_post: {
+        method: "GET",
+        path: "/v1/posts/:id/post.json",
+        pathParams: z.object({
+            id: PostIDSchema
+        }),
+
+        responses: {
+            200: PostSchema
+        },
+
+        summary: "Get an uploaded post"
+    },
+
+    get_profile_picture: {
+        method: "GET",
+        path: "/v1/users/:identity/picture.json",
+        pathParams: z.object({
+            identity: IdentitySchema
+        }),
+
+        responses: {
+            200: ProfilePictureSchema
+        },
+
+        summary: 'Get the profile picture for a given identity (e.g. "foo@bar.com"), 404 if they have none'
+    }
+});
+
+export const api_v1_write_contract = c.router(
     {
-        get_post: {
-            method: "GET",
-            path: "/v1/posts/:id",
-
-            responses: {
-                200: PostSchema
-            },
-
-            summary: "Get an uploaded post"
-        },
-
-        get_profile_picture: {
-            method: "GET",
-            path: "/v1/users/:user/picture",
-
-            responses: {
-                200: FileSchema
-            },
-
-            summary:
-                'Get the profile picture for a given user (e.g. for foo@bar.com, specify "foo") or for yourself by specifying "me"'
-        },
-
-        get_recent_posts: {
-            method: "GET",
-            path: "/v1/feeds/recent",
-
-            query: z.object({
-                timestamp: z.number()
-            }),
-
-            responses: {
-                200: PostPageSchema
-            },
-
-            summary:
-                "Get a feed of recent posts from this instance, paginated by timestamp"
-            // TODO: how will this work with gh pages? is timestamp the wrong key here
-        },
-
-        get_user_posts: {
-            method: "GET",
-            path: "/v1/feeds/user/:user",
-
-            query: z.object({
-                timestamp: z.number()
-            }),
-
-            responses: {
-                200: PostPageSchema
-            },
-
-            summary:
-                'Get a feed of recent posts from a given user (e.g. for foo@bar.com, specify "foo") or for yourself by specifying "me", paginated by timestamp. '
-            // TODO: how will this work with gh pages? is timestamp the wrong key here
-        },
-
         upload_post: {
             method: "POST",
             path: "/v1/posts",
             contentType: "multipart/form-data",
 
-            // TODO: auth handling
-
+            // signed body parts: metadata, image
             body: z.object({
-                image: FileSchema,
-                metadata: UploadRequestMetadataSchema
+                metadata: UploadRequestMetadataSchema,
+                image: FileSchema
             }),
 
             responses: {
@@ -93,14 +110,16 @@ export const api_v1_contract = c.router(
         edit_post: {
             method: "PUT",
             path: "/v1/posts/:id",
+            pathParams: z.object({
+                id: PostIDSchema
+            }),
             contentType: "application/json",
 
-            // TODO: auth handling
-
+            // signed body parts: the json body
             body: EditRequestSchema,
 
             responses: {
-                204: SuccessfulActionResponseSchema
+                200: SuccessfulActionResponseSchema
             },
 
             summary: "Edit an existing post of yours"
@@ -109,11 +128,12 @@ export const api_v1_contract = c.router(
         delete_post: {
             method: "DELETE",
             path: "/v1/posts/:id",
-
-            // TODO: auth handling
+            pathParams: z.object({
+                id: PostIDSchema
+            }),
 
             responses: {
-                204: SuccessfulActionResponseSchema
+                200: SuccessfulActionResponseSchema
             },
 
             summary: "Delete a post of yours"
@@ -124,14 +144,13 @@ export const api_v1_contract = c.router(
             path: "/v1/users/me/picture",
             contentType: "multipart/form-data",
 
-            // TODO: auth handling
-
+            // signed body parts: image
             body: z.object({
                 image: FileSchema
             }),
 
             responses: {
-                204: SuccessfulActionResponseSchema
+                200: SuccessfulActionResponseSchema
             },
 
             summary: "Set or change your profile picture"
@@ -141,21 +160,32 @@ export const api_v1_contract = c.router(
             method: "DELETE",
             path: "/v1/users/me/picture",
 
-            // TODO: auth handling
-
             responses: {
-                204: SuccessfulActionResponseSchema
+                200: SuccessfulActionResponseSchema
             },
 
             summary: "Remove your profile picture"
+        },
+
+        delete_me: {
+            method: "DELETE",
+            path: "/v1/users/me",
+
+            responses: {
+                200: SuccessfulActionResponseSchema
+            },
+
+            summary: "Erase everything you have on this host (posts, profile picture, your user feed)"
         }
     },
     {
         commonResponses: {
-            200: SuccessfulActionResponseSchema,
             400: FailedActionResponseSchema,
-            401: FailedActionResponseSchema,
+            401: FailedActionResponseSchema, // missing or invalid auth
+            403: FailedActionResponseSchema, // authenticated, but not allowed (e.g. identity host not accepted, not the post's author)
             404: FailedActionResponseSchema,
+            413: FailedActionResponseSchema,
+            429: FailedActionResponseSchema,
             500: FailedActionResponseSchema
         }
     }

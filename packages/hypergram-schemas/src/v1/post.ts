@@ -1,20 +1,15 @@
 import {z} from "zod";
 
+import { CaptionSchema, IdentitySchema, PostIDSchema, URLSchema } from "./common";
+
 export const PostSchema = z.object({
-    author: z.string(), // should be the user part of the username, i.e. foo@bar.com would have author "foo"
-    ts: z.number(),
-    image_url: z.url(),
-    thumb_url: z.url(),
-    post_url: z.url(),
-    caption: z.string().min(1).max(512).optional()
+    id: PostIDSchema,
+    author: IdentitySchema,
+    ts: z.number().int(), // ms since epoch, set by the host when it publishes (not the uploader's clock) as feeds are ordered by it
+    image_url: URLSchema,
+    thumb_url: URLSchema,
+    post_url: URLSchema.optional(), // canonical url of this post's webpage
+    caption: CaptionSchema.optional()
 });
 export type Post = z.infer<typeof PostSchema>;
 export type PostInput = z.input<typeof PostSchema>;
-
-export const MyPostSchema = PostSchema.extend({
-    deletion_url: z.url(),
-    edit_url: z.url().optional()
-});
-
-export type MyPost = z.infer<typeof MyPostSchema>;
-export type MyPostInput = z.input<typeof MyPostSchema>;
