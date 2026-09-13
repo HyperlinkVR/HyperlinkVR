@@ -4,3 +4,4 @@ export * from "./windowing";
 export * from "./settings";
 export * from "./discord_rpc";
 export * from "./network";
+export * from "./network_wire";

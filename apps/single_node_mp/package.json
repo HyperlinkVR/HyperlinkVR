@@ -1,0 +1,23 @@
+{
+    "name": "@hyperlinkvr/single-node-mp",
+    "type": "module",
+    "version": "0.0.1",
+    "private": true,
+    "description": "The single-node multiplayer server.",
+    "scripts": {
+        "dev": "tsx watch src/index.ts",
+        "build": "tsc --build",
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@hyperlinkvr/core": "workspace:*",
+        "@hyperlinkvr/types": "workspace:*",
+        "msgpackr": "catalog:",
+        "ws": "catalog:"
+    },
+    "devDependencies": {
+        "@types/ws": "catalog:",
+        "tsx": "^4.22.4",
+        "typescript": "5.9.3"
+    }
+}

@@ -112,7 +112,8 @@ const NetworkTools = () => {
         <>
             <FlatSettingWidget setting_key="devtools_network_mode" />
 
-            {mode !== "off" && (
+            {/* simulated conditions only apply to the local carrier, not a real socket */}
+            {mode === "local" && (
                 <>
                     <FlatSettingWidget setting_key="devtools_network_latency" />
                     <FlatSettingWidget setting_key="devtools_network_jitter" />

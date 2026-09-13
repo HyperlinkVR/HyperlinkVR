@@ -539,7 +539,7 @@ export const settings_def = build_settings({
 
     // TODO: "service" mode once the multiplayer service exists
     devtools_network_mode: {
-        default_value: "off" as "off" | "local",
+        default_value: "off" as "off" | "local" | "ws",
         local_only: true,
         ui: {
             flat: {
@@ -548,7 +548,8 @@ export const settings_def = build_settings({
                     type: "select",
                     options: [
                         { label: "Off", value: "off" },
-                        { label: "Local (windows in this browser)", value: "local" }
+                        { label: "Local (windows in this browser)", value: "local" },
+                        { label: "WebSocket", value: "ws" }
                     ]
                 }
             }

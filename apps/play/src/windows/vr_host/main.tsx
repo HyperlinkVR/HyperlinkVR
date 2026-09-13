@@ -10,7 +10,7 @@ import { EngineHost, xr_store } from "@hyperlinkvr/vr-engine";
 
 import { DefaultContextProviders } from "../../contexts/DefaultContextProviders";
 import {NetworkEngineProvider, useAuthSession, useSetting} from "@hyperlinkvr/react";
-import {LocalNetworkEngine} from "@hyperlinkvr/platform-browser";
+import {LocalNetworkEngine, WSNetworkEngine } from "@hyperlinkvr/platform-browser";
 
 type LoadPhase = "idle" | "starting" | "started";
 
@@ -21,10 +21,13 @@ const DevNetworkEngineProvider = ({children}: {children: React.ReactNode}) => {
     const [jitter_ms] = useSetting("devtools_network_jitter");
     const [drop_percent] = useSetting("devtools_network_drop");
 
-    const engine = useMemo(() => (mode === "local" ? new LocalNetworkEngine() : null), [mode]);
+    const engine = useMemo(() => (mode === "local" ? new LocalNetworkEngine() : mode === "ws" ? new WSNetworkEngine({ url: "ws://localhost:8080" }) : null), [mode]);
 
     useEffect(() => {
-        engine?.set_conditions({latency_ms, jitter_ms, drop_rate: drop_percent / 100});
+        // simulated conditions only apply to the local carrier, not a real socket
+        if (engine instanceof LocalNetworkEngine) {
+            engine.set_conditions({latency_ms, jitter_ms, drop_rate: drop_percent / 100});
+        }
     }, [engine, latency_ms, jitter_ms, drop_percent]);
 
     return <NetworkEngineProvider engine={engine}>{children}</NetworkEngineProvider>;

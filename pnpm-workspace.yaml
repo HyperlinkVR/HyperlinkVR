@@ -18,9 +18,11 @@ catalog:
   '@types/react': 19.2.3
   '@types/react-dom': 19.2.3
   '@types/three': ^0.185.0
+  '@types/ws': ^8.18.1
   '@wxt-dev/auto-icons': ^1.1.2
   react-error-boundary: ^6.1.4
   lucide-react: 1.21.0
+  msgpackr: ^2.1.0
   react: 19.2.7
   react-dom: 19.2.7
   tailwind-preset-mantine: ^4.1.0
@@ -28,6 +30,7 @@ catalog:
   three: ^0.185.0
   troika-three-text: ^0.52.4
   wxt: ^0.21.4
+  ws: ^8.21.3
   zod: ^4.4.3
   zustand: ^5.0.14
 

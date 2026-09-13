@@ -10,6 +10,7 @@
     },
     "dependencies": {
         "@hyperlinkvr/core": "workspace:*",
-        "@hyperlinkvr/types": "workspace:*"
+        "@hyperlinkvr/types": "workspace:*",
+        "msgpackr": "catalog:"
     }
 }
