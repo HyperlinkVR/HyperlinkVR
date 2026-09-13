@@ -1,0 +1,97 @@
+# Multiplayer roadmap
+
+## Decisions (architecture)
+
+- **Transport is relay-routed, not P2P.** Clients connect to a relay; the relay forwards everything. Federated relays (anyone can run one, they mesh) is the "decentralised but works" target. WebRTC P2P is off the table for game data — it needs signalling + TURN anyway, caps room size, and can't do global DMs.
+- **WebSocket now, for everything.** It's correct and permanent for reliable traffic (state, events, chat, presence). It only carries "unreliable" reliably (`capabilities.unreliable = false`).
+- **WebTransport later, only for the pose/unreliable channel**, and only once WS's TCP head-of-line-blocking visibly hurts under packet loss. Drops in behind the same `NetworkEngine` interface — no game-code change. Not speculative work.
+- **Wire format is msgpackr binary.** Shared wire types live in `@hyperlinkvr/core` (`network_wire.ts`); each side keeps its own codec so core has no runtime dep.
+- **Voice chat = relay-routed (SFU-style), not P2P.** Discord model. Likely WebRTC just for the client↔relay media leg. Its own project (Phase E).
+- **E2E encryption is a later layer**, needed once relays aren't all first-party. Payloads stay opaque to the relay (routing reads only the envelope), which also keeps relay CPU reasonable. Integrity wants signatures, not just confidentiality.
+
+Ordering: **A and B are independent** (do in either order / interleave). **C needs both A and B. D needs C.** E is optional, after.
+
+---
+
+## ✅ Done
+
+- [x] Transport interface (`NetworkEngine` / `NetworkRoom`)
+- [x] Local `BroadcastChannel` carrier, with simulated latency, jitter and packet loss
+- [x] Authority registry, and the report/trigger outbox that checks it
+- [x] `NetSession` (join after consent, host election, leave on navigation) and the peer list overlay
+- [x] Devtools network settings (sim sliders now gated to `local` mode only)
+- [x] Presence: poses, appearance, interpolated remote avatars
+- [x] **Node server** (`apps/single_node_mp`) — assigns peer IDs + join order, elects oldest peer as host, forwards to one / others / host, drops peers on socket close or missed heartbeat, cleans up empty rooms, rejects room-less connections. Backpressure drops unreliable sends to a backed-up peer.
+- [x] **`WSNetworkEngine` carrier** — reports `capabilities.unreliable = false`; a dropped connection closes the room with `connection-lost` (v1 rejoin = join as a new peer); buffers inbound messages until the first listener attaches.
+- [x] **Dev `ws` network mode** wired into `DevNetworkEngineProvider` (stopgap until full service mode).
+
+---
+
+## Phase A: the forwarding node
+
+1. [x] **Node server [M].**
+2. [x] **`WSNetworkEngine` carrier [S].**
+3. [ ] **Service mode [S].** A `service_multiplayer` setting, a descriptor fetch, a `ServiceNetworkEngine` that picks the right carrier, and `"service"` added to the devtools mode. *(The dev `ws` mode is a temporary shortcut for this.)*
+4. [ ] **Extension VR host provides a network engine [S].** Presence then works in the extension too, not just play.
+5. [ ] **Identity rules [M, can wait until before public testing].** A signed identity handshake, so the node can reject guests and duplicate accounts. Replaces the currently-trusted `hello`. Pairs with the reconnection session-token work (Phase E).
+
+**Flagged to change / add:**
+- [ ] **Versioned wire protocol [S].** The frames are currently *unversioned* — add a version field or handshake before external clients exist, so protocol changes don't silently break older clients.
+- [ ] **Server hardening [S].** Set `maxPayload` and `perMessageDeflate: false` on the `WebSocketServer`; add per-connection rate limiting and room caps (overlaps Phase E robustness).
+
+**Milestone: presence between real machines and browsers.**
+
+---
+
+## Phase B: groundwork, all still singleplayer
+
+6. [ ] **Players identified by peer ID [M].** `Player.id`, `target_player` in messages, the spawn event carries the ID, the engine's player registry is keyed by ID, and minigolf is re-keyed.
+7. [ ] **Per-world multiplayer mode [S].** `solo` / `presence` / `shared` in the meta tag, with `presence` as the default. Solo worlds don't join a room.
+8. [ ] **Command bus [L].** Every SDK action handler (objects, HUD, VFX, world environment, animations, seeks, monitors, triggers) stops caring whether a command came from the page or the network. It accepts IDs minted by the host, and keeps a compacted log of commands for late joiners. *(The large foundational item — shared mode and physics depend on it.)*
+9. [ ] **Session clock sync [S].** So tweens and animations can start at the same moment everywhere.
+
+---
+
+## Phase C: shared mode
+
+10. [ ] **Roles [S].** The engine knows if it's host. In shared worlds, clients hand world-level authority (world monitors) to the host.
+11. [ ] **Command replication [M].** The host broadcasts every command it applies on a reliable channel, and clients apply them.
+12. [ ] **Client page lifecycle [S].** In shared worlds, client pages never get `READY`, and the host's "loading finished" is replicated to everyone.
+13. [ ] **Late join [M].** A newcomer gets the command log replayed, and holds a loading screen until it's caught up.
+14. [ ] **Report routing [M].** Client engines send reports to the host's page with `player` attached. Player-targeted actions (teleport, send to world, player monitors) go to that player's engine.
+15. [ ] **Per-player HUD and effects [S].** Using the scope the HUD already has.
+16. [ ] **SDK [S].** `e.player`, `players.on_spawn` fires for remote players on the host, `players.list()` and `on_leave`, and `.create()` throws on clients.
+17. [ ] **Host leaves [S].** For v1, the instance simply ends.
+18. [ ] **Games [S].** Port clubhouse, or a button and score world, to `shared`.
+
+**Milestone: button, score and HUD games are multiplayer.**
+
+---
+
+## Phase D: physics
+
+19. [ ] **`ObjectPhysics` honours authority [M].** A body simulated by another engine becomes kinematic and follows the stream.
+20. [ ] **Host physics streaming [M].** The host streams the pose and velocity of every dynamic body that's moving. It reuses the pose buffer, and stops sending once a body comes to rest.
+21. [ ] **Grab handoff [L].** A grab claims the object through the host (optimistically, host settles conflicts). The holder streams it; letting go hands it back to the host with its velocity. Needs the most feel-tuning. *(This is the VRChat-style ownership model.)*
+22. [ ] **Held objects run their own triggers [M].** Triggers and reports for a held object run on the holder's engine. Other engines replay visuals only, reports suppressed.
+23. [ ] **Pinned ownership [S].** `set_ownership(player)`, needed for minigolf balls.
+24. [ ] **Remote avatar colliders [S].** So players can push things, and raycasts can hit them.
+25. [ ] **Games [M].** Minigolf, basketball, defendthecore.
+
+**Milestone: physics games are multiplayer. At this point it's "fully working".**
+
+---
+
+## Phase E: optional, after that
+
+26. [ ] The local escape hatch: `hyperlinkvr.local()`, `me.create()`, message channels.
+27. [ ] `net.state` and host migration.
+28. [ ] **Voice chat** (its own project) — relay-routed / SFU-style, likely WebRTC for the client↔relay media leg.
+29. [ ] Presence polish: syncing facial expressions, an interpolation delay that adapts to conditions, binary encoding.
+    - [ ] **Pose send optimisation.** Poses currently broadcast at 20Hz unconditionally. Gate on a movement threshold *plus* a late-join pose (or low-rate keepalive) — a pure delta check alone would leave idle avatars stuck at their default pose for newcomers, since the appearance handshake syncs appearance but not pose. Matters mainly for flat/idle players; in VR micro-movements make it near-moot.
+30. [ ] Robustness: **reconnects** (stable session token so a returning peer keeps its `PeerID` / `joined_at` and host election doesn't flap; server holds `PeerInfo` through a grace window), node rate limits and room caps, invites and instance selection (Discord join button), a peer list in the watch UI.
+31. [ ] **Relay network / federation.** Relay↔relay routing (server-to-server: WS or QUIC, not WebRTC) so relays can locate players across the mesh.
+32. [ ] **E2E encryption.** Encrypt private channels (chat/DMs) so relay operators can't read them; keep game data cleartext-to-relay (or authenticated-only) — decide per channel. Needed once relays aren't all first-party.
+33. [ ] **WebTransport carrier** for genuine unreliable pose delivery, if/when WS TCP head-of-line-blocking proves to hurt.
+
+> **Note:** in-world text chat / DMs were raised but are **not** currently a planned phase item — decide deliberately whether they belong (in-world chat is cheap on the existing relay; global DMs need identity + relay-mesh routing).
