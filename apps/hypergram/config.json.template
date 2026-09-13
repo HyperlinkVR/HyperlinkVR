@@ -1,0 +1,5 @@
+{
+    "read_api_base_url": "http://localhost:8787",
+    "write_api_base_url": "http://localhost:8787",
+    "auth_api_base_url": "http://localhost:8787"
+}

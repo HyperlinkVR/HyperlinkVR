@@ -1,16 +1,15 @@
 import { serve } from "@hono/node-server";
 
 import { create_app } from "./app";
-import { dev_manifest, seed } from "./seed";
+import { seed } from "./seed";
 import { MemorySiteStore } from "./store";
 
-// base_url in dev_manifest is fixed to this port, so keep them in sync if you change it
 const PORT = 8787;
 
 const store = new MemorySiteStore();
 await seed(store);
 
-const app = create_app({ store, manifest: dev_manifest });
+const app = create_app({ store });
 
 serve({ fetch: app.fetch, port: PORT }, (info) => {
     const origin = `http://localhost:${info.port}`;

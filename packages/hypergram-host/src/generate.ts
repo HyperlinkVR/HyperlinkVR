@@ -3,7 +3,6 @@ import {
     api_v1_read_contract,
     is_older_than,
     POSTS_PER_PAGE,
-    type HostManifest,
     type Post,
     type PostPage,
     type ProfilePicture
@@ -50,17 +49,13 @@ const generate_feed = (base_url: string, head_path: string, posts: Post[]) => {
 };
 
 export interface SiteState {
-    manifest: HostManifest;
     posts: Post[];
     pictures: ProfilePicture[];
 }
 
 // every json file the host should be serving, keyed by store path
-export const generate_site = ({ manifest, posts, pictures }: SiteState) => {
-    const base_url = manifest.base_url.endsWith("/") ? manifest.base_url : `${manifest.base_url}/`;
+export const generate_site = (base_url: string, { posts, pictures }: SiteState) => {
     const files = new Map<string, unknown>();
-
-    files.set(store_path(api_v1_read_contract.get_manifest.path), manifest);
 
     for (const [path, page] of generate_feed(base_url, recent_feed_path, posts)) {
         files.set(path, page);

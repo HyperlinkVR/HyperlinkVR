@@ -12,7 +12,7 @@ import { Post } from "./components/Post";
 
 
 const App = () => {
-    const client = useMemo(() => read_client("http://localhost:8787"), []);
+    const client = useMemo(() => read_client(), []);
     
     const [posts, setPosts] = useState<PostData[]>([]);
 

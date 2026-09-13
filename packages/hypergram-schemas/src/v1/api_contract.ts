@@ -6,7 +6,6 @@ import { z } from "zod";
 import { EditRequestSchema, FailedActionResponseSchema, SuccessfulActionResponseSchema, UploadRequestMetadataSchema } from "./actions";
 import { IdentitySchema, PostIDSchema } from "./common";
 import { PostPageSchema } from "./feeds";
-import { HostManifestSchema } from "./manifest";
 import { PostSchema } from "./post";
 import { ProfilePictureSchema } from "./profile_picture";
 
@@ -22,17 +21,6 @@ export const FileSchema = z.custom<File | Blob>((val) => typeof val !== "string"
 // a 404 from a static host won't have a json body, so reads only declare 200
 
 export const api_v1_read_contract = c.router({
-    get_manifest: {
-        method: "GET",
-        path: "/v1/manifest.json",
-
-        responses: {
-            200: HostManifestSchema
-        },
-
-        summary: "Get the manifest describing this host"
-    },
-
     get_recent_feed: {
         method: "GET",
         path: "/v1/feeds/recent.json",
@@ -187,6 +175,63 @@ export const api_v1_write_contract = c.router(
             413: FailedActionResponseSchema,
             429: FailedActionResponseSchema,
             500: FailedActionResponseSchema
+        },
+        baseHeaders: {
+            "Authorization": z.string()
         }
     }
 );
+
+export const api_v1_auth_contract = c.router({
+    login_game: {
+        method: "POST",
+        path: "/v1/auth/game",
+
+        headers: z.object({
+            "X-Hypergram-Identity": z.string(),
+            "X-Hypergram-Signature": z.string(),
+            "X-Hypergram-SignatureTimestamp": z.string()
+        }),
+
+        body: c.noBody(),
+
+        responses: {
+            200: z.object({
+                token: z.string()
+            }),
+            401: FailedActionResponseSchema
+        },
+
+        summary: "Headless login for the game engine. Validates the game engine headers and returns a Bearer token instantly."
+    },
+
+    login_web: {
+        method: "POST",
+        path: "/v1/auth/web",
+
+        body: z.object({
+            redirect_uri: z.httpUrl()
+        }),
+
+        responses: {
+            200: z.object({
+                auth_url: z.httpUrl()
+            })
+        },
+
+        summary: "Initialise browser-based login. Returns the URL the UI must navigate the user to. Upon completion, the host redirects back to the provided redirect_uri with the URL hash 'token=TOKENHERE'."
+    },
+
+    logout: {
+        method: "DELETE",
+        path: "/v1/auth/logout",
+
+        body: c.noBody(),
+
+        responses: {
+            200: SuccessfulActionResponseSchema
+        },
+
+        summary: "Invalidate the current authorisation token on the server."
+    }
+});

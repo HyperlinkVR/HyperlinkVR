@@ -13,7 +13,7 @@ import { LoadingSpinner } from "@hyperlinkvr/ui-dom";
 
 
 const App = () => {
-    const client = useMemo(() => read_client("http://localhost:8787"), []);
+    const client = useMemo(() => read_client(), []);
     
     const [post, setPost] = useState<PostData | null>(null);
     const [error, setError] = useState<string | null>(null);

@@ -60,6 +60,8 @@ export default defineConfig({
         rolldownOptions: {
             input: {
                 home: page("index.html"),
+                post: page("post", "index.html"),
+                callback: page("callback", "index.html"),
             }
         }
     }

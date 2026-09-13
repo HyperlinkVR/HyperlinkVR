@@ -12,14 +12,14 @@
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {
-        "@hyperlinkvr/ui-dom": "workspace:*",
+        "@hyperlinkvr/hypergram-schemas": "workspace:*",
         "@hyperlinkvr/styles": "workspace:*",
         "@hyperlinkvr/types": "workspace:*",
-        "@hyperlinkvr/hypergram-schemas": "workspace:*",
+        "@hyperlinkvr/ui-dom": "workspace:*",
         "@ts-rest/core": "catalog:",
+        "lucide-react": "catalog:",
         "react": "catalog:",
-        "react-dom": "catalog:",
-        "lucide-react": "catalog:"
+        "react-dom": "catalog:"
     },
     "devDependencies": {
         "@tailwindcss/vite": "catalog:",
