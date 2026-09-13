@@ -15,7 +15,7 @@ const make_cdn_config = (entry, file_name, is_first) => ({
     build: {
         target: "es2020",
         watch: is_dev ? {} : undefined,
-        outDir: "public/cdn",
+        outDir: is_dev ? "public/cdn" : "dist/cdn",
         emptyOutDir: is_first,
         rollupOptions: {
             input: entry,
