@@ -30,8 +30,7 @@ export default defineBackground(async () => {
     const REAL_HOST_URL = new URL(WINDOW_INTENTS.VR_HOST, location.href).href;
 
     const get_window_url = (
-        intent: WindowIntent,
-        args?: Record<string, any>
+        intent: WindowIntent
     ) => {
         const base_url = WINDOW_INTENTS[intent];
         if (!base_url) {
@@ -39,14 +38,7 @@ export default defineBackground(async () => {
             return null;
         }
 
-        const url = new URL(base_url, location.href);
-        if (args) {
-            Object.entries(args).forEach(([key, value]) => {
-                url.searchParams.set(key, value);
-            });
-        }
-
-        return url.href;
+        return new URL(base_url, location.href).href;
     };
 
     class ExtensionBackendIntegration implements BackendIntegrationEngine {
@@ -59,7 +51,6 @@ export default defineBackground(async () => {
             height: number;
         }): Promise<number> {
             const url = get_window_url(params.intent);
-
             if (!url) {
                 throw new Error(`Unknown intent ${params.intent}`);
             }

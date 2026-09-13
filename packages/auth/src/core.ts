@@ -245,6 +245,8 @@ interface AuthSessionToStore {
     identity: Identity;
     method: LoginMethod;
     public_key: JsonWebKey;
+    // immutable account id from the identity record; the durable id the app keys on
+    uuid?: string;
     authed_at?: number;
 }
 

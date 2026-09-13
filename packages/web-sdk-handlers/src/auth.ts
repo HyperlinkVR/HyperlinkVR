@@ -27,6 +27,7 @@ export const whoami: Handler<"HVRSDK_AUTH_WHOAMI"> = async ({ storage }) => {
     return {
         for: "HVRSDK_AUTH_WHOAMI",
         info: {
+            uuid: auth_session.uuid,
             identity: auth_session.identity,
             public_key: auth_session.public_key,
             avatar_url: auth_session.avatar_url,
