@@ -44,7 +44,6 @@
         "@wxt-dev/auto-icons": "catalog:",
         "rollup-plugin-visualizer": "^7.0.1",
         "tailwindcss": "catalog:",
-        "terser": "^5.48.0",
         "wxt": "catalog:"
     }
 }

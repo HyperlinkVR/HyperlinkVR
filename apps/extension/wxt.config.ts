@@ -58,13 +58,6 @@ const PROD_PUBKEY =
 
 export default defineConfig({
     vite: () => ({
-        build: {
-            minify: "terser",
-            terserOptions: {
-                keep_classnames: /Container|Text|Image|Svg|Video|Icon|Content|Root|Fullscreen|Component|Portal/,
-                keep_fnames: /Container|Text|Image|Svg|Video|Icon|Content|Root|Fullscreen|Component|Portal/
-            }
-        },
         plugins: [
             tailwindcss(),
             LOG_COMPILATION
