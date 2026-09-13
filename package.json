@@ -6,7 +6,7 @@
     "packageManager": "pnpm@10.19.0",
     "homepage": "https://hyperlink.surf",
     "scripts": {
-        "dev": "turbo run dev",
+        "dev": "turbo run dev --ui=tui",
         "build": "turbo run build",
         "build:extension": "cd apps/extension && pnpm build",
         "build:schema": "tsx scripts/build_json_schema.ts",
