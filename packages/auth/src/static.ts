@@ -8,7 +8,7 @@ import { RandomWords } from "@wordlist/random";
 import type { StoredKey } from "./core";
 import type { Identity } from "@hyperlinkvr/types";
 import type { PasswordDerivAlgorithmName} from "./schema";
-import { StaticAuthRecordSchema, StaticIdentityRecordSchema, type StaticAuthRecord, type StaticIdentityRecord } from "./schema";
+import { StaticAuthRecordSchema, StaticIdentityRecordSchema, StaticIdentityRecordSchema_VERSION, type StaticAuthRecord, type StaticIdentityRecord } from "./schema";
 
 
 interface SuccessfulRecordResolution {
@@ -204,11 +204,13 @@ export const generate_auth_record = async (public_key: JsonWebKey, encrypted_pri
     });
 }
 
-export const generate_static_identity_record = async (identity: Identity, auth: StaticAuthRecord, status: "active" | "suspended" = "active"): Promise<StaticIdentityRecord> => {
+// uuid is passed in  so recovery/key-rotation can preserve the existing account id
+export const generate_static_identity_record = async (identity: Identity, auth: StaticAuthRecord, uuid: string, status: "active" | "suspended" = "active"): Promise<StaticIdentityRecord> => {
     const created_at = Date.now();
 
     return StaticIdentityRecordSchema.parse({
-        version: 1,
+        version: StaticIdentityRecordSchema_VERSION,
+        uuid,
         identity: `${identity.name}@${identity.host}`,
         created_at,
         status,
@@ -255,7 +257,7 @@ export const signup_static = async (identity: Identity, local_storage: StorageEn
     const encrypted_private_key = await encrypt_private_key(private_key, password);
 
     const auth_record = await generate_auth_record(public_key, encrypted_private_key);
-    const static_record = await generate_static_identity_record(identity, auth_record);
+    const static_record = await generate_static_identity_record(identity, auth_record, crypto.randomUUID());
 
     await store_encrypted_private_key(identity, encrypted_private_key, local_storage);
     await store_public_key(identity, public_key, local_storage);
