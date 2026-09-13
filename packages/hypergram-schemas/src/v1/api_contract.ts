@@ -210,16 +210,16 @@ export const api_v1_auth_contract = c.router({
         path: "/v1/auth/web",
 
         body: z.object({
-            redirect_uri: z.httpUrl()
+            redirect_uri: z.url()
         }),
 
         responses: {
             200: z.object({
-                auth_url: z.httpUrl()
+                auth_url: z.url()
             })
         },
 
-        summary: "Initialise browser-based login. Returns the URL the UI must navigate the user to. Upon completion, the host redirects back to the provided redirect_uri with the URL hash 'token=TOKENHERE'."
+        summary: "Initialise browser-based login. Returns the URL the UI must navigate the user to. Upon completion, the host redirects back to the provided redirect_uri with the URL hash '#token=TOKENHERE&username=user@host.com'."
     },
 
     logout: {

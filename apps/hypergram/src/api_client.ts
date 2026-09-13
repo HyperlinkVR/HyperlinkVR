@@ -12,7 +12,7 @@ export const write_client = (base_url: string = config.write_api_base_url) =>
         baseUrl: base_url.replace(/\/$/, ""),
         baseHeaders: {
             Authorization: () => {
-                const token = localStorage.get("hypergram_auth_token");
+                const token = localStorage.getItem("token");
                 return token ? `Bearer ${token}` : "";
             }
         }
