@@ -28,9 +28,9 @@ const App = () => {
         <main className="p-5 bg-gray-800 min-h-screen text-white">
             <Header />
 
-            <div className="w-1/2 mx-auto">
+            <div className="w-1/2 mx-auto pt-10">
                 {posts.map((post) => (
-                    <Post post={post} key={post.id} />
+                    <Post snippet post={post} key={post.id} />
                 ))}
             </div>
         </main>

@@ -7,11 +7,11 @@ import { useEffect, useMemo, useState } from "react";
 import { read_client } from "../api_client";
 
 
-export const Post = ({ post }: { post: PostData }) => {
+const PostInternal = ({ post, snippet = false }: { post: PostData, snippet?: boolean }) => {
     const client = useMemo(() => read_client("http://localhost:8787"), []);
-    
+
     const formatted_date = useMemo(() => new Date(post.ts).toLocaleString(), [post.ts]);
-    
+
     const [profile_picture, setProfilePicture] = useState<string | null>(null);
     useEffect(() => {
         client.get_profile_picture({params: { identity: post.author }}).then((res) => {
@@ -22,20 +22,35 @@ export const Post = ({ post }: { post: PostData }) => {
     }, [client, post.author]);
 
     return (
-        <a href={`/post/${post.id}`} className="w-full">
-            <article className="my-5 p-5 bg-gray-700 rounded-lg flex flex-col items-center justify-center gap-5">
-                <div className="flex items-center justify-between w-full">
-                    <div className="flex items-center gap-3">
-                        <ProfilePicture avatar_url={profile_picture || undefined} username={post.author} className="w-10 h-10" />
-                        <b>{post.author}</b>
-                    </div>
-
-                    <p>{formatted_date}</p>
+        <article className="my-5 p-5 bg-gray-700 rounded-lg flex flex-col items-center justify-center gap-5">
+            <div className="flex items-center justify-between w-full">
+                <div className="flex items-center gap-3">
+                    <ProfilePicture avatar_url={profile_picture || undefined} username={post.author} className="w-10 h-10" />
+                    <b>{post.author}</b>
                 </div>
 
-                <img src={post.image_url} alt={post.caption || "Post image"} className="h-150 rounded-lg aspect-square object-cover" />
-                {post.caption && <p>{post.caption}</p>}
-            </article>
-        </a>
+                <p>{formatted_date}</p>
+            </div>
+
+            <img src={post.image_url} alt={post.caption || "Post image"} className={`h-150 rounded-lg object-cover ${snippet ? "aspect-square" : ""}`} />
+            {post.caption && (
+                <p className="w-full">
+                    <span className="font-bold">{post.author}: </span>
+                    {post.caption}
+                </p>
+            )}
+        </article>
     )
+}
+
+export const Post = ({ post, snippet = false }: { post: PostData, snippet?: boolean }) => {
+    if (snippet) {
+        return (
+            <a href={`/post/?id=${post.id}`} className="w-full">
+                <PostInternal post={post} snippet={snippet} />
+            </a>
+        )
+    } else {
+        return <PostInternal post={post} snippet={snippet} />
+    }
 }
