@@ -29,24 +29,33 @@ const monitors_for = (username: string | null): Map<string, RegisteredMonitor> =
 };
 
 export class Player {
-    readonly #selected_username: string | null = null;
+    // null targets the local player; otherwise the stable account uuid of the target
+    readonly #id: string | null = null;
 
-    // null targets the local player (currently the only one, but thinking ahead to multiplayer)
-    constructor(username: string | null = null) {
-        if (username !== null) {
-            throw new Error("Selecting other players is not supported yet");
+    constructor(id: string | null = null) {
+        this.#id = id;
+    }
+
+    // the stored target id as given (null = local); does not resolve the local player's uuid
+    get_stored_id(): string | null {
+        return this.#id;
+    }
+
+    // the stable account uuid — the durable id to key game state on (scoreboards, etc). resolves
+    // the local player's id via whoami. null for guests / unauthed. this is what the SDK
+    // identifies players by; the username is a mutable, human-facing handle.
+    async get_id(): Promise<string | null> {
+        if (this.#id !== null) {
+            return this.#id;
         }
-        this.#selected_username = username;
+        const res = await whoami();
+        return res?.info?.uuid ?? null;
     }
 
-    get_stored_username(): string | null {
-        return this.#selected_username;
-    }
-
-    async get_username(): Promise<string  | null> {
-        if (this.#selected_username !== null) {
-            // a null here means local player was passed, not necessarily that the player isn't logged in
-            return this.#selected_username;
+    async get_username(): Promise<string | null> {
+        // only the local player's handle is resolvable without the room roster yet (TODO: remote)
+        if (this.#id !== null) {
+            return null;
         }
 
         const res = await whoami();
@@ -66,7 +75,7 @@ export class Player {
     async get_position() {
         const res = await send_via_rtc({
             action: "HVRSDK_PLAYER_GET_POSITION",
-            target_username: this.#selected_username
+            target_id: this.#id
         });
 
         if (!res || res.position === undefined || res.yaw === undefined) {
@@ -82,7 +91,7 @@ export class Player {
     async teleport_to(position?: [number, number, number], yaw?: number) {
         const res = await send_via_rtc({
             action: "HVRSDK_PLAYER_TELEPORT_TO",
-            target_username: this.#selected_username,
+            target_id: this.#id,
             position,
             yaw
         });
@@ -107,7 +116,7 @@ export class Player {
 
         const res = await send_via_rtc({
             action: "HVRSDK_PLAYER_SEND_TO_WORLD",
-            target_username: this.#selected_username,
+            target_id: this.#id,
             url,
             prompt
         });
@@ -126,7 +135,7 @@ export class Player {
         // still gets a binding, so a trigger can source it) rather than a js callback
         callback?: (event: ReportEvent) => void
     ): Promise<() => Promise<void>> {
-        const registered = monitors_for(this.#selected_username);
+        const registered = monitors_for(this.#id);
 
         if (registered.has(name)) {
             throw new Error(`A monitor named "${name}" is already registered on this player.`);
@@ -145,7 +154,7 @@ export class Player {
         try {
             res = await send_via_rtc({
                 action: "HVRSDK_PLAYER_ADD_MONITOR",
-                target_username: this.#selected_username,
+                target_id: this.#id,
                 monitor: {
                     ...monitor,
                     binding: {name, id}
@@ -192,7 +201,7 @@ export class Player {
     }
 
     async remove_monitor(name: string): Promise<void> {
-        const registered = monitors_for(this.#selected_username);
+        const registered = monitors_for(this.#id);
         const entry = registered.get(name);
 
         if (!entry) {
@@ -205,7 +214,7 @@ export class Player {
 
         const res = await send_via_rtc({
             action: "HVRSDK_PLAYER_REMOVE_MONITOR",
-            target_username: this.#selected_username,
+            target_id: this.#id,
             monitor_id: entry.id
         });
 
@@ -215,20 +224,32 @@ export class Player {
     }
 
     async remove_all_monitors(): Promise<void> {
-        const registered = monitors_for(this.#selected_username);
+        const registered = monitors_for(this.#id);
         for (const name of [...registered.keys()]) {
             await this.remove_monitor(name);
         }
     }
 
     get_monitor_names(): string[] {
-        return [...monitors_for(this.#selected_username).keys()];
+        return [...monitors_for(this.#id).keys()];
     }
 }
 
 export const get_current_player = () => {
     return new Player();
 }
+
+// resolve a username handle to its stable account uuid, for keying game state by id when you only
+// have a handle. only the local player resolves without the room roster yet (others return null
+// until the player registry lands).
+export const resolve_username_to_uuid = async (username: string): Promise<string | null> => {
+    const res = await whoami();
+    if (!res?.info?.uuid) {
+        return null;
+    }
+    const {identity} = res.info;
+    return `${identity.name}@${identity.host}` === username ? res.info.uuid : null;
+};
 
 export interface SpawnInfo {
     mode: "vr" | "flat";
@@ -248,7 +269,7 @@ export const on_spawn = (callback: SpawnCallback): (() => void) => {
 
 /** @internal */
 export const _dispatch_spawn = (event: NamedWebSDKEvent<"HVRSDK_PLAYER_SPAWNED">) => {
-    const player = new Player(event.username);
+    const player = new Player(event.id);
     for (const callback of spawn_callbacks) {
         try {
             callback(player, {mode: event.mode});

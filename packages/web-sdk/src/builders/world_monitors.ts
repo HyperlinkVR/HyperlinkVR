@@ -14,9 +14,9 @@ import {
 export const object_subject = (id: string): SubjectRefInput => ({kind: "object", id});
 
 /** @group World Monitors */
-export const player_subject = (username: string | null = null): SubjectRefInput => ({
+export const player_subject = (id: string | null = null): SubjectRefInput => ({
     kind: "player",
-    username
+    id
 });
 
 // TODO: tag filters
@@ -33,7 +33,7 @@ export const any_subject = (): TargetRefInput => ({kind: "any"});
 // an object handle (from EngineObjectDispatchBuilder.create()) or a Player can be
 // passed straight in; the subject ref is derived from it
 type ObjectHandleLike = {object: {id: string}};
-type PlayerLike = {get_stored_username: () => string | null};
+type PlayerLike = {get_stored_id: () => string | null};
 
 /** @group World Monitors */
 export type SubjectLike = TargetRefInput | ObjectHandleLike | PlayerLike;
@@ -42,8 +42,8 @@ const to_target_ref = (subject: SubjectLike): TargetRefInput => {
     if ("kind" in subject) {
         return subject;
     }
-    if ("get_stored_username" in subject && typeof subject.get_stored_username === "function") {
-        return {kind: "player", username: subject.get_stored_username()};
+    if ("get_stored_id" in subject && typeof subject.get_stored_id === "function") {
+        return {kind: "player", id: subject.get_stored_id()};
     }
     if ("object" in subject && subject.object && typeof subject.object.id === "string") {
         return {kind: "object", id: subject.object.id};

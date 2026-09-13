@@ -173,7 +173,7 @@ export const Button = (props: ButtonProps) => {
             // assumes local player for now
             emit_report({
                 kind: "button-prefab",
-                payload: { type: "press", username: null }
+                payload: { type: "press", id: null }
             });
         }
     }, [emit_report, props.report_press]);
@@ -183,7 +183,7 @@ export const Button = (props: ButtonProps) => {
             // assumes local player for now
             emit_report({
                 kind: "button-prefab",
-                payload: { type: "release", username: null }
+                payload: { type: "release", id: null }
             });
         }
     }, [emit_report, props.report_release]);

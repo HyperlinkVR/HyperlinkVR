@@ -130,7 +130,7 @@ export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>
         try {
             emit_event({
                 type: "HVRSDK_PLAYER_SPAWNED",
-                username: null, // local player
+                id: null, // local player
                 mode: session_mode
             });
         } catch (error) {

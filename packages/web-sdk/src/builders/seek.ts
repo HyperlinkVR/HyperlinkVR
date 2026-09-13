@@ -46,8 +46,8 @@ export class SeekBuilder extends BaseBuilder<SeekConfigInput> {
     }
 
     
-    toward_player(username: string | null = null) {
-        this._internal.target = { kind: "player", username };
+    toward_player(id: string | null = null) {
+        this._internal.target = { kind: "player", id };
         return this;
     }
     

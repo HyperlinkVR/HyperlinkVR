@@ -522,15 +522,15 @@ hyperlinkvr.on_ready(async () => {
             if (e.kind !== "button-prefab") return;
             if (e.payload.type !== "press") return;
 
-            const ball = get_ball_of_player(e.payload.username);
+            const ball = get_ball_of_player(e.payload.id);
             if (!ball) {
-                console.warn(`No ball found for player ${e.payload.username}`);
+                console.warn(`No ball found for player ${e.payload.id}`);
                 return;
             }
 
             if (!loaded_ball_ids.has(ball.object.id)) {
                 console.warn(
-                    `Ball ${ball.object.id} not loaded in cannon for player ${e.payload.username}`
+                    `Ball ${ball.object.id} not loaded in cannon for player ${e.payload.id}`
                 );
                 return;
             }
@@ -547,15 +547,15 @@ hyperlinkvr.on_ready(async () => {
 
                     // teleport player to the top after delay
                     // TODO: i think this will be temporary, the zipline idea is cool (once movement for it is implemented)
-                    const player = new hyperlinkvr.players.Player(e.payload.username);
+                    const player = new hyperlinkvr.players.Player(e.payload.id);
                     player.teleport_to(target.transform.position);
                 },
                 time_s * 1000 + 100
             ); // small buffer to ensure it makes it
 
             // firing counts as a stroke
-            take_stroke(e.payload.username);
-            stroke_at_rest(e.payload.username);
+            take_stroke(e.payload.id);
+            stroke_at_rest(e.payload.id);
             ball.prefab.unlock!();
 
             // animate the cannon

@@ -57,20 +57,21 @@ export type HUDComponent = z.infer<typeof HUDComponentSchema>;
 export type HUDComponentInput = z.input<typeof HUDComponentSchema>;
 
 // can provide a single username, an array of usernames (null means the local player)
-const HUDScopeUsernamesSchema = z
+const HUDScopeIdsSchema = z
     .union([
         z.string(),
         z.null(),
         z.array(z.union([z.string(), z.null()]))
     ])
     // normalise to array
-    .transform((usernames) => Array.isArray(usernames) ? usernames : [usernames]);
+    .transform((ids) => Array.isArray(ids) ? ids : [ids]);
 
 export const HUDScopeSchema = z.union([
     z.literal("global"),
     z.object({
         type: z.literal("player"),
-        usernames: HUDScopeUsernamesSchema
+        // player ids (stable account uuids); null = local player
+        ids: HUDScopeIdsSchema
     })
 ]);
 export type HUDScope = z.infer<typeof HUDScopeSchema>;

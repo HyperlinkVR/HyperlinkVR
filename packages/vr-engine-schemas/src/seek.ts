@@ -1,9 +1,11 @@
 import { z } from "zod";
 
+import { PlayerRefSchema } from "./world_monitors";
+
 export const SeekTargetSchema = z.discriminatedUnion("kind", [
     z.object({ kind: z.literal("point"),  position: z.tuple([z.number(), z.number(), z.number()]) }),
     z.object({ kind: z.literal("object"), object_id: z.string() }),
-    z.object({ kind: z.literal("player"), username: z.string().nullable() }),
+    PlayerRefSchema,
 ]);
 // TODO: seek any player, any object, or any subject (player or object) as a target with optional tag filter
 export type SeekTarget = z.infer<typeof SeekTargetSchema>;

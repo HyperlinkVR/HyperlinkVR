@@ -84,7 +84,7 @@ export const HUDSync = () => {
             }
 
             // TODO: message.tween is applied instantly for now. tween_registry is keyed by object id and only interpolates transforms (will be best to move tweens to use channel system)
-            modify_element(message.element_id, data, message.target_username);
+            modify_element(message.element_id, data, message.target_id);
 
             reply({
                 for: "HVRSDK_UPDATE_HUD_ELEMENT",
@@ -96,8 +96,8 @@ export const HUDSync = () => {
         const unlisten_reset = rtc.on_action("HVRSDK_RESET_HUD", (message, reply) => {
             const {reset} = useHUDStore.getState();
 
-            console.log("(x) Reset HUD", message.target_username ?? "for everyone");
-            reset(message.target_username);
+            console.log("(x) Reset HUD", message.target_id ?? "for everyone");
+            reset(message.target_id);
 
             reply({
                 for: "HVRSDK_RESET_HUD",

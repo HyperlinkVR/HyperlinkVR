@@ -23,13 +23,13 @@ export class HUDElementModificationBuilder<ComponentInput extends HUDComponentIn
         this.#target = target;
     }
 
-    // rescope the handle
-    for_player(username: string | null) {
+    // rescope the handle to a player id (uuid); null = local player
+    for_player(id: string | null) {
         if (this.#burned) {
             throw new Error("This modification builder has already been applied.");
         }
 
-        this.#target = username;
+        this.#target = id;
         return this;
     }
 
@@ -118,7 +118,7 @@ export class HUDElementModificationBuilder<ComponentInput extends HUDComponentIn
             action: "HVRSDK_UPDATE_HUD_ELEMENT",
             element_id: built_modification.id,
             changes: built_modification,
-            target_username: this.#target
+            target_id: this.#target
         });
     }
 
@@ -145,7 +145,7 @@ export class HUDElementModificationBuilder<ComponentInput extends HUDComponentIn
             action: "HVRSDK_UPDATE_HUD_ELEMENT",
             element_id: built_modification.id,
             changes: built_modification,
-            target_username: this.#target,
+            target_id: this.#target,
             tween
         });
     }
@@ -236,16 +236,16 @@ export abstract class HUDElementBuilder<
     }
 
     // null means the local player
-    player(username: string | null) {
-        this._internal.scope = {type: "player", usernames: [username]};
+    player(id: string | null) {
+        this._internal.scope = {type: "player", ids: [id]};
         return this;
     }
 
-    players(...usernames: (string | null)[]) {
-        if (usernames.length === 0) {
-            throw new Error("players needs at least one username. Use global() for everyone.");
+    players(...ids: (string | null)[]) {
+        if (ids.length === 0) {
+            throw new Error("players needs at least one id. Use global() for everyone.");
         }
-        this._internal.scope = {type: "player", usernames};
+        this._internal.scope = {type: "player", ids};
         return this;
     }
 

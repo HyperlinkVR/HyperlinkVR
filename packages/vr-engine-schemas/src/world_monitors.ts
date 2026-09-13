@@ -3,6 +3,14 @@ import {z} from "zod";
 import {bindable} from "./binding";
 import {AxisRangeSchema} from "./object_monitors";
 
+// a reference to one player. null (the default) is the local player; a uuid (the stable account
+// id) targets a specific player in multiplayer. shared by subjects, targets and seek targets.
+export const PlayerRefSchema = z.object({
+    kind: z.literal("player"),
+    id: z.string().nullable().default(null)
+});
+export type PlayerRef = z.infer<typeof PlayerRefSchema>;
+
 // a concrete, resolved endpoint: always exactly one thing. this is what a report
 // carries to say who the pair was. objects and players are interchangeable.
 export const SubjectRefSchema = z.discriminatedUnion("kind", [
@@ -10,11 +18,7 @@ export const SubjectRefSchema = z.discriminatedUnion("kind", [
         kind: z.literal("object"),
         id: z.string()
     }),
-    z.object({
-        kind: z.literal("player"),
-        // null (the default) is the local player. named players are reserved for multiplayer.
-        username: z.string().nullable().default(null)
-    })
+    PlayerRefSchema
 ]);
 export type SubjectRef = z.infer<typeof SubjectRefSchema>;
 export type SubjectRefInput = z.input<typeof SubjectRefSchema>;
@@ -27,10 +31,7 @@ export const TargetRefSchema = z.discriminatedUnion("kind", [
         kind: z.literal("object"),
         id: z.string()
     }),
-    z.object({
-        kind: z.literal("player"),
-        username: z.string().nullable().default(null)
-    }),
+    PlayerRefSchema,
     z.object({kind: z.literal("any-object")}),
     z.object({kind: z.literal("any-player")}),
     z.object({kind: z.literal("any")})

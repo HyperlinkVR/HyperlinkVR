@@ -27,16 +27,16 @@ interface HUDStoreState {
     modify_element: (
         element_id: string,
         changes: HUDElementModification,
-        target_username: string | null | undefined
+        target_id: string | null | undefined
     ) => void;
-    reset: (target_username: string | null | undefined) => void;
+    reset: (target_id: string | null | undefined) => void;
 
     // anchor null disables the anchor filter, which is what flat wants
-    resolve_for: (username: string | null, anchor: HUDVRAnchor | null) => ResolvedHUDElement[];
+    resolve_for: (id: string | null, anchor: HUDVRAnchor | null) => ResolvedHUDElement[];
 }
 
-const override_key = (target_username: string | null) =>
-    target_username === null ? LOCAL_PLAYER_KEY : target_username;
+const override_key = (target_id: string | null) =>
+    target_id === null ? LOCAL_PLAYER_KEY : target_id;
 
 const merge_override = (element: StoredHUDElement, override: HUDOverride | undefined): ResolvedHUDElement => {
     const {overrides, ...base} = element;
@@ -66,12 +66,12 @@ const merge_override = (element: StoredHUDElement, override: HUDOverride | undef
     return merged;
 };
 
-const in_scope = (element: StoredHUDElement, username: string | null) => {
+const in_scope = (element: StoredHUDElement, id: string | null) => {
     if (element.scope === "global") {
         return true;
     }
 
-    return element.scope.usernames.includes(username);
+    return element.scope.ids.includes(id);
 };
 
 export const useHUDStore = create<HUDStoreState>((set, get) => ({
@@ -93,7 +93,7 @@ export const useHUDStore = create<HUDStoreState>((set, get) => ({
 
     get_element: (element_id) => get().elements[element_id],
 
-    modify_element: (element_id, changes, target_username) => set((state) => {
+    modify_element: (element_id, changes, target_id) => set((state) => {
         const stored = state.elements[element_id];
         if (!stored) {
             console.warn("Modification for unknown HUD element", element_id);
@@ -103,7 +103,7 @@ export const useHUDStore = create<HUDStoreState>((set, get) => ({
         const {id, ...applied} = changes;
 
         // undefined targets the element itself, so the change becomes the new shared default
-        if (target_username === undefined) {
+        if (target_id === undefined) {
             const {overrides, sequence} = stored;
             const next = merge_override(stored, applied);
 
@@ -115,7 +115,7 @@ export const useHUDStore = create<HUDStoreState>((set, get) => ({
             };
         }
 
-        const key = override_key(target_username);
+        const key = override_key(target_id);
 
         return {
             elements: {
@@ -131,14 +131,14 @@ export const useHUDStore = create<HUDStoreState>((set, get) => ({
         };
     }),
 
-    reset: (target_username) => set((state) => {
+    reset: (target_id) => set((state) => {
         // resetting everyone drops the elements entirely
-        if (target_username === undefined) {
+        if (target_id === undefined) {
             return {elements: {}};
         }
 
         // resetting one player only drops their overrides, leaving the declaration intact
-        const key = override_key(target_username);
+        const key = override_key(target_id);
         const elements: Record<string, StoredHUDElement> = {};
 
         for (const [element_id, stored] of Object.entries(state.elements)) {
@@ -149,11 +149,11 @@ export const useHUDStore = create<HUDStoreState>((set, get) => ({
         return {elements};
     }),
 
-    resolve_for: (username, anchor) => {
-        const key = override_key(username);
+    resolve_for: (id, anchor) => {
+        const key = override_key(id);
 
         return Object.values(get().elements)
-            .filter((stored) => in_scope(stored, username))
+            .filter((stored) => in_scope(stored, id))
             .map((stored) => merge_override(stored, stored.overrides[key]))
             .filter((element) => element.visible)
             .filter((element) => anchor === null || element.vr_anchor === anchor)

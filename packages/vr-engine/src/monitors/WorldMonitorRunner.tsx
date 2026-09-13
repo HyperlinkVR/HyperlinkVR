@@ -80,7 +80,7 @@ const resolve_target = (target: TargetRef, pool: Vector3[], out: ResolvedSubject
         if (!get_player_position(pos)) {
             return;
         }
-        out.push({ ref: { kind: "player", username: null }, pos, key: "p:@local" });
+        out.push({ ref: { kind: "player", id: null }, pos, key: "p:@local" });
     };
 
     switch (target.kind) {
@@ -94,7 +94,7 @@ const resolve_target = (target: TargetRef, pool: Vector3[], out: ResolvedSubject
         case "player": {
             // only the local player has a position source today; remote players
             // slot in behind get_player_position when multiplayer lands
-            if (target.username === null) {
+            if (target.id === null) {
                 push_local_player();
             }
             break;

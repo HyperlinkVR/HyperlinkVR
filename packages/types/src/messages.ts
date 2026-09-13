@@ -188,19 +188,19 @@ interface WebSDKLoadingFinishedAction extends BaseWebSDKActionMessage {
 
 interface WebSDKPlayerGetPositionAction extends BaseWebSDKActionMessage {
     action: "HVRSDK_PLAYER_GET_POSITION";
-    target_username: string | null;
+    target_id: string | null;
 }
 
 interface WebSDKPlayerTeleportToAction extends BaseWebSDKActionMessage {
     action: "HVRSDK_PLAYER_TELEPORT_TO";
-    target_username: string | null;
+    target_id: string | null;
     position?: [number, number, number];
     yaw?: number;
 }
 
 interface WebSDKPlayerSendToWorldAction extends BaseWebSDKActionMessage {
     action: "HVRSDK_PLAYER_SEND_TO_WORLD";
-    target_username: string | null;
+    target_id: string | null;
     url: string;
     prompt: "show" | "try_skip" | "skip_or_fail";
 }
@@ -230,13 +230,13 @@ interface WebSDKVFXCommandAction extends BaseWebSDKActionMessage {
 
 interface WebSDKPlayerAddMonitorAction extends BaseWebSDKActionMessage {
     action: "HVRSDK_PLAYER_ADD_MONITOR";
-    target_username: string | null;
+    target_id: string | null;
     monitor: PlayerMonitor;
 }
 
 interface WebSDKPlayerRemoveMonitorAction extends BaseWebSDKActionMessage {
     action: "HVRSDK_PLAYER_REMOVE_MONITOR";
-    target_username: string | null;
+    target_id: string | null;
     monitor_id: string;
 }
 
@@ -277,13 +277,13 @@ interface WebSDKUpdateHUDElementAction extends BaseWebSDKActionMessage {
     element_id: string;
     changes: HUDElementModification;
     // undefined writes the element's own scope, a value writes one player's override
-    target_username?: string | null;
+    target_id?: string | null;
     tween?: Tween;
 }
 
 interface WebSDKResetHUDAction extends BaseWebSDKActionMessage {
     action: "HVRSDK_RESET_HUD";
-    target_username?: string | null;
+    target_id?: string | null;
 }
 
 interface WebSDKLaunchAction extends BaseWebSDKActionMessage {
@@ -406,7 +406,7 @@ interface WebSDKBatchEngineObjectReportEventMessage extends BaseWebSDKEventMessa
 
 interface WebSDKPlayerSpawnedEventMessage extends BaseWebSDKEventMessage {
     type: "HVRSDK_PLAYER_SPAWNED";
-    username: string | null;
+    id: string | null;
     mode: "vr" | "flat";
 }
 

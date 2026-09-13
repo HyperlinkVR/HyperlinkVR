@@ -117,12 +117,12 @@ export const HUDSurface = ({
     //const username = useMemo(() => session?.username ?? null, [session]);
     // TODO: is this the right way to be doing multiplayer hud. i suppose details are hazy currently, perhaps this mechanism is for the p2p host and everyone else will always be local
     // actually, just pass null for local. we only want our own hud for the render
-    const username = null;
+    const id = null;
 
     const elements = useHUDStore((state) => state.elements);
 
     const by_slot = useMemo(() => {
-        const resolved = useHUDStore.getState().resolve_for(username, anchor);
+        const resolved = useHUDStore.getState().resolve_for(id, anchor);
         const grouped = new Map<string, StoreResolvedHUDElement[]>();
 
         for (const element of resolved) {
@@ -133,7 +133,7 @@ export const HUDSurface = ({
         }
 
         return grouped;
-    }, [elements, username, anchor]);
+    }, [elements, id, anchor]);
 
     const [devtools_photo_mode] = useSetting("devtools_flat_photo_mode");
     if (devtools_photo_mode) return null;
