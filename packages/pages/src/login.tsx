@@ -127,6 +127,7 @@ const LoginFormStatic = ({ username, resolved_identity }: FormProps) => {
                         identity,
                         method: "static",
                         public_key: resolved_identity.public_key.key as JsonWebKey,
+                        uuid: resolved_identity.static_record?.uuid,
                         authed_at: Date.now()
                     },
                     local_storage
@@ -175,6 +176,7 @@ const LoginFormStatic = ({ username, resolved_identity }: FormProps) => {
                         identity,
                         method: "static",
                         public_key: resolved_identity.public_key.key as JsonWebKey,
+                        uuid: resolved_identity.static_record?.uuid,
                         authed_at: Date.now()
                     },
                     local_storage
