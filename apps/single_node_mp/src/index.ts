@@ -121,7 +121,9 @@ wss.on("connection", (ws, request) => {
 
     const info: PeerInfo = {
         ...hello,
-        id: randomUUID(),
+        // adopt the claimed account id as the PeerID (mint one for guests / unauthed).
+        // TODO: once identities are verified, reject/replace a duplicate id instead of trusting it
+        id: url.searchParams.get("id") ?? randomUUID(),
         joined_at: join_counter++
     };
 

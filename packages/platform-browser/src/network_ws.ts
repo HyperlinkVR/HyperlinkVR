@@ -238,6 +238,9 @@ export class WSNetworkEngine implements NetworkEngine {
             if (hello.display_name) {
                 url.searchParams.set("display_name", hello.display_name);
             }
+            if (hello.id) {
+                url.searchParams.set("id", hello.id);
+            }
 
             const ws = new WebSocket(url);
             ws.binaryType = "arraybuffer";

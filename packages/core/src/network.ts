@@ -9,6 +9,9 @@ export interface RoomKey {
 export interface PeerHello {
     username: string | null;
     display_name?: string;
+    // claimed stable account id (auth uuid); the carrier adopts it as the PeerID, or mints one
+    // for guests. verification lands with the signed identity handshake.
+    id?: string;
     // TODO: transmit other details like avatar etc
 }
 

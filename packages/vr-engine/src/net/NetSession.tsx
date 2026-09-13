@@ -30,7 +30,9 @@ export const NetSessionProvider = ({ children }: { children: React.ReactNode }) 
     const network = useNetworkEngineOptional();
     const { url } = useWorldSession();
     const { blocked } = useNavConsent();
-    const username = useAuthSession()?.username ?? null;
+    const auth_session = useAuthSession();
+    const username = auth_session?.username ?? null;
+    const uuid = auth_session?.uuid;
 
     // don't announce the player into a room until they've consented to being in the world
     const world = url && !blocked ? world_key(url) : null;
@@ -47,7 +49,7 @@ export const NetSessionProvider = ({ children }: { children: React.ReactNode }) 
         let unlisten = () => {};
 
         network
-            .join({ world, instance: DEFAULT_INSTANCE }, { username })
+            .join({ world, instance: DEFAULT_INSTANCE }, { username, id: uuid })
             .then((joined) => {
                 if (cancelled) {
                     joined.leave();
@@ -77,7 +79,7 @@ export const NetSessionProvider = ({ children }: { children: React.ReactNode }) 
             room?.leave();
             setSession(NO_SESSION);
         };
-    }, [network, world, username]);
+    }, [network, world, username, uuid]);
 
     return <NetSessionContext.Provider value={session}>{children}</NetSessionContext.Provider>;
 };
