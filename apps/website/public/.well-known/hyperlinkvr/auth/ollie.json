@@ -1,6 +1,7 @@
 {
-    "$schema": "https://hyperlink.surf/schemas/StaticIdentityRecord_v1.json",
-    "version": 1,
+    "$schema": "https://hyperlink.surf/schemas/StaticIdentityRecord_v2.json",
+    "version": 2,
+    "uuid": "cba40157-41c7-4cd0-8cc1-976c950c952c",
     "identity": "ollie@hyperlink.surf",
     "created_at": 1782827964967,
     "status": "active",

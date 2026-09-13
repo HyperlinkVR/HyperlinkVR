@@ -38,13 +38,14 @@ export const StaticAuthRecordSchema = z.object({
 });
 export type StaticAuthRecord = z.infer<typeof StaticAuthRecordSchema>;
 
-export const StaticIdentityRecordSchema_VERSION = 1;
+export const StaticIdentityRecordSchema_VERSION = 2;
 export const StaticIdentityRecordSchema = z.object({
     $schema: z
         .string()
         .optional()
         .default(`https://hyperlink.surf/schemas/StaticIdentityRecord_v${StaticIdentityRecordSchema_VERSION}.json`),
     version: z.number().int().min(1).max(StaticIdentityRecordSchema_VERSION),
+    uuid: z.uuid(),
     identity: z.string().min(3).max(64),
     created_at: z.number(),
     status: z.enum(["active", "suspended"]),
