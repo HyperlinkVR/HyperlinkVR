@@ -37,8 +37,8 @@ Ordering: **A and B are independent** (do in either order / interleave). **C nee
 
 1. [x] **Node server [M].**
 2. [x] **`WSNetworkEngine` carrier [S].**
-3. [ ] **Service mode [S].** Default connects to the relay network via a discovery **entrypoint** that returns a colocated, non-busy endpoint + protocol/capabilities/auth (and possibly a session ticket); `ServiceNetworkEngine` resolves that and builds the carrier. `service_override` (last resort) connects directly to a given URL — a single node or another network — bypassing discovery. Adds `"service"` to the devtools mode. *(The dev `ws` mode is a temporary shortcut.)*
-4. [ ] **Extension VR host provides a network engine [S].** Presence then works in the extension too, not just play.
+3. [x] **Service mode [S].** Default connects to the relay network via a discovery **entrypoint** that returns a colocated, non-busy endpoint + protocol/capabilities/auth (and possibly a session ticket); `ServiceNetworkEngine` resolves that and builds the carrier. `service_override` (last resort) connects directly to a given URL — a single node or another network — bypassing discovery. Adds `"service"` to the devtools mode. *(The dev `ws` mode is a temporary shortcut.)*
+4. [x] **Extension VR host provides a network engine [S].** Presence then works in the extension too, not just play.
 5. [ ] **Identity rules [M, can wait until before public testing].** A signed identity handshake, so the node can reject guests and duplicate accounts. Replaces the currently-trusted `hello`. Pairs with the reconnection session-token work (Phase E).
 
 **Flagged to change / add:**
@@ -51,8 +51,8 @@ Ordering: **A and B are independent** (do in either order / interleave). **C nee
 
 ## Phase B: groundwork, all still singleplayer
 
-6. [ ] **Players identified by peer ID [M].** `Player.id`, `target_player` in messages, the spawn event carries the ID, the engine's player registry is keyed by ID, and minigolf is re-keyed.
-7. [ ] **Per-world multiplayer mode [S].** `solo` / `presence` / `shared` in the meta tag, with `presence` as the default. Solo worlds don't join a room.
+6. [ ] **Players identified by peer ID [M].** `Player.id`, `target_player` in messages, the spawn event carries the ID, the engine's player registry is keyed by ID, and minigolf is re-keyed (but don't forget singleplayer and reconnects!). Perhaps could use a stable ID, either a UUID stored in their static record, or a hash of the pub key (but keep in mind it may change if a new keypair is generated) although why not just use the username as the peer ID since it is meant to be stable currently. Keeping in mind the identity operator could change any of those fields arbitrarily
+7. [ ] **Per-world multiplayer mode [S].** `solo` / `presence` / `shared` in the meta tag or world metadata, with `presence` as the default. Solo worlds don't join a room.
 8. [ ] **Command bus [L].** Every SDK action handler (objects, HUD, VFX, world environment, animations, seeks, monitors, triggers) stops caring whether a command came from the page or the network. It accepts IDs minted by the host, and keeps a compacted log of commands for late joiners. *(The large foundational item — shared mode and physics depend on it.)*
 9. [ ] **Session clock sync [S].** So tweens and animations can start at the same moment everywhere.
 
@@ -63,7 +63,7 @@ Ordering: **A and B are independent** (do in either order / interleave). **C nee
 10. [ ] **Roles [S].** The engine knows if it's host. In shared worlds, clients hand world-level authority (world monitors) to the host.
 11. [ ] **Command replication [M].** The host broadcasts every command it applies on a reliable channel, and clients apply them.
 12. [ ] **Client page lifecycle [S].** In shared worlds, client pages never get `READY`, and the host's "loading finished" is replicated to everyone.
-13. [ ] **Late join [M].** A newcomer gets the command log replayed, and holds a loading screen until it's caught up.
+13. [ ] **Late join [M].** A newcomer gets the command log replayed, and holds a loading screen until it's caught up (might be able to look at current state rather than replay all commands, or at the very least do it differentially)
 14. [ ] **Report routing [M].** Client engines send reports to the host's page with `player` attached. Player-targeted actions (teleport, send to world, player monitors) go to that player's engine.
 15. [ ] **Per-player HUD and effects [S].** Using the scope the HUD already has.
 16. [ ] **SDK [S].** `e.player`, `players.on_spawn` fires for remote players on the host, `players.list()` and `on_leave`, and `.create()` throws on clients.
@@ -112,5 +112,6 @@ A first-class goal (Rec Room parity), run as a **parallel track** to world-sync 
 - [ ] **Friends / social graph & presence [M].** Friends list, online status, "join friend's instance" (ties into invites / instance selection, E#30).
 - [ ] **Safety controls [M, before public].** Client-side **block / mute** (local, needs no server or central authority) and rate limiting. No reporting pipeline — a decentralised network has no central operator to receive one — and no server-side scanning of E2E channels.
 - [ ] **E2E for private channels** — see E#32; encrypt chat/DM channels so relay operators can't read them.
+- [ ] **Multiple instances** - more than the 1 main instance for each world to split players and allow private lobbies
 
 **Dependency summary:** in-world chat is near-term (relay only). DMs trail identity + persistence, and reaching anyone in the world trails the relay network (E#31).
