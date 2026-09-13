@@ -10,7 +10,7 @@ if (typeof global_window.hyperlinkvr === "undefined") {
             const sdk_url = new URL("sdk.js", loader_script.src).href;
 
             // parser-blocking, sdk installs window.hyperlinkvr before any page script runs
-            document.write('<script src="' + sdk_url + '"><' + "/script>");
+            document.write('<script data-cfasync="false" src="' + sdk_url + '"><' + "/script>");
         }
     }
 }

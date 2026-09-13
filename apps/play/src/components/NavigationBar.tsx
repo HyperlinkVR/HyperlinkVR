@@ -17,6 +17,11 @@ export const NavigationBar = ({initial_url = "", on_url_submit}: NavigationBarPr
 
     const commit_url = useCallback(
         (url: string) => {
+            if (!url.startsWith("http://") && !url.startsWith("https://")) {
+                url = "https://" + url;
+                setInputURL(url);
+            }
+
             setCommittedURL(url);
             on_url_submit(url);
         },
