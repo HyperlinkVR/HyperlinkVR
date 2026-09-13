@@ -1,4 +1,4 @@
-import { useMessageEngine, useSetting, useWorldSession } from "@hyperlinkvr/react";
+import { useAuthSession, useMessageEngine, useSetting, useWorldSession } from "@hyperlinkvr/react";
 import { PlayerMonitorSchema } from "@hyperlinkvr/vr-engine-schemas";
 import { Text } from "@react-three/drei";
 import { XROrigin } from "@react-three/xr";
@@ -108,6 +108,8 @@ export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>
     const {on_action, emit_event, connected} = useWebSDKMessaging();
     const messenger = useMessageEngine();
     const {id: tab_id} = useWorldSession();
+    // the local player's stable account id (matches SDK player.get_id()); null for guests
+    const local_id = useAuthSession()?.uuid ?? null;
 
     const seated = useIsSeated();
 
@@ -130,13 +132,13 @@ export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>
         try {
             emit_event({
                 type: "HVRSDK_PLAYER_SPAWNED",
-                id: null, // local player
+                id: local_id,
                 mode: session_mode
             });
         } catch (error) {
             console.warn("Failed to emit player spawn event", error);
         }
-    }, [world_ready, connected, session_mode, emit_event]);
+    }, [world_ready, connected, session_mode, emit_event, local_id]);
 
     useEffect(() => {
         // TODO: these ignore target username on the message and assume its for us, nothing to do rn but just remember this is the case when multiplayer happens

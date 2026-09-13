@@ -125,9 +125,9 @@ export const compute_hole_pars = () => {
 };
 
 export const add_player = async (player: hvr.players.Player, spawn_pos: [number, number, number] = [0, 0, 0]) => {
-    const username = await player.get_username();
-    if (players.has(username)) {
-        console.warn(`Player ${username} already exists`);
+    const id = await player.get_id();
+    if (players.has(id)) {
+        console.warn(`Player ${id} already exists`);
         return;
     }
 
@@ -151,14 +151,14 @@ export const add_player = async (player: hvr.players.Player, spawn_pos: [number,
             if (e.kind !== "golf-ball-prefab") return;
 
             if (e.payload.type === "struck") {
-                take_stroke(username);
+                take_stroke(id);
             } else if (e.payload.type === "at-rest") {
-                stroke_at_rest(username);
+                stroke_at_rest(id);
             }
         })
         .create();
 
-    players.set(username, create_player_state(created_ball, created_putter, putter.color));
+    players.set(id, create_player_state(created_ball, created_putter, putter.color));
     notify_game_state();
 };
 
@@ -179,7 +179,7 @@ export const next_hole = () => {
 
     going_to_next_hole = true;
 
-    for (const [username, state] of players.entries()) {
+    for (const [id, state] of players.entries()) {
         state.strokes_this_hole = 0;
         state.finished_this_hole = false;
         state.last_pos = null;
@@ -190,7 +190,7 @@ export const next_hole = () => {
             .set_position(start_marker.transform.position)
             .apply();
 
-        show_stroke(1, username);
+        show_stroke(1, id);
     }
 
     notify_game_state();
@@ -245,10 +245,10 @@ export const get_owner_of_ball = (ball_object_id: string) => {
     return undefined;
 }
 
-export const get_ball_of_player = (username: string | null) => {
-    const state = players.get(username);
+export const get_ball_of_player = (id: string | null) => {
+    const state = players.get(id);
     if (!state) {
-        throw new Error(`Player ${username} not found`);
+        throw new Error(`Player ${id} not found`);
     }
 
     return state.ball;
@@ -263,14 +263,14 @@ export const get_ball_by_object_id = (ball_object_id: string) => {
     return get_ball_of_player(owner);
 }
 
-export const scored_on_hole = async (username: string | null) => {
+export const scored_on_hole = async (id: string | null) => {
     if (current_hole === 0) {
         return;
     }
 
-    const state = players.get(username);
+    const state = players.get(id);
     if (!state) {
-        throw new Error(`Player ${username} not found`);
+        throw new Error(`Player ${id} not found`);
     }
 
     if (state.finished_this_hole) {
@@ -280,7 +280,7 @@ export const scored_on_hole = async (username: string | null) => {
     state.finished_this_hole = true;
     notify_game_state();
 
-    show_stroke(state.strokes_this_hole, username);
+    show_stroke(state.strokes_this_hole, id);
 
     const start_markers = get_start_markers();
 
@@ -289,10 +289,10 @@ export const scored_on_hole = async (username: string | null) => {
         throw new Error(`Start marker for hole ${current_hole} not found`);
     }
 
-    console.log(`Player ${username} scored on hole ${current_hole} with ${state.strokes_this_hole} strokes`);
+    console.log(`Player ${id} scored on hole ${current_hole} with ${state.strokes_this_hole} strokes`);
 
     const par = (start_marker.properties.par ?? 3) as number; // default par to 3 if not specified
-    await show_result(username, state.strokes_this_hole, par);
+    await show_result(id, state.strokes_this_hole, par);
 
     // after the result shown, if all players have finished, move to the next hole
     const all_finished = Array.from(players.values()).every((s) => s.finished_this_hole);
@@ -301,14 +301,14 @@ export const scored_on_hole = async (username: string | null) => {
     }
 }
 
-export const take_stroke = (username: string | null) => {
+export const take_stroke = (id: string | null) => {
     if (current_hole === 0) {
         return;
     }
 
-    const state = players.get(username);
+    const state = players.get(id);
     if (!state) {
-        throw new Error(`Player ${username} not found`);
+        throw new Error(`Player ${id} not found`);
     }
 
     if (state.finished_this_hole) {
@@ -321,14 +321,14 @@ export const take_stroke = (username: string | null) => {
     notify_game_state();
 }
 
-export const stroke_at_rest = (username: string | null) => {
+export const stroke_at_rest = (id: string | null) => {
     if (current_hole === 0) {
         return;
     }
 
-    const state = players.get(username);
+    const state = players.get(id);
     if (!state) {
-        throw new Error(`Player ${username} not found`);
+        throw new Error(`Player ${id} not found`);
     }
 
     // record where the stroke ended up as an easy way to recover from oob (doesnt catch all cases ofc but better than start)
@@ -340,7 +340,7 @@ export const stroke_at_rest = (username: string | null) => {
         return;
     }
 
-    show_stroke(state.strokes_this_hole + 1, username);
+    show_stroke(state.strokes_this_hole + 1, id);
 }
 
 
@@ -383,25 +383,25 @@ const dev_cheats = {
         }
     },
 
-    tp_to_ball: async (username: string | null = null) => {
-        const state = players.get(username);
+    tp_to_ball: async (id: string | null = null) => {
+        const state = players.get(id);
         if (!state) {
-            throw new Error(`Player ${username} not found`);
+            throw new Error(`Player ${id} not found`);
         }
 
-        const player = new hyperlinkvr.players.Player(username);
+        const player = new hyperlinkvr.players.Player(id);
         await state.ball.refresh();
         const ball_obj = state.ball.object;
         player.teleport_to(ball_obj.transform.position, ball_obj.transform.rotation[1]);
     },
 
-    tp_ball_to_me: async (username: string | null = null) => {
-        const state = players.get(username);
+    tp_ball_to_me: async (id: string | null = null) => {
+        const state = players.get(id);
         if (!state) {
-            throw new Error(`Player ${username} not found`);
+            throw new Error(`Player ${id} not found`);
         }
 
-        const player = new hyperlinkvr.players.Player(username);
+        const player = new hyperlinkvr.players.Player(id);
         const player_pos = await player.get_position();
         state.ball
             .modify()

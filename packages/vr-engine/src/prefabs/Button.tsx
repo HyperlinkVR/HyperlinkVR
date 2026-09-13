@@ -8,6 +8,8 @@ import { mergeVertices, toCreasedNormals } from "three/examples/jsm/utils/Buffer
 
 
 import { ObjectPhysics } from "../engine/ObjectPhysics";
+import { useAuthSession } from "@hyperlinkvr/react";
+
 import { useObjectBinding } from "../hooks/useObjectBinding";
 import { Grabbable } from "../interaction";
 import type { PrefabProps } from "../types";
@@ -73,6 +75,8 @@ type ButtonProps = PrefabProps<ButtonPrefab> & {
 
 export const Button = (props: ButtonProps) => {
     const {emit_report, on_prefab_command} = useObjectBinding(props.binding);
+    // the local player's stable account id (matches SDK player.get_id()); null for guests
+    const local_id = useAuthSession()?.uuid ?? null;
 
     const geometry = useMemo(() => {
         // The front rounding comes from a positive outward bevel.
@@ -170,23 +174,21 @@ export const Button = (props: ButtonProps) => {
 
     const emit_press_report = useCallback(() => {
         if (props.report_press) {
-            // assumes local player for now
             emit_report({
                 kind: "button-prefab",
-                payload: { type: "press", id: null }
+                payload: { type: "press", id: local_id }
             });
         }
-    }, [emit_report, props.report_press]);
+    }, [emit_report, props.report_press, local_id]);
 
     const emit_release_report = useCallback(() => {
         if (props.report_release) {
-            // assumes local player for now
             emit_report({
                 kind: "button-prefab",
-                payload: { type: "release", id: null }
+                payload: { type: "release", id: local_id }
             });
         }
-    }, [emit_report, props.report_release]);
+    }, [emit_report, props.report_release, local_id]);
 
     useFrame((state, delta) => {
         const housing = housingRef.current;

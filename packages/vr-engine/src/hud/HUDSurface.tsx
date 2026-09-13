@@ -1,4 +1,4 @@
-import { useSetting } from "@hyperlinkvr/react";
+import { useAuthSession, useSetting } from "@hyperlinkvr/react";
 import type { HUDSlot, HUDVRAnchor } from "@hyperlinkvr/vr-engine-schemas";
 import { Container, Text } from "@react-three/uikit";
 import { Suspense, useEffect, useMemo } from "react";
@@ -113,11 +113,9 @@ export const HUDSurface = ({
     width = HUD_CANVAS_WIDTH,
     height = HUD_CANVAS_HEIGHT
 }: HUDSurfaceProps) => {
-    //const session = useAuthSession();
-    //const username = useMemo(() => session?.username ?? null, [session]);
-    // TODO: is this the right way to be doing multiplayer hud. i suppose details are hazy currently, perhaps this mechanism is for the p2p host and everyone else will always be local
-    // actually, just pass null for local. we only want our own hud for the render
-    const id = null;
+    // the local player's stable account id (matches SDK player.get_id() and the id engine events
+    // carry); null for guests. this renderer only shows the local player's own hud.
+    const id = useAuthSession()?.uuid ?? null;
 
     const elements = useHUDStore((state) => state.elements);
 

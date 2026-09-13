@@ -61,19 +61,19 @@ export const show_hole = async (hole_number: number, details: HoleExtraDetails =
 
 const player_stroke_huds = new Map<string | null, hvr.builders.HUDTextHandle>();
 
-export const show_stroke = async (stroke_number: number, username: string | null) => {
-    if (!player_stroke_huds.has(username)) {
+export const show_stroke = async (stroke_number: number, id: string | null) => {
+    if (!player_stroke_huds.has(id)) {
         const stroke_text = await h.hud_text("stroke", `Stroke ${stroke_number}`)
             .set_slot("top-left")
             .set_font_size(36)
-            .player(username)
+            .player(id)
             .create();
 
-        player_stroke_huds.set(username, stroke_text);
+        player_stroke_huds.set(id, stroke_text);
         return;
     }
 
-    const stroke_hud = player_stroke_huds.get(username)!;
+    const stroke_hud = player_stroke_huds.get(id)!;
     stroke_hud.set_text(`Stroke ${stroke_number}`);
 }
 
@@ -100,13 +100,13 @@ const get_result_text = (strokes: number, par: number) => {
     return `${strokes} strokes`;
 }
 
-export const show_result = async (username: string | null, strokes: number, par: number) => {
+export const show_result = async (id: string | null, strokes: number, par: number) => {
     const result_text = get_result_text(strokes, par);
     const result_hud = await h.hud_text("result", result_text)
         .set_slot("middle-center")
         .set_font_size(64)
         .set_vr_anchor("head")
-        .player(username)
+        .player(id)
         .create();
 
     setTimeout(() => {
@@ -114,12 +114,12 @@ export const show_result = async (username: string | null, strokes: number, par:
     }, 4000);
 }
 
-export const show_oob = async (username: string | null) => {
+export const show_oob = async (id: string | null) => {
     const oob_hud = await h.hud_text("oob", "Out of bounds!")
         .set_slot("middle-center")
         .set_font_size(64)
         .set_vr_anchor("head")
-        .player(username)
+        .player(id)
         .create();
 
     setTimeout(() => {

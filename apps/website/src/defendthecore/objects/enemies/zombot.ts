@@ -313,7 +313,7 @@ export const apply_zombot_behaviour = async (created_zombot: hvr.builders.Engine
                     .seek()
                     .speed(zombot_speed)
                     .set_distance(1)
-                    .toward_player(player.username)
+                    .toward_player(player.id)
                     .start();
             } else if (event.payload.type === "exit") {
                 in_range--;
