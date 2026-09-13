@@ -69,6 +69,7 @@ Ordering: **A and B are independent** (do in either order / interleave). **C nee
 16. [ ] **SDK [S].** `e.player`, `players.on_spawn` fires for remote players on the host, `players.list()` and `on_leave`, and `.create()` throws on clients.
 17. [ ] **Host leaves [S].** For v1, the instance simply ends.
 18. [ ] **Games [S].** Port clubhouse, or a button and score world, to `shared`.
+19. [ ] **WebTransport [S].** for the unreliable channel (making it a hybrid transport, with WebSocket for reliable. Maybe fallback to WebSocket for unreliable if WebTransport isn't available, but need to be careful that all parties agree, so don't do that yet)
 
 **Milestone: button, score and HUD games are multiplayer.**
 
@@ -76,13 +77,13 @@ Ordering: **A and B are independent** (do in either order / interleave). **C nee
 
 ## Phase D: physics
 
-19. [ ] **`ObjectPhysics` honours authority [M].** A body simulated by another engine becomes kinematic and follows the stream.
-20. [ ] **Host physics streaming [M].** The host streams the pose and velocity of every dynamic body that's moving. It reuses the pose buffer, and stops sending once a body comes to rest.
-21. [ ] **Grab handoff [L].** A grab claims the object through the host (optimistically, host settles conflicts). The holder streams it; letting go hands it back to the host with its velocity. Needs the most feel-tuning. *(This is the VRChat-style ownership model.)*
-22. [ ] **Held objects run their own triggers [M].** Triggers and reports for a held object run on the holder's engine. Other engines replay visuals only, reports suppressed.
-23. [ ] **Pinned ownership [S].** `set_ownership(player)`, needed for minigolf balls.
-24. [ ] **Remote avatar colliders [S].** So players can push things, and raycasts can hit them.
-25. [ ] **Games [M].** Minigolf, basketball, defendthecore.
+20. [ ] **`ObjectPhysics` honours authority [M].** A body simulated by another engine becomes kinematic and follows the stream.
+21. [ ] **Host physics streaming [M].** The host streams the pose and velocity of every dynamic body that's moving. It reuses the pose buffer, and stops sending once a body comes to rest.
+22. [ ] **Grab handoff [L].** A grab claims the object through the host (optimistically, host settles conflicts). The holder streams it; letting go hands it back to the host with its velocity. Needs the most feel-tuning. *(This is the VRChat-style ownership model.)*
+23. [ ] **Held objects run their own triggers [M].** Triggers and reports for a held object run on the holder's engine. Other engines replay visuals only, reports suppressed.
+24. [ ] **Pinned ownership [S].** `set_ownership(player)`, needed for minigolf balls.
+25. [ ] **Remote avatar colliders [S].** So players can push things, and raycasts can hit them.
+26. [ ] **Games [M].** Minigolf, basketball, defendthecore.
 
 **Milestone: physics games are multiplayer. At this point it's "fully working".**
 
@@ -90,15 +91,14 @@ Ordering: **A and B are independent** (do in either order / interleave). **C nee
 
 ## Phase E: optional, after that
 
-26. [ ] The local escape hatch: `hyperlinkvr.local()`, `me.create()`, message channels.
-27. [ ] `net.state` and host migration.
-28. [ ] **Voice chat** (its own project) — relay-routed / SFU-style, likely WebRTC for the client↔relay media leg.
-29. [ ] Presence polish: syncing facial expressions, an interpolation delay that adapts to conditions, binary encoding.
+27. [ ] The local escape hatch: `hyperlinkvr.local()`, `me.create()`, message channels.
+28. [ ] `net.state` and host migration.
+29. [ ] **Voice chat** (its own project) — relay-routed / SFU-style, likely WebRTC for the client↔relay media leg.
+30. [ ] Presence polish: syncing facial expressions, an interpolation delay that adapts to conditions, binary encoding.
     - [ ] **Pose send optimisation.** Poses currently broadcast at 20Hz unconditionally. Gate on a movement threshold *plus* a late-join pose (or low-rate keepalive) — a pure delta check alone would leave idle avatars stuck at their default pose for newcomers, since the appearance handshake syncs appearance but not pose. Matters mainly for flat/idle players; in VR micro-movements make it near-moot.
-30. [ ] Robustness: **reconnects** (stable session token so a returning peer keeps its `PeerID` / `joined_at` and host election doesn't flap; server holds `PeerInfo` through a grace window), node rate limits and room caps, invites and instance selection (Discord join button), a peer list in the watch UI.
-31. [ ] **Relay network.** One shared global network (not a federation of independent relays): a discovery entrypoint places clients on a well-colocated, non-busy entry point, and internal routing (server-to-server: WS or QUIC, not WebRTC) lets any client reach anyone in the world. Distinct from the single node, which never cross-relays.
-32. [ ] **E2E encryption.** Encrypt private channels (chat/DMs) so relay operators can't read them; keep game data cleartext-to-relay (or authenticated-only) — decide per channel. Needed once relays aren't all first-party.
-33. [ ] **WebTransport carrier** for genuine unreliable pose delivery, if/when WS TCP head-of-line-blocking proves to hurt.
+31. [ ] Robustness: **reconnects** (stable session token so a returning peer keeps its `PeerID` / `joined_at` and host election doesn't flap; server holds `PeerInfo` through a grace window), node rate limits and room caps, invites and instance selection (Discord join button), a peer list in the watch UI.
+32. [ ] **Relay network.** One shared global network (not a federation of independent relays): a discovery entrypoint places clients on a well-colocated, non-busy entry point, and internal routing (server-to-server: WS or QUIC, not WebRTC) lets any client reach anyone in the world. Distinct from the single node, which never cross-relays.
+33. [ ] **E2E encryption.** Encrypt private channels (chat/DMs) so relay operators can't read them; keep game data cleartext-to-relay (or authenticated-only) — decide per channel. Needed once relays aren't all first-party.
 
 ---
 
