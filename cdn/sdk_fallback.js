@@ -1,0 +1,1 @@
+(function(){if(window.hyperlinkvr===void 0&&window.name===`hvr-content-frame`){let e=document.currentScript;if(e){let t=new URL(`sdk.js`,e.src).href;document.write(`<script src="`+t+`"><\/script>`)}}})();
