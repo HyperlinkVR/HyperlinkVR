@@ -20,11 +20,11 @@ catalog:
   '@types/three': ^0.185.0
   '@types/ws': ^8.18.1
   '@wxt-dev/auto-icons': ^1.1.2
-  react-error-boundary: ^6.1.4
   lucide-react: 1.21.0
   msgpackr: ^2.1.0
   react: 19.2.7
   react-dom: 19.2.7
+  react-error-boundary: ^6.1.4
   tailwind-preset-mantine: ^4.1.0
   tailwindcss: 4.3.1
   three: ^0.185.0
@@ -48,6 +48,7 @@ overrides:
 
 patchedDependencies:
   '@react-three/drei': patches/@react-three__drei.patch
+  '@react-three/uikit': patches/@react-three__uikit.patch
   '@tailwindcss/oxide@4.3.1': patches/@tailwindcss__oxide@4.3.1.patch
   '@wordlist/english-eff': patches/@wordlist__english-eff.patch
   '@wordlist/random': patches/@wordlist__random.patch
