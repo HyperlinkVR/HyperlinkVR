@@ -487,6 +487,45 @@ export const settings_def = build_settings({
     },
     // TODO: put all default urls, repos, etc in a root consts file
 
+    service_multiplayer_kind: {
+        default_value: "single_node" as "single_node" | "network",
+        ui: {
+            flat: {
+                label: "Multiplayer service kind",
+                description:
+                    "Single node connects to a ws relay directly; relay network fetches a discovery entrypoint first",
+                widget: {
+                    type: "select",
+                    options: [
+                        { label: "Single node", value: "single_node" },
+                        { label: "Relay network", value: "network" }
+                    ]
+                },
+                breadcrumbs: ["Services"],
+                conditional: (settings) => settings.service_override === true
+            }
+        }
+    },
+
+    service_multiplayer: {
+        default_value: "wss://mp.hyperlink.surf",
+        ui: {
+            flat: {
+                label: "Multiplayer service",
+                description:
+                    "Single node: a ws(s) relay URL. Relay network: the discovery entrypoint URL.",
+                widget: {
+                    type: "text",
+                    placeholder: "wss://mp.hyperlink.surf",
+                    subtype_hint: "url",
+                    width: "long"
+                },
+                breadcrumbs: ["Services"],
+                conditional: (settings) => settings.service_override === true
+            }
+        }
+    },
+
     debug_ray_hits: {
         default_value: false,
         local_only: true
@@ -537,9 +576,8 @@ export const settings_def = build_settings({
         local_only: true
     },
 
-    // TODO: "service" mode once the multiplayer service exists
     devtools_network_mode: {
-        default_value: "off" as "off" | "local" | "ws",
+        default_value: "service" as "off" | "local" | "ws" | "service",
         local_only: true,
         ui: {
             flat: {
@@ -549,7 +587,8 @@ export const settings_def = build_settings({
                     options: [
                         { label: "Off", value: "off" },
                         { label: "Local (windows in this browser)", value: "local" },
-                        { label: "WebSocket", value: "ws" }
+                        { label: "WebSocket (localhost)", value: "ws" },
+                        { label: "Set by service (no override)", value: "service" }
                     ]
                 }
             }

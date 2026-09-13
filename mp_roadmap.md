@@ -1,8 +1,14 @@
 # Multiplayer roadmap
 
+**Product goal:** social parity with Rec Room — shared worlds + voice + **text chat + DMs + friends**, not just world sync.
+
 ## Decisions (architecture)
 
-- **Transport is relay-routed, not P2P.** Clients connect to a relay; the relay forwards everything. Federated relays (anyone can run one, they mesh) is the "decentralised but works" target. WebRTC P2P is off the table for game data — it needs signalling + TURN anyway, caps room size, and can't do global DMs.
+- **Transport is relay-routed, not P2P.** Clients connect to a relay; the relay forwards everything. WebRTC P2P is off the table for game data — it needs signalling + TURN anyway, caps room size, and can't do global DMs.
+- **Two modes of operation:**
+  - **Single node** (`apps/single_node_mp`) — a standalone relay with *no* cross-relaying. For devs, self-hosters, and as a low-complexity fallback if the shared network ever goes away. Never participates in the network.
+  - **The relay network** — one shared global system (not a federation of independent relays). A client hits a discovery **entrypoint** that places it on a well-colocated, not-too-busy entry point; through the network it can reach anyone in the world. Internal topology/routing is the network's concern, invisible to the client.
+- **Overriding the service is a last resort**, not the normal path.
 - **WebSocket now, for everything.** It's correct and permanent for reliable traffic (state, events, chat, presence). It only carries "unreliable" reliably (`capabilities.unreliable = false`).
 - **WebTransport later, only for the pose/unreliable channel**, and only once WS's TCP head-of-line-blocking visibly hurts under packet loss. Drops in behind the same `NetworkEngine` interface — no game-code change. Not speculative work.
 - **Wire format is msgpackr binary.** Shared wire types live in `@hyperlinkvr/core` (`network_wire.ts`); each side keeps its own codec so core has no runtime dep.
@@ -31,7 +37,7 @@ Ordering: **A and B are independent** (do in either order / interleave). **C nee
 
 1. [x] **Node server [M].**
 2. [x] **`WSNetworkEngine` carrier [S].**
-3. [ ] **Service mode [S].** A `service_multiplayer` setting, a descriptor fetch, a `ServiceNetworkEngine` that picks the right carrier, and `"service"` added to the devtools mode. *(The dev `ws` mode is a temporary shortcut for this.)*
+3. [ ] **Service mode [S].** Default connects to the relay network via a discovery **entrypoint** that returns a colocated, non-busy endpoint + protocol/capabilities/auth (and possibly a session ticket); `ServiceNetworkEngine` resolves that and builds the carrier. `service_override` (last resort) connects directly to a given URL — a single node or another network — bypassing discovery. Adds `"service"` to the devtools mode. *(The dev `ws` mode is a temporary shortcut.)*
 4. [ ] **Extension VR host provides a network engine [S].** Presence then works in the extension too, not just play.
 5. [ ] **Identity rules [M, can wait until before public testing].** A signed identity handshake, so the node can reject guests and duplicate accounts. Replaces the currently-trusted `hello`. Pairs with the reconnection session-token work (Phase E).
 
@@ -90,8 +96,21 @@ Ordering: **A and B are independent** (do in either order / interleave). **C nee
 29. [ ] Presence polish: syncing facial expressions, an interpolation delay that adapts to conditions, binary encoding.
     - [ ] **Pose send optimisation.** Poses currently broadcast at 20Hz unconditionally. Gate on a movement threshold *plus* a late-join pose (or low-rate keepalive) — a pure delta check alone would leave idle avatars stuck at their default pose for newcomers, since the appearance handshake syncs appearance but not pose. Matters mainly for flat/idle players; in VR micro-movements make it near-moot.
 30. [ ] Robustness: **reconnects** (stable session token so a returning peer keeps its `PeerID` / `joined_at` and host election doesn't flap; server holds `PeerInfo` through a grace window), node rate limits and room caps, invites and instance selection (Discord join button), a peer list in the watch UI.
-31. [ ] **Relay network / federation.** Relay↔relay routing (server-to-server: WS or QUIC, not WebRTC) so relays can locate players across the mesh.
+31. [ ] **Relay network.** One shared global network (not a federation of independent relays): a discovery entrypoint places clients on a well-colocated, non-busy entry point, and internal routing (server-to-server: WS or QUIC, not WebRTC) lets any client reach anyone in the world. Distinct from the single node, which never cross-relays.
 32. [ ] **E2E encryption.** Encrypt private channels (chat/DMs) so relay operators can't read them; keep game data cleartext-to-relay (or authenticated-only) — decide per channel. Needed once relays aren't all first-party.
 33. [ ] **WebTransport carrier** for genuine unreliable pose delivery, if/when WS TCP head-of-line-blocking proves to hurt.
 
-> **Note:** in-world text chat / DMs were raised but are **not** currently a planned phase item — decide deliberately whether they belong (in-world chat is cheap on the existing relay; global DMs need identity + relay-mesh routing).
+---
+
+## Social track: text chat, DMs & friends
+
+A first-class goal (Rec Room parity), run as a **parallel track** to world-sync (B/C/D) — it depends on the relay + identity, not on the command bus or physics.
+
+- [ ] **In-world text chat [S/M].** A reliable `chat` channel + chat UI (log, input, sender identity). Depends only on presence/relay (done), so it can land early — and doubles as a real-payload test of the relay. Sender via `PeerID` now, stable identity once auth lands.
+- [ ] **Identity & profiles [M].** Stable user identity (usernames, IDs, profile) — extends Phase A#5 identity rules. Prerequisite for DM addressing and durable message authorship.
+- [ ] **Direct messages [L].** 1:1 (and group) messaging independent of sharing a world. Needs: identity (addressing), **message persistence / inbox** (history + offline delivery — a backend store, not just relay forwarding), and routing to a user wherever they are (the relay network, E#31).
+- [ ] **Friends / social graph & presence [M].** Friends list, online status, "join friend's instance" (ties into invites / instance selection, E#30).
+- [ ] **Safety controls [M, before public].** Client-side **block / mute** (local, needs no server or central authority) and rate limiting. No reporting pipeline — a decentralised network has no central operator to receive one — and no server-side scanning of E2E channels.
+- [ ] **E2E for private channels** — see E#32; encrypt chat/DM channels so relay operators can't read them.
+
+**Dependency summary:** in-world chat is near-term (relay only). DMs trail identity + persistence, and reaching anyone in the world trails the relay network (E#31).

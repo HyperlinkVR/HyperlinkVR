@@ -10,18 +10,30 @@ import { EngineHost, xr_store } from "@hyperlinkvr/vr-engine";
 
 import { DefaultContextProviders } from "../../contexts/DefaultContextProviders";
 import {NetworkEngineProvider, useAuthSession, useSetting} from "@hyperlinkvr/react";
-import {LocalNetworkEngine, WSNetworkEngine } from "@hyperlinkvr/platform-browser";
+import {LocalNetworkEngine, ServiceNetworkEngine, WSNetworkEngine } from "@hyperlinkvr/platform-browser";
 
 type LoadPhase = "idle" | "starting" | "started";
 
-// TODO: service mode, resolving the multiplayer service's carrier
 const DevNetworkEngineProvider = ({children}: {children: React.ReactNode}) => {
     const [mode] = useSetting("devtools_network_mode");
     const [latency_ms] = useSetting("devtools_network_latency");
     const [jitter_ms] = useSetting("devtools_network_jitter");
     const [drop_percent] = useSetting("devtools_network_drop");
+    const [service_kind] = useSetting("service_multiplayer_kind");
+    const [service_url] = useSetting("service_multiplayer");
 
-    const engine = useMemo(() => (mode === "local" ? new LocalNetworkEngine() : mode === "ws" ? new WSNetworkEngine({ url: "ws://localhost:8080" }) : null), [mode]);
+    const engine = useMemo(() => {
+        switch (mode) {
+            case "local":
+                return new LocalNetworkEngine();
+            case "ws":
+                return new WSNetworkEngine({ url: "ws://localhost:8080" });
+            case "service":
+                return new ServiceNetworkEngine({ kind: service_kind, url: service_url });
+            default:
+                return null;
+        }
+    }, [mode, service_kind, service_url]);
 
     useEffect(() => {
         // simulated conditions only apply to the local carrier, not a real socket
