@@ -1,10 +1,11 @@
 import {
+    useMessageEngine,
     useSearchStore,
     useSlugByURL,
-    useWorldMetadataWithFallback
+    useWorldMetadataWithFallback, useWorldSession
 } from "@hyperlinkvr/react";
 import { Container, Text } from "@react-three/uikit";
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 
 import { useCrossfadeOpacity } from "../animation/Crossfader";
 import { FocusableButton } from "../components/FocusableButton";
@@ -13,6 +14,7 @@ import { useNavState } from "../contexts/NavStateContext";
 import { get_clear_fg_color } from "../util/color";
 import type { ScreenProps } from "./index";
 import { AuthorWithVerification } from "../components/AuthorWithVerification";
+import { ActionMessage } from "@hyperlinkvr/types";
 
 
 export const WorldScreen = ({args}: ScreenProps) => {
@@ -32,6 +34,24 @@ export const WorldScreen = ({args}: ScreenProps) => {
     const is_slug_loading = useSearchStore((state) => state.is_slug_loading);
 
     const opacity = useCrossfadeOpacity();
+
+    const messenger = useMessageEngine();
+    const {id} = useWorldSession();
+
+    const go_to_world = useCallback(
+        () => {
+            if (!args.url) {
+                return;
+            }
+
+            messenger.send<ActionMessage>({
+                action: "HVR_NAVIGATE",
+                url: args.url,
+                tab: id,
+            });
+        },
+        [messenger, args.url, id]
+    )
 
     return (
         <Container width="100%" height="100%" flexDirection="column" alignItems="center" justifyContent="flex-start" gap={16} color="white">
@@ -90,7 +110,7 @@ export const WorldScreen = ({args}: ScreenProps) => {
 
 
             <Container marginTop="auto" width="100%" height="15%" flexDirection="row" alignItems="center" justifyContent="flex-start" gap={10}>
-                <FocusableButton width="100%" height="100%" backgroundColor={theme_color || 0xffffff} opacity={opacity}>
+                <FocusableButton width="100%" height="100%" backgroundColor={theme_color || 0xffffff} opacity={opacity} on_press={go_to_world}>
                     <Text fontWeight="bold" color={on_theme_color} fontSize={32}>Join world</Text>
                 </FocusableButton>
             </Container>
