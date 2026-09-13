@@ -98,13 +98,13 @@ export const Scoreboard = () => {
                 </thead>
 
                 <tbody className="divide-y divide-white/5">
-                    {sorted_scoreboard.map(([username, state], index) => {
-                        const is_me = !username;
+                    {sorted_scoreboard.map(([id, state], index) => {
+                        const is_me = state.username === my_username;
                         const relative = state.score - running_par;
 
                         return (
                             <tr
-                                key={username}
+                                key={id}
                                 className={
                                     (is_me ? "bg-emerald-400/10 " : "") +
                                     "transition-colors hover:bg-white/5"
@@ -117,7 +117,7 @@ export const Scoreboard = () => {
                                         </span>
                                         <div style={{backgroundColor: `#${state.color.toString(16).padStart(6, "0")}`}} className="h-3 w-3 rounded-full" />
                                         <span className="font-medium text-white">
-                                            {username || my_username}
+                                            {state.username}
                                         </span>
                                         {is_me && (
                                             <span className="rounded-full bg-emerald-400/20 px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-wide text-emerald-200">

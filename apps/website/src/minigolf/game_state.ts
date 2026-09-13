@@ -9,6 +9,7 @@ import { are_markers_loaded, get_start_markers } from "./markers";
 const h = hyperlinkvr.builders;
 
 interface PlayerState {
+    username: string;
     score: number;
     strokes_this_hole: number;
     finished_this_hole: boolean;
@@ -19,11 +20,13 @@ interface PlayerState {
 }
 
 const create_player_state = (
+    username: string,
     ball: hvr.builders.EnginePrefabObjectHandle,
     putter: hvr.builders.EnginePrefabObjectHandle,
     color: number
 ): PlayerState => {
     return {
+        username,
         score: 0,
         strokes_this_hole: 0,
         finished_this_hole: false,
@@ -124,6 +127,16 @@ export const compute_hole_pars = () => {
     notify_hole_info();
 };
 
+const get_my_username = async () => {
+    const me = await hyperlinkvr.auth.whoami();
+    if (!me.info) {
+        throw new Error("Failed to get my username");
+    }
+
+    const identity = me.info.identity;
+    return `${identity.name}@${identity.host}`;
+}
+
 export const add_player = async (player: hvr.players.Player, spawn_pos: [number, number, number] = [0, 0, 0]) => {
     const id = await player.get_id();
     if (players.has(id)) {
@@ -158,7 +171,7 @@ export const add_player = async (player: hvr.players.Player, spawn_pos: [number,
         })
         .create();
 
-    players.set(id, create_player_state(created_ball, created_putter, putter.color));
+    players.set(id, create_player_state(await player.get_username() || await get_my_username(), created_ball, created_putter, putter.color));
     notify_game_state();
 };
 
