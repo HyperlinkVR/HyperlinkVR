@@ -1,5 +1,6 @@
 import type { NetworkRoom, PeerID, PeerInfo } from "@hyperlinkvr/core";
 import { useAuthSession, useNetworkEngineOptional, useWorldSession } from "@hyperlinkvr/react";
+import {canonicalise_url} from "@hyperlinkvr/auth";
 import { createContext, useContext, useEffect, useState } from "react";
 
 import { useNavConsent } from "../engine/NavConsentGate";
@@ -19,9 +20,7 @@ const DEFAULT_INSTANCE = "main";
 
 const world_key = (url: string) => {
     try {
-        const parsed = new URL(url);
-        parsed.hash = "";
-        return parsed.href;
+        return canonicalise_url(url);
     } catch {
         return url;
     }

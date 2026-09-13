@@ -719,6 +719,9 @@ importers:
 
   packages/vr-engine:
     dependencies:
+      '@hyperlinkvr/auth':
+        specifier: workspace:*
+        version: link:../auth
       '@hyperlinkvr/core':
         specifier: workspace:*
         version: link:../core
