@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import { AssetRef } from "./assets";
+import { AssetRef, is_asset_ref } from "./assets";
 
 // walks the schema and replaces any asset urls with assetrefs
 
@@ -250,6 +250,24 @@ const walk = (schema: any, value: any): any => {
 
 export const adopt_assets = <T>(schema: AnySchema, value: T): T =>
     schema_contains_asset(schema) ? (walk(schema, value) as T) : value;
+
+// unadopts assets back to urls (should only be used for multiplayer replication, not to be used in the engine itself, which should always use AssetRefs for safety)
+export const serialise_assets = <T>(value: T): T => {
+    if (is_asset_ref(value)) {
+        return value.dangerously_get_source_url() as unknown as T;
+    }
+    if (Array.isArray(value)) {
+        return value.map((item) => serialise_assets(item)) as unknown as T;
+    }
+    if (value && typeof value === "object") {
+        const out: Record<string, unknown> = {};
+        for (const [key, child] of Object.entries(value)) {
+            out[key] = serialise_assets(child);
+        }
+        return out as T;
+    }
+    return value;
+};
 
 export const parse_and_adopt = <S extends AnySchema>(
     schema: S,

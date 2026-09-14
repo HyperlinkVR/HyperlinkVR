@@ -2,6 +2,8 @@ import type { SendTarget } from "@hyperlinkvr/core";
 import type { WebSDKActionMessage, WebSDKActionName } from "@hyperlinkvr/types";
 
 export const COMMAND_CHANNEL = "cmd";
+export const SNAPSHOT_REQUEST_CHANNEL = "snapshot-req";
+export const SNAPSHOT_CHANNEL = "snapshot";
 
 export type Origin = "page" | "network";
 
@@ -42,6 +44,11 @@ const COMMAND_SPECS: Partial<Record<WebSDKActionName, CommandSpec>> = {
 
     HVRSDK_INTERACTION_COMMAND: {},
     HVRSDK_PREFAB_COMMAND: {},
+
+    // lifecycle: the host's "world is ready" replicates so clients present during load clear
+    // their loading screen off the host's signal, not their own (dropped) page's. late joiners
+    // get world_ready in the join snapshot instead (see #13 / SnapshotSync).
+    HVRSDK_LOADING_FINISHED: {},
 };
 
 export const is_command = (action: WebSDKActionName): boolean => action in COMMAND_SPECS;

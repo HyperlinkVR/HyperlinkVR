@@ -47,7 +47,7 @@ import { ObjectMonitorRunner } from "../monitors/ObjectMonitorRunner";
 import { WorldMonitorRunner } from "../monitors/WorldMonitorRunner";
 import { clear_collider_collision_info, filter_contact_pair } from "../physics/collision_hooks";
 import { reset_authority } from "../net/authority";
-import { NetSessionProvider } from "../net/NetSession";
+import { NetSessionProvider, useNetSession } from "../net/NetSession";
 import { NetSessionOverlay } from "../net/NetSessionOverlay";
 import { PresenceSync } from "../net/PresenceSync";
 import { FlatAvatarHands, XRAvatarHand } from "../player/AvatarHand";
@@ -340,6 +340,11 @@ const WorldSessionListener = () => {
     const { on_action } = useWebSDKMessaging();
     const { support, doc_generation } = useWorldSession();
 
+    // a shared client's engine state is host-authoritative — its own page's document lifecycle
+    // must not reset the world (it would wipe the host's snapshot / replicated state).
+    const { mode, room } = useNetSession();
+    const suppress_page = mode === "shared" && !!room && room.self.id !== room.host();
+
     const set_world_ready = useWorldLoadingStateStore((store) => store.set_world_ready);
     const reset_for_new_document = useWorldLoadingStateStore((store) => store.reset_for_new_document);
     const clear_all_objects = useEngineObjectStore((store) => store.clear_all_objects);
@@ -363,7 +368,7 @@ const WorldSessionListener = () => {
     }, [on_action, set_world_ready]);
 
     useEffect(() => {
-        if (doc_generation === 0) {
+        if (doc_generation === 0 || suppress_page) {
             return;
         }
 
@@ -376,7 +381,7 @@ const WorldSessionListener = () => {
         reset_for_new_document();
         clear_collider_collision_info();
         reset_authority();
-    }, [doc_generation, support, clear_all_objects, reset_for_new_document, clear_hud, clear_vfx]);
+    }, [doc_generation, support, suppress_page, clear_all_objects, reset_for_new_document, clear_hud, clear_vfx]);
 
     return null;
 };

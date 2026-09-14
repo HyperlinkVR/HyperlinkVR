@@ -9,6 +9,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 
 import { add_report_sink } from "../engine/report_outbox";
 import { route_command } from "../net/command_bus";
+import { useNetSession } from "../net/NetSession";
 import { clear_collider_collision_info } from "../physics/collision_hooks";
 import { useEngineObjectStore } from "../stores/EngineObjectStore";
 import { useWorldLoadingStateStore } from "../stores/WorldLoadingStateStore";
@@ -45,6 +46,15 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
     const [connected, setConnected] = useState(false);
 
     const storage = useStorageEngines();
+
+    // a shared client's engine state is host-authoritative (driven by CommandSync's pulled
+    // snapshot + live commands), so its own page connecting must NOT clear that state. read live
+    // through a ref so the memoised RTC handler sees the current value.
+    const { mode, room } = useNetSession();
+    const is_shared_client_ref = useRef(false);
+    useEffect(() => {
+        is_shared_client_ref.current = mode === "shared" && !!room && room.self.id !== room.host();
+    }, [mode, room]);
 
     // the data channel callbacks are memoised with stable deps so a spy opening/closing
     // doesn't tear down the RTC connection; they read the live value through this ref
@@ -144,10 +154,13 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
 
                 // first load, page navigation, or the host hot-reloading in dev
                 // wipe the previous session's world state now, while the data channel is still torn down, so it happens before the game starts spawning again
-                // (fixes stuck state after hmr)
-                useEngineObjectStore.getState().clear_all_objects();
-                useWorldLoadingStateStore.getState().reset_for_new_document();
-                clear_collider_collision_info();
+                // (fixes stuck state after hmr). a shared client's state is host-owned, so skip it
+                // clearing here would blow away the snapshot CommandSync pulled from the host.
+                if (!is_shared_client_ref.current) {
+                    useEngineObjectStore.getState().clear_all_objects();
+                    useWorldLoadingStateStore.getState().reset_for_new_document();
+                    clear_collider_collision_info();
+                }
 
                 if (data_channel_ref.current) {
                     data_channel_ref.current.removeEventListener("message", handle_data_channel_message);
