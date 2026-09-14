@@ -370,22 +370,16 @@ importers:
       '@hyperlinkvr/hypergram-schemas':
         specifier: workspace:*
         version: link:../../packages/hypergram-schemas
-      '@ts-rest/core':
-        specifier: 'catalog:'
-        version: 3.53.0-rc.1(@types/node@20.11.5)
-      '@ts-rest/serverless':
-        specifier: 3.53.0-rc.1
-        version: 3.53.0-rc.1(@ts-rest/core@3.53.0-rc.1(@types/node@20.11.5))
-      hono:
-        specifier: ^4.13.7
-        version: 4.13.7
-      zod:
-        specifier: 'catalog:'
-        version: 4.4.3
+      '@hyperlinkvr/hypergram-server':
+        specifier: workspace:*
+        version: link:../../packages/hypergram-server
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
         version: 20.11.5
+      tsx:
+        specifier: ^4.19.2
+        version: 4.22.4
       typescript:
         specifier: 5.9.3
         version: 5.9.3
@@ -604,6 +598,37 @@ importers:
       zod:
         specifier: 'catalog:'
         version: 4.4.3
+
+  packages/hypergram-server:
+    dependencies:
+      '@hyperlinkvr/auth':
+        specifier: workspace:*
+        version: link:../auth
+      '@hyperlinkvr/hypergram-host':
+        specifier: workspace:*
+        version: link:../hypergram-host
+      '@hyperlinkvr/hypergram-schemas':
+        specifier: workspace:*
+        version: link:../hypergram-schemas
+      '@ts-rest/core':
+        specifier: 'catalog:'
+        version: 3.53.0-rc.1(@types/node@20.11.5)
+      '@ts-rest/serverless':
+        specifier: 3.53.0-rc.1
+        version: 3.53.0-rc.1(@ts-rest/core@3.53.0-rc.1(@types/node@20.11.5))
+      hono:
+        specifier: ^4.13.7
+        version: 4.13.7
+      zod:
+        specifier: 'catalog:'
+        version: 4.4.3
+    devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 20.11.5
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
 
   packages/pages:
     dependencies:

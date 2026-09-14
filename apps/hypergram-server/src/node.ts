@@ -1,18 +1,33 @@
+import { join } from "node:path";
+
 import { serve } from "@hono/node-server";
+import { create_app, create_signature_auth } from "@hyperlinkvr/hypergram-server";
 
-import { create_app } from "./app";
-import { seed } from "./seed";
-import { MemorySiteStore } from "./store";
-
+import { FileSystemSiteStore } from "./fs_store";
 
 const PORT = 8787;
+const BASE_URL = `http://localhost:${PORT}`
 
-const store = new MemorySiteStore();
-await seed(store);
 
-const app = create_app({ store });
+const DATA_DIR = join(process.cwd(), ".data");
+
+const store = new FileSystemSiteStore(DATA_DIR);
+
+const token_secret = process.env.TOKEN_SECRET ?? crypto.randomUUID();
+if (!process.env.TOKEN_SECRET) {
+    console.warn("TOKEN_SECRET not set. Using an ephemeral secret, so existing tokens are invalidated on restart");
+}
+
+const app = create_app({
+    store,
+    base_url: BASE_URL,
+    // only accepts game signature auth currently, no web auth adapter implemented
+    auth: create_signature_auth({ token_secret })
+});
 
 serve({ fetch: app.fetch, port: PORT }, (info) => {
     const origin = `http://localhost:${info.port}`;
-    console.log(`hypergram dev host on ${origin}`);
+    console.log(`hypergram host on ${origin}`);
+    console.log(`  data:   ${DATA_DIR}`);
+    console.log(`  recent: ${origin}/v1/feeds/recent.json`);
 });

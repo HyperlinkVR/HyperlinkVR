@@ -82,7 +82,6 @@ export const api_v1_write_contract = c.router(
             path: "/v1/posts",
             contentType: "multipart/form-data",
 
-            // signed body parts: metadata, image
             body: z.object({
                 metadata: UploadRequestMetadataSchema,
                 image: FileSchema
@@ -103,7 +102,6 @@ export const api_v1_write_contract = c.router(
             }),
             contentType: "application/json",
 
-            // signed body parts: the json body
             body: EditRequestSchema,
 
             responses: {
@@ -132,7 +130,6 @@ export const api_v1_write_contract = c.router(
             path: "/v1/users/me/picture",
             contentType: "multipart/form-data",
 
-            // signed body parts: image
             body: z.object({
                 image: FileSchema
             }),
@@ -177,7 +174,7 @@ export const api_v1_write_contract = c.router(
             500: FailedActionResponseSchema
         },
         baseHeaders: {
-            "Authorization": z.string()
+            "authorization": z.string()
         }
     }
 );
@@ -188,9 +185,9 @@ export const api_v1_auth_contract = c.router({
         path: "/v1/auth/game",
 
         headers: z.object({
-            "X-Hypergram-Identity": z.string(),
-            "X-Hypergram-Signature": z.string(),
-            "X-Hypergram-SignatureTimestamp": z.string()
+            "x-hypergram-identity": z.string(),
+            "x-hypergram-signature": z.string(),
+            "x-hypergram-signaturetimestamp": z.string()
         }),
 
         body: c.noBody(),
