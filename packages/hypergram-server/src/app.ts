@@ -1,8 +1,9 @@
-import { load_site_state, post_dir, publish_site, type SiteStore } from "@hyperlinkvr/hypergram-host";
+import { load_site_state, post_dir, post_path, publish_site, type SiteStore } from "@hyperlinkvr/hypergram-host";
 import { api_v1_auth_contract, api_v1_write_contract, type HostManifest, type Post } from "@hyperlinkvr/hypergram-schemas/v1";
 import { createFetchHandler } from "@ts-rest/serverless/fetch";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { ulid } from "ulidx";
 
 import type { AuthAdapter } from "./auth";
 
@@ -94,12 +95,14 @@ export const create_app = async ({ store, base_url, auth, name, serve_reads = tr
             if (!identity) return { status: 401, body: { success: false, error: "unauthenticated" } };
 
             const { metadata, image } = body;
-            const image_store_path = `${post_dir(metadata.id)}/image.${ext_for(image)}`;
+            const id = ulid(); // host assigns the id, so its clock also orders the ulid consistently with post.ts
+            const image_store_path = `${post_dir(id)}/image.${ext_for(image)}`;
             await store.put(image_store_path, new Uint8Array(await image.arrayBuffer()), image.type || "application/octet-stream");
 
             const state = await load_site_state(store);
+            const post_url = abs(post_path(id));
             const post: Post = {
-                id: metadata.id,
+                id,
                 author: identity,
                 ts: Date.now(), // host clock, not the uploader's
                 image_url: abs(image_store_path),
@@ -109,7 +112,7 @@ export const create_app = async ({ store, base_url, auth, name, serve_reads = tr
             state.posts.push(post);
             await publish_site(base_url, store, state, manifest);
 
-            return { status: 201, body: { success: true, status: "published" } };
+            return { status: 201, body: { success: true, status: "published", post_url } };
         },
 
         edit_post: async ({ params, body }, { request }) => {
@@ -124,7 +127,7 @@ export const create_app = async ({ store, base_url, auth, name, serve_reads = tr
             post.caption = body.caption ?? undefined; // null removes the caption
             await publish_site(base_url, store, state, manifest);
 
-            return { status: 200, body: { success: true, status: "published" } };
+            return { status: 200, body: { success: true, status: "published", post_url: abs(post_path(post.id)) } };
         },
 
         delete_post: async ({ params }, { request }) => {

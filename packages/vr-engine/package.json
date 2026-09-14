@@ -22,6 +22,7 @@
     },
     "dependencies": {
         "@hyperlinkvr/core": "workspace:*",
+        "@hyperlinkvr/hypergram-schemas": "workspace:*",
         "@hyperlinkvr/react": "workspace:*",
         "@hyperlinkvr/types": "workspace:*",
         "@hyperlinkvr/ui-dom": "workspace:*",
@@ -35,6 +36,7 @@
         "@react-three/uikit": "^1.0.74",
         "@react-three/uikit-default": "^1.0.74",
         "@react-three/xr": "catalog:",
+        "@ts-rest/core": "catalog:",
         "bippy": "^0.5.43",
         "quarks.r3f": "^0.17.1",
         "react": "catalog:",

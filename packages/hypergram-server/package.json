@@ -17,6 +17,7 @@
         "@ts-rest/core": "catalog:",
         "@ts-rest/serverless": "3.53.0-rc.1",
         "hono": "^4.13.7",
+        "ulidx": "^2.4.1",
         "zod": "catalog:"
     },
     "devDependencies": {
