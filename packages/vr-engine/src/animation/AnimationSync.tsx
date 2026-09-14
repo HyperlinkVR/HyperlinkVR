@@ -50,7 +50,7 @@ export const AnimationSync = () => {
                 return;
             }
 
-            const id = crypto.randomUUID();
+            const id = message.id ?? crypto.randomUUID();
             const created = {id, ...animation};
             console.log("(+) Creating animation", created);
 

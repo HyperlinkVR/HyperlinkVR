@@ -19,6 +19,8 @@ export const CommandSync = () => {
             return;
         }
 
+        console.debug("[cmd] transport bound", { self: room.self.id, host: room.host(), is_host: room.self.id === room.host() });
+
         set_command_transport({
             is_host: () => room.self.id === room.host(),
             send: (target, payload) => room.send(target, COMMAND_CHANNEL, payload, "reliable"),
@@ -26,6 +28,15 @@ export const CommandSync = () => {
 
         const unlisten = room.on_message((message) => {
             if (message.channel !== COMMAND_CHANNEL) {
+                return;
+            }
+
+            // AUTHORITY: only the host authors commands. `from` is stamped server-side and can't
+            // be forged, so this drops anything from a non-host peer — a client can't inject state
+            // into us, and the host applies nothing inbound (it authors via its page, sends out).
+            // legitimate client influence is reports the host's page validates (#14), never this.
+            if (message.from !== room.host()) {
+                console.warn("[cmd] dropped non-host command", { from: message.from, host: room.host() });
                 return;
             }
 

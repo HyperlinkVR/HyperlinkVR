@@ -27,7 +27,7 @@ export const HUDSync = () => {
                 return;
             }
 
-            const id = crypto.randomUUID();
+            const id = message.id ?? crypto.randomUUID();
             const created = CreatedHUDElementSchema.parse({id, ...data});
             console.log("(+) Creating HUD element", created);
             add_element(created);

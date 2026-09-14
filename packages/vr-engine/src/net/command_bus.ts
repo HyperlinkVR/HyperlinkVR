@@ -15,8 +15,33 @@ const COMMAND_SPECS: Partial<Record<WebSDKActionName, CommandSpec>> = {
     },
     HVRSDK_MODIFY_ENGINE_OBJECT: {},
     HVRSDK_DESTROY_ENGINE_OBJECT: {},
-    // TODO: HUD (create/update/destroy/reset), VFX, animation, seek, world env,
-    // world monitors + triggers. each create-style one needs a mint like above.
+
+    HVRSDK_CREATE_HUD_ELEMENT: {
+        mint: (m: any) => { m.id ??= crypto.randomUUID(); },
+    },
+    HVRSDK_UPDATE_HUD_ELEMENT: {},
+    HVRSDK_DESTROY_HUD_ELEMENT: {},
+    HVRSDK_RESET_HUD: {},
+
+    HVRSDK_SET_VFX: {},
+    HVRSDK_VFX_COMMAND: {},
+
+    // TODO will drift by one latency hop until session clock sync (#9)
+    HVRSDK_CREATE_ANIMATION: {
+        mint: (m: any) => { m.id ??= crypto.randomUUID(); },
+    },
+    HVRSDK_DESTROY_ANIMATION: {},
+    HVRSDK_ANIMATION_COMMAND: {},
+
+    // TODO physics/timing is a later pass (#9 / phase D)
+    HVRSDK_SEEK_ENGINE_OBJECT: {},
+    HVRSDK_STOP_SEEK_ENGINE_OBJECT: {},
+
+    HVRSDK_UPDATE_WORLD_ENV: {},
+    HVRSDK_RESET_WORLD_ENV: {},
+
+    HVRSDK_INTERACTION_COMMAND: {},
+    HVRSDK_PREFAB_COMMAND: {},
 };
 
 export const is_command = (action: WebSDKActionName): boolean => action in COMMAND_SPECS;
@@ -42,7 +67,9 @@ export const route_command = (message: WebSDKActionMessage, origin: Origin): boo
         return true;
     }
 
-    if (transport.is_host()) {
+    const host = transport.is_host();
+
+    if (host) {
         // host authority
         if (origin === "page") {
             COMMAND_SPECS[action]?.mint?.(message);
@@ -61,9 +88,7 @@ export const route_command = (message: WebSDKActionMessage, origin: Origin): boo
         return true;
     }
 
-    // page-authored on a client: the client has no authority to mint or apply. hand it to
-    // the host and wait for the echo. the id the page sees must come from that echo.
-    // TODO: correlate the page's reply (it currently blocks on a minted id + channels).
-    transport.send("host", JSON.stringify(message));
+    // dont forward things the client request
+    // TODO: maybe a way to have client computed things but with signing/permission from the host to prevent cheating, or double backed. not sure how the simulation transfer logic will work
     return false;
 };

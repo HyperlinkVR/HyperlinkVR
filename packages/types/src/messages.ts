@@ -166,6 +166,8 @@ interface WebSDKPrefabCommandAction extends BaseWebSDKActionMessage {
 interface WebSDKCreateAnimationAction extends BaseWebSDKActionMessage {
     action: "HVRSDK_CREATE_ANIMATION";
     animation: Animation;
+    // host-minted id, stamped by the command bus before replication; absent for a solo page action
+    id?: string;
 }
 
 interface WebSDKDestroyAnimationAction extends BaseWebSDKActionMessage {
@@ -268,6 +270,8 @@ interface WebSDKWorldRemoveTriggerAction extends BaseWebSDKActionMessage {
 interface WebSDKCreateHUDElementAction extends BaseWebSDKActionMessage {
     action: "HVRSDK_CREATE_HUD_ELEMENT";
     element: HUDDispatch;
+    // host-minted id, stamped by the command bus before replication; absent for a solo page action
+    id?: string;
 }
 
 interface WebSDKDestroyHUDElementAction extends BaseWebSDKActionMessage {
