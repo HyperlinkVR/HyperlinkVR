@@ -88,17 +88,6 @@ const SpectatorUI = () => {
         setPhase("started");
     }, []);
 
-    if (is_supported === null) {
-        return (
-            <div className="bg-black/80 backdrop-blur-md absolute inset-0 flex flex-col items-center justify-center z-50 text-white gap-8">
-                <h1 className="font-title text-3xl">HyperlinkVR</h1>
-                <p className="text-lg">
-                    WebXR is not supported in this browser.
-                </p>
-            </div>
-        );
-    }
-
     const button_text = is_supported ? (
         phase === "starting" ? (
             <LoadingSpinner className="mx-auto" />
@@ -119,19 +108,20 @@ const SpectatorUI = () => {
                         <h1 className="font-title text-3xl">HyperlinkVR</h1>
 
                         <div className="flex flex-col gap-4 w-64 items-center justify-center">
-                            {on_ready ? (
-                                // TODO: we really need a button component
-                                <button
-                                    className="w-full px-4 py-2 bg-blue-600 rounded-lg hover:not-disabled:bg-blue-700 transition text-xl font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-600"
-                                    onClick={enter_vr}
-                                    disabled={
-                                        !is_supported || phase === "starting"
-                                    }>
-                                    {button_text}
-                                </button>
-                            ) : (
-                                <LoadingSpinner className="my-2" />
-                            )}
+                            {is_supported === null ? null : (
+                                on_ready ? (
+                                    // TODO: we really need a button component
+                                    <button
+                                        className="w-full px-4 py-2 bg-blue-600 rounded-lg hover:not-disabled:bg-blue-700 transition text-xl font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-600"
+                                        onClick={enter_vr}
+                                        disabled={
+                                            !is_supported || phase === "starting"
+                                        }>
+                                        {button_text}
+                                    </button>
+                                ) : (
+                                    <LoadingSpinner className="my-2" />
+                                ))}
 
                             <button
                                 className="w-full px-4 py-2 bg-blue-600 rounded-lg hover:not-disabled:bg-blue-700 transition text-xl font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-600"
