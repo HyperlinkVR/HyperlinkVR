@@ -55,7 +55,7 @@ export const EngineObjectSync = () => {
                 return;
             }
 
-            const id = crypto.randomUUID();
+            const id = message.id ?? crypto.randomUUID();
             const created_object = { id, ...data };
             console.log("(+) Creating engine object", created_object);
 

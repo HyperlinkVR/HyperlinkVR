@@ -76,6 +76,7 @@ import { FlatLoadingScreen, VRLoadingScreen } from "./LoadingScreen";
 import { FlatNavConsentGate, useNavConsent, VRNavConsentGate } from "./NavConsentGate";
 
 import "../loader-config";
+import { CommandSync } from "../net/CommandSync";
 
 export const xr_store = createXRStore({
     controller: XRAvatarHand,
@@ -496,6 +497,7 @@ const EngineHostInternal = memo(
                             }}>
                                 <DiscordPresenceSync />
                                 <WorldSessionListener />
+                                <CommandSync />
 
                                 <EngineObjectSync />
                                 <AnimationSync />

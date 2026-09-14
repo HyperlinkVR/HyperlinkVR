@@ -115,6 +115,9 @@ interface WebSDKRTCAnswerAction extends BaseWebSDKActionMessage {
 interface WebSDKCreateEngineObjectAction extends BaseWebSDKActionMessage {
     action: "HVRSDK_CREATE_ENGINE_OBJECT";
     object: EngineObjectDispatch;
+    // host-minted id, stamped by the command bus before replication so every engine agrees.
+    // absent for a page action in a solo world, where the handler mints its own.
+    id?: string;
 }
 
 interface WebSDKDestroyEngineObjectAction extends BaseWebSDKActionMessage {

@@ -1,19 +1,24 @@
 import type { NetworkRoom, PeerID, PeerInfo } from "@hyperlinkvr/core";
-import { useAuthSession, useNetworkEngineOptional, useWorldSession } from "@hyperlinkvr/react";
+import { useAuthSession, useNetworkEngineOptional, useWorldMetadata, useWorldSession } from "@hyperlinkvr/react";
 import {canonicalise_url} from "@hyperlinkvr/auth";
 import { createContext, useContext, useEffect, useState } from "react";
 
 import { useNavConsent } from "../engine/NavConsentGate";
+import { derive_mode, type MultiplayerMode } from "./mode";
 
-interface NetSession {
+interface RoomState {
     room: NetworkRoom | null;
     peers: PeerInfo[];
     host: PeerID | null;
 }
 
-const NO_SESSION: NetSession = { room: null, peers: [], host: null };
+interface NetSession extends RoomState {
+    mode: MultiplayerMode;
+}
 
-const NetSessionContext = createContext<NetSession>(NO_SESSION);
+const NO_SESSION: RoomState = { room: null, peers: [], host: null };
+
+const NetSessionContext = createContext<NetSession>({ ...NO_SESSION, mode: "solo" });
 
 // TODO: instance selection (invites etc), everyone on a world shares one for now
 const DEFAULT_INSTANCE = "main";
@@ -37,10 +42,14 @@ export const NetSessionProvider = ({ children }: { children: React.ReactNode }) 
     // don't announce the player into a room until they've consented to being in the world
     const world = url && !blocked ? world_key(url) : null;
 
-    const [session, setSession] = useState<NetSession>(NO_SESSION);
+    // solo vs shared is derived from max_players
+    const mode = derive_mode(useWorldMetadata(url));
+    const shared = mode === "shared";
+
+    const [session, setSession] = useState<RoomState>(NO_SESSION);
 
     useEffect(() => {
-        if (!network || !world) {
+        if (!network || !world || !shared) {
             return;
         }
 
@@ -79,9 +88,9 @@ export const NetSessionProvider = ({ children }: { children: React.ReactNode }) 
             room?.leave();
             setSession(NO_SESSION);
         };
-    }, [network, world, username, uuid]);
+    }, [network, world, shared, username, uuid]);
 
-    return <NetSessionContext.Provider value={session}>{children}</NetSessionContext.Provider>;
+    return <NetSessionContext.Provider value={{ ...session, mode }}>{children}</NetSessionContext.Provider>;
 };
 
 export const useNetSession = () => useContext(NetSessionContext);

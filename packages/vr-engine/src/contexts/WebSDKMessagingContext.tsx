@@ -8,6 +8,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 
 
 import { add_report_sink } from "../engine/report_outbox";
+import { route_command } from "../net/command_bus";
 import { clear_collider_collision_info } from "../physics/collision_hooks";
 import { useEngineObjectStore } from "../stores/EngineObjectStore";
 import { useWorldLoadingStateStore } from "../stores/WorldLoadingStateStore";
@@ -21,6 +22,9 @@ interface WebSDKMessagingContextType {
 
     on_action: <M extends WebSDKActionName>(action_filter: M, callback: (message: NamedAction<M>, reply: (message: NamedReply<M> | WebSDKErrorReply<M>) => void) => void) => () => void;
     emit_event: (message: WebSDKEventMessage) => void;
+
+    // apply a command replicated from the host (called by CommandSync)
+    apply_remote_command: (message: any) => void;
 
     connected: boolean;
 }
@@ -48,7 +52,7 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
     useEffect(() => { spy_ref.current = spy_active; }, [spy_active]);
 
     const action_map_ref = useRef<Map<WebSDKActionName, Set<(message: NamedAction<any>, reply: (message: NamedReply<any> | WebSDKErrorReply) => void) => void>>>(new Map());
-    const pending_actions_ref = useRef<Map<WebSDKActionName, any[]>>(new Map());
+    const pending_actions_ref = useRef<Map<WebSDKActionName, { data: any; reply: (message: any) => void }[]>>(new Map());
 
     const sdk_peer = () => sdk_origin_ref.current ? { sdk_origin: sdk_origin_ref.current } : "vr-host";
 
@@ -66,6 +70,19 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
 
         data_channel_ref.current?.send(JSON.stringify(message));
     }, [messenger]);
+
+    const dispatch_action = useCallback((data: any, reply: (message: any) => void) => {
+        const handlers = action_map_ref.current.get(data.action);
+        if (handlers && handlers.size > 0) {
+            handlers.forEach((handler) => handler(data, reply));
+            return;
+        }
+
+        console.warn("No handler registered yet for action, buffering:", data.action);
+        const pending = pending_actions_ref.current.get(data.action) || [];
+        pending.push({ data, reply });
+        pending_actions_ref.current.set(data.action, pending);
+    }, []);
 
     const handle_data_channel_message = useCallback((event: MessageEvent) => {
         const data = JSON.parse(event.data) as any;
@@ -85,21 +102,21 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
             return;
         }
 
-        const handlers = action_map_ref.current.get(data.action);
-        if (handlers && handlers.size > 0) {
-            handlers.forEach((handler) => {
-                handler(data, (reply_message: NamedReply<any> | WebSDKErrorReply) => {
-                    send_over_data_channel({ ...reply_message, correlation_id: data.correlation_id });
-                });
-            });
+        if (!route_command(data, "page")) {
             return;
         }
 
-        console.warn("No handler registered yet for action, buffering:", data.action);
-        const pending = pending_actions_ref.current.get(data.action) || [];
-        pending.push(data);
-        pending_actions_ref.current.set(data.action, pending);
-    }, [messenger, send_over_data_channel]);
+        dispatch_action(data, (reply_message: NamedReply<any> | WebSDKErrorReply) => {
+            send_over_data_channel({ ...reply_message, correlation_id: data.correlation_id });
+        });
+    }, [messenger, send_over_data_channel, dispatch_action]);
+
+    const apply_remote_command = useCallback((data: any) => {
+        if (!("action" in data)) {
+            return;
+        }
+        dispatch_action(data, () => {});
+    }, [dispatch_action]);
 
     // TODO: this code kinda sucks, same for how the background handles it. but it works :)
 
@@ -257,13 +274,13 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
             action_map_ref.current.set(action_filter, handlers);
 
             // drain any pending actions for this filter (as it is now ready to recieve!)
+            // each carries the reply captured when it was buffered (channel reply for a page
+            // action, no-op for a replicated command).
             const pending = pending_actions_ref.current.get(action_filter);
             if (pending && pending.length > 0) {
                 pending_actions_ref.current.delete(action_filter);
-                for (const data of pending) {
-                    handler(data, (reply_message: NamedReply<any> | WebSDKErrorReply) => {
-                        send_over_data_channel({ ...reply_message, correlation_id: data.correlation_id });
-                    });
+                for (const { data, reply } of pending) {
+                    handler(data, reply);
                 }
             }
 
@@ -311,7 +328,7 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
     }, [connected, emit_event]);
 
     return (
-        <WebSDKMessagingContext.Provider value={{ wait_for_action, on_action, emit_event, connected }}>
+        <WebSDKMessagingContext.Provider value={{ wait_for_action, on_action, emit_event, apply_remote_command, connected }}>
             {children}
         </WebSDKMessagingContext.Provider>
     );
