@@ -34,7 +34,7 @@
 
 6. [x] **Players identified by peer ID [M].** `Player.id`, `target_player` in messages, the spawn event carries the ID, the engine's player registry is keyed by ID, and minigolf is re-keyed (but don't forget singleplayer and reconnects!). Perhaps could use a stable ID, either a UUID stored in their static record, or a hash of the pub key (but keep in mind it may change if a new keypair is generated) although why not just use the username as the peer ID since it is meant to be stable currently. Keeping in mind the identity operator could change any of those fields arbitrarily
 7. [ ] **Per-world multiplayer mode [S].** `solo` / `presence` / `shared` in the meta tag or world metadata, with `presence` as the default. Solo worlds don't join a room.
-8. [ ] **Command bus [L].** Every SDK action handler (objects, HUD, VFX, world environment, animations, seeks, monitors, triggers) stops caring whether a command came from the page or the network. It accepts IDs minted by the host, and keeps a compacted log of commands for late joiners. *(The large foundational item — shared mode and physics depend on it.)*
+8. [ ] **Command bus [L].** Every SDK action handler (objects, HUD, VFX, world environment, animations, seeks, monitors, triggers) stops caring whether a command came from the page or the network. It accepts IDs minted by the host, and exposes a hook to broadcast each command it applies (the live delta channel, see #11); no command log or compaction here, since late joiners catch up from a state snapshot rather than a replay (see #13). *(The large foundational item — shared mode and physics depend on it.)*
 9. [ ] **Session clock sync [S].** So tweens and animations can start at the same moment everywhere.
 
 ---
@@ -44,7 +44,7 @@
 10. [ ] **Roles [S].** The engine knows if it's host. In shared worlds, clients hand world-level authority (world monitors) to the host.
 11. [ ] **Command replication [M].** The host broadcasts every command it applies on a reliable channel, and clients apply them.
 12. [ ] **Client page lifecycle [S].** In shared worlds, client pages never get `READY`, and the host's "loading finished" is replicated to everyone.
-13. [ ] **Late join [M].** A newcomer gets the command log replayed, and holds a loading screen until it's caught up (might be able to look at current state rather than replay all commands, or at the very least do it differentially)
+13. [ ] **Late join (snapshot, not replay) [M].** A newcomer gets a serialized snapshot of current world state — each subsystem (objects, HUD, VFX, active tweens/seeks with their start-time, monitors) exposes `serialize()`/`hydrate()` — and holds a loading screen until it's hydrated. Not a command-log replay: replaying timing-dependent commands (a tween that started 10s ago) is the fragility to avoid — a snapshot captures `tween X 40% through, started at session-time T` instead. The stores are already serializable and ID-keyed (`EngineObjectStore.objects`), and this same serialization feeds `net.state` / host migration (#28).
 14. [ ] **Report routing [M].** Client engines send reports to the host's page with `player` attached. Player-targeted actions (teleport, send to world, player monitors) go to that player's engine.
 15. [ ] **Per-player HUD and effects [S].** Using the scope the HUD already has.
 16. [ ] **SDK [S].** `e.player`, `players.on_spawn` fires for remote players on the host, `players.list()` and `on_leave`, and `.create()` throws on clients.
