@@ -10,6 +10,7 @@ import { read_client } from "../api_client";
 import { Header } from "../components/Header";
 import { Post } from "../components/Post";
 import { LoadingSpinner } from "@hyperlinkvr/ui-dom";
+import { Layout } from "../components/Layout";
 
 
 const App = () => {
@@ -38,15 +39,13 @@ const App = () => {
 
     
     return (
-        <main className="p-5 bg-gray-800 min-h-screen text-white flex flex-col items-stretch justify-start gap-5">
-            <Header />
-
+        <Layout className="items-stretch justify-start gap-5">
             <div className="w-4/5 mx-auto flex flex-col items-stretch justify-center flex-1">
                 {error && <p className="text-red-500">{error}</p>}
                 {post && <Post post={post} />}
                 {!post && !error && <LoadingSpinner className="mx-auto" />}
             </div>
-        </main>
+        </Layout>
     );
 }
 

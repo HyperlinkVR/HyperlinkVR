@@ -78,6 +78,10 @@ export const create_app = async ({ store, base_url, auth, name, serve_reads = tr
 
     const manifest: HostManifest = {
         name,
+        bases: {
+            write: base_url,
+            auth: base_url
+        },
         auth: { login: true, web: typeof auth.login_web === "function" }
     };
 

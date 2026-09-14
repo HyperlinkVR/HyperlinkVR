@@ -1,38 +1,28 @@
 import { LoadingSpinner } from "@hyperlinkvr/ui-dom";
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 
 
 
-import { auth_client, read_client } from "../api_client";
+import { auth_client } from "../api_client";
+import { useHostManifest } from "../contexts/HostManifestContext";
 
 
 export const Header = () => {
     const logged_in = localStorage.getItem("token") !== null;
 
-    const [auth_loading, setAuthLoading] = useState(true);
-    const [login_supported, setLoginSupported] = useState(false);
+    const {manifest} = useHostManifest();
+    const [auth_loading, setAuthLoading] = useState(false);
 
-    useEffect(() => {
-        const client = read_client();
-
-        client.get_manifest().then(res => {
-            if (res.status !== 200) {
-                console.error("Failed to fetch manifest");
-                setLoginSupported(false);
-                setAuthLoading(false);
-                return;
-            }
-
-            const auth = res.body.auth;
-            setLoginSupported(auth && auth.login && auth.web);
-            setAuthLoading(false);
-        });
-    }, []);
+    const login_supported = useMemo(() => manifest && manifest.auth && manifest.auth.login && manifest.auth.web, [manifest]);
 
     const handle_login = async () => {
+        if (!manifest || !manifest.bases || !manifest.bases.auth || !login_supported) {
+            return;
+        }
+
         setAuthLoading(true);
 
-        const client = auth_client();
+        const client = auth_client(manifest.bases.auth);
 
         const redirect_uri = new URL("/callback", window.location.origin);
         redirect_uri.searchParams.set("redirect", window.location.pathname + window.location.search);
@@ -58,7 +48,7 @@ export const Header = () => {
         <header className="fixed top-0 left-0 py-4 pl-5 pr-10 flex items-center justify-between w-full">
             <a href="/">
                 <h1 className="text-3xl font-title">
-                    Hypergram
+                    {manifest!.name}
                 </h1>
             </a>
 

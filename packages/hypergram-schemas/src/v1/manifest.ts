@@ -2,6 +2,10 @@ import { z } from "zod";
 
 export const HostManifestSchema = z.object({
     name: z.string().optional(),
+    bases: z.object({
+        write: z.httpUrl().optional(),
+        auth: z.httpUrl().optional()
+    }).optional(),
     auth: z.object({
         login: z.boolean(),
         web: z.boolean()
