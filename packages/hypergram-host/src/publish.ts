@@ -1,5 +1,7 @@
 import { PostSchema, ProfilePictureSchema } from "@hyperlinkvr/hypergram-schemas/v1";
 
+import type { HostManifest } from "@hyperlinkvr/hypergram-schemas/v1";
+
 import { generate_site, type SiteState } from "./generate";
 import { get_json, type SiteStore } from "./store";
 
@@ -17,8 +19,8 @@ export const load_site_state = async (store: SiteStore): Promise<SiteState> => {
 
 // writes every generated json file and deletes json files that are no longer generated (e.g. a deleted post, a page lost to compaction)
 // non-json files (images) are left alone, the caller manages those
-export const publish_site = async (base_url: string, store: SiteStore, state: SiteState) => {
-    const files = generate_site(base_url, state);
+export const publish_site = async (base_url: string, store: SiteStore, state: SiteState, manifest: HostManifest) => {
+    const files = generate_site(base_url, state, manifest);
     const existing = (await store.list("v1/")).filter((path) => path.endsWith(".json"));
 
     for (const [path, body] of files) {

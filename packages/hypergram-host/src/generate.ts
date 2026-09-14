@@ -3,6 +3,7 @@ import {
     api_v1_read_contract,
     is_older_than,
     POSTS_PER_PAGE,
+    type HostManifest,
     type Post,
     type PostPage,
     type ProfilePicture
@@ -14,6 +15,7 @@ const store_path = (path: string) => path.replace(/^\//, "");
 export const post_path = (id: string) => store_path(insertParamsIntoPath({ path: api_v1_read_contract.get_post.path, params: { id } }));
 export const post_dir = (id: string) => post_path(id).replace(/\/[^/]+$/, "");
 
+const manifest_path = store_path(api_v1_read_contract.get_manifest.path);
 const recent_feed_path = store_path(api_v1_read_contract.get_recent_feed.path);
 const user_feed_path = (identity: string) => store_path(insertParamsIntoPath({ path: api_v1_read_contract.get_user_feed.path, params: { identity } }));
 const profile_picture_path = (identity: string) => store_path(insertParamsIntoPath({ path: api_v1_read_contract.get_profile_picture.path, params: { identity } }));
@@ -53,9 +55,11 @@ export interface SiteState {
     pictures: ProfilePicture[];
 }
 
-// every json file the host should be serving, keyed by store path
-export const generate_site = (base_url: string, { posts, pictures }: SiteState) => {
+
+export const generate_site = (base_url: string, { posts, pictures }: SiteState, manifest: HostManifest) => {
     const files = new Map<string, unknown>();
+
+    files.set(manifest_path, manifest);
 
     for (const [path, page] of generate_feed(base_url, recent_feed_path, posts)) {
         files.set(path, page);

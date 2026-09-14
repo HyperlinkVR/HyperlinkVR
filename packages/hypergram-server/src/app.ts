@@ -1,5 +1,5 @@
 import { load_site_state, post_dir, publish_site, type SiteStore } from "@hyperlinkvr/hypergram-host";
-import { api_v1_auth_contract, api_v1_write_contract, type Post } from "@hyperlinkvr/hypergram-schemas/v1";
+import { api_v1_auth_contract, api_v1_write_contract, type HostManifest, type Post } from "@hyperlinkvr/hypergram-schemas/v1";
 import { createFetchHandler } from "@ts-rest/serverless/fetch";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
@@ -10,6 +10,8 @@ export interface AppDeps {
     store: SiteStore;
     base_url: string;
     auth: AuthAdapter;
+    // shown in the manifest so clients can label the host
+    name?: string;
     // also serve the static read files straight from the store
     // leave on for an all-in-one / dev host, turn off when reads are served by a cdn or static host (e.g. github pages) and this server only handles writes + auth.
     serve_reads?: boolean;
@@ -71,8 +73,15 @@ const to_fetch_request = async (c: any): Promise<Request> => {
     return new Request(c.req.url, { method, headers, body });
 };
 
-export const create_app = ({ store, base_url, auth, serve_reads = true }: AppDeps) => {
+export const create_app = async ({ store, base_url, auth, name, serve_reads = true }: AppDeps) => {
     const abs = (store_path: string) => new URL(store_path, base_url).href;
+
+    const manifest: HostManifest = {
+        name,
+        auth: { login: true, web: typeof auth.login_web === "function" }
+    };
+
+    await publish_site(base_url, store, await load_site_state(store), manifest);
 
     // a write loads the published files, mutates, and republishes the whole site (see hypergram-host).
     const handle_write = createFetchHandler(api_v1_write_contract, {
@@ -94,7 +103,7 @@ export const create_app = ({ store, base_url, auth, serve_reads = true }: AppDep
                 caption: metadata.caption
             };
             state.posts.push(post);
-            await publish_site(base_url, store, state);
+            await publish_site(base_url, store, state, manifest);
 
             return { status: 201, body: { success: true, status: "published" } };
         },
@@ -109,7 +118,7 @@ export const create_app = ({ store, base_url, auth, serve_reads = true }: AppDep
             if (post.author !== identity) return { status: 403, body: { success: false, error: "not your post" } };
 
             post.caption = body.caption ?? undefined; // null removes the caption
-            await publish_site(base_url, store, state);
+            await publish_site(base_url, store, state, manifest);
 
             return { status: 200, body: { success: true, status: "published" } };
         },
@@ -126,7 +135,7 @@ export const create_app = ({ store, base_url, auth, serve_reads = true }: AppDep
             for (const path of await store.list(`${post_dir(params.id)}/`)) {
                 if (!path.endsWith(".json")) await store.delete(path); // publish_site only prunes json, so drop the image here
             }
-            await publish_site(base_url, store, { ...state, posts: state.posts.filter((p) => p.id !== params.id) });
+            await publish_site(base_url, store, { ...state, posts: state.posts.filter((p) => p.id !== params.id) }, manifest);
 
             return { status: 200, body: { success: true, status: "published" } };
         },

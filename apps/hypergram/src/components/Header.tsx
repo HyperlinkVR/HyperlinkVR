@@ -1,11 +1,33 @@
-import { auth_client } from "../api_client";
-import { useState } from "react";
 import { LoadingSpinner } from "@hyperlinkvr/ui-dom";
+import { useEffect, useState } from "react";
+
+
+
+import { auth_client, read_client } from "../api_client";
+
 
 export const Header = () => {
     const logged_in = localStorage.getItem("token") !== null;
 
-    const [auth_loading, setAuthLoading] = useState(false);
+    const [auth_loading, setAuthLoading] = useState(true);
+    const [login_supported, setLoginSupported] = useState(false);
+
+    useEffect(() => {
+        const client = read_client();
+
+        client.get_manifest().then(res => {
+            if (res.status !== 200) {
+                console.error("Failed to fetch manifest");
+                setLoginSupported(false);
+                setAuthLoading(false);
+                return;
+            }
+
+            const auth = res.body.auth;
+            setLoginSupported(auth && auth.login && auth.web);
+            setAuthLoading(false);
+        });
+    }, []);
 
     const handle_login = async () => {
         setAuthLoading(true);
@@ -41,7 +63,7 @@ export const Header = () => {
             </a>
 
             {auth_loading && <LoadingSpinner />}
-            {!auth_loading && (logged_in ? (
+            {!auth_loading && login_supported && (logged_in ? (
                 <button className="text-blue-200 hover:underline cursor-pointer">
                     Logout from {localStorage.getItem("username")}
                 </button>

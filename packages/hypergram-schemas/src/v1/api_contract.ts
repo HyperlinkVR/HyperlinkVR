@@ -6,6 +6,7 @@ import { z } from "zod";
 import { EditRequestSchema, FailedActionResponseSchema, SuccessfulActionResponseSchema, UploadRequestMetadataSchema } from "./actions";
 import { IdentitySchema, PostIDSchema } from "./common";
 import { PostPageSchema } from "./feeds";
+import { HostManifestSchema } from "./manifest";
 import { PostSchema } from "./post";
 import { ProfilePictureSchema } from "./profile_picture";
 
@@ -21,6 +22,17 @@ export const FileSchema = z.custom<File | Blob>((val) => typeof val !== "string"
 // a 404 from a static host won't have a json body, so reads only declare 200
 
 export const api_v1_read_contract = c.router({
+    get_manifest: {
+        method: "GET",
+        path: "/v1/manifest.json",
+
+        responses: {
+            200: HostManifestSchema
+        },
+
+        summary: "Get this host's manifest (name, which auth methods it accepts)"
+    },
+
     get_recent_feed: {
         method: "GET",
         path: "/v1/feeds/recent.json",
