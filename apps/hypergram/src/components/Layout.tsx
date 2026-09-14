@@ -1,10 +1,16 @@
-import { Header } from "./Header";
-import React from "react";
-import { HostManifestProvider, useHostManifest } from "../contexts/HostManifestContext";
 import { LoadingSpinner } from "@hyperlinkvr/ui-dom";
+import React, { useEffect } from "react";
+
+import { HostManifestProvider, useHostManifest } from "../contexts/HostManifestContext";
+import { Header } from "./Header";
+
 
 const LayoutInternal = ({children, className = ""}: {children: React.ReactNode, className?: string}) => {
-    const {loading, error} = useHostManifest();
+    const {loading, error, manifest} = useHostManifest();
+
+    useEffect(() => {
+        document.title = manifest?.name || "Hypergram";
+    }, [manifest]);
 
     return (
         <main className={`p-5 bg-gray-800 min-h-screen text-white flex flex-col ${className}`}>
@@ -25,3 +31,5 @@ export const Layout = (props: {children: React.ReactNode, className?: string}) =
         <LayoutInternal {...props} />
     </HostManifestProvider>
 );
+
+// TODO: might be best converted to a next.js static app
