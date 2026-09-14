@@ -1,24 +1,5 @@
 # Multiplayer roadmap
 
-**Product goal:** social parity with Rec Room — shared worlds + voice + **text chat + DMs + friends**, not just world sync.
-
-## Decisions (architecture)
-
-- **Transport is relay-routed, not P2P.** Clients connect to a relay; the relay forwards everything. WebRTC P2P is off the table for game data — it needs signalling + TURN anyway, caps room size, and can't do global DMs.
-- **Two modes of operation:**
-  - **Single node** (`apps/single_node_mp`) — a standalone relay with *no* cross-relaying. For devs, self-hosters, and as a low-complexity fallback if the shared network ever goes away. Never participates in the network.
-  - **The relay network** — one shared global system (not a federation of independent relays). A client hits a discovery **entrypoint** that places it on a well-colocated, not-too-busy entry point; through the network it can reach anyone in the world. Internal topology/routing is the network's concern, invisible to the client.
-- **Overriding the service is a last resort**, not the normal path.
-- **WebSocket now, for everything.** It's correct and permanent for reliable traffic (state, events, chat, presence). It only carries "unreliable" reliably (`capabilities.unreliable = false`).
-- **WebTransport later, only for the pose/unreliable channel**, and only once WS's TCP head-of-line-blocking visibly hurts under packet loss. Drops in behind the same `NetworkEngine` interface — no game-code change. Not speculative work.
-- **Wire format is msgpackr binary.** Shared wire types live in `@hyperlinkvr/core` (`network_wire.ts`); each side keeps its own codec so core has no runtime dep.
-- **Voice chat = relay-routed (SFU-style), not P2P.** Discord model. Likely WebRTC just for the client↔relay media leg. Its own project (Phase E).
-- **E2E encryption is a later layer**, needed once relays aren't all first-party. Payloads stay opaque to the relay (routing reads only the envelope), which also keeps relay CPU reasonable. Integrity wants signatures, not just confidentiality.
-
-Ordering: **A and B are independent** (do in either order / interleave). **C needs both A and B. D needs C.** E is optional, after.
-
----
-
 ## ✅ Done
 
 - [x] Transport interface (`NetworkEngine` / `NetworkRoom`)
