@@ -3,6 +3,8 @@ import { adopt_assets, EngineObjectDispatchSchema, serialise_assets } from "@hyp
 import { useEffect } from "react";
 
 import { useWebSDKMessaging } from "../contexts/WebSDKMessagingContext";
+import { sample_live_transform } from "../engine/object_modification";
+import { get_object_refs } from "../engine/object_ref_registry";
 import { useEngineObjectStore } from "../stores/EngineObjectStore";
 import { useWorldLoadingStateStore } from "../stores/WorldLoadingStateStore";
 import { COMMAND_CHANNEL, SNAPSHOT_CHANNEL, SNAPSHOT_REQUEST_CHANNEL, set_command_transport } from "./command_bus";
@@ -37,8 +39,13 @@ export const CommandSync = () => {
             if (message.channel === SNAPSHOT_REQUEST_CHANNEL) {
                 if (is_host()) {
                     const snapshot: Snapshot = {
-                        // un-adopt AssetRefs to url strings so they survive json
-                        objects: Object.values(useEngineObjectStore.getState().objects).map((o) => serialise_assets(o)),
+                        // sample the live transform
+                        // TODO: has offset issues, look at how objectcollectionrenderer resolved it
+                        objects: Object.values(useEngineObjectStore.getState().objects).map((o) => {
+                            const refs = get_object_refs(o.id)?.current;
+                            const live = refs ? { ...o, transform: sample_live_transform(refs) } : o;
+                            return serialise_assets(live);
+                        }),
                         world_ready: useWorldLoadingStateStore.getState().world_ready,
                     };
                     room.send({ peer: message.from }, SNAPSHOT_CHANNEL, JSON.stringify(snapshot), "reliable");
