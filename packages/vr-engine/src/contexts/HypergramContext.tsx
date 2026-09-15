@@ -1,6 +1,6 @@
 import { sign_with_private_key } from "@hyperlinkvr/auth";
 import { api_v1_auth_contract, api_v1_read_contract, api_v1_write_contract, HostManifest } from "@hyperlinkvr/hypergram-schemas/v1";
-import { useAuthHostManifest, useAuthSession, useStorageEngine } from "@hyperlinkvr/react";
+import { useAuthHostManifest, useAuthSession, useSetting, useStorageEngine } from "@hyperlinkvr/react";
 import { initClient } from "@ts-rest/core";
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode, useCallback } from "react";
 
@@ -21,7 +21,9 @@ export const HypergramProvider = ({ children }: { children: ReactNode }) => {
     const local_storage = useStorageEngine("local");
     const session_storage = useStorageEngine("session");
 
-    const read_base = auth_manifest?.hypergram_read_api_base;
+    const [read_base_override] = useSetting("devtools_hypergram_override");
+
+    const read_base = read_base_override || auth_manifest?.hypergram_read_api_base;
 
     const read_client = useMemo(
         () => (read_base ? initClient(api_v1_read_contract, { baseUrl: read_base.replace(/\/$/, "") }) : null),

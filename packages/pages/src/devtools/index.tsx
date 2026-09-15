@@ -106,6 +106,28 @@ const ToolSettingSwitch = ({
     );
 };
 
+const ToolSettingInput = ({
+    label,
+    setting_key
+}: {
+    label: string;
+    setting_key: SettingKeyReturning<string>
+}) => {
+    const [value, setValue] = useSetting(setting_key);
+
+    return (
+        <div className="flex flex-col gap-1">
+            <label className="text-white text-sm font-light">{label}</label>
+            <input
+                type="text"
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                className="px-3 py-2 rounded-md bg-black/20 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+        </div>
+    );
+};
+
 export const DevToolsPage = () => {
     return (
         <main
@@ -246,6 +268,10 @@ export const DevToolsPage = () => {
 
                     <ToolGroup title="Performance">
                         <ToolDeviceProfileEmulation />
+                    </ToolGroup>
+
+                    <ToolGroup title="Hypergram">
+                        <ToolSettingInput label="API base override (leave blank to use login host's as usual)" setting_key="devtools_hypergram_override" />
                     </ToolGroup>
 
                     <ToolGroup title="Expressions">

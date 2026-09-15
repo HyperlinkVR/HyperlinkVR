@@ -556,6 +556,11 @@ export const settings_def = build_settings({
     devtools_emulated_device_profile: {
         default_value: null as DeviceProfile | null,
         local_only: true
+    },
+
+    devtools_hypergram_override: {
+        default_value: "" as string,
+        local_only: true
     }
 });
 
