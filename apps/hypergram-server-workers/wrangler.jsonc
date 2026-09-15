@@ -8,7 +8,7 @@
 	// ],
     "routes": [
       {
-        "pattern": "https://hypergram-api.hyperlink.surf/*",
+        "pattern": "hypergram-api.hyperlink.surf",
         "custom_domain": true
       }
     ],

@@ -2,13 +2,19 @@
 
 ### 1. Basic Deployment
 
-Update the routes in `wrangler.toml` to point to your own custom domain/subdomain.
+First, update the routes in `wrangler.jsonc` to point to your own custom domain/subdomain.
 
-Deploy the Worker to Cloudflare:
+Second, deploy the Worker to Cloudflare:
 
 ```bash
 npm run deploy
 
+```
+
+Finally, deploy a token secret that will be used to sign tokens with significant complexity (using a password generator with a good length should do).
+
+```
+npx wrangler secret put TOKEN_SECRET
 ```
 
 ---
