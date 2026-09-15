@@ -1,4 +1,4 @@
-import { load_site_state, post_dir, post_path, publish_site, type SiteStore } from "@hyperlinkvr/hypergram-host";
+import { load_site_state, post_dir, post_path, publish_site, type SiteStore } from "@hyperlinkvr/hypergram-read-host";
 import { api_v1_auth_contract, api_v1_write_contract, type HostManifest, type Post } from "@hyperlinkvr/hypergram-schemas/v1";
 import { createFetchHandler } from "@ts-rest/serverless/fetch";
 import { Hono } from "hono";

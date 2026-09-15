@@ -1,5 +1,5 @@
 {
-    "name": "@hyperlinkvr/hypergram-dev-server",
+    "name": "@hyperlinkvr/hypergram-server-node",
     "type": "module",
     "version": "0.0.1",
     "private": true,
@@ -10,9 +10,9 @@
     },
     "dependencies": {
         "@hono/node-server": "^2.1.1",
-        "@hyperlinkvr/hypergram-host": "workspace:*",
+        "@hyperlinkvr/hypergram-read-host": "workspace:*",
         "@hyperlinkvr/hypergram-schemas": "workspace:*",
-        "@hyperlinkvr/hypergram-server": "workspace:*"
+        "@hyperlinkvr/hypergram-server-lib": "workspace:*"
     },
     "devDependencies": {
         "@types/node": "catalog:",

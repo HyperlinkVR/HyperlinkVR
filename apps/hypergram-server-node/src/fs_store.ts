@@ -1,7 +1,7 @@
 import { mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join, relative, sep } from "node:path";
 
-import type { SiteStore } from "@hyperlinkvr/hypergram-host";
+import type { SiteStore } from "@hyperlinkvr/hypergram-read-host";
 export class FileSystemSiteStore implements SiteStore {
     constructor(private readonly root: string) {}
 

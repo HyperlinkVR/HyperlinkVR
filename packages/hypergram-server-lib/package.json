@@ -1,5 +1,5 @@
 {
-    "name": "@hyperlinkvr/hypergram-server",
+    "name": "@hyperlinkvr/hypergram-server-lib",
     "type": "module",
     "version": "0.0.1",
     "private": true,
@@ -12,7 +12,7 @@
     },
     "dependencies": {
         "@hyperlinkvr/auth": "workspace:*",
-        "@hyperlinkvr/hypergram-host": "workspace:*",
+        "@hyperlinkvr/hypergram-read-host": "workspace:*",
         "@hyperlinkvr/hypergram-schemas": "workspace:*",
         "@ts-rest/core": "catalog:",
         "@ts-rest/serverless": "3.53.0-rc.1",

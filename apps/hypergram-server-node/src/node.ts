@@ -1,7 +1,7 @@
 import { join } from "node:path";
 
 import { serve } from "@hono/node-server";
-import { create_app, create_signature_auth } from "@hyperlinkvr/hypergram-server";
+import { create_app, create_signature_auth } from "@hyperlinkvr/hypergram-server-lib";
 
 import { FileSystemSiteStore } from "./fs_store";
 

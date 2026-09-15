@@ -359,20 +359,20 @@ importers:
         specifier: ^8.1.0
         version: 8.1.0(@types/node@20.11.5)(esbuild@0.28.1)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.28))(terser@5.51.2)(tsx@4.22.4)(yaml@2.9.0)
 
-  apps/hypergram-server:
+  apps/hypergram-server-node:
     dependencies:
       '@hono/node-server':
         specifier: ^2.1.1
         version: 2.1.1(hono@4.13.7)
-      '@hyperlinkvr/hypergram-host':
+      '@hyperlinkvr/hypergram-read-host':
         specifier: workspace:*
-        version: link:../../packages/hypergram-host
+        version: link:../../packages/hypergram-read-host
       '@hyperlinkvr/hypergram-schemas':
         specifier: workspace:*
         version: link:../../packages/hypergram-schemas
-      '@hyperlinkvr/hypergram-server':
+      '@hyperlinkvr/hypergram-server-lib':
         specifier: workspace:*
-        version: link:../../packages/hypergram-server
+        version: link:../../packages/hypergram-server-lib
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
@@ -578,7 +578,7 @@ importers:
         specifier: ^7.0.2
         version: 7.0.2
 
-  packages/hypergram-host:
+  packages/hypergram-read-host:
     dependencies:
       '@hyperlinkvr/hypergram-schemas':
         specifier: workspace:*
@@ -599,14 +599,14 @@ importers:
         specifier: 'catalog:'
         version: 4.4.3
 
-  packages/hypergram-server:
+  packages/hypergram-server-lib:
     dependencies:
       '@hyperlinkvr/auth':
         specifier: workspace:*
         version: link:../auth
-      '@hyperlinkvr/hypergram-host':
+      '@hyperlinkvr/hypergram-read-host':
         specifier: workspace:*
-        version: link:../hypergram-host
+        version: link:../hypergram-read-host
       '@hyperlinkvr/hypergram-schemas':
         specifier: workspace:*
         version: link:../hypergram-schemas
