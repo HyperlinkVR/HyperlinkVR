@@ -29,6 +29,7 @@ import { useIsSeated } from "./seating";
 import { LOCAL_PLAYER_SUBJECT } from "./subject";
 import { Vignette } from "./Vignette";
 import { WristWatch } from "./WristWatch";
+import { PhotoCamera } from "../gadgets/PhotoCamera";
 
 
 const MouthTest = ({
@@ -280,6 +281,7 @@ export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>
                 <WristWatch />
 
                 <PlayerKinematics />
+                <PhotoCamera />
 
                 {session_mode === "vr" ? (
                     <>

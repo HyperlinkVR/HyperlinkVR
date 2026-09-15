@@ -14,4 +14,8 @@ export const CaptionSchema = z.string().min(1).max(512);
 
 export const Sha256HexSchema = z.string().regex(/^[0-9a-f]{64}$/, "Expected a lowercase hex sha256 digest");
 
-export const URLSchema = z.httpUrl();
+export const URLSchema = z.url({
+    protocol: /^https?$/,
+    message: "Expected an http or https url"
+});
+

@@ -112,6 +112,7 @@ export const HypergramProvider = ({ children }: { children: ReactNode }) => {
                 });
 
                 if (response.status === 200) {
+                    console.log("Hypergram login successful");
                     token_ref.current = response.body.token;
                     await session_storage.set("hypergram_token", response.body.token);
                     return true;
