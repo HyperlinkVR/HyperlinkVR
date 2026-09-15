@@ -9,7 +9,7 @@ interface RawDraggableTrackProps {
     min: number;
     max: number;
     step: number;
-    disabled?: boolean;
+    enabled?: boolean;
     onValueChange: (value: number) => void;
     onDragStart?: () => void;
     onDragEnd?: () => void;
@@ -24,7 +24,7 @@ const RawDraggableTrack = ({
     min,
     max,
     step,
-    disabled = false,
+    enabled = true,
     onValueChange,
     onDragStart,
     onDragEnd
@@ -32,7 +32,7 @@ const RawDraggableTrack = ({
     const is_dragging_ref = useRef(false);
 
     const handle_pointer_event = (e: ThreeEvent<PointerEvent>) => {
-        if (disabled || !e.uv) return;
+        if (!enabled || !e.uv) return;
 
         const percentage = e.uv.x;
         const raw_value = min + percentage * (max - min);
@@ -54,7 +54,7 @@ const RawDraggableTrack = ({
             height={24}
             flexDirection="row"
             alignItems="center"
-            opacity={disabled ? opacity/2 : opacity}
+            opacity={!enabled ? opacity/2 : opacity}
         >
             <Container width="100%" height={4} backgroundColor="#475569" borderRadius={2} />
 
@@ -82,9 +82,9 @@ const RawDraggableTrack = ({
                 width="100%"
                 height="100%"
                 zIndexOffset={10}
-                cursor={disabled ? "default" : "pointer"}
+                cursor={!enabled ? "default" : "pointer"}
                 onPointerDown={(e) => {
-                    if (disabled) return;
+                    if (!enabled) return;
                     e.stopPropagation();
                     is_dragging_ref.current = true;
                     onDragStart?.();
@@ -134,7 +134,7 @@ interface SmartSliderProps {
     step?: number;
     precision_dp?: number;
     unit?: string;
-    disabled?: boolean;
+    enabled?: boolean;
 }
 
 export const SmartSlider = ({
@@ -148,7 +148,7 @@ export const SmartSlider = ({
     step = 1,
     precision_dp = 2,
     unit = "",
-    disabled = false
+    enabled = true
 }: SmartSliderProps) => {
     const [input_str, setInputStr] = useState(value.toFixed(precision_dp));
     const [is_focused, setIsFocused] = useState(false);
@@ -196,7 +196,7 @@ export const SmartSlider = ({
             width="100%"
             maxWidth={384}
             paddingY={8}
-            opacity={disabled ? opacity/2 : opacity}
+            opacity={!enabled ? opacity/2 : opacity}
         >
             {label && (
                 <Text fontSize={12} flexWrap="no-wrap" marginRight={16} color="white">
@@ -217,7 +217,7 @@ export const SmartSlider = ({
                     min={slider_min}
                     max={slider_max}
                     step={step}
-                    disabled={disabled}
+                    enabled={enabled}
                     onValueChange={handle_slider_change}
                     onDragStart={() => { is_dragging_ref.current = true; }}
                     onDragEnd={() => { is_dragging_ref.current = false; }}
@@ -248,7 +248,7 @@ export const SmartSlider = ({
                         color="white"
                         fontSize={14}
                         textAlign="right"
-                        disabled={disabled}
+                        disabled={!enabled}
                     />
                     {unit && <Text fontSize={14} color="white" marginLeft={4}>{unit}</Text>}
                 </Container>

@@ -3,4 +3,4 @@ export * from "./messaging";
 export * from "./windowing";
 export * from "./settings";
 export * from "./discord_rpc";
-export * from "./device_profile";
+export * from "./get_device_profile";

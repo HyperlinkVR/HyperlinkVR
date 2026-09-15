@@ -5,7 +5,7 @@ import {useFocusable} from "../contexts/FocusNavContext";
 import type {ComponentRef} from "react";
 import { useRef} from "react";
 
-export const ToggleSwitch = ({value, on_change, label}: {value: boolean; on_change: (value: boolean) => void; label: string}) => {
+export const ToggleSwitch = ({value, on_change, label, enabled = true}: {value: boolean; on_change: (value: boolean) => void; label: string, enabled?: boolean}) => {
     const ref = useRef<ComponentRef<typeof Container>>(null);
     const {is_focused} = useFocusable(ref, {
         on_accept: () => on_change(!value)
@@ -26,7 +26,7 @@ export const ToggleSwitch = ({value, on_change, label}: {value: boolean; on_chan
                 <Text>{label}</Text>
             </Label>
 
-            <Switch checked={value} borderWidth={is_focused ? 1 : 0} borderColor={is_focused ? "white" : "transparent"} />
+            <Switch checked={value} borderWidth={is_focused ? 1 : 0} borderColor={is_focused ? "white" : "transparent"} disabled={!enabled} />
         </Container>
     );
 }

@@ -1,4 +1,4 @@
-import { get_all_settings, get_default_settings, get_setting, StorageEngine, update_setting, watch_all_settings, watch_setting } from "@hyperlinkvr/core";
+import { get_all_settings, get_default_settings, get_setting, is_value_forced, StorageEngine, update_setting, watch_all_settings, watch_setting } from "@hyperlinkvr/core";
 import type { SettingKey } from "@hyperlinkvr/types";
 import { settings_def } from "@hyperlinkvr/types";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
@@ -43,7 +43,9 @@ export const useSettingWithEngines = <K extends SettingKey>(
         update_setting(key, debounced_value, storage);
     }, [key, debounced_value, storage]);
 
-    return [value, update_value, loaded] as const;
+    const forced = useMemo(() => is_value_forced(key), [key, value]);
+
+    return [value, update_value, loaded, forced] as const;
 };
 
 export const useSettingWithoutContext = <K extends SettingKey>(key: K, debounce_delay = 500) => {
@@ -58,6 +60,8 @@ interface SettingsContextType {
 
     subscribe_settings: (cb: () => void) => () => void;
     get_settings_snapshot: () => Record<SettingKey, any>;
+
+    is_value_forced: <K extends SettingKey>(key: K) => boolean;
 }
 
 const SettingsContext = createContext<SettingsContextType | null>(null);
@@ -172,9 +176,10 @@ export const SettingsProvider = ({ children, debounce_delay = 500 }: { children:
             set_setting: set_setting_fn,
             watch_setting: watch_setting_fn,
             subscribe_settings,
-            get_settings_snapshot
+            get_settings_snapshot,
+            is_value_forced
         }),
-        [get_setting_fn, set_setting_fn, watch_setting_fn, subscribe_settings, get_settings_snapshot]
+        [get_setting_fn, set_setting_fn, watch_setting_fn, subscribe_settings, get_settings_snapshot, is_value_forced]
     );
 
     return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;
@@ -215,7 +220,9 @@ export const useSetting = <K extends SettingKey>(key: K, debounce_delay = 500) =
         [key, set_setting]
     );
 
-    return [value, update_value, loaded] as const;
+    const forced = useMemo(() => is_value_forced(key), [key, value]);
+
+    return [value, update_value, loaded, forced] as const;
 }
 
 export const useAllSettings = () => {

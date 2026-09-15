@@ -15,7 +15,7 @@ interface DropdownProps {
     value: string | number;
     options: Option[];
     on_change: (value: string | number) => void;
-    disabled?: boolean;
+    enabled?: boolean;
 }
 
 const Option = ({
@@ -79,7 +79,7 @@ export const Dropdown = ({
     value,
     options,
     on_change,
-    disabled = false
+    enabled = true,
 }: DropdownProps) => {
     const [is_open, setIsOpen] = useState(false);
 
@@ -109,7 +109,7 @@ export const Dropdown = ({
             width="100%"
             maxWidth={384}
             paddingY={8}
-            opacity={disabled ? opacity/2 : opacity}
+            opacity={!enabled ? opacity/2 : opacity}
         >
             {label && (
                 <Text fontSize={12} flexWrap="no-wrap" marginRight={16} color="white">
@@ -126,9 +126,9 @@ export const Dropdown = ({
                     paddingX={12}
                     paddingY={8}
                     borderRadius={6}
-                    cursor={disabled ? "default" : "pointer"}
+                    cursor={!enabled ? "default" : "pointer"}
                     onClick={(e) => {
-                        if (disabled) return;
+                        if (!enabled) return;
                         e.stopPropagation();
 
                         if (is_open) {
@@ -138,7 +138,7 @@ export const Dropdown = ({
                         }
                     }}
                     hover={{
-                        backgroundColor: disabled ? "#334155" : "#475569"
+                        backgroundColor: !enabled ? "#334155" : "#475569"
                     }}
 
                     borderWidth={is_focused ? 1 : 0}

@@ -3,6 +3,7 @@ import { settings_def } from "@hyperlinkvr/types";
 
 
 
+import { get_device_profile } from "./get_device_profile";
 import type { StorageEngine } from "./storage";
 
 
@@ -26,11 +27,49 @@ const get_storage_engine = (setting: Setting<any>, storage: SettingsStorageEngin
     }
 }
 
+const evaluate_force_condition = async <K extends SettingKey>(
+    setting_key: K,
+    current: (typeof settings_def)[K]["default_value"],
+    storage: SettingsStorageEngines
+): Promise<(typeof settings_def)[K]["default_value"]> => {
+    const setting_def = settings_def[setting_key as SettingKey] as any;
+
+    if (!setting_def.force_value) return current;
+
+    const evaluated = setting_def.force_value({
+        device_profile: get_device_profile()
+    });
+
+    if (!evaluated) {
+        return current;
+    }
+
+    if (evaluated.persists && evaluated.value !== current) {
+        const engine = get_storage_engine(setting_def, storage);
+        await engine.set(`settings.${setting_key}`, evaluated.value);
+    }
+
+    return evaluated.value;
+};
+
+export const is_value_forced = <K extends SettingKey>(setting_key: K): boolean => {
+    const setting_def = settings_def[setting_key as SettingKey] as any;
+
+    if (!setting_def.force_value) return false;
+
+    const evaluated = setting_def.force_value({
+        device_profile: get_device_profile()
+    });
+
+    return !!evaluated;
+}
+
 export const get_setting = async <K extends SettingKey>(key: K, storage: SettingsStorageEngines): Promise<typeof settings_def[K]["default_value"]> => {
     const setting = settings_def[key];
     const engine = get_storage_engine(setting, storage);
 
-    return await engine.get<typeof setting.default_value>(`settings.${key}`) ?? setting.default_value;
+    const current = await engine.get<typeof setting.default_value>(`settings.${key}`) ?? setting.default_value;
+    return await evaluate_force_condition(key, current, storage);
 }
 
 export const get_all_settings = async (storage: SettingsStorageEngines): Promise<Record<SettingKey, any>> => {
@@ -45,14 +84,17 @@ export const get_all_settings = async (storage: SettingsStorageEngines): Promise
             const setting_key = key.replace(/^settings\./, "") as SettingKey;
             if (!(setting_key in settings_def)) continue;   // ignore orphaned keys
             if (get_storage_engine(settings_def[setting_key], storage) !== engine) continue; // ignore keys that no longer belong to this engine (e.g. if a setting was changed from sync to local)
-            result[setting_key] = value ?? settings_def[setting_key].default_value;
+
+            const current = value ?? settings_def[setting_key].default_value;
+            result[setting_key] = await evaluate_force_condition(setting_key, current, storage);
         }
     }
 
     // fill in any missing settings with their default values
     for (const key of Object.keys(settings_def) as SettingKey[]) {
         if (!(key in result)) {
-            result[key] = settings_def[key].default_value;
+            const current = settings_def[key].default_value;
+            result[key] = await evaluate_force_condition(key, current, storage);
         }
     }
 
@@ -100,14 +142,16 @@ export const watch_all_settings = (
         const engine = storage[engine_kind as keyof SettingsStorageEngines];
         if (!engine) continue;
 
-        const unsubscribe = engine.watch_all((changes) => {
+        const unsubscribe = engine.watch_all(async (changes) => {
             const filtered_changes: Partial<Record<SettingKey, { new_value?: any }>> = {};
             for (const [key, change] of Object.entries(changes)) {
                 const setting_key = key.replace(/^settings\./, "") as SettingKey;
                 if (!(setting_key in settings_def)) continue;   // ignore orphaned keys
                 if (get_storage_engine(settings_def[setting_key], storage) !== engine) continue; // ignore keys that no longer belong to this engine (e.g. if a setting was changed from sync to local)
+
+                const current = change!.new_value ?? settings_def[setting_key].default_value;
                 filtered_changes[setting_key] = {
-                    new_value: change!.new_value ?? settings_def[setting_key].default_value
+                    new_value: await evaluate_force_condition(setting_key, current, storage)
                 };
             }
             callback(filtered_changes);
