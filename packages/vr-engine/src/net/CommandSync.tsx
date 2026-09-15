@@ -39,11 +39,15 @@ export const CommandSync = () => {
             if (message.channel === SNAPSHOT_REQUEST_CHANNEL) {
                 if (is_host()) {
                     const snapshot: Snapshot = {
-                        // sample the live transform
-                        // TODO: has offset issues, look at how objectcollectionrenderer resolved it
+                        // take the live position/rotation (physics-driven) but keep the stored scale:
+                        // scale is never physics-driven, and for body-owned poses the sampled group
+                        // is forced to identity scale, so sampling it would ship [1,1,1] and desync
+                        // the mesh from its collider.
                         objects: Object.values(useEngineObjectStore.getState().objects).map((o) => {
                             const refs = get_object_refs(o.id)?.current;
-                            const live = refs ? { ...o, transform: sample_live_transform(refs) } : o;
+                            const live = refs
+                                ? { ...o, transform: { ...sample_live_transform(refs), scale: o.transform.scale } }
+                                : o;
                             return serialise_assets(live);
                         }),
                         world_ready: useWorldLoadingStateStore.getState().world_ready,
