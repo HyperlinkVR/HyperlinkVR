@@ -6,8 +6,7 @@
     "description": "",
     "scripts": {
         "dev": "vite",
-        "build": "vite --build",
-        "build:web": "vite --build",
+        "build": "vite build",
         "preview": "vite preview",
         "typecheck": "tsc --noEmit"
     },
