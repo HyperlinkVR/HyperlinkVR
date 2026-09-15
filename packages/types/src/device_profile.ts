@@ -8,7 +8,6 @@ export type GPUFamily =
 
 export interface DeviceProfile {
     low_power: boolean;
-    tier: "standalone" | "pc" | "unknown";
 
     // best guess if this is a standalone headset, often correlated with low_power (but not always, e.g. higher pwoer standalones like AVP). this is a hint from the user agent
     is_standalone: boolean;

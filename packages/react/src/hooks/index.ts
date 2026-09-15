@@ -5,4 +5,4 @@ export * from "./useSettingDefinition";
 export * from "./useServiceURLs";
 export * from "./useWorldMetadata";
 export * from "./useSignatureVerification";
-
+export * from "./useDeviceProfile";

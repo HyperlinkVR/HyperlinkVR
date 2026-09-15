@@ -1,4 +1,4 @@
-import type { SeparateUIDefinition, Setting, SettingKey, SettingsTree, UISubdefinition } from "@hyperlinkvr/types";
+import type { DeviceProfile, SeparateUIDefinition, Setting, SettingKey, SettingsTree, UISubdefinition } from "@hyperlinkvr/types";
 import { settings_def } from "@hyperlinkvr/types";
 
 
@@ -30,14 +30,17 @@ const get_storage_engine = (setting: Setting<any>, storage: SettingsStorageEngin
 const evaluate_force_condition = async <K extends SettingKey>(
     setting_key: K,
     current: (typeof settings_def)[K]["default_value"],
-    storage: SettingsStorageEngines
+    storage: SettingsStorageEngines,
+    values?: {
+        device_profile?: DeviceProfile;
+    }
 ): Promise<(typeof settings_def)[K]["default_value"]> => {
     const setting_def = settings_def[setting_key as SettingKey] as any;
 
     if (!setting_def.force_value) return current;
 
     const evaluated = setting_def.force_value({
-        device_profile: get_device_profile()
+        device_profile: values?.device_profile ?? await get_device_profile(storage.local!)
     });
 
     if (!evaluated) {
@@ -52,17 +55,25 @@ const evaluate_force_condition = async <K extends SettingKey>(
     return evaluated.value;
 };
 
-export const is_value_forced = <K extends SettingKey>(setting_key: K): boolean => {
+export const is_value_forced = async <K extends SettingKey>(
+    setting_key: K,
+    storage: SettingsStorageEngines,
+    values?: {
+        device_profile?: DeviceProfile;
+    }
+): Promise<boolean> => {
     const setting_def = settings_def[setting_key as SettingKey] as any;
 
     if (!setting_def.force_value) return false;
 
     const evaluated = setting_def.force_value({
-        device_profile: get_device_profile()
+        device_profile: values?.device_profile ?? await get_device_profile(storage.local!)
     });
 
     return !!evaluated;
-}
+};
+
+// TODO: auto re-evaluate when devtools emulated profile changes
 
 export const get_setting = async <K extends SettingKey>(key: K, storage: SettingsStorageEngines): Promise<typeof settings_def[K]["default_value"]> => {
     const setting = settings_def[key];

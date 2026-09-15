@@ -551,6 +551,11 @@ export const settings_def = build_settings({
     devtools_flat_photo_mode: {
         default_value: false,
         local_only: true
+    },
+
+    devtools_emulated_device_profile: {
+        default_value: null as DeviceProfile | null,
+        local_only: true
     }
 });
 

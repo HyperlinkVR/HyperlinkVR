@@ -1,4 +1,8 @@
 import type { DeviceProfile, GPUFamily } from "@hyperlinkvr/types";
+import { get_setting } from "./settings";
+import { StorageEngine } from "./storage";
+
+
 
 const STANDALONE_UA_HINTS = [/OculusBrowser/i, /Quest/i, /Pico/i, /Wolvic/i, /VR Browser/i];
 
@@ -53,7 +57,6 @@ const detect_profile = (): DeviceProfile => {
         const low_power = is_low_power_family(family);
         return {
             low_power,
-            tier: low_power ? "standalone" : "pc",
             is_standalone: low_power,
             gpu,
             gpu_family: family,
@@ -66,7 +69,6 @@ const detect_profile = (): DeviceProfile => {
     const is_standalone = STANDALONE_UA_HINTS.some((re) => re.test(ua));
     return {
         low_power: is_standalone,
-        tier: is_standalone ? "standalone" : "unknown",
         is_standalone,
         gpu: null,
         gpu_family: "unknown",
@@ -74,11 +76,19 @@ const detect_profile = (): DeviceProfile => {
     };
 };
 
-let device_profile: DeviceProfile | null = null;
+let cached_detected_profile: DeviceProfile | null = null;
 
-export const get_device_profile = (): DeviceProfile => {
-    if (!device_profile) {
-        device_profile = detect_profile();
+export const get_device_profile = async (local_storage: StorageEngine<"local">, bypass_emulation = false): Promise<DeviceProfile> => {
+    if (!bypass_emulation) {
+        const emulated = await get_setting("devtools_emulated_device_profile", {local: local_storage});
+        if (emulated) {
+            return emulated;
+        }
     }
-    return device_profile;
+
+    if (!cached_detected_profile) {
+        cached_detected_profile = detect_profile();
+    }
+
+    return cached_detected_profile;
 };

@@ -3,6 +3,7 @@ import type { SettingKeyReturning, WindowIntent } from "@hyperlinkvr/types";
 import { ToggleSwitch } from "@hyperlinkvr/ui-dom/settings";
 import { WATCH_UI_HEIGHT, WATCH_UI_WIDTH } from "@hyperlinkvr/watch-ui";
 import { Earth, MailSearch, Trophy, UserKey, Watch } from "lucide-react";
+import { ToolDeviceProfileEmulation } from "./components/ToolEmulatedProfile";
 
 
 const bg = new URL("../../node_modules/@hyperlinkvr/assets/bg.webp", import.meta.url).href;
@@ -241,6 +242,10 @@ export const DevToolsPage = () => {
                             label="Enable photo mode (flat only)"
                             setting_key="devtools_flat_photo_mode"
                         />
+                    </ToolGroup>
+
+                    <ToolGroup title="Performance">
+                        <ToolDeviceProfileEmulation />
                     </ToolGroup>
 
                     <ToolGroup title="Expressions">
