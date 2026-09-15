@@ -1,0 +1,47 @@
+name: Deploy hypergram UI to its own gh-pages repo
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'apps/hypergram/**'
+      - 'packages/hypergram-schemas'
+      - 'pnpm-lock.yaml'
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Write config file
+        run: |
+          echo '{"read_api_base_url": "https://hypergram-api.hyperlink.surf"}' > apps/hypergram/config.json
+
+      - name: Build hypergram
+        run: pnpm build:hypergram
+
+      - name: Deploy to the hypergram repo's gh-pages branch
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          deploy_key: ${{ secrets.HYPERGRAM_DEPLOY_KEY }}
+          external_repository: HyperlinkVR/gram.hyperlink.surf
+          publish_branch: gh-pages
+          publish_dir: ./apps/hypergram/dist
+          cname: gram.hyperlink.surf
