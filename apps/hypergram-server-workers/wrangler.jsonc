@@ -1,0 +1,69 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "hypergram-workers",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-09-15",
+	// "compatibility_flags": [
+	//   "nodejs_compat"
+	// ],
+    "routes": [
+      {
+        "pattern": "https://hypergram-api.hyperlink.surf/*",
+        "custom_domain": true
+      }
+    ],
+	"vars": {
+		"NAME": "Hypergram", // the name to display in the UI
+		"SITE_BUCKET_ROOT": "" // optional root prefix to apply to r2 paths
+	},
+	"ratelimits": [
+		{
+			"name": "IP_RATE_LIMITER",
+			"namespace_id": "1001",
+			"simple": {
+				"limit": 30, // 30 requests per minute per IP
+				"period": 60
+			}
+		},
+		{
+			"name": "GLOBAL_RATE_LIMITER",
+			"namespace_id": "1002",
+			"simple": {
+				"limit": 5000, // 5000 total requests per minute globally across all users
+				"period": 60
+			}
+		}
+	],
+	"r2_buckets": [
+		{
+			"bucket_name": "hypergram-store",
+			"binding": "SITE_BUCKET"
+		}
+	]
+	// "kv_namespaces": [
+	//   {
+	//     "binding": "MY_KV_NAMESPACE",
+	//     "id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+	//   }
+	// ],
+	// "r2_buckets": [
+	//   {
+	//     "binding": "MY_BUCKET",
+	//     "bucket_name": "my-bucket"
+	//   }
+	// ],
+	// "d1_databases": [
+	//   {
+	//     "binding": "MY_DB",
+	//     "database_name": "my-database",
+	//     "database_id": ""
+	//   }
+	// ],
+	// "ai": {
+	//   "binding": "AI"
+	// },
+	// "observability": {
+	//   "enabled": true,
+	//   "head_sampling_rate": 1
+	// }
+}

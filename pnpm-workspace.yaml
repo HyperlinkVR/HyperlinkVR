@@ -14,12 +14,12 @@ catalog:
   '@react-three/uikit-lucide': ^1.0.74
   '@react-three/xr': ^6.6.30
   '@tailwindcss/vite': 4.3.1
+  '@ts-rest/core': ^3.53.0-rc.1
   '@types/node': 20.11.5
   '@types/react': 19.2.3
   '@types/react-dom': 19.2.3
   '@types/three': ^0.185.0
   '@wxt-dev/auto-icons': ^1.1.2
-  '@ts-rest/core': ^3.53.0-rc.1
   lucide-react: 1.21.0
   react: 19.2.7
   react-dom: 19.2.7
@@ -40,6 +40,7 @@ onlyBuiltDependencies:
   - lmdb
   - msgpackr-extract
   - sharp
+  - workerd
 
 overrides:
   three: ^0.185.0

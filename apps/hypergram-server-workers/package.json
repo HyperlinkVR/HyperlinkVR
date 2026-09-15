@@ -1,0 +1,16 @@
+{
+    "name": "@hyperlinkvr/hypergram-server-workers",
+    "type": "module",
+    "scripts": {
+        "dev": "wrangler dev",
+        "deploy": "wrangler deploy --minify",
+        "cf-typegen": "wrangler types --env-interface CloudflareBindings"
+    },
+    "dependencies": {
+        "@hyperlinkvr/hypergram-server-lib": "workspace:*",
+        "@hyperlinkvr/hypergram-read-host": "workspace:*"
+    },
+    "devDependencies": {
+        "wrangler": "^4.110.0"
+    }
+}
