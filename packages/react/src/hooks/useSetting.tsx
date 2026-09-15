@@ -1,4 +1,4 @@
-import { get_all_settings, get_default_settings, get_setting, StorageEngine, update_setting, watch_all_settings, watch_setting } from "@hyperlinkvr/core";
+import { get_all_settings, get_default_settings, get_setting, is_value_forced, StorageEngine, update_setting, watch_all_settings, watch_setting } from "@hyperlinkvr/core";
 import type { SettingKey } from "@hyperlinkvr/types";
 import { settings_def } from "@hyperlinkvr/types";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
@@ -19,11 +19,16 @@ export const useSettingWithEngines = <K extends SettingKey>(
     );
 
     const [loaded, setLoaded] = useState(false);
+    const [forced, setForced] = useState(false);
 
     useEffect(() => {
         get_setting(key, storage).then((stored) => {
             setValue(stored);
-            setLoaded(true);
+
+            is_value_forced(key, storage).then((is_forced) => {
+                setForced(is_forced);
+                setLoaded(true);
+            });
         });
     }, [key, get_setting]);
 
@@ -43,7 +48,7 @@ export const useSettingWithEngines = <K extends SettingKey>(
         update_setting(key, debounced_value, storage);
     }, [key, debounced_value, storage]);
 
-    return [value, update_value, loaded] as const;
+    return [value, update_value, loaded, forced] as const;
 };
 
 export const useSettingWithoutContext = <K extends SettingKey>(key: K, debounce_delay = 500) => {
@@ -58,6 +63,8 @@ interface SettingsContextType {
 
     subscribe_settings: (cb: () => void) => () => void;
     get_settings_snapshot: () => Record<SettingKey, any>;
+
+    is_value_forced: <K extends SettingKey>(key: K) => Promise<boolean>;
 }
 
 const SettingsContext = createContext<SettingsContextType | null>(null);
@@ -172,9 +179,10 @@ export const SettingsProvider = ({ children, debounce_delay = 500 }: { children:
             set_setting: set_setting_fn,
             watch_setting: watch_setting_fn,
             subscribe_settings,
-            get_settings_snapshot
+            get_settings_snapshot,
+            is_value_forced: (key: SettingKey) => is_value_forced(key, storage_engines)
         }),
-        [get_setting_fn, set_setting_fn, watch_setting_fn, subscribe_settings, get_settings_snapshot]
+        [get_setting_fn, set_setting_fn, watch_setting_fn, subscribe_settings, get_settings_snapshot, is_value_forced, storage_engines]
     );
 
     return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;
@@ -187,17 +195,22 @@ export const useSetting = <K extends SettingKey>(key: K, debounce_delay = 500) =
         throw new Error("useSetting must be used within a SettingsProvider. You can use useSettingWithoutContext if you don't want to use the provider (but it's recommended you do!)");
     }
 
-    const { get_setting, set_setting, watch_setting } = context;
+    const { get_setting, set_setting, watch_setting, is_value_forced } = context;
 
     const [value, setValue] = useState<(typeof settings_def)[K]["default_value"]>(settings_def[key].default_value);
 
     const [loaded, setLoaded] = useState(false);
+    const [forced, setForced] = useState(false);
 
     // get default value from storage on mount
     useEffect(() => {
         get_setting(key).then((stored) => {
             setValue(stored);
-            setLoaded(true);
+
+            is_value_forced(key).then((is_forced) => {
+                setForced(is_forced);
+                setLoaded(true);
+            });
         });
     }, [key, get_setting]);
 
@@ -215,7 +228,7 @@ export const useSetting = <K extends SettingKey>(key: K, debounce_delay = 500) =
         [key, set_setting]
     );
 
-    return [value, update_value, loaded] as const;
+    return [value, update_value, loaded, forced] as const;
 }
 
 export const useAllSettings = () => {

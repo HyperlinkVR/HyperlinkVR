@@ -13,6 +13,7 @@ type WidgetLookup<V extends SettingValueType> = {
             value: V;
             on_change: (value: V) => void;
             label: string;
+            enabled?: boolean;
         }
     >;
 };
@@ -23,8 +24,8 @@ const widget_lookup: Partial<WidgetLookup<any>> = {
     "select": Dropdown
 };
 
-export const WatchSettingWidget = ({setting_key}: {setting_key: SettingKey}) => {
-    const [value, setValue] = useSetting(setting_key);
+export const WatchSettingWidget = ({setting_key, enabled = true}: {setting_key: SettingKey, enabled?: boolean}) => {
+    const [value, setValue, _, forced] = useSetting(setting_key);
     const ui_def = useSettingUIDefinition(setting_key, "watch");
 
     const WidgetComponent = useMemo(() => {
@@ -50,6 +51,6 @@ export const WatchSettingWidget = ({setting_key}: {setting_key: SettingKey}) => 
 
     // TODO: handle description. either add to component or wrap it
 
-    return <WidgetComponent value={value} on_change={setValue} label={ui_def.label} {...ui_def.widget} />;
+    return <WidgetComponent value={value} on_change={setValue} label={ui_def.label} enabled={enabled && !forced} {...ui_def.widget} />;
 }
 // TODO: could unite this into a base setting widget that takes the widget lookup table?

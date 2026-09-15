@@ -16,7 +16,7 @@ import { EnhancedBillboard } from "../interaction";
 
 const camera = new URL("../../assets/misc/camera/camera.glb", import.meta.url).href;
 
-export const SpectatorCamera = () => {
+const SpectatorCameraInternal = () => {
     const [mode] = useSetting("spectator_view");
 
     const [horiz_fov] = useSetting("third_person_fov");
@@ -38,7 +38,7 @@ export const SpectatorCamera = () => {
             throw new Error(`Unknown spectator_view mode: ${mode}`);
         }
     }, [mode]);
-// TODO: might want to actually hide from the first person cam too for MR mode
+
     return (
         <>
             <LayerGroup
@@ -79,7 +79,15 @@ export const SpectatorCamera = () => {
         </>
     );
 };
-// TODO: option to toggle between follow origin and staying static with trigger (show text that faces you with "Following")
-// TODO: fix position of grabbable and the actual camera with locomotion now enabled
+
+export const SpectatorCamera = () => {
+    const [mode] = useSetting("spectator_view");
+
+    if (mode === "off") {
+        return null;
+    }
+
+    return <SpectatorCameraInternal />;
+}
 
 // TODO: full scene re-render happens when this changes!!!!!!!
