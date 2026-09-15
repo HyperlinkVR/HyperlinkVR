@@ -14,6 +14,7 @@
     ],
 	"vars": {
 		"NAME": "Hypergram", // the name to display in the UI
+		"ALLOWED_HOSTS": "hyperlink.surf", // which identity hosts can authenticate with this server (use commas to specify multiple)
 		"SITE_BUCKET_ROOT": "" // optional root prefix to apply to r2 paths
 	},
 	"ratelimits": [

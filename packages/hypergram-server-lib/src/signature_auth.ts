@@ -4,6 +4,7 @@ import type { AuthAdapter } from "./auth";
 
 export interface SignatureAuthOptions {
     token_secret: string;
+    allowed_hosts: string[] | "*";
     token_ttl_ms?: number;
     // how far the signed timestamp may drift from the host clock, in ms. default 5 min.
     max_signature_skew_ms?: number;
@@ -26,6 +27,7 @@ interface TokenPayload {
 // it is likely that adapters adding wbe auth would wrap around this to still use this signature logic
 export const create_signature_auth = ({
     token_secret,
+    allowed_hosts,
     token_ttl_ms = 24 * 60 * 60 * 1000,
     max_signature_skew_ms = 5 * 60 * 1000
 }: SignatureAuthOptions): AuthAdapter => {
@@ -70,6 +72,8 @@ export const create_signature_auth = ({
 
             const parsed = parse_identity(username);
             if (!parsed.success) return null;
+
+            if (allowed_hosts !== "*" && !allowed_hosts.includes(parsed.identity.host)) return null;
 
             const resolution = await resolve_static_record(parsed.identity);
             if (!resolution.success || !resolution.record) return null;
