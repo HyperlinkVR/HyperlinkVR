@@ -346,7 +346,12 @@ export const PhotoCamera = () => {
 
     // TODO: properly modelled camera, this is a prototype
     return (
-        <Grabbable sticky position={[0, 2, 0]} on_trigger_start={() => (capture_pending.current = true)}>
+        <Grabbable
+            sticky
+            position={[0, 2, 0]}
+            on_trigger_start={() => (capture_pending.current = true)}
+            grab_rotation={[-Math.PI / 2, 0, 0]}
+        >
             <group position={[0, -0.015, 0]}>
                 <mesh>
                     <boxGeometry args={[0.175, 0.125, BODY_THICKNESS]} />
