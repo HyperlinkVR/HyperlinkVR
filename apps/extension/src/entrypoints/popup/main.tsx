@@ -174,6 +174,7 @@ Enable this option to use Chrome's debugger to inject raw inputs directly.`}
 
                     <Dropdown
                         options={[
+                            { label: "Off (cheapest)", value: "off" },
                             { label: "First Person", value: "first_person" },
                             { label: "Third Person", value: "third_person" },
                             { label: "Mixed Reality", value: "mixed_reality" }
@@ -227,6 +228,6 @@ Enable this option to use Chrome's debugger to inject raw inputs directly.`}
     );
 };
 
-// TODO: use include_in_popup rather than manually adding
+// TODO: use include_in_popup and instance FlatSettingWidget rather than manually adding (handles disable logic too)
 
 ReactDOM.createRoot(document.getElementById("root")!).render(<Popup />);
