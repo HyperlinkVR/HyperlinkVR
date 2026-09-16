@@ -1,5 +1,9 @@
 import type { SiteStore } from "@hyperlinkvr/hypergram-read-host";
 
+export const TTL_1_DAY = 86400;
+
+export type CacheStateRef = { cache?: "HIT" | "MISS" };
+
 export class R2SiteStore implements SiteStore {
     constructor(
         private readonly bucket: R2Bucket,
@@ -7,7 +11,8 @@ export class R2SiteStore implements SiteStore {
         private readonly ctx?: ExecutionContext,
         private readonly ip_limiter?: RateLimit,
         private readonly global_limiter?: RateLimit,
-        private readonly ttl_seconds: number = 86400 // Default 1 day cache
+        private readonly ttl_seconds: number = TTL_1_DAY,
+        private readonly cache_state_ref?: CacheStateRef
     ) {}
 
     private full(path: string): string {
@@ -45,23 +50,33 @@ export class R2SiteStore implements SiteStore {
     }
 
     async get(path: string, client_key?: string): Promise<Uint8Array | null> {
-        await this.check_limits("get", client_key);
+        const full_path = this.full(path);
 
-        const fullPath = this.full(path);
-
-        const cache_url = new URL(`https://r2-cache.internal/${fullPath}`);
+        const cache_url = new URL(`https://r2-cache.internal/${full_path}`);
         const cache_key = new Request(cache_url.toString());
         const cache = caches.default;
 
         // check cache first before invoking a read operation
+        // (before limit check since it's free)
         const cached = await cache.match(cache_key);
         if (cached) {
             const buffer = await cached.arrayBuffer();
+
+            if (this.cache_state_ref) {
+                this.cache_state_ref.cache = "HIT";
+            }
+
             return new Uint8Array(buffer);
         }
 
+        if (this.cache_state_ref) {
+            this.cache_state_ref.cache = "MISS";
+        }
+
+        await this.check_limits("get", client_key);
+
         // cache miss
-        const object = await this.bucket.get(fullPath);
+        const object = await this.bucket.get(full_path);
         if (!object) return null;
 
         const buffer = await object.arrayBuffer();
