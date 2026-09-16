@@ -1,7 +1,18 @@
 import { useSetting } from "@hyperlinkvr/react";
+import { useFrame } from "@react-three/fiber";
 import { Container, Text } from "@react-three/uikit";
 import { Globe } from "@react-three/uikit-lucide";
-import { useCallback, useMemo, useRef, useState } from "react";
+import {
+    ComponentRef,
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState
+} from "react";
+import { MathUtils } from "three";
+
+
 
 import type { Key, KeyAction, KeyboardLayout } from "./layout";
 import { available_layouts, choose_layout } from "./layouts";
@@ -58,7 +69,7 @@ const LocalePicker = ({ on_select }: { on_select: (id: KeyboardLayout["id"]) => 
     </Container>
 );
 
-const Keyboard = () => {
+const Keyboard = ({visible = true, on_hidden}: {visible?: boolean; on_hidden?: () => void}) => {
     // TODO: way for certain inputs to force a specific layout, good for numpads etc
     // TODO: way to render fixed always in world keyboard (for dom mirror) that doesnt attach to store and can emit directly to a target
 
@@ -110,11 +121,38 @@ const Keyboard = () => {
         [set_requested_layout]
     );
 
+    const container_ref = useRef<ComponentRef<typeof Container> | null>(null);
+    const opacity_ref = useRef(0);
+    const set_container = useCallback((container: ComponentRef<typeof Container> | null) => {
+        container_ref.current = container;
+        if (container) container.setProperties({ opacity: 0 }); // start transparent before the frame loop takes over
+    }, []);
+
+    // fade in and out when visibility changes (but don't unmount, that's for the parent)
+    useFrame((_, delta) => {
+        const container = container_ref.current;
+        if (!container) return;
+
+        const target_opacity = visible ? 1 : 0;
+        opacity_ref.current = MathUtils.lerp(
+            opacity_ref.current,
+            target_opacity,
+            delta * 10
+        );
+
+        container.setProperties({ opacity: opacity_ref.current });
+
+        if (!visible && opacity_ref.current < 0.01) {
+            on_hidden?.();
+        }
+    });
+
     // guard against a page a shift-once/goto pointed at that this layout doesn't define
     const rows = keyboard_layout.pages[page] ?? keyboard_layout.pages[keyboard_layout.default_page]!;
 
     return (
         <Container
+            ref={set_container}
             width={KEYBOARD_WIDTH}
             flexDirection="column"
             gap={GAP}
@@ -155,8 +193,17 @@ const Keyboard = () => {
 
 export const KeyboardRenderer = () => {
     const is_open = useKeyboardStore((s) => s.is_open);
+    const [mounted, setMounted] = useState(is_open);
 
-    if (!is_open) return null;
+    useEffect(() => {
+        if (is_open) {
+            setMounted(true);
+        }
+    }, [is_open]);
 
-    return <Keyboard />;
+    if (!mounted) {
+        return null;
+    }
+
+    return <Keyboard visible={is_open} on_hidden={() => setMounted(false)} />;
 };
