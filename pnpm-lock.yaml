@@ -12,9 +12,6 @@ catalogs:
     '@react-three/fiber':
       specifier: ^9.6.1
       version: 9.6.1
-    '@react-three/handle':
-      specifier: ^6.6.30
-      version: 6.6.30
     '@react-three/rapier':
       specifier: ^2.2.0
       version: 2.2.0
@@ -802,18 +799,12 @@ importers:
 
   packages/ui-3d:
     dependencies:
-      '@hyperlinkvr/core':
-        specifier: workspace:*
-        version: link:../core
       '@hyperlinkvr/react':
         specifier: workspace:*
         version: link:../react
       '@hyperlinkvr/types':
         specifier: workspace:*
         version: link:../types
-      '@react-three/drei':
-        specifier: 'catalog:'
-        version: 10.7.7(patch_hash=108871b0ae831447502f11be687d1e55031ef1c7d4cab37a0191038ec8a22ead)(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(@types/three@0.185.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0)
       '@react-three/fiber':
         specifier: 'catalog:'
         version: 9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0)
@@ -826,9 +817,6 @@ importers:
       '@react-three/uikit-lucide':
         specifier: 'catalog:'
         version: 1.0.74(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))
-      '@react-three/xr':
-        specifier: 'catalog:'
-        version: 6.6.30(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0)
       react:
         specifier: 'catalog:'
         version: 19.2.7
@@ -851,9 +839,6 @@ importers:
 
   packages/ui-dom:
     dependencies:
-      '@hyperlinkvr/auth':
-        specifier: workspace:*
-        version: link:../auth
       '@hyperlinkvr/react':
         specifier: workspace:*
         version: link:../react
@@ -912,9 +897,6 @@ importers:
       '@react-three/fiber':
         specifier: 'catalog:'
         version: 9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0)
-      '@react-three/handle':
-        specifier: 'catalog:'
-        version: 6.6.30(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)
       '@react-three/rapier':
         specifier: 'catalog:'
         version: 2.2.0(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(react@19.2.7)(three@0.185.0)
@@ -997,9 +979,6 @@ importers:
       '@hyperlinkvr/vr-engine-schemas':
         specifier: workspace:*
         version: link:../vr-engine-schemas
-      '@react-three/drei':
-        specifier: 'catalog:'
-        version: 10.7.7(patch_hash=108871b0ae831447502f11be687d1e55031ef1c7d4cab37a0191038ec8a22ead)(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(@types/three@0.185.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0)
       '@react-three/fiber':
         specifier: 'catalog:'
         version: 9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0)
@@ -1012,9 +991,6 @@ importers:
       '@react-three/uikit-lucide':
         specifier: 'catalog:'
         version: 1.0.74(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))
-      '@react-three/xr':
-        specifier: 'catalog:'
-        version: 6.6.30(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0)
       react:
         specifier: 'catalog:'
         version: 19.2.7
@@ -3950,13 +3926,6 @@ packages:
         optional: true
       react-native:
         optional: true
-
-  '@react-three/handle@6.6.30':
-    resolution: {integrity: sha512-FWCbh++8EyZcXpO957QnmRfdoWJ+lImqlWhTubghFhcNuEN5N9a2bwf6kYzlpuFKX2byaE/2xKSfMD4Up3cLqw==}
-    peerDependencies:
-      '@react-three/fiber': '>=8'
-      react: '>=18'
-      three: ^0.185.0
 
   '@react-three/rapier@2.2.0':
     resolution: {integrity: sha512-mVsqbKXlGZoN+XrqdhzFZUQmy8pibEOVzl4k7LC+LHe84bQnYBSagy1Hvbda6bL1PJDdTFyiDiBk5buKFinNIQ==}
@@ -13853,18 +13822,6 @@ snapshots:
       zustand: 5.0.14(@types/react@19.2.3)(react@19.2.7)(use-sync-external-store@1.6.0(react@19.2.7))
     optionalDependencies:
       react-dom: 19.2.7(react@19.2.7)
-    transitivePeerDependencies:
-      - '@types/react'
-      - immer
-
-  '@react-three/handle@6.6.30(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)':
-    dependencies:
-      '@pmndrs/handle': 6.6.30(@types/react@19.2.3)(react@19.2.7)
-      '@pmndrs/pointer-events': 6.6.30
-      '@react-three/fiber': 9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0)
-      react: 19.2.7
-      three: 0.185.0
-      zustand: 4.5.7(@types/react@19.2.3)(react@19.2.7)
     transitivePeerDependencies:
       - '@types/react'
       - immer

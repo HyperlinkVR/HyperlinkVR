@@ -9,15 +9,12 @@
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {
-        "@hyperlinkvr/core": "workspace:*",
         "@hyperlinkvr/react": "workspace:*",
         "@hyperlinkvr/types": "workspace:*",
         "react": "catalog:",
         "react-dom": "catalog:",
         "three": "catalog:",
         "@react-three/fiber": "catalog:",
-        "@react-three/drei": "catalog:",
-        "@react-three/xr": "catalog:",
         "@react-three/uikit": "catalog:",
         "@react-three/uikit-default": "catalog:",
         "@react-three/uikit-lucide": "catalog:",
