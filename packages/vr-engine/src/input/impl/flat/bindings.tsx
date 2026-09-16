@@ -11,6 +11,7 @@ import {
 } from "react";
 import { useSetHintState } from "./hints";
 import { dispatch_ui_nav } from "@hyperlinkvr/watch-ui";
+import { useSystemInputStore } from "../../system_input";
 
 // TODO: crouch
 // TODO: sprint toggle option, both here and in xr
@@ -379,6 +380,7 @@ export const FlatInputProvider = ({ children }: { children: ReactNode }) => {
         let pad_jump = false;
         let pad_sprint = false;
         let pad_throw = false;
+        let pad_quick_menu = false;
 
         // held levels this frame, edge/repeat-filtered at the end
         const ui_levels = make_ui_state();
@@ -397,6 +399,8 @@ export const FlatInputProvider = ({ children }: { children: ReactNode }) => {
                 apply_cursor();
             }
             pad_select_previous.current = select_pressed;
+
+            pad_quick_menu = buttons[StandardControllerInput.L_BUMPER]?.pressed ?? false;
 
             // trigger hysteresis
             const grab_value = buttons[StandardControllerInput.L_TRIGGER]?.value ?? 0;
@@ -520,6 +524,11 @@ export const FlatInputProvider = ({ children }: { children: ReactNode }) => {
 
         frame_input.sprint = sprint;
         frame_input.throw_held = throw_held;
+
+        // system UI intents are scheme-neutral, so they go to the shared store
+        // rather than frame_input (Q or bumper, momentary). the setter no-ops
+        // when unchanged, so pushing every frame is cheap
+        useSystemInputStore.getState().set_quick_menu_held(keys.has("KeyQ") || pad_quick_menu);
 
         // world actions are suspended while browsing the watch
         frame_input.jump = !watch_open && (keys.has("Space") || pad_jump);

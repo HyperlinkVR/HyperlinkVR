@@ -27,6 +27,7 @@ import { FlatHandsPublisher } from "../input/impl/flat/hands";
 import { FlatLocomotion } from "../input/impl/flat/locomotion";
 import { XRHandsPublisher } from "../input/impl/xr/hands";
 import { XRLocomotion } from "../input/impl/xr/locomotion";
+import { XRSystemInput } from "../input/impl/xr/system_input";
 import { register_input_monitor, unregister_input_monitor } from "../monitors/input_monitor_registry";
 import { useWorldLoadingStateStore } from "../stores/WorldLoadingStateStore";
 import { Avatar } from "./Avatar";
@@ -304,6 +305,7 @@ export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>
                         </XROrigin>
                         <BodyHUD />
                         <HeadHUD />
+                        <XRSystemInput />
                         {can_move && !seated && <XRLocomotion origin={origin_ref} />}
                     </>
                 ) : (

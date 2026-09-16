@@ -3,7 +3,7 @@ import { WATCH_UI_HEIGHT, WATCH_UI_WIDTH, WatchUI } from "@hyperlinkvr/watch-ui"
 import { useFrame, useThree } from "@react-three/fiber";
 import { Container } from "@react-three/uikit";
 import { KeyboardScope } from "@hyperlinkvr/ui-3d";
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import type { Group, Object3D } from "three";
 import { MathUtils, Matrix4, Quaternion, Raycaster, Vector2, Vector3 } from "three";
 
@@ -12,6 +12,7 @@ import { MathUtils, Matrix4, Quaternion, Raycaster, Vector2, Vector3 } from "thr
 import { useSessionMode } from "../../../react/src/contexts/SessionMode";
 import { useHands } from "../input/hands";
 import { FlatWatchUINavDriver, useFlatInputControls, useFlatInputState } from "../input/impl/flat/bindings";
+import { useWatchDetachShortcut } from "../input/system_input";
 import { click_raycast_layer_mask, Layer, LayerGroup } from "../render";
 
 export type WatchMode = "wrist" | "presented" | "detached";
@@ -43,6 +44,7 @@ interface WatchUIPresentationProps {
     on_request_close?: () => void;
     set_detach?: (detached: boolean) => void;
     detachable?: boolean;
+    open_ref?: RefObject<boolean>;
 }
 
 const WatchUIPresentation = ({
@@ -50,7 +52,8 @@ const WatchUIPresentation = ({
     gaze_to_open = false,
     on_request_close,
     set_detach,
-    detachable = false
+    detachable = false,
+    open_ref
 }: WatchUIPresentationProps) => {
     const body_group_ref = useRef<Group>(null);
     const ui_group_ref = useRef<Group>(null);
@@ -230,6 +233,8 @@ const WatchUIPresentation = ({
             want_open = false;
         }
 
+        if (open_ref) open_ref.current = want_open;
+
         if (want_open !== ui_open) {
             setUIOpen(want_open);
         }
@@ -364,8 +369,22 @@ export const FlatWatch = () => {
 
 export const VRWatch = () => {
     const [detached, setDetached] = useState(false);
-    // TODO: add controller bind for detach
-    return <WatchUIPresentation mode={detached ? "detached" : "wrist"} detachable set_detach={setDetached} gaze_to_open />;
+    const open_ref = useRef(false);
+
+    useWatchDetachShortcut(() => {
+        if (!open_ref.current) return;
+        setDetached((current) => !current);
+    });
+
+    return (
+        <WatchUIPresentation
+            mode={detached ? "detached" : "wrist"}
+            detachable
+            set_detach={setDetached}
+            gaze_to_open
+            open_ref={open_ref}
+        />
+    );
 };
 
 export const WristWatch = () => {
