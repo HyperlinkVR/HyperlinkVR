@@ -1,6 +1,6 @@
 import type { SiteStore } from "@hyperlinkvr/hypergram-read-host";
 
-export const TTL_1_DAY = 86400;
+export const TTL_1_YEAR = 60 * 60 * 24 * 365;
 
 export type CacheStateRef = { cache?: "HIT" | "MISS" };
 
@@ -11,7 +11,7 @@ export class R2SiteStore implements SiteStore {
         private readonly ctx?: ExecutionContext,
         private readonly ip_limiter?: RateLimit,
         private readonly global_limiter?: RateLimit,
-        private readonly ttl_seconds: number = TTL_1_DAY,
+        private readonly ttl_seconds: number = TTL_1_YEAR, // cache is deleted on writes, so a long TTL is fine
         private readonly cache_state_ref?: CacheStateRef
     ) {}
 
@@ -81,9 +81,12 @@ export class R2SiteStore implements SiteStore {
 
         const buffer = await object.arrayBuffer();
 
+        const content_type = object.httpMetadata?.contentType || "application/octet-stream";
+
         const response_to_cache = new Response(buffer, {
             headers: {
-                "Cache-Control": `public, s-maxage=${this.ttl_seconds}`
+                "Content-Type": content_type,
+                "Cache-Control": `public, max-age=${this.ttl_seconds}, s-maxage=${this.ttl_seconds}, immutable`
             }
         });
 

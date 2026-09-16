@@ -2,7 +2,7 @@ import { create_app, create_signature_auth } from "@hyperlinkvr/hypergram-server
 
 
 
-import { CacheStateRef, R2SiteStore, TTL_1_DAY } from "./r2_store";
+import { CacheStateRef, R2SiteStore, TTL_1_YEAR } from "./r2_store";
 
 
 export default {
@@ -18,7 +18,7 @@ export default {
         }
 
         const cache_state: CacheStateRef = {};
-        const store = new R2SiteStore(env.SITE_BUCKET, env.SITE_BUCKET_ROOT ?? "", ctx, env.IP_RATE_LIMITER, env.GLOBAL_RATE_LIMITER, TTL_1_DAY, cache_state);
+        const store = new R2SiteStore(env.SITE_BUCKET, env.SITE_BUCKET_ROOT ?? "", ctx, env.IP_RATE_LIMITER, env.GLOBAL_RATE_LIMITER, TTL_1_YEAR, cache_state);
 
         const app = await create_app({
             store,
