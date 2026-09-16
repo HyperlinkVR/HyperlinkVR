@@ -33,8 +33,10 @@ export default {
             const res = await app.fetch(request, env, ctx);
 
             const headers = new Headers(res.headers);
-            headers.set("X-Cache", cache_state.cache ?? "MISS");
-            headers.set("Access-Control-Expose-Headers", "X-Cache");
+            if (cache_state.cache) {
+                headers.set("X-Cache", cache_state.cache);
+                headers.set("Access-Control-Expose-Headers", "X-Cache");
+            }
 
             return new Response(res.body, {
                 status: res.status,
