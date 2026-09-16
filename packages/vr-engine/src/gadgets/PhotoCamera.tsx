@@ -1,3 +1,4 @@
+import { useSessionMode } from "@hyperlinkvr/react";
 import { PerspectiveCamera, PositionalAudio, useFBO } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Container, Image, Text } from "@react-three/uikit";
@@ -11,7 +12,6 @@ import { HypergramProvider, useHypergram } from "../contexts/HypergramContext";
 import { Grabbable } from "../interaction";
 import { compute_layer_mask, Layer } from "../render";
 import { active_pipeline } from "../render/GraphicsPipeline";
-import {useSessionMode} from "@hyperlinkvr/react";
 
 
 const DISPLAY_ASPECT = 16 / 9;
@@ -215,18 +215,25 @@ const UploadControls = ({ buffer, go_back }: { buffer: Uint8Array, go_back: () =
     );
 };
 
-const CaptureControls = ({ buffer_ref, on_capture, capture_pending }: { buffer_ref: RefObject<Uint8Array | null>, on_capture?: () => void, capture_pending: RefObject<boolean> }) => {
+const CaptureControls = ({
+    buffer_ref,
+    on_capture,
+    capture_pending,
+    can_capture = { current: true }
+}: {
+    buffer_ref: RefObject<Uint8Array | null>;
+    on_capture?: () => void;
+    capture_pending: RefObject<boolean>;
+    can_capture?: RefObject<boolean>;
+}) => {
     const camera_ref = useRef<PerspectiveCameraType>(null);
 
-    const on_camera_ready = useCallback(
-        (cam: PerspectiveCameraType) => {
-            if (!cam) return;
+    const on_camera_ready = useCallback((cam: PerspectiveCameraType) => {
+        if (!cam) return;
 
-            camera_ref.current = cam;
-            cam.layers.mask = LAYER_MASK;
-        },
-        []
-    );
+        camera_ref.current = cam;
+        cam.layers.mask = LAYER_MASK;
+    }, []);
 
     const screen_mesh_ref = useRef<Mesh>(null);
 
@@ -247,6 +254,8 @@ const CaptureControls = ({ buffer_ref, on_capture, capture_pending }: { buffer_r
         colorSpace: SRGBColorSpace
     });
 
+    const blackout_preview = useRef(0);
+
     useFrame(() => {
         if (!camera_ref.current) return;
 
@@ -262,11 +271,19 @@ const CaptureControls = ({ buffer_ref, on_capture, capture_pending }: { buffer_r
 
         // low res preview render every frame for the viewfinder
         gl.setRenderTarget(preview_rt);
-        gl.render(scene, camera_ref.current);
+        if (blackout_preview.current > 0) {
+            blackout_preview.current--;
+        } else {
+            gl.render(scene, camera_ref.current);
+        }
 
         // high res render for snapshot, only rendered when user clicks the capture button
         if (capture_pending.current) {
             capture_pending.current = false;
+
+            // blackout preview rt for a few frames to simulate shutter
+            blackout_preview.current = 5;
+            gl.clear();
 
             gl.setRenderTarget(capture_rt);
             gl.render(scene, camera_ref.current);
@@ -309,7 +326,13 @@ const CaptureControls = ({ buffer_ref, on_capture, capture_pending }: { buffer_r
                 <meshBasicMaterial map={preview_rt.texture} />
             </mesh>
 
-            <mesh position={[0, -0.055, SCREEN_OFFSET]} rotation={[Math.PI / 2, 0, 0]} onPointerDown={() => (capture_pending.current = true)}>
+            <mesh
+                position={[0, -0.055, SCREEN_OFFSET]}
+                rotation={[Math.PI / 2, 0, 0]}
+                onPointerDown={() => {
+                    if (!can_capture.current) return;
+                    capture_pending.current = true;
+                }}>
                 <cylinderGeometry args={[0.01, 0.01, 0.001, 32]} />
                 <meshStandardMaterial color="white" />
             </mesh>
@@ -317,21 +340,28 @@ const CaptureControls = ({ buffer_ref, on_capture, capture_pending }: { buffer_r
     );
 };
 
-const CameraControls = ({capture_pending, on_capture}: {capture_pending: RefObject<boolean>, on_capture?: () => void}) => {
+const SHUTTER_TIME = 300;
+
+const CameraControls = ({capture_pending, on_capture, can_capture = {current: true}}: {capture_pending: RefObject<boolean>, on_capture?: () => void, can_capture?: RefObject<boolean>}) => {
     const captured_buffer = useRef<Uint8Array | null>(null);
-    const [has_captured, setHasCaptured] = useState(false);
+    const [show_upload, setShowUpload] = useState(false);
 
     const handle_capture = useCallback(
         () => {
-            setHasCaptured(true);
+            // show upload controls after a short delay to allow the shutter effect to be seen
+            setTimeout(() => {
+                setShowUpload(true);
+            }, SHUTTER_TIME);
+
             on_capture?.();
         },
         [on_capture]
     );
 
-    if (!has_captured) {
+    if (!show_upload) {
         return (
             <CaptureControls
+                can_capture={can_capture}
                 capture_pending={capture_pending}
                 buffer_ref={captured_buffer}
                 on_capture={handle_capture}
@@ -346,7 +376,9 @@ const CameraControls = ({capture_pending, on_capture}: {capture_pending: RefObje
         return (
             <UploadControls
                 buffer={captured_buffer.current}
-                go_back={() => setHasCaptured(false)}
+                go_back={() => {
+                    setShowUpload(false);
+                }}
             />
         );
     }
@@ -356,8 +388,16 @@ export const PhotoCamera = () => {
     const capture_pending = useRef(false);
     const sfx_ref = useRef<PositionalAudioType>(null);
 
-    const play_sound = useCallback(
+    const can_capture = useRef(true);
+
+    const handle_capture = useCallback(
         () => {
+            // lock out capture for a short time while waiting for the shutter effect to be seen (and for the control switch to happen)
+            can_capture.current = false;
+            setTimeout(() => {
+                can_capture.current = true;
+            }, SHUTTER_TIME * 2);
+
             const sfx = sfx_ref.current;
             if (!sfx) return;
 
@@ -375,7 +415,10 @@ export const PhotoCamera = () => {
         <Grabbable
             sticky
             position={[0, 2, 0]}
-            on_trigger_start={() => (capture_pending.current = true)}
+            on_trigger_start={() => {
+                if (!can_capture.current) return;
+                capture_pending.current = true;
+            }}
             grab_rotation={[mode === "vr" ? -Math.PI / 2 : 0, 0, 0]}
         >
             <group position={[0, -0.015, 0]}>
@@ -393,7 +436,7 @@ export const PhotoCamera = () => {
             <PositionalAudio ref={sfx_ref} url={camera_sfx} distance={1} loop={false} autoplay={false} />
 
             <HypergramProvider>
-                <CameraControls capture_pending={capture_pending} on_capture={play_sound} />
+                <CameraControls can_capture={can_capture} capture_pending={capture_pending} on_capture={handle_capture} />
             </HypergramProvider>
         </Grabbable>
     );
