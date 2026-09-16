@@ -2,7 +2,7 @@ import { useSessionMode } from "@hyperlinkvr/react";
 import { PerspectiveCamera, PositionalAudio, useFBO } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Container, Image, Text } from "@react-three/uikit";
-import { Button } from "@react-three/uikit-default";
+import { Button, Input } from "@react-three/uikit-default";
 import { RefObject, useCallback, useMemo, useRef, useState } from "react";
 import { DataTexture, LinearFilter, Mesh, PerspectiveCamera as PerspectiveCameraType, RGBAFormat, SRGBColorSpace, UnsignedByteType, type PositionalAudio as PositionalAudioType } from "three";
 
@@ -12,6 +12,8 @@ import { HypergramProvider, useHypergram } from "../contexts/HypergramContext";
 import { Grabbable } from "../interaction";
 import { compute_layer_mask, Layer } from "../render";
 import { active_pipeline } from "../render/GraphicsPipeline";
+import { ArrowLeft, X } from "@react-three/uikit-lucide";
+import { MAX_CAPTION_LENGTH } from "@hyperlinkvr/hypergram-schemas/v1";
 
 
 const DISPLAY_ASPECT = 16 / 9;
@@ -88,6 +90,129 @@ const image_buffer_to_blob = async (buffer: Uint8Array) => {
 const BODY_THICKNESS = 0.04;
 const SCREEN_OFFSET = BODY_THICKNESS / 2 + 0.001;
 
+const HypergramPostControls = ({ texture, buffer, go_back, on_success }: { texture: DataTexture, go_back: () => void, buffer: Uint8Array, on_success: () => void }) => {
+    const hypergram = useHypergram();
+
+    const [caption_input, setCaptionInput] = useState("");
+
+    const [posting, setPosting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const post_to_hypergram = useCallback(async (caption: string) => {
+        if (!hypergram.active) {
+            console.error("Hypergram not active, cannot post photo");
+            return;
+        }
+
+        setError(null);
+        setPosting(true);
+
+        const blob = await image_buffer_to_blob(buffer);
+        if (!blob) {
+            console.error("Failed to convert buffer to blob");
+            setPosting(false);
+            return;
+        }
+
+        const success = await hypergram.post_photo!(
+            new File([blob], "upload.png"),
+            caption.length > 0 ? caption : undefined
+        );
+
+        setPosting(false);
+
+        if (success) {
+            console.log("Photo uploaded to Hypergram successfully!");
+            on_success();
+        } else {
+            console.error("Failed to upload post to Hypergram");
+            setError("Failed to upload post! Please try again.");
+        }
+    }, [buffer, hypergram, on_success]);
+
+    return (
+        <group position={[0, 0, SCREEN_OFFSET]}>
+            <Container
+                flexDirection="column"
+                alignItems="center"
+                justifyContent="center"
+                gap={1}
+                width={40}
+            >
+                <Container width={40} flexDirection="row" justifyContent="center">
+                    <Container marginRight="auto" width={9} height={3}>
+                        <Button
+                            onPointerDown={go_back}
+                            backgroundColor="black"
+                            height={3}
+                            width={9}
+                            flexGrow={1}
+                            flexShrink={1}
+                            flexBasis={0}
+                            paddingX={0.5}
+                            paddingY={0.5}
+                            justifyContent="center"
+                            alignItems="center"
+                            fontSize={2}
+                            color="white"
+                        >
+                            <ArrowLeft marginRight={1} width={1.5} />
+                            <Text>
+                                Back
+                            </Text>
+                        </Button>
+                    </Container>
+
+                    {error && (
+                        <Text fontSize={1} color="red">
+                            {error}
+                        </Text>
+                    )}
+                </Container>
+
+                <Image src={texture} width={40} keepAspectRatio borderRadius={1} />
+
+                <Container width={40} height={5}>
+                    <Input
+                        value={caption_input}
+                        onValueChange={(val) => {
+                            if (val.length <= MAX_CAPTION_LENGTH) {
+                                setCaptionInput(val);
+                            }
+                        }}
+                        placeholder="Enter caption (optional)..."
+                        width="100%"
+                        height="100%"
+                        fontSize={1.5}
+                        paddingX={2}
+                        paddingY={0.5}
+                        borderWidth={0.2}
+                    />
+                </Container>
+
+                <Button
+                    onPointerDown={() => post_to_hypergram(caption_input)}
+                    backgroundColor="black"
+                    height={4}
+                    width={40}
+                    flexGrow={1}
+                    flexShrink={1}
+                    flexBasis={0}
+                    paddingX={0.5}
+                    paddingY={0.5}
+                    justifyContent="center"
+                    alignItems="center"
+                    disabled={posting}
+                >
+                    <Text fontSize={2} color="white">
+                        {posting ? "Posting..." : "Post"}
+                    </Text>
+                </Button>
+            </Container>
+        </group>
+    );
+}
+
 const UploadControls = ({ buffer, go_back }: { buffer: Uint8Array, go_back: () => void }) => {
     const hypergram = useHypergram();
 
@@ -103,40 +228,22 @@ const UploadControls = ({ buffer, go_back }: { buffer: Uint8Array, go_back: () =
         return tex;
     }, [buffer]);
 
-    const [posting, setPosting] = useState(false);
-    const [post_success, setPostSuccess] = useState<boolean | null>(null);
+    const [show_post_menu, setShowPostMenu] = useState(false);
+    const [posted, setPosted] = useState<boolean>(false);
 
-    const post_to_hypergram = useCallback(
-        async () => {
-            if (!hypergram.active) {
-                console.error("Hypergram not active, cannot post photo");
-                return;
-            }
-
-            setPosting(true);
-            setPostSuccess(null);
-
-            const blob = await image_buffer_to_blob(buffer);
-            if (!blob) {
-                console.error("Failed to convert buffer to blob");
-                setPosting(false);
-                return;
-            }
-
-            // TODO: caption input (probably new screen)
-            const success = await hypergram.post_photo!(new File([blob], "upload.png"), "Captured with HyperlinkVR");
-            if (success) {
-                console.log("Photo uploaded to Hypergram successfully!");
-                setPostSuccess(true);
-            } else {
-                console.error("Failed to upload photo to Hypergram");
-                setPostSuccess(false);
-            }
-
-            setPosting(false);
-        },
-        [buffer, hypergram]
-    );
+    if (show_post_menu) {
+        return (
+            <HypergramPostControls
+                texture={texture}
+                buffer={buffer}
+                go_back={() => setShowPostMenu(false)}
+                on_success={() => {
+                    setPosted(true);
+                    setShowPostMenu(false);
+                }}
+            />
+        );
+    }
 
     return (
         <group position={[0, 0, SCREEN_OFFSET]}>
@@ -147,23 +254,28 @@ const UploadControls = ({ buffer, go_back }: { buffer: Uint8Array, go_back: () =
                 gap={1}
                 width={40}
             >
-                <Button
-                    onPointerDown={go_back}
-                    backgroundColor="black"
-                    height={3}
-                    width={3}
-                    flexGrow={1}
-                    flexShrink={1}
-                    flexBasis={0}
-                    paddingX={0.5}
-                    paddingY={0.5}
-                    justifyContent="center"
-                    alignItems="center"
-                >
-                    <Text fontSize={2} color="white">
-                        X
-                    </Text>
-                </Button>
+                <Container marginLeft="auto" width={10} height={3}>
+                    <Button
+                        onPointerDown={go_back}
+                        backgroundColor="black"
+                        height={3}
+                        width={10}
+                        flexGrow={1}
+                        flexShrink={1}
+                        flexBasis={0}
+                        paddingX={0.5}
+                        paddingY={0.5}
+                        justifyContent="center"
+                        alignItems="center"
+                        fontSize={2}
+                        color="white"
+                    >
+                        <X marginRight={1} width={1.25} />
+                        <Text>
+                            Close
+                        </Text>
+                    </Button>
+                </Container>
 
                 <Image src={texture} width={40} keepAspectRatio borderRadius={1} />
 
@@ -192,7 +304,7 @@ const UploadControls = ({ buffer, go_back }: { buffer: Uint8Array, go_back: () =
 
                     {hypergram.active && (
                         <Button
-                            onPointerDown={post_to_hypergram}
+                            onPointerDown={() => setShowPostMenu(true)}
                             backgroundColor="black"
                             height={4}
                             flexGrow={1}
@@ -202,10 +314,10 @@ const UploadControls = ({ buffer, go_back }: { buffer: Uint8Array, go_back: () =
                             paddingY={0.5}
                             justifyContent="center"
                             alignItems="center"
-                            disabled={posting || post_success === true}
+                            disabled={posted === true}
                         >
                             <Text fontSize={2} color="white">
-                                {posting ? "Posting..." : (post_success === true ? "Posted!" : "Post to Hypergram")}
+                                {posted === true ? "Posted!" : "Post to Hypergram"}
                             </Text>
                         </Button>
                     )}
@@ -444,3 +556,6 @@ export const PhotoCamera = () => {
 
 // TODO: gadget equipping (holster or hand menu?)
 // TODO: square guide, or just stop making them square online
+// TODO: controller haptics (abstracted in input providers, and used in multiple places)
+// TODO: vr keyboard now also needed here (as well as it is for settings, watch search, dom mirror etc, automatic if possible would be super useful)
+// TODO: lock flat input whilst focused on input fields

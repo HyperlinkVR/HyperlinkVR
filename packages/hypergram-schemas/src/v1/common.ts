@@ -10,7 +10,8 @@ export const PostIDSchema = z
     .string()
     .regex(/^[0-7][0-9A-HJKMNP-TV-Z]{25}$/, "Expected an uppercase ULID");
 
-export const CaptionSchema = z.string().min(1).max(512);
+export const MAX_CAPTION_LENGTH = 512;
+export const CaptionSchema = z.string().min(1).max(MAX_CAPTION_LENGTH);
 
 export const Sha256HexSchema = z.string().regex(/^[0-9a-f]{64}$/, "Expected a lowercase hex sha256 digest");
 
