@@ -503,6 +503,10 @@ export const settings_def = build_settings({
     },
     // TODO: put all default urls, repos, etc in a root consts file
 
+    keyboard_layout: {
+        default_value: {locale: "en-GB", variant: "qwerty"} as {locale: string; variant?: string},
+    },
+
     debug_ray_hits: {
         default_value: false,
         local_only: true

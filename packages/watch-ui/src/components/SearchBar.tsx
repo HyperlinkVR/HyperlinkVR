@@ -2,6 +2,7 @@ import { Container, Input, VanillaInput } from "@react-three/uikit";
 import { Search, X } from "@react-three/uikit-lucide";
 import { useImperativeHandle, useRef } from "react";
 import { FocusableButton } from "./FocusableButton";
+import { useKeyboardInput } from "@hyperlinkvr/ui-3d";
 
 
 export const SearchBar = ({
@@ -21,7 +22,7 @@ export const SearchBar = ({
     return (
         <Container width="100%" height={48} borderRadius={4} paddingInline={16} backgroundColor="#ffffff" flexDirection="row" alignItems="center" justifyContent="center" gap={16}>
             <Search />
-            <Input ref={internal_ref} width="100%" placeholder="Search worlds..." paddingBlock={24} value={value} onFocusChange={on_focus_change} onValueChange={on_change} />
+            <Input {...useKeyboardInput({ref: internal_ref, onFocusChange: on_focus_change})} width="100%" placeholder="Search worlds..." paddingBlock={24} value={value} onValueChange={on_change} />
             {value && (
                 <FocusableButton variant="link" on_press={() => on_change?.("")} color="black">
                     <X />

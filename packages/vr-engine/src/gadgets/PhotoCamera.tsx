@@ -14,6 +14,7 @@ import { compute_layer_mask, Layer } from "../render";
 import { active_pipeline } from "../render/GraphicsPipeline";
 import { ArrowLeft, X } from "@react-three/uikit-lucide";
 import { MAX_CAPTION_LENGTH } from "@hyperlinkvr/hypergram-schemas/v1";
+import { useKeyboardInput } from "@hyperlinkvr/ui-3d";
 
 
 const DISPLAY_ASPECT = 16 / 9;
@@ -174,6 +175,7 @@ const HypergramPostControls = ({ texture, buffer, go_back, on_success }: { textu
 
                 <Container width={40} height={5}>
                     <Input
+                        {...useKeyboardInput()}
                         value={caption_input}
                         onValueChange={(val) => {
                             if (val.length <= MAX_CAPTION_LENGTH) {
@@ -314,10 +316,10 @@ const UploadControls = ({ buffer, go_back }: { buffer: Uint8Array, go_back: () =
                             paddingY={0.5}
                             justifyContent="center"
                             alignItems="center"
-                            disabled={posted === true}
+                            disabled={posted}
                         >
                             <Text fontSize={2} color="white">
-                                {posted === true ? "Posted!" : "Post to Hypergram"}
+                                {posted ? "Posted!" : "Post to Hypergram"}
                             </Text>
                         </Button>
                     )}

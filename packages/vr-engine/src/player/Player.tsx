@@ -1,16 +1,24 @@
 import { useMessageEngine, useSetting, useWorldSession } from "@hyperlinkvr/react";
 import { PlayerMonitorSchema } from "@hyperlinkvr/vr-engine-schemas";
 import { Text } from "@react-three/drei";
+import { Container } from "@react-three/uikit";
 import { XROrigin } from "@react-three/xr";
-import { Suspense, useEffect, useImperativeHandle, useRef } from "react";
+import {
+    Suspense,
+    useEffect,
+    useImperativeHandle,
+    useMemo,
+    useRef
+} from "react";
 import type { Group } from "three";
 
 
 
-import { useWebSDKMessaging } from "../contexts";
-import type { ExpressionMouth} from "../contexts/PlayerExpressionContext";
-import { PlayerExpressionProvider, usePlayerExpression } from "../contexts/PlayerExpressionContext";
 import { useSessionMode } from "../../../react/src/contexts/SessionMode";
+import { useWebSDKMessaging } from "../contexts";
+import type { ExpressionMouth } from "../contexts/PlayerExpressionContext";
+import { PlayerExpressionProvider, usePlayerExpression } from "../contexts/PlayerExpressionContext";
+import { PhotoCamera } from "../gadgets/PhotoCamera";
 import { BodyHUD } from "../hud/BodyHUD";
 import { FlatHUD } from "../hud/FlatHUD";
 import { HeadHUD } from "../hud/HeadHUD";
@@ -23,13 +31,15 @@ import { register_input_monitor, unregister_input_monitor } from "../monitors/in
 import { useWorldLoadingStateStore } from "../stores/WorldLoadingStateStore";
 import { Avatar } from "./Avatar";
 import { FlatCameraRig } from "./FlatCameraRig";
-import { PlayerKinematics } from "./PlayerKinematics";
 import { set_local_player_origin } from "./player_position_registry";
+import { PlayerKinematics } from "./PlayerKinematics";
 import { useIsSeated } from "./seating";
 import { LOCAL_PLAYER_SUBJECT } from "./subject";
 import { Vignette } from "./Vignette";
 import { WristWatch } from "./WristWatch";
-import { PhotoCamera } from "../gadgets/PhotoCamera";
+import { KeyboardRenderer } from "@hyperlinkvr/ui-3d";
+import { useFrame } from "@react-three/fiber";
+import { KeyboardSlot } from "./KeyboardSlot";
 
 
 const MouthTest = ({
@@ -290,6 +300,7 @@ export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>
                             <XRHandsPublisher />
                             <ExpressionTest />
                             <OriginHUD />
+                            <KeyboardSlot />
                         </XROrigin>
                         <BodyHUD />
                         <HeadHUD />

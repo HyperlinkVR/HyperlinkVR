@@ -25,6 +25,7 @@
       <sourceFolder url="file://$MODULE_DIR$/packages/hypergram-server" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/packages/hypergram-read-host" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/packages/hypergram-server-lib" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/packages/ui-3d" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/.turbo" />
       <excludeFolder url="file://$MODULE_DIR$/apps/extension/.output" />
       <excludeFolder url="file://$MODULE_DIR$/apps/extension/.turbo" />

@@ -1,9 +1,9 @@
 {
-    "name": "@hyperlinkvr/watch-ui",
+    "name": "@hyperlinkvr/ui-3d",
     "version": "0.0.1",
     "private": true,
-    "main": "src/index.tsx",
-    "types": "src/index.tsx",
+    "main": "src/index.ts",
+    "types": "src/index.ts",
     "scripts": {
         "build": "tsc --build",
         "typecheck": "tsc --noEmit"
@@ -12,9 +12,6 @@
         "@hyperlinkvr/core": "workspace:*",
         "@hyperlinkvr/react": "workspace:*",
         "@hyperlinkvr/types": "workspace:*",
-        "@hyperlinkvr/vr-engine-schemas": "workspace:*",
-        "@hyperlinkvr/auth": "workspace:*",
-        "@hyperlinkvr/ui-3d": "workspace:*",
         "react": "catalog:",
         "react-dom": "catalog:",
         "three": "catalog:",
@@ -24,12 +21,10 @@
         "@react-three/uikit": "catalog:",
         "@react-three/uikit-default": "catalog:",
         "@react-three/uikit-lucide": "catalog:",
-        "react-error-boundary": "catalog:",
-        "troika-three-text": "catalog:"
+        "zustand": "catalog:"
     },
     "devDependencies": {
         "@types/three": "catalog:",
-        "@types/react": "catalog:",
-        "@types/troika-three-text": "workspace:*"
+        "@types/react": "catalog:"
     }
 }

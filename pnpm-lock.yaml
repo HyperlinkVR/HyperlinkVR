@@ -800,6 +800,55 @@ importers:
         specifier: workspace:*
         version: link:../vr-engine-schemas
 
+  packages/ui-3d:
+    dependencies:
+      '@hyperlinkvr/core':
+        specifier: workspace:*
+        version: link:../core
+      '@hyperlinkvr/react':
+        specifier: workspace:*
+        version: link:../react
+      '@hyperlinkvr/types':
+        specifier: workspace:*
+        version: link:../types
+      '@react-three/drei':
+        specifier: 'catalog:'
+        version: 10.7.7(patch_hash=108871b0ae831447502f11be687d1e55031ef1c7d4cab37a0191038ec8a22ead)(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(@types/three@0.185.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0)
+      '@react-three/fiber':
+        specifier: 'catalog:'
+        version: 9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0)
+      '@react-three/uikit':
+        specifier: 'catalog:'
+        version: 1.0.74(patch_hash=dc16ff70565242d18e3b750194896a48bdc375f0e832ca395e51eecf4e8820e9)(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))
+      '@react-three/uikit-default':
+        specifier: 'catalog:'
+        version: 1.0.74(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))
+      '@react-three/uikit-lucide':
+        specifier: 'catalog:'
+        version: 1.0.74(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))
+      '@react-three/xr':
+        specifier: 'catalog:'
+        version: 6.6.30(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0)
+      react:
+        specifier: 'catalog:'
+        version: 19.2.7
+      react-dom:
+        specifier: 'catalog:'
+        version: 19.2.7(react@19.2.7)
+      three:
+        specifier: ^0.185.0
+        version: 0.185.0
+      zustand:
+        specifier: 'catalog:'
+        version: 5.0.14(@types/react@19.2.3)(react@19.2.7)(use-sync-external-store@1.6.0(react@19.2.7))
+    devDependencies:
+      '@types/react':
+        specifier: 'catalog:'
+        version: 19.2.3
+      '@types/three':
+        specifier: 'catalog:'
+        version: 0.185.0
+
   packages/ui-dom:
     dependencies:
       '@hyperlinkvr/auth':
@@ -839,6 +888,9 @@ importers:
       '@hyperlinkvr/types':
         specifier: workspace:*
         version: link:../types
+      '@hyperlinkvr/ui-3d':
+        specifier: workspace:*
+        version: link:../ui-3d
       '@hyperlinkvr/ui-dom':
         specifier: workspace:*
         version: link:../ui-dom
@@ -936,6 +988,9 @@ importers:
       '@hyperlinkvr/types':
         specifier: workspace:*
         version: link:../types
+      '@hyperlinkvr/ui-3d':
+        specifier: workspace:*
+        version: link:../ui-3d
       '@hyperlinkvr/vr-engine-schemas':
         specifier: workspace:*
         version: link:../vr-engine-schemas
