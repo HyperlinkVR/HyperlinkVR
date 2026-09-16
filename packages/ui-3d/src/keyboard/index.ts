@@ -1,4 +1,5 @@
 export * from "./hooks";
+export * from "./scope";
 export * from "./store";
 export * from "./write";
 export * from "./layout";

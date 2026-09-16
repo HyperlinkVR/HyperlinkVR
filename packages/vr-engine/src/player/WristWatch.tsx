@@ -2,6 +2,7 @@ import { useSetting } from "@hyperlinkvr/react";
 import { WATCH_UI_HEIGHT, WATCH_UI_WIDTH, WatchUI } from "@hyperlinkvr/watch-ui";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Container } from "@react-three/uikit";
+import { KeyboardScope } from "@hyperlinkvr/ui-3d";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import type { Group, Object3D } from "three";
 import { MathUtils, Matrix4, Quaternion, Raycaster, Vector2, Vector3 } from "three";
@@ -282,7 +283,9 @@ const WatchUIPresentation = ({
                         flexDirection="column"
                     >
                         <Suspense fallback={null}> {/* TODO: little backup loading panel */}
-                            <WatchUI on_request_close={on_request_close} detached={mode === "detached"} set_detach={set_detach} detachable={detachable} />
+                            <KeyboardScope name="watch" active={ui_open}>
+                                <WatchUI on_request_close={on_request_close} detached={mode === "detached"} set_detach={set_detach} detachable={detachable} />
+                            </KeyboardScope>
                         </Suspense>
                     </Container>
                 </LayerGroup>
