@@ -1,12 +1,4 @@
-import {
-    DiscordPresenceProvider,
-    useDiscordPresence,
-    useSetting,
-    useStorage,
-    useWorldMetadata,
-    useWorldSession,
-    WorldSessionProvider
-} from "@hyperlinkvr/react";
+import { DiscordPresenceProvider, useDiscordPresence, useSetting, useStorage, useWorldMetadata, useWorldSession, WorldSessionProvider } from "@hyperlinkvr/react";
 import { SoftShadows, Stats, Text } from "@react-three/drei";
 import type { RootState } from "@react-three/fiber";
 import { Canvas } from "@react-three/fiber";
@@ -71,7 +63,13 @@ import { EngineObjectSync } from "./EngineObjectSync";
 import { FlatLoadingScreen, VRLoadingScreen } from "./LoadingScreen";
 import { FlatNavConsentGate, useNavConsent, VRNavConsentGate } from "./NavConsentGate";
 
+
+
 import "../loader-config";
+
+
+
+
 
 export const xr_store = createXRStore({
     controller: XRAvatarHand,
@@ -405,13 +403,15 @@ const DiscordPresenceSync = () => {
                     url
                 }
             ]
-        }).catch((err => {
+        }).catch((err) => {
             console.error("Failed to set Discord activity:", err);
-        }));
+        });
     }, [url, world_metadata, set_activity, show_world]);
 
     return null;
 }
+
+const anim_logo_svg = new URL("../../../assets/hyperlinkvr_anim.svg", import.meta.url).href;
 
 const EngineHostInternal = memo(
     ({ on_ready, mode }: { on_ready: () => void; mode: "vr" | "flat" }) => {
@@ -479,6 +479,8 @@ const EngineHostInternal = memo(
             return "soft";
         }, [shadows]);
 
+        const [spec_cam_mode] = useSetting("spectator_view");
+
         return (
             <SessionModeProvider value={mode}>
                 <WorldSessionProvider>
@@ -524,6 +526,13 @@ const EngineHostInternal = memo(
 
                                     {loading && <FlatLoadingScreen />}
                                     {mode === "flat" && <FlatNavConsentGate />}
+
+                                    {spec_cam_mode === "off" && (
+                                        <div className="fixed top-0 left-0 w-full h-full pointer-events-none z-4 bg-black flex flex-col items-center justify-center gap-2">
+                                            <img src={anim_logo_svg} className="w-32 h-32" />
+                                            <p className="text-white">Spectator view disabled</p>
+                                        </div>
+                                    )}
 
                                     <AvatarProvider>
                                         <PlayerOriginProvider value={player_ref}>
