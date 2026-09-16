@@ -4,11 +4,12 @@ import { Matrix4, PerspectiveCamera, Vector3, type Object3D, type Quaternion, ty
 
 
 
-import type { PlayerOriginContextType} from "../contexts";
+import type { PlayerOriginContextType } from "../contexts";
 import { usePlayerOrigin } from "../contexts";
 import { Eye } from "../types";
 import { active_pipeline } from "./GraphicsPipeline";
 import { Layer } from "./layers";
+import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass";
 
 
 // TODO: params kinda redundant (having current, as well as being able to mod in place) but will keep as is for consistency for now
@@ -132,7 +133,7 @@ export const SpectatorCameraController = ({config = camera_controller_configs.fi
         gl.clear();
 
         // substitute our spectator camera into the render pass to ensure it actually gets used for the render, not the headset arraycamera
-        const render_pass = active_pipeline.passes.find((p: any) => p.is_render_pass);
+        const render_pass = active_pipeline.passes.find((p) => p instanceof RenderPass || (p as any)?.is_render_pass);
         const prev_cam = (render_pass as any)?.camera;
         if (render_pass) (render_pass as any).camera = spec_camera;
 
