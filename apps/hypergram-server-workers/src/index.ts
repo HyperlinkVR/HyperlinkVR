@@ -20,16 +20,16 @@ export default {
         const cache_state: CacheStateRef = {};
         const store = new R2SiteStore(env.SITE_BUCKET, env.SITE_BUCKET_ROOT ?? "", ctx, env.IP_RATE_LIMITER, env.GLOBAL_RATE_LIMITER, TTL_1_YEAR, cache_state);
 
-        const app = await create_app({
-            store,
-            base_url,
-            name: env.NAME ?? "Hypergram",
-            // only accepts game signature auth currently, no web auth adapter implemented
-            auth: create_signature_auth({ token_secret: env.TOKEN_SECRET, allowed_hosts: env.ALLOWED_HOSTS.split(",") })
-        });
-
 
         try {
+            const app = await create_app({
+                store,
+                base_url,
+                name: env.NAME ?? "Hypergram",
+                // only accepts game signature auth currently, no web auth adapter implemented
+                auth: create_signature_auth({ token_secret: env.TOKEN_SECRET, allowed_hosts: env.ALLOWED_HOSTS.split(",") })
+            });
+
             const res = await app.fetch(request, env, ctx);
 
             const headers = new Headers(res.headers);
