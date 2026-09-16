@@ -149,5 +149,3 @@ export class R2SiteStore implements SiteStore {
         return out;
     }
 }
-
-// TODO: resolve feeds and manifest virtually rather than writing to the bucket

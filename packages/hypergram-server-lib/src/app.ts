@@ -1,5 +1,5 @@
-import { load_site_state, post_dir, post_path, publish_site, type SiteStore } from "@hyperlinkvr/hypergram-read-host";
-import { api_v1_auth_contract, api_v1_write_contract, type HostManifest, type Post } from "@hyperlinkvr/hypergram-schemas/v1";
+import { generate_read, get_json, is_generated_read, load_site_state, manifest_path, post_dir, post_path, type SiteStore } from "@hyperlinkvr/hypergram-read-host";
+import { api_v1_auth_contract, api_v1_write_contract, PostSchema, type HostManifest, type Post } from "@hyperlinkvr/hypergram-schemas/v1";
 import { createFetchHandler } from "@ts-rest/serverless/fetch";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
@@ -86,9 +86,8 @@ export const create_app = async ({ store, base_url, auth, name, serve_reads = tr
         auth: { login: true, web: typeof auth.login_web === "function" }
     };
 
-    await publish_site(base_url, store, await load_site_state(store), manifest);
-
-    // a write loads the published files, mutates, and republishes the whole site (see hypergram-host).
+    // a write only touches its own source-of-truth files (post.json + image); the manifest and feeds are
+    // generated on demand at read time (see the read handlers below), never materialised to the store.
     const handle_write = createFetchHandler(api_v1_write_contract, {
         upload_post: async ({ body }, { request }) => {
             const identity = await auth.authenticate(request);
@@ -99,8 +98,6 @@ export const create_app = async ({ store, base_url, auth, name, serve_reads = tr
             const image_store_path = `${post_dir(id)}/image.${ext_for(image)}`;
             await store.put(image_store_path, new Uint8Array(await image.arrayBuffer()), image.type || "application/octet-stream");
 
-            const state = await load_site_state(store);
-            const post_url = abs(post_path(id));
             const post: Post = {
                 id,
                 author: identity,
@@ -109,23 +106,22 @@ export const create_app = async ({ store, base_url, auth, name, serve_reads = tr
                 thumb_url: abs(image_store_path), // stub: no separate thumbnail yet
                 caption: metadata.caption
             };
-            state.posts.push(post);
-            await publish_site(base_url, store, state, manifest);
+            await store.put(post_path(id), JSON.stringify(post), "application/json");
 
-            return { status: 201, body: { success: true, status: "published", post_url } };
+            return { status: 201, body: { success: true, status: "published", post_url: abs(post_path(id)) } };
         },
 
         edit_post: async ({ params, body }, { request }) => {
             const identity = await auth.authenticate(request);
             if (!identity) return { status: 401, body: { success: false, error: "unauthenticated" } };
 
-            const state = await load_site_state(store);
-            const post = state.posts.find((p) => p.id === params.id);
-            if (!post) return { status: 404, body: { success: false, error: "post not found" } };
+            const existing = await get_json(store, post_path(params.id));
+            if (!existing) return { status: 404, body: { success: false, error: "post not found" } };
+            const post = PostSchema.parse(existing);
             if (post.author !== identity) return { status: 403, body: { success: false, error: "not your post" } };
 
             post.caption = body.caption ?? undefined; // null removes the caption
-            await publish_site(base_url, store, state, manifest);
+            await store.put(post_path(post.id), JSON.stringify(post), "application/json");
 
             return { status: 200, body: { success: true, status: "published", post_url: abs(post_path(post.id)) } };
         },
@@ -134,15 +130,15 @@ export const create_app = async ({ store, base_url, auth, name, serve_reads = tr
             const identity = await auth.authenticate(request);
             if (!identity) return { status: 401, body: { success: false, error: "unauthenticated" } };
 
-            const state = await load_site_state(store);
-            const target = state.posts.find((p) => p.id === params.id);
-            if (!target) return { status: 404, body: { success: false, error: "post not found" } };
+            const existing = await get_json(store, post_path(params.id));
+            if (!existing) return { status: 404, body: { success: false, error: "post not found" } };
+            const target = PostSchema.parse(existing);
             if (target.author !== identity) return { status: 403, body: { success: false, error: "not your post" } };
 
+            // drop the whole post directory (post.json + image); the feeds stop referencing it once it's gone
             for (const path of await store.list(`${post_dir(params.id)}/`)) {
-                if (!path.endsWith(".json")) await store.delete(path); // publish_site only prunes json, so drop the image here
+                await store.delete(path);
             }
-            await publish_site(base_url, store, { ...state, posts: state.posts.filter((p) => p.id !== params.id) }, manifest);
 
             return { status: 200, body: { success: true, status: "published" } };
         },
@@ -184,9 +180,19 @@ export const create_app = async ({ store, base_url, auth, name, serve_reads = tr
     });
 
     if (serve_reads) {
-        // reads are plain static files generated by the host, served straight from the store
         app.get("/*", async (c) => {
             const path = c.req.path.replace(/^\//, "");
+
+            // manifest is pure config, no store I/O
+            if (path === manifest_path) return c.json(manifest);
+
+            // feeds are generated on demand from the stored posts, never materialised to the store
+            if (is_generated_read(path)) {
+                const body = generate_read(base_url, path, await load_site_state(store), manifest);
+                return body === null ? c.notFound() : c.json(body);
+            }
+
+            // everything else (post.json, picture.json, images) is a stored file served as-is
             const body = await store.get(path);
             if (!body) return c.notFound();
             // copy into a fresh Uint8Array so the backing buffer is a plain ArrayBuffer (what hono's body type wants)
