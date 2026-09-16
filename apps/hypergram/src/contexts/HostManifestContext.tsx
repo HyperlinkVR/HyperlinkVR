@@ -2,6 +2,7 @@ import { type HostManifest } from "@hyperlinkvr/hypergram-schemas/v1";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 import { read_client } from "../api_client";
+import { human_status } from "../util/human_status";
 
 interface HostManifestContextType {
     loading: boolean;
@@ -23,12 +24,17 @@ export const HostManifestProvider = ({children}: {children: React.ReactNode}) =>
             setLoading(false);
 
             if (res.status !== 200) {
-                setError("Failed to fetch manifest");
+                console.error("Failed to fetch manifest", res.status, res.body);
+                setError(human_status(res.status));
                 return;
             }
 
             setManifest(res.body);
-        })
+        }).catch(err => {
+            console.error("Error fetching manifest", err);
+            setLoading(false);
+            setError("Error while fetching manifest");
+        });
     }, []);
 
     return (

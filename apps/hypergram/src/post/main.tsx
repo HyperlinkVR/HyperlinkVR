@@ -7,10 +7,10 @@ import ReactDOM from "react-dom/client";
 
 
 import { read_client } from "../api_client";
-import { Header } from "../components/Header";
 import { Post } from "../components/Post";
 import { LoadingSpinner } from "@hyperlinkvr/ui-dom";
 import { Layout } from "../components/Layout";
+import { human_status } from "../util/human_status";
 
 
 const App = () => {
@@ -32,8 +32,11 @@ const App = () => {
                 setPost(res.body);
             } else {
                 console.error("Failed to fetch post", res.status, res.body);
-                setError("Failed to fetch post");
+                setError(human_status(res.status));
             }
+        }).catch((err) => {
+            console.error("Error fetching post", err);
+            setError("Error while fetching post!");
         });
     }, []);
 
