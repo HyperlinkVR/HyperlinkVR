@@ -225,15 +225,20 @@ export const useOutlineEffect = (
         const target = target_ref.current;
         if (!target || !enabled) return;
 
-        // 1. Collect all valid meshes into an array first
+        // collect all valid meshes
         const meshes: Mesh[] = [];
         target.traverse((child) => {
-            if ((child as Mesh).isMesh && !excluded_from_bounds(child)) {
+            if (
+                (child as Mesh).isMesh // actually a mesh
+                && !("node" in child && "yogaNode" in (child as any).node) // not a uikit component (which crashes if a mesh is added to it)
+                && !excluded_from_bounds(child) // not excluded from object bounds
+            ) {
+                console.log(child)
                 meshes.push(child as Mesh);
             }
         });
 
-        // 2. Add outlines to the collected meshes
+        // add outlines to each
         meshes.forEach((mesh) => {
             const outline = new Mesh(
                 mesh.geometry,
@@ -255,7 +260,6 @@ export const useOutlineEffect = (
         return () => {
             if (!target) return;
 
-            // 3. Remove in a clean pass
             target.traverse((child) => {
                 const outlines = child.children.filter(
                     (c) => c.userData._is_outline_effect

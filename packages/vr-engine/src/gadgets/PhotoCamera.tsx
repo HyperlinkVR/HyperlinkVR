@@ -15,6 +15,7 @@ import {
 
 import { HypergramProvider, useHypergram } from "../contexts/HypergramContext";
 import { compute_layer_mask, Layer } from "../render";
+import { Grabbable } from "../interaction";
 
 const DISPLAY_ASPECT = 16 / 9;
 
@@ -85,6 +86,9 @@ const image_buffer_to_blob = async (buffer: Uint8Array) => {
     });
 }
 
+const BODY_THICKNESS = 0.04;
+const SCREEN_OFFSET = BODY_THICKNESS / 2 + 0.001;
+
 const UploadControls = ({ buffer, go_back }: { buffer: Uint8Array, go_back: () => void }) => {
     const hypergram = useHypergram();
 
@@ -136,43 +140,19 @@ const UploadControls = ({ buffer, go_back }: { buffer: Uint8Array, go_back: () =
     );
 
     return (
-        <Container
-            flexDirection="column"
-            alignItems="center"
-            justifyContent="center"
-            gap={1}
-            width={40}
-        >
-            <Button
-                onPointerDown={go_back}
-                backgroundColor="black"
-                height={3}
-                width={3}
-                flexGrow={1}
-                flexShrink={1}
-                flexBasis={0}
-                paddingX={0.5}
-                paddingY={0.5}
-                justifyContent="center"
-                alignItems="center"
-            >
-                <Text fontSize={2} color="white">
-                    X
-                </Text>
-            </Button>
-
-            <Image src={texture} width={40} keepAspectRatio borderRadius={1} />
-
+        <group position={[0, 0, SCREEN_OFFSET]}>
             <Container
-                width={40}
-                flexDirection="row"
+                flexDirection="column"
+                alignItems="center"
+                justifyContent="center"
                 gap={1}
-                justifyContent="space-between"
+                width={40}
             >
                 <Button
-                    onPointerDown={() => download_image_buffer(buffer)}
+                    onPointerDown={go_back}
                     backgroundColor="black"
-                    height={4}
+                    height={3}
+                    width={3}
                     flexGrow={1}
                     flexShrink={1}
                     flexBasis={0}
@@ -182,13 +162,20 @@ const UploadControls = ({ buffer, go_back }: { buffer: Uint8Array, go_back: () =
                     alignItems="center"
                 >
                     <Text fontSize={2} color="white">
-                        Save to device
+                        X
                     </Text>
                 </Button>
 
-                {hypergram.active && (
+                <Image src={texture} width={40} keepAspectRatio borderRadius={1} />
+
+                <Container
+                    width={40}
+                    flexDirection="row"
+                    gap={1}
+                    justifyContent="space-between"
+                >
                     <Button
-                        onPointerDown={post_to_hypergram}
+                        onPointerDown={() => download_image_buffer(buffer)}
                         backgroundColor="black"
                         height={4}
                         flexGrow={1}
@@ -198,19 +185,38 @@ const UploadControls = ({ buffer, go_back }: { buffer: Uint8Array, go_back: () =
                         paddingY={0.5}
                         justifyContent="center"
                         alignItems="center"
-                        disabled={posting || post_success === true}
                     >
                         <Text fontSize={2} color="white">
-                            {posting ? "Posting..." : (post_success === true ? "Posted!" : "Post to Hypergram")}
+                            Save to device
                         </Text>
                     </Button>
-                )}
+
+                    {hypergram.active && (
+                        <Button
+                            onPointerDown={post_to_hypergram}
+                            backgroundColor="black"
+                            height={4}
+                            flexGrow={1}
+                            flexShrink={1}
+                            flexBasis={0}
+                            paddingX={0.5}
+                            paddingY={0.5}
+                            justifyContent="center"
+                            alignItems="center"
+                            disabled={posting || post_success === true}
+                        >
+                            <Text fontSize={2} color="white">
+                                {posting ? "Posting..." : (post_success === true ? "Posted!" : "Post to Hypergram")}
+                            </Text>
+                        </Button>
+                    )}
+                </Container>
             </Container>
-        </Container>
+        </group>
     );
 };
 
-const CaptureControls = ({ buffer_ref, on_capture }: { buffer_ref: RefObject<Uint8Array | null>, on_capture?: () => void }) => {
+const CaptureControls = ({ buffer_ref, on_capture, capture_pending }: { buffer_ref: RefObject<Uint8Array | null>, on_capture?: () => void, capture_pending: RefObject<boolean> }) => {
     const camera_ref = useRef<PerspectiveCameraType>(null);
 
     const on_camera_ready = useCallback(
@@ -224,7 +230,6 @@ const CaptureControls = ({ buffer_ref, on_capture }: { buffer_ref: RefObject<Uin
     );
 
     const screen_mesh_ref = useRef<Mesh>(null);
-    const capture_pending = useRef(false);
 
     const { gl, scene } = useThree();
 
@@ -247,7 +252,7 @@ const CaptureControls = ({ buffer_ref, on_capture }: { buffer_ref: RefObject<Uin
         if (!camera_ref.current) return;
 
         // hide screen mesh so it doesn't appear in the render target
-        // TODO: use a layer for this so later camera body also excluded
+        // TODO: use a layer for this so later camera body also excluded (or just apply the ref to the camera body too)
         if (screen_mesh_ref.current) screen_mesh_ref.current.visible = false;
 
         // low res preview render every frame for the viewfinder
@@ -292,28 +297,27 @@ const CaptureControls = ({ buffer_ref, on_capture }: { buffer_ref: RefObject<Uin
                 far={100}
             />
 
-            <mesh ref={screen_mesh_ref} position={[0, 0, -0.05]}>
-                <planeGeometry args={[0.2, 0.2 / DISPLAY_ASPECT]} />
+            <mesh ref={screen_mesh_ref} position={[0, 0, SCREEN_OFFSET]}>
+                <planeGeometry args={[0.15, 0.15 / DISPLAY_ASPECT]} />
                 <meshBasicMaterial map={preview_rt.texture} />
             </mesh>
 
-            <mesh
-                position={[0, 0.18, 0]}
-                onPointerDown={() => (capture_pending.current = true)}>
-                <boxGeometry args={[0.05, 0.05, 0.05]} />
-                <meshStandardMaterial color="red" />
+            <mesh position={[0, -0.055, SCREEN_OFFSET]} rotation={[Math.PI / 2, 0, 0]} onPointerDown={() => (capture_pending.current = true)}>
+                <cylinderGeometry args={[0.01, 0.01, 0.001, 32]} />
+                <meshStandardMaterial color="white" />
             </mesh>
         </group>
     );
 };
 
-const PhotoCameraInternal = () => {
+const CameraControls = ({capture_pending}: {capture_pending: RefObject<boolean>}) => {
     const captured_buffer = useRef<Uint8Array | null>(null);
     const [has_captured, setHasCaptured] = useState(false);
 
     if (!has_captured) {
         return (
             <CaptureControls
+                capture_pending={capture_pending}
                 buffer_ref={captured_buffer}
                 on_capture={() => setHasCaptured(true)}
             />
@@ -333,14 +337,30 @@ const PhotoCameraInternal = () => {
     }
 }
 
-export const PhotoCamera = () => (
-    <group position={[0, 2, 0]}>
-        <HypergramProvider>
-            <PhotoCameraInternal />
-        </HypergramProvider>
-    </group>
-);
+export const PhotoCamera = () => {
+    const capture_pending = useRef(false);
 
-// TODO: grabbable + trigger squeeze control
+    // TODO: properly modelled camera, this is a prototype
+    return (
+        <Grabbable sticky position={[0, 2, 0]} on_trigger_start={() => (capture_pending.current = true)}>
+            <group position={[0, -0.015, 0]}>
+                <mesh>
+                    <boxGeometry args={[0.175, 0.125, BODY_THICKNESS]} />
+                    <meshStandardMaterial color="gray" />
+                </mesh>
+
+                <mesh position={[0, 0, -SCREEN_OFFSET - 0.02]} rotation={[Math.PI / 2, 0, 0]}>
+                    <cylinderGeometry args={[0.04, 0.04, 0.04, 32]} />
+                    <meshStandardMaterial color="gray" />
+                </mesh>
+            </group>
+
+            <HypergramProvider>
+                <CameraControls capture_pending={capture_pending} />
+            </HypergramProvider>
+        </Grabbable>
+    );
+}
+
 // TODO: gadget equipping (holster or hand menu?)
 // TODO: square guide, or just stop making them square online
