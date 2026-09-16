@@ -10,7 +10,7 @@ import { BackSide, Box3, Matrix4, Mesh, MeshBasicMaterial, Quaternion, Raycaster
 
 
 import { useObjectRefsOptional } from "../contexts";
-import { useSessionMode } from "../../../react/src/contexts/SessionMode";
+import { useSessionMode } from "@hyperlinkvr/react";
 import { DEFAULT_IGNORE_RELEASE_DELAY_S, PLAYER_FILTER_BIT, PROP_FILTER_BIT, WORLD_FILTER_BIT} from "../physics/collision_groups";
 import { rotation_to_quaternion } from "../util/rotation";
 import type { Hand} from "../input/hands";
@@ -233,7 +233,6 @@ export const useOutlineEffect = (
                 && !("node" in child && "yogaNode" in (child as any).node) // not a uikit component (which crashes if a mesh is added to it)
                 && !excluded_from_bounds(child) // not excluded from object bounds
             ) {
-                console.log(child)
                 meshes.push(child as Mesh);
             }
         });
