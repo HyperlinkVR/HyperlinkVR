@@ -1,9 +1,9 @@
-import { PerspectiveCamera, useFBO } from "@react-three/drei";
+import { PerspectiveCamera, PositionalAudio, useFBO } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Container, Image, Text } from "@react-three/uikit";
 import { Button } from "@react-three/uikit-default";
 import { RefObject, useCallback, useMemo, useRef, useState } from "react";
-import { DataTexture, LinearFilter, Mesh, PerspectiveCamera as PerspectiveCameraType, RGBAFormat, SRGBColorSpace, UnsignedByteType } from "three";
+import { DataTexture, LinearFilter, Mesh, PerspectiveCamera as PerspectiveCameraType, RGBAFormat, SRGBColorSpace, UnsignedByteType, type PositionalAudio as PositionalAudioType } from "three";
 
 
 
@@ -11,6 +11,7 @@ import { HypergramProvider, useHypergram } from "../contexts/HypergramContext";
 import { Grabbable } from "../interaction";
 import { compute_layer_mask, Layer } from "../render";
 import { active_pipeline } from "../render/GraphicsPipeline";
+import {useSessionMode} from "@hyperlinkvr/react";
 
 
 const DISPLAY_ASPECT = 16 / 9;
@@ -27,6 +28,8 @@ const LAYER_MASK = compute_layer_mask([
     Layer.PlayerModel_Head,
     Layer.NoVFX
 ]);
+
+const camera_sfx = new URL("../../assets/gadgets/camera/camera.opus", import.meta.url).href;
 
 const buffer_to_canvas = (buffer: Uint8Array) => {
     const canvas = document.createElement("canvas");
@@ -314,16 +317,24 @@ const CaptureControls = ({ buffer_ref, on_capture, capture_pending }: { buffer_r
     );
 };
 
-const CameraControls = ({capture_pending}: {capture_pending: RefObject<boolean>}) => {
+const CameraControls = ({capture_pending, on_capture}: {capture_pending: RefObject<boolean>, on_capture?: () => void}) => {
     const captured_buffer = useRef<Uint8Array | null>(null);
     const [has_captured, setHasCaptured] = useState(false);
+
+    const handle_capture = useCallback(
+        () => {
+            setHasCaptured(true);
+            on_capture?.();
+        },
+        [on_capture]
+    );
 
     if (!has_captured) {
         return (
             <CaptureControls
                 capture_pending={capture_pending}
                 buffer_ref={captured_buffer}
-                on_capture={() => setHasCaptured(true)}
+                on_capture={handle_capture}
             />
         );
     } else {
@@ -343,6 +354,21 @@ const CameraControls = ({capture_pending}: {capture_pending: RefObject<boolean>}
 
 export const PhotoCamera = () => {
     const capture_pending = useRef(false);
+    const sfx_ref = useRef<PositionalAudioType>(null);
+
+    const play_sound = useCallback(
+        () => {
+            const sfx = sfx_ref.current;
+            if (!sfx) return;
+
+            sfx.offset = 0;
+            sfx.play();
+        },
+        []
+    );
+
+    const mode = useSessionMode();
+    // TODO: why does rotation comfort depend on mode? probably controller orientation. might be good to normalise, or offer way to set both, esp in sdk
 
     // TODO: properly modelled camera, this is a prototype
     return (
@@ -350,7 +376,7 @@ export const PhotoCamera = () => {
             sticky
             position={[0, 2, 0]}
             on_trigger_start={() => (capture_pending.current = true)}
-            grab_rotation={[-Math.PI / 2, 0, 0]}
+            grab_rotation={[mode === "vr" ? -Math.PI / 2 : 0, 0, 0]}
         >
             <group position={[0, -0.015, 0]}>
                 <mesh>
@@ -364,8 +390,10 @@ export const PhotoCamera = () => {
                 </mesh>
             </group>
 
+            <PositionalAudio ref={sfx_ref} url={camera_sfx} distance={1} loop={false} autoplay={false} />
+
             <HypergramProvider>
-                <CameraControls capture_pending={capture_pending} />
+                <CameraControls capture_pending={capture_pending} on_capture={play_sound} />
             </HypergramProvider>
         </Grabbable>
     );
