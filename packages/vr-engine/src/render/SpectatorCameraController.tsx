@@ -132,7 +132,7 @@ export const SpectatorCameraController = ({config = camera_controller_configs.fi
         gl.clear();
 
         // substitute our spectator camera into the render pass to ensure it actually gets used for the render, not the headset arraycamera
-        const render_pass = active_pipeline.passes.find((p: any) => p.isRenderPass);
+        const render_pass = active_pipeline.passes.find((p: any) => p.is_render_pass);
         const prev_cam = (render_pass as any)?.camera;
         if (render_pass) (render_pass as any).camera = spec_camera;
 
