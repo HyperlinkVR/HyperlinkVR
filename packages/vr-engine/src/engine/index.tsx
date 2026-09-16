@@ -527,7 +527,7 @@ const EngineHostInternal = memo(
                                     {loading && <FlatLoadingScreen />}
                                     {mode === "flat" && <FlatNavConsentGate />}
 
-                                    {spec_cam_mode === "off" && (
+                                    {mode === "vr" && spec_cam_mode === "off" && (
                                         <div className="fixed top-0 left-0 w-full h-full pointer-events-none z-4 bg-black flex flex-col items-center justify-center gap-2">
                                             <img src={anim_logo_svg} className="w-32 h-32" />
                                             <p className="text-white">Spectator view disabled</p>
