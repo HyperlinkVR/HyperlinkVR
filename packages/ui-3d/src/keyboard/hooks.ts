@@ -1,6 +1,7 @@
 import type { VanillaInput } from "@react-three/uikit";
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
+import type { KeyboardTarget } from "./store";
 import { useKeyboardStore } from "./store";
 
 
@@ -20,17 +21,27 @@ interface KeyboardInputOptions {
 // high level access for inputs that want to automatically open the keyboard when focused, and close it when blurred
 export const useKeyboardInput = ({ ref, onFocusChange }: KeyboardInputOptions = {}) => {
     const internal = useRef<VanillaInput | null>(null);
+
+    // unmount cleanup can still see the element after react has already called the ref callback with null
+    const element = useRef<KeyboardTarget | null>(null);
+
     const { open, close } = useKeyboardTarget();
 
     const set_ref = useCallback(
         (instance: VanillaInput | null) => {
             internal.current = instance;
-            // suppress the OS on-screen keyboard
-            if (instance) instance.element.inputMode = "none";
+            if (instance) {
+                // suppress the OS on-screen keyboard
+                instance.element.inputMode = "none";
+                element.current = instance.element;
+            }
             if (ref) ref.current = instance;
         },
         [ref]
     );
+
+    // close the keyboard when the input is unmounted
+    useEffect(() => () => close(element.current), [close]);
 
     const handle_focus_change = useCallback(
         (focused: boolean) => {
