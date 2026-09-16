@@ -306,7 +306,7 @@ const UploadControls = ({ buffer, go_back }: { buffer: Uint8Array, go_back: () =
 
                     {hypergram.active && (
                         <Button
-                            onPointerDown={() => setShowPostMenu(true)}
+                            onPointerDown={() => !posted && setShowPostMenu(true)}
                             backgroundColor="black"
                             height={4}
                             flexGrow={1}

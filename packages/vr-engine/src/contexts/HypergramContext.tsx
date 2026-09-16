@@ -134,7 +134,7 @@ export const HypergramProvider = ({ children }: { children: ReactNode }) => {
     }, [session, auth_client, manifest, local_storage, session_storage]);
 
     const post_photo = useCallback(
-        async (file: File, caption = "") => {
+        async (file: File, caption?: string) => {
             if (!write_client || !manifest?.auth.login) {
                 console.error("Cannot post photo: hypergram not available on this host");
                 return false;
