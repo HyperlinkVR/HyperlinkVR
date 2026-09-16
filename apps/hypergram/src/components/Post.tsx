@@ -6,17 +6,25 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { read_client, write_client } from "../api_client";
 import { Pencil, Trash } from "lucide-react";
+import { useHostManifest } from "../contexts/HostManifestContext";
 
 const PostEditControls = ({ post }: { post: PostData }) => {
+    const {manifest} = useHostManifest();
+
     const edit_post = useCallback(
         async (e: React.MouseEvent<HTMLButtonElement>) => {
             e.preventDefault();
+
+            if (!manifest?.bases?.write) {
+                console.error("No write base configured in manifest");
+                return;
+            }
 
             // TODO: proper modal
             const new_caption = prompt("Enter new caption", post.caption || "");
             if (new_caption === null) return;
 
-            const client = write_client();
+            const client = write_client(manifest.bases.write);
             const res = await client.edit_post({
                 params: { id: post.id },
                 body: { caption: new_caption}
@@ -37,9 +45,14 @@ const PostEditControls = ({ post }: { post: PostData }) => {
         async (e: React.MouseEvent<HTMLButtonElement>) => {
             e.preventDefault();
 
+            if (!manifest?.bases?.write) {
+                console.error("No write base configured in manifest");
+                return;
+            }
+
             if (!confirm("Are you sure you want to delete this post?")) return;
 
-            const client = write_client();
+            const client = write_client(manifest.bases.write);
             const res = await client.delete_post({ params: { id: post.id } });
 
             if (res.status === 200) {
@@ -53,6 +66,10 @@ const PostEditControls = ({ post }: { post: PostData }) => {
         },
         [post.id]
     );
+
+    if (!manifest?.bases?.write) {
+        return null;
+    }
 
     return (
         <div className="flex items-center gap-3">
@@ -68,7 +85,7 @@ const PostEditControls = ({ post }: { post: PostData }) => {
 }
 
 const PostInternal = ({ post, snippet = false }: { post: PostData, snippet?: boolean }) => {
-    const client = useMemo(() => read_client("http://localhost:8787"), []);
+    const client = useMemo(() => read_client(), []);
 
     const formatted_date = useMemo(() => new Date(post.ts).toLocaleString(), [post.ts]);
 
