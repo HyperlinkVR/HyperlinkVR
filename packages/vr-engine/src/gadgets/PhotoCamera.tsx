@@ -3,19 +3,15 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { Container, Image, Text } from "@react-three/uikit";
 import { Button } from "@react-three/uikit-default";
 import { RefObject, useCallback, useMemo, useRef, useState } from "react";
-import {
-    DataTexture,
-    LinearFilter,
-    Mesh,
-    PerspectiveCamera as PerspectiveCameraType,
-    RGBAFormat,
-    SRGBColorSpace,
-    UnsignedByteType
-} from "three";
+import { DataTexture, LinearFilter, Mesh, PerspectiveCamera as PerspectiveCameraType, RGBAFormat, SRGBColorSpace, UnsignedByteType } from "three";
+
+
 
 import { HypergramProvider, useHypergram } from "../contexts/HypergramContext";
-import { compute_layer_mask, Layer } from "../render";
 import { Grabbable } from "../interaction";
+import { compute_layer_mask, Layer } from "../render";
+import { active_pipeline } from "../render/GraphicsPipeline";
+
 
 const DISPLAY_ASPECT = 16 / 9;
 
@@ -255,6 +251,12 @@ const CaptureControls = ({ buffer_ref, on_capture, capture_pending }: { buffer_r
         // TODO: use a layer for this so later camera body also excluded (or just apply the ref to the camera body too)
         if (screen_mesh_ref.current) screen_mesh_ref.current.visible = false;
 
+        const prev_xr_enabled = gl.xr.enabled;
+        const prev_target = gl.getRenderTarget();
+        const prev_effects = active_pipeline.passes;
+        gl.xr.enabled = false;
+        gl.setEffects([]);
+
         // low res preview render every frame for the viewfinder
         gl.setRenderTarget(preview_rt);
         gl.render(scene, camera_ref.current);
@@ -281,7 +283,9 @@ const CaptureControls = ({ buffer_ref, on_capture, capture_pending }: { buffer_r
             on_capture?.();
         }
 
-        gl.setRenderTarget(null);
+        gl.setRenderTarget(prev_target);
+        gl.setEffects(prev_effects);
+        gl.xr.enabled = prev_xr_enabled;
 
         // show screen mesh again
         if (screen_mesh_ref.current) screen_mesh_ref.current.visible = true;
