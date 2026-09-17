@@ -1,6 +1,6 @@
 import { useSessionMode } from "@hyperlinkvr/react";
 import { useFrame } from "@react-three/fiber";
-import { Container, Text } from "@react-three/uikit";
+import { Container, Text, Fullscreen } from "@react-three/uikit";
 import { ArrowLeft, Camera, Smile } from "@react-three/uikit-lucide";
 import { RefObject, useEffect, useMemo, useRef, useState } from "react";
 import { Group, Vector3 } from "three";
@@ -64,6 +64,11 @@ const root: Page = {
     ]
 };
 
+// TODO: set icon size so it scales properly on flat (will need to adjust pixelsize)
+// TODO: replace the click on flat with mouse hovering?
+// TODO: free cursor when open
+// TODO: controller stick input for flat
+
 const QuickMenuItems = ({ controls, active_index, on_page_changed }: {
     controls?: RefObject<QuickMenuHandle | null>;
     active_index?: number | null;
@@ -109,7 +114,7 @@ const QuickMenuItems = ({ controls, active_index, on_page_changed }: {
     }
 
     return (
-        <Container pixelSize={0.0025} width={200} height={200} positionType="relative" color="white">
+        <Container width={200} height={200} positionType="relative" color="white">
             {current_page.slots.map((slot, i) =>
                 slot && (
                     <Container
@@ -187,11 +192,13 @@ const VRQuickMenu = () => {
             <AnchorSpace />
 
             <group ref={group_ref}>
-                <QuickMenuItems
-                    controls={controls}
-                    active_index={active_index}
-                    on_page_changed={() => (needs_placing.current = true)}
-                />
+                <Container pixelSize={0.0025}>
+                    <QuickMenuItems
+                        controls={controls}
+                        active_index={active_index}
+                        on_page_changed={() => (needs_placing.current = true)}
+                    />
+                </Container>
             </group>
         </>
     );
@@ -199,7 +206,11 @@ const VRQuickMenu = () => {
 
 const FlatQuickMenu = () => {
     // TODO: fullscreen presentation with mouse freed/gamepad stick?
-    return <QuickMenuItems />;
+    return (
+        <Fullscreen alignItems="center" justifyContent="center" depthWrite={false} depthTest={false}>
+            <QuickMenuItems />;
+        </Fullscreen>
+    )
 };
 
 export const QuickMenu = () => {
