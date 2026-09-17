@@ -514,6 +514,7 @@ export const useGrabbable = (
     const unit_scale = useRef(new Vector3(1, 1, 1));
     const grip_offset_position = useRef(new Vector3());
     const aim_target_quat = useRef(new Quaternion());
+    const aim_grip_up = useRef(new Vector3());
 
     const throw_dir_quat = useRef(new Quaternion());
     const throw_velocity = useRef(new Vector3());
@@ -912,7 +913,13 @@ export const useGrabbable = (
                 .normalize();
         }
 
-        aim_right.current.crossVectors(aim_forward.current, WORLD_UP);
+        // Roll the offset basis with the grip so the positional offset tracks
+        // the same roll the orientation does; otherwise wrist roll pivots the
+        // object around a world-up-leveled arm (the "gimbal" decouple).
+        aim_grip_up.current
+            .copy(WORLD_UP)
+            .applyQuaternion(grip_world_quat.current);
+        aim_right.current.crossVectors(aim_forward.current, aim_grip_up.current);
         if (aim_right.current.lengthSq() < 1e-6) {
             aim_right.current
                 .set(1, 0, 0)

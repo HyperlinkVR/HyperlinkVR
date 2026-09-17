@@ -535,6 +535,7 @@ export const PhotoCamera = () => {
                 capture_pending.current = true;
             }}
             grab_rotation={[mode === "vr" ? -Math.PI / 2 : 0, 0, 0]}
+            grab_offset={[-0.075, 0.075, 0.15]}
         >
             <group position={[0, -0.015, 0]}>
                 <mesh>
