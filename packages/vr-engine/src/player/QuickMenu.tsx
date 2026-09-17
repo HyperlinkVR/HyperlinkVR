@@ -334,6 +334,9 @@ const FlatQuickMenu = () => {
                             transformTranslateY: 0
                         });
 
+                        // TODO: wait for new stick input before resuming movement
+                        // TODO: automatically zero when stick released (dont use look delta for controller, treat it like a stick surface)
+
                         armed.current = true;
                         set_active_index(null);
                     }}

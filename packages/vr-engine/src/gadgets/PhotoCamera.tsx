@@ -525,6 +525,7 @@ export const PhotoCamera = () => {
     // TODO: why does rotation comfort depend on mode? probably controller orientation. might be good to normalise, or offer way to set both, esp in sdk
 
     // TODO: properly modelled camera, this is a prototype
+    // TODO: way to hide hand that grabs the item so the hand is out the way of the camera
     return (
         <Grabbable
             sticky
