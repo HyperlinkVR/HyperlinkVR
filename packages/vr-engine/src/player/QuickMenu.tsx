@@ -10,7 +10,7 @@ import {
     useRef,
     useState
 } from "react";
-import { Group, Vector3 } from "three";
+import { Euler, Group, Quaternion, Vector3 } from "three";
 
 
 
@@ -177,14 +177,18 @@ const QuickMenuItems = ({
 };
 
 const VRQuickMenu = () => {
-    const { AnchorSpace, get_hand_world_pos } = useXRHandAttachment({
-        hand: "non_watch_hand"
-    });
+    const { AnchorSpace, get_hand_world_pos, ray_space_ref } =
+        useXRHandAttachment({
+            hand: "non_watch_hand"
+        });
 
     const group_ref = useRef<Group>(null);
     const needs_placing = useRef(true);
     const armed = useRef(true);
     const scratch = useMemo(() => new Vector3(), []);
+    const q_target = useMemo(() => new Quaternion(), []);
+    const q_parent = useMemo(() => new Quaternion(), []);
+    const euler = useMemo(() => new Euler(), []);
     const controls = useRef<QuickMenuHandle | null>(null);
     const [active_index, set_active_index] = useState<number | null>(null);
 
@@ -198,6 +202,19 @@ const VRQuickMenu = () => {
         if (needs_placing.current) {
             group_ref.current.parent?.worldToLocal(scratch);
             group_ref.current.position.copy(scratch);
+
+            // snap heading to the controller's yaw (y-axis only)
+            if (ray_space_ref.current && group_ref.current.parent) {
+                ray_space_ref.current.getWorldQuaternion(q_target);
+                euler.setFromQuaternion(q_target, "YXZ");
+                q_target.setFromEuler(euler.set(0, euler.y, 0, "YXZ"));
+
+                group_ref.current.parent.getWorldQuaternion(q_parent);
+                group_ref.current.quaternion
+                    .copy(q_parent.invert())
+                    .multiply(q_target);
+            }
+
             needs_placing.current = false;
             armed.current = true;
             set_active_index(null);
