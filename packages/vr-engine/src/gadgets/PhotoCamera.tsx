@@ -528,6 +528,7 @@ export const PhotoCamera = () => {
     return (
         <Grabbable
             sticky
+            auto_equip_hand="non_watch_hand"
             position={[0, 2, 0]}
             on_trigger_start={() => {
                 if (!can_capture.current) return;
@@ -556,8 +557,6 @@ export const PhotoCamera = () => {
     );
 }
 
-// TODO: gadget equipping (holster or hand menu?)
 // TODO: square guide, or just stop making them square online
 // TODO: controller haptics (abstracted in input providers, and used in multiple places)
-// TODO: vr keyboard now also needed here (as well as it is for settings, watch search, dom mirror etc, automatic if possible would be super useful)
 // TODO: lock flat input whilst focused on input fields

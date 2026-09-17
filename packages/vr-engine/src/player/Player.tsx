@@ -1,13 +1,11 @@
 import { useMessageEngine, useSetting, useWorldSession } from "@hyperlinkvr/react";
 import { PlayerMonitorSchema } from "@hyperlinkvr/vr-engine-schemas";
 import { Text } from "@react-three/drei";
-import { Container } from "@react-three/uikit";
 import { XROrigin } from "@react-three/xr";
 import {
     Suspense,
     useEffect,
     useImperativeHandle,
-    useMemo,
     useRef
 } from "react";
 import type { Group } from "three";
@@ -38,10 +36,9 @@ import { useIsSeated } from "./seating";
 import { LOCAL_PLAYER_SUBJECT } from "./subject";
 import { Vignette } from "./Vignette";
 import { WristWatch } from "./WristWatch";
-import { KeyboardRenderer } from "@hyperlinkvr/ui-3d";
-import { useFrame } from "@react-three/fiber";
 import { KeyboardSlot } from "./KeyboardSlot";
 import { QuickMenu } from "./QuickMenu";
+import { PlayerGadgetsProvider, usePlayerGadgets } from "../contexts/PlayerGadgetsContext";
 
 
 const MouthTest = ({
@@ -104,6 +101,16 @@ const ExpressionTest = () => {
         </group>
     );
 };
+
+const Gadgets = () => {
+    const {active_gadgets} = usePlayerGadgets();
+
+    return (
+        <group name="GadgetsRoot">
+            {active_gadgets.camera.active && <PhotoCamera key={active_gadgets.camera.spawn_key} />}
+        </group>
+    );
+}
 
 export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>; can_move?: boolean }) => {
     const origin_ref = useRef<Group>(null);
@@ -286,42 +293,45 @@ export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>
     return (
         <group name="Player">
             <PlayerExpressionProvider>
-                <Suspense fallback={null}> {/* TODO: can have a little fallback avatar while it loads, just a gray or translucent placeholder akin to vrchat */}
-                    <Avatar />
-                </Suspense>
+                <PlayerGadgetsProvider>
+                    <Suspense fallback={null}> {/* TODO: can have a little fallback avatar while it loads, just a gray or translucent placeholder akin to vrchat */}
+                        <Avatar />
+                    </Suspense>
 
-                <WristWatch />
+                    <WristWatch />
 
-                <PlayerKinematics />
-                <PhotoCamera />
+                    <PlayerKinematics />
 
-                {session_mode === "vr" ? (
-                    <>
-                        <Vignette />
-                        <XROrigin ref={origin_ref}>
-                            <XRHandsPublisher />
-                            <ExpressionTest />
-                            <OriginHUD />
-                            <KeyboardSlot />
-                            <QuickMenu />
-                        </XROrigin>
-                        <BodyHUD />
-                        <HeadHUD />
-                        <XRSystemInput />
-                        {can_move && !seated && <XRLocomotion origin={origin_ref} />}
-                    </>
-                ) : (
-                    <>
-                        <group ref={origin_ref} name="FlatOrigin">
-                            <FlatHandsPublisher />
-                            <FlatCameraRig origin={origin_ref} />
-                            <ExpressionTest />
-                            <QuickMenu />
-                        </group>
-                        <FlatHUD />
-                        {can_move && !seated && <FlatLocomotion origin={origin_ref} />}
-                    </>
-                )}
+                    <Gadgets />
+
+                    {session_mode === "vr" ? (
+                        <>
+                            <Vignette />
+                            <XROrigin ref={origin_ref}>
+                                <XRHandsPublisher />
+                                <ExpressionTest />
+                                <OriginHUD />
+                                <KeyboardSlot />
+                                <QuickMenu />
+                            </XROrigin>
+                            <BodyHUD />
+                            <HeadHUD />
+                            <XRSystemInput />
+                            {can_move && !seated && <XRLocomotion origin={origin_ref} />}
+                        </>
+                    ) : (
+                        <>
+                            <group ref={origin_ref} name="FlatOrigin">
+                                <FlatHandsPublisher />
+                                <FlatCameraRig origin={origin_ref} />
+                                <ExpressionTest />
+                                <QuickMenu />
+                            </group>
+                            <FlatHUD />
+                            {can_move && !seated && <FlatLocomotion origin={origin_ref} />}
+                        </>
+                    )}
+                </PlayerGadgetsProvider>
             </PlayerExpressionProvider>
         </group>
     );

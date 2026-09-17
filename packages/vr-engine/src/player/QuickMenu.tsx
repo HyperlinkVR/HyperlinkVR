@@ -1,14 +1,16 @@
-import { useSessionMode, useSetting } from "@hyperlinkvr/react";
+import { useSessionMode } from "@hyperlinkvr/react";
 import { useFrame } from "@react-three/fiber";
-import { Container } from "@react-three/uikit";
+import { Container, Text } from "@react-three/uikit";
 import { ArrowLeft, Camera, Smile } from "@react-three/uikit-lucide";
-import { useXRInputSourceState, XRSpace } from "@react-three/xr";
 import { ReactNode, RefObject, useEffect, useMemo, useRef, useState } from "react";
 import { Group, Vector3 } from "three";
 
 
 
+import { PlayerExpression, usePlayerExpression } from "../contexts";
+import { GadgetName, usePlayerGadgets } from "../contexts/PlayerGadgetsContext";
 import { useQuickMenuHeld } from "../input/system_input";
+import { useXRHandAttachment } from "../input/impl/xr/useXRHandAttachment";
 
 
 const DIST = 45;
@@ -22,7 +24,9 @@ const OFFSETS = [
 
 type Slot =
     | { icon: ReactNode; on_select: () => void }
-    | { icon: ReactNode; page: Page }
+    | { icon: ReactNode; page: Page | null }
+    | { icon: ReactNode; gadget: GadgetName }
+    | { icon: ReactNode; expression: PlayerExpression }
     | null;
 
 type Page = { slots: [Slot, Slot, Slot, Slot] };
@@ -39,9 +43,9 @@ const direction_index = (x: number, y: number) =>
 const expression_page: Page = {
     // TODO: expression menu (move from the test menu)
     slots: [
-        null,
+        { icon: <Text>:D</Text>, expression: { eyes: "default", mouth: "big_smile" } },
         { icon: <ArrowLeft />, page: null },
-        null,
+        { icon: <Text>:{"{"}</Text>, expression: { eyes: "default", mouth: "wobbly_frown" } },
         null
     ]
 };
@@ -49,12 +53,7 @@ const expression_page: Page = {
 const root: Page = {
     slots: [
         { icon: <Smile />, page: expression_page },
-        {
-            icon: <Camera />,
-            on_select: () => {
-                // TODO: spawn camera
-            }
-        },
+        { icon: <Camera />, gadget: "camera" },
         null,
         null
     ]
@@ -67,6 +66,9 @@ const QuickMenuItems = ({ controls, active_index, on_page_changed }: {
 }) => {
     const [current_page, setCurrentPage] = useState(root);
 
+    const {respawn_gadget} = usePlayerGadgets();
+    const {dispatch_expression} = usePlayerExpression();
+
     const on_slot = (slot: Slot) => {
         if (!slot) return;
 
@@ -76,7 +78,11 @@ const QuickMenuItems = ({ controls, active_index, on_page_changed }: {
 
             setCurrentPage(page);
             on_page_changed?.(page);
-        } else {
+        } else if ("gadget" in slot) {
+            respawn_gadget(slot.gadget);
+        } else if ("expression" in slot) {
+            dispatch_expression(slot.expression);
+        } else if ("on_select" in slot) {
             slot.on_select();
         }
     };
@@ -112,12 +118,11 @@ const QuickMenuItems = ({ controls, active_index, on_page_changed }: {
 
 
 const VRQuickMenu = () => {
-    const [watch_hand] = useSetting("watch_hand");
-    const other_hand = watch_hand === "left" ? "right" : "left";
-    const controller = useXRInputSourceState("controller", other_hand);
+    const { AnchorSpace, get_hand_world_pos } = useXRHandAttachment({
+        hand: "non_watch_hand"
+    });
 
     const group_ref = useRef<Group>(null);
-    const ray_space_ref = useRef<Group>(null);
     const needs_placing = useRef(true);
     const armed = useRef(true);
     const scratch = useMemo(() => new Vector3(), []);
@@ -125,10 +130,10 @@ const VRQuickMenu = () => {
     const [active_index, set_active_index] = useState<number | null>(null);
 
     useFrame(() => {
-        if (!ray_space_ref.current || !group_ref.current) return;
+        if (!group_ref.current) return;
 
-        ray_space_ref.current.getWorldPosition(scratch);
-        if (scratch.lengthSq() === 0) return;
+        const is_tracked = get_hand_world_pos(scratch);
+        if (!is_tracked) return;
 
         // on spawn, or after navigating, recentre the menu on the controller
         if (needs_placing.current) {
@@ -163,27 +168,23 @@ const VRQuickMenu = () => {
 
     return (
         <>
-            {controller && (
-                <XRSpace
-                    ref={ray_space_ref}
-                    space={controller.inputSource.targetRaySpace}
-                />
-            )}
+            <AnchorSpace />
+
             <group ref={group_ref}>
                 <QuickMenuItems
                     controls={controls}
                     active_index={active_index}
-                    on_page_changed={() => needs_placing.current = true}
+                    on_page_changed={() => (needs_placing.current = true)}
                 />
             </group>
         </>
     );
-}
+};
 
 const FlatQuickMenu = () => {
     // TODO: fullscreen presentation with mouse freed/gamepad stick?
     return <QuickMenuItems />;
-}
+};
 
 export const QuickMenu = () => {
     const visible = useQuickMenuHeld();

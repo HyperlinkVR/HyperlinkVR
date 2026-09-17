@@ -17,13 +17,13 @@ catalogs:
       version: 2.2.0
     '@react-three/uikit':
       specifier: ^1.0.74
-      version: 1.0.74
+      version: 1.0.76
     '@react-three/uikit-default':
       specifier: ^1.0.74
-      version: 1.0.74
+      version: 1.0.76
     '@react-three/uikit-lucide':
       specifier: ^1.0.74
-      version: 1.0.74
+      version: 1.0.76
     '@react-three/xr':
       specifier: ^6.6.30
       version: 6.6.30
@@ -677,7 +677,7 @@ importers:
         version: 9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0)
       '@react-three/uikit':
         specifier: 'catalog:'
-        version: 1.0.74(patch_hash=dc16ff70565242d18e3b750194896a48bdc375f0e832ca395e51eecf4e8820e9)(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))
+        version: 1.0.76(patch_hash=dc16ff70565242d18e3b750194896a48bdc375f0e832ca395e51eecf4e8820e9)(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))
       lucide-react:
         specifier: 'catalog:'
         version: 1.21.0(react@19.2.7)
@@ -810,13 +810,13 @@ importers:
         version: 9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0)
       '@react-three/uikit':
         specifier: 'catalog:'
-        version: 1.0.74(patch_hash=dc16ff70565242d18e3b750194896a48bdc375f0e832ca395e51eecf4e8820e9)(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))
+        version: 1.0.76(patch_hash=dc16ff70565242d18e3b750194896a48bdc375f0e832ca395e51eecf4e8820e9)(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))
       '@react-three/uikit-default':
         specifier: 'catalog:'
-        version: 1.0.74(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))
+        version: 1.0.76(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))
       '@react-three/uikit-lucide':
         specifier: 'catalog:'
-        version: 1.0.74(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))
+        version: 1.0.76(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))
       react:
         specifier: 'catalog:'
         version: 19.2.7
@@ -902,13 +902,13 @@ importers:
         version: 2.2.0(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(react@19.2.7)(three@0.185.0)
       '@react-three/uikit':
         specifier: 'catalog:'
-        version: 1.0.74(patch_hash=dc16ff70565242d18e3b750194896a48bdc375f0e832ca395e51eecf4e8820e9)(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))
+        version: 1.0.76(patch_hash=dc16ff70565242d18e3b750194896a48bdc375f0e832ca395e51eecf4e8820e9)(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))
       '@react-three/uikit-default':
         specifier: 'catalog:'
-        version: 1.0.74(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))
+        version: 1.0.76(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))
       '@react-three/uikit-lucide':
         specifier: 'catalog:'
-        version: 1.0.74(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))
+        version: 1.0.76(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))
       '@react-three/xr':
         specifier: 'catalog:'
         version: 6.6.30(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0)
@@ -984,13 +984,13 @@ importers:
         version: 9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0)
       '@react-three/uikit':
         specifier: 'catalog:'
-        version: 1.0.74(patch_hash=dc16ff70565242d18e3b750194896a48bdc375f0e832ca395e51eecf4e8820e9)(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))
+        version: 1.0.76(patch_hash=dc16ff70565242d18e3b750194896a48bdc375f0e832ca395e51eecf4e8820e9)(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))
       '@react-three/uikit-default':
         specifier: 'catalog:'
-        version: 1.0.74(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))
+        version: 1.0.76(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))
       '@react-three/uikit-lucide':
         specifier: 'catalog:'
-        version: 1.0.74(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))
+        version: 1.0.76(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))
       react:
         specifier: 'catalog:'
         version: 19.2.7
@@ -3816,23 +3816,23 @@ packages:
   '@pmndrs/handle@6.6.30':
     resolution: {integrity: sha512-KPutdaLpCNPZoqXX2HvlRc+cQMETXdHTF0nKqFHMrJrne34apqELRVig53lO469rJhheedsRVepfdyo4g9Rukw==}
 
-  '@pmndrs/msdfonts@1.0.74':
-    resolution: {integrity: sha512-cRMUq0RhvszDe4JfEZ8O8ZnZfZc0PsuiiMvwSb7CvFAQ156riCr1AueBvf4NEvLXHvBO7ZEMmgdODLSdEgg/HA==}
+  '@pmndrs/msdfonts@1.0.76':
+    resolution: {integrity: sha512-NKBJIOIrEoJovhes8TzAAmRtUuOPJIpyHjiCSMVfJLoV2MGRsArXiPkEm6+BDCk1N8eiHWuWGlw4/+LoCmHB2A==}
 
   '@pmndrs/pointer-events@6.6.30':
     resolution: {integrity: sha512-YD2jWdgEqqAWJNOOZ1WZMunUby8jwuQyOMk8zbeqC39R4nkZnGvu1Pa5EMGbV1zd2vZTxXDxYcAVxtQuhVwf3g==}
 
-  '@pmndrs/uikit-default@1.0.74':
-    resolution: {integrity: sha512-4HSSEmhZpI/+KQTAInyhmIPJcvFP3Af8M465kfzOo281DabcuUlPveiPQbbkdSyLh4PtF3sYIY7kYZFyuA+szA==}
+  '@pmndrs/uikit-default@1.0.76':
+    resolution: {integrity: sha512-pSd+qmxiSMNmVHAcL1E8nwEztDNe0dwtu7Bp8QWzIqi0Fyqf7LYk2LMF11TIURe21hU/Uj9+378dKgHvcLqI8Q==}
 
-  '@pmndrs/uikit-lucide@1.0.74':
-    resolution: {integrity: sha512-tZ/g++iW6KEK3KdB2pRh/WpWgUh0Fs9k+S2SXBhEL5GidhDfBb3+mj/SZR8fe3oo+H3HkDoFIUT+UBz7hVbsCA==}
+  '@pmndrs/uikit-lucide@1.0.76':
+    resolution: {integrity: sha512-qCPcVFO1qNWFBHq4xQ3s+CtSyvs4QKe61Xkjf2Fk8koiyNY36flVe7Yqhz8zLsj4Sf+O5ziCmFlpMFpGZOusbA==}
 
-  '@pmndrs/uikit-pub-sub@1.0.74':
-    resolution: {integrity: sha512-piiYQX/hjuXzTwBAjGbWqycEZsMFlsCKxoczs6G7M7kPWWmfLuFf9woOXHLtW5x6cnJJ19YrNuaQDtzG3SXj3Q==}
+  '@pmndrs/uikit-pub-sub@1.0.76':
+    resolution: {integrity: sha512-+DVXInyj+/GAJJDTvElLrVqh8b1kmnPGZW1UQApUIwxZmhzCPmr2cAz0j1/vNyDG5VQNLWWmkItLi50/chKcwA==}
 
-  '@pmndrs/uikit@1.0.74':
-    resolution: {integrity: sha512-GF7Uwqile6UnbXQPXpbB9hkDSXJA2d0P3Vv33kLom4Q57JqCPoGGsjy4CzjsZlZwXb1riIUpu5CN5xnBtpPkmQ==}
+  '@pmndrs/uikit@1.0.76':
+    resolution: {integrity: sha512-qLE7kGaW5LGE4YdFzCQZaCiB6NvfL9JJ2NxaBSw8Z0lu/0uiUfA49vKHFxk/1qiGvTu+esrDCAydI+H2aN1kYg==}
     peerDependencies:
       three: ^0.185.0
 
@@ -3934,14 +3934,14 @@ packages:
       react: ^19
       three: ^0.185.0
 
-  '@react-three/uikit-default@1.0.74':
-    resolution: {integrity: sha512-aS3V+BgjmcNKxUE2pJuWwRC6mx1AO9DKYH1g+EJS31op/rYlSJKxaEpH9m5STHcDxC5CiLHodNropuTEtceheg==}
+  '@react-three/uikit-default@1.0.76':
+    resolution: {integrity: sha512-Pd3U3GfhgLKPrQ4hNLb3+Pjg05sLZSknMl1m7rxej6UlBgf/HqTjMKd5xLKZXJh9okINxAk4KcAtGhwaAMCkZw==}
 
-  '@react-three/uikit-lucide@1.0.74':
-    resolution: {integrity: sha512-v7LE9oKeaEqKKPPQPRxzCWXsmi5yMqk+w6Egh0ycRVZzKDUnYRHc6xTkS24znqhN6zyLoAmpxoW8ryZeKBC5eg==}
+  '@react-three/uikit-lucide@1.0.76':
+    resolution: {integrity: sha512-e24ME4mGS+QaY8gCjBa/kdBBHPXulhDNIY504ja99SzMrV7nRhploTJNRN6GSHtoGHkE4WNf6Ew6imrBmFlVPw==}
 
-  '@react-three/uikit@1.0.74':
-    resolution: {integrity: sha512-OCprhz7S+Io2CV7iotxLA1vpU9OeJeOy5kxOXZ/G9pmWYo7FfMoy/9BRWUaMR0mhcXbi1IOkyPRF5Ndae6Yywg==}
+  '@react-three/uikit@1.0.76':
+    resolution: {integrity: sha512-QpQNYkuR4Yc8IqMvbjkG+n07xftnMHUA825N/w7XTeSDl3Qj8DCU4XO4uf6+/4JpBx+8WyZD3bm3VdCJMCxn+w==}
     peerDependencies:
       '@react-three/fiber': '>=8'
       react: '>=18'
@@ -13658,32 +13658,32 @@ snapshots:
       - immer
       - react
 
-  '@pmndrs/msdfonts@1.0.74': {}
+  '@pmndrs/msdfonts@1.0.76': {}
 
   '@pmndrs/pointer-events@6.6.30': {}
 
-  '@pmndrs/uikit-default@1.0.74(three@0.185.0)':
+  '@pmndrs/uikit-default@1.0.76(three@0.185.0)':
     dependencies:
-      '@pmndrs/uikit': 1.0.74(three@0.185.0)
-      '@pmndrs/uikit-lucide': 1.0.74(three@0.185.0)
+      '@pmndrs/uikit': 1.0.76(three@0.185.0)
+      '@pmndrs/uikit-lucide': 1.0.76(three@0.185.0)
       zod: 4.4.3
     transitivePeerDependencies:
       - three
 
-  '@pmndrs/uikit-lucide@1.0.74(three@0.185.0)':
+  '@pmndrs/uikit-lucide@1.0.76(three@0.185.0)':
     dependencies:
-      '@pmndrs/uikit': 1.0.74(three@0.185.0)
+      '@pmndrs/uikit': 1.0.76(three@0.185.0)
     transitivePeerDependencies:
       - three
 
-  '@pmndrs/uikit-pub-sub@1.0.74':
+  '@pmndrs/uikit-pub-sub@1.0.76':
     dependencies:
       '@preact/signals-core': 1.14.3
 
-  '@pmndrs/uikit@1.0.74(three@0.185.0)':
+  '@pmndrs/uikit@1.0.76(three@0.185.0)':
     dependencies:
-      '@pmndrs/msdfonts': 1.0.74
-      '@pmndrs/uikit-pub-sub': 1.0.74
+      '@pmndrs/msdfonts': 1.0.76
+      '@pmndrs/uikit-pub-sub': 1.0.76
       '@preact/signals-core': 1.14.3
       '@zappar/msdf-generator': 1.2.4
       three: 0.185.0
@@ -13835,10 +13835,10 @@ snapshots:
       three: 0.185.0
       three-stdlib: 2.36.1(three@0.185.0)
 
-  '@react-three/uikit-default@1.0.74(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))':
+  '@react-three/uikit-default@1.0.76(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))':
     dependencies:
-      '@pmndrs/uikit-default': 1.0.74(three@0.185.0)
-      '@react-three/uikit': 1.0.74(patch_hash=dc16ff70565242d18e3b750194896a48bdc375f0e832ca395e51eecf4e8820e9)(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))
+      '@pmndrs/uikit-default': 1.0.76(three@0.185.0)
+      '@react-three/uikit': 1.0.76(patch_hash=dc16ff70565242d18e3b750194896a48bdc375f0e832ca395e51eecf4e8820e9)(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))
     transitivePeerDependencies:
       - '@react-three/fiber'
       - '@types/react'
@@ -13847,10 +13847,10 @@ snapshots:
       - three
       - use-sync-external-store
 
-  '@react-three/uikit-lucide@1.0.74(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))':
+  '@react-three/uikit-lucide@1.0.76(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))':
     dependencies:
-      '@pmndrs/uikit-lucide': 1.0.74(three@0.185.0)
-      '@react-three/uikit': 1.0.74(patch_hash=dc16ff70565242d18e3b750194896a48bdc375f0e832ca395e51eecf4e8820e9)(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))
+      '@pmndrs/uikit-lucide': 1.0.76(three@0.185.0)
+      '@react-three/uikit': 1.0.76(patch_hash=dc16ff70565242d18e3b750194896a48bdc375f0e832ca395e51eecf4e8820e9)(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))
     transitivePeerDependencies:
       - '@react-three/fiber'
       - '@types/react'
@@ -13859,10 +13859,10 @@ snapshots:
       - three
       - use-sync-external-store
 
-  '@react-three/uikit@1.0.74(patch_hash=dc16ff70565242d18e3b750194896a48bdc375f0e832ca395e51eecf4e8820e9)(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))':
+  '@react-three/uikit@1.0.76(patch_hash=dc16ff70565242d18e3b750194896a48bdc375f0e832ca395e51eecf4e8820e9)(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))':
     dependencies:
       '@pmndrs/pointer-events': 6.6.30
-      '@pmndrs/uikit': 1.0.74(three@0.185.0)
+      '@pmndrs/uikit': 1.0.76(three@0.185.0)
       '@preact/signals-core': 1.14.3
       '@react-three/fiber': 9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0)
       react: 19.2.7
