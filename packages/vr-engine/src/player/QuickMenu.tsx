@@ -2,15 +2,15 @@ import { useSessionMode } from "@hyperlinkvr/react";
 import { useFrame } from "@react-three/fiber";
 import { Container, Text } from "@react-three/uikit";
 import { ArrowLeft, Camera, Smile } from "@react-three/uikit-lucide";
-import { ReactNode, RefObject, useEffect, useMemo, useRef, useState } from "react";
+import { RefObject, useEffect, useMemo, useRef, useState } from "react";
 import { Group, Vector3 } from "three";
 
 
 
 import { PlayerExpression, usePlayerExpression } from "../contexts";
 import { GadgetName, usePlayerGadgets } from "../contexts/PlayerGadgetsContext";
-import { useQuickMenuHeld } from "../input/system_input";
 import { useXRHandAttachment } from "../input/impl/xr/useXRHandAttachment";
+import { useQuickMenuHeld } from "../input/system_input";
 
 
 const DIST = 45;
@@ -22,12 +22,17 @@ const OFFSETS = [
     { x: DIST, y: 0 } // right
 ] as const;
 
-type Slot =
-    | { icon: ReactNode; on_select: () => void }
-    | { icon: ReactNode; page: Page | null }
-    | { icon: ReactNode; gadget: GadgetName }
-    | { icon: ReactNode; expression: PlayerExpression }
-    | null;
+interface BaseSlot {
+    icon: React.ReactNode,
+    stay_open?: boolean
+}
+
+type SlotAction =
+    | { gadget: GadgetName }
+    | { expression: PlayerExpression }
+    | { on_select: () => void };
+
+type Slot = (BaseSlot & SlotAction) | (Omit<BaseSlot, "stay_open"> & { page: Page | null }) | null;
 
 type Page = { slots: [Slot, Slot, Slot, Slot] };
 
@@ -69,6 +74,8 @@ const QuickMenuItems = ({ controls, active_index, on_page_changed }: {
     const {respawn_gadget} = usePlayerGadgets();
     const {dispatch_expression} = usePlayerExpression();
 
+    const [self_dismiss, setSelfDismiss] = useState(false);
+
     const on_slot = (slot: Slot) => {
         if (!slot) return;
 
@@ -85,12 +92,21 @@ const QuickMenuItems = ({ controls, active_index, on_page_changed }: {
         } else if ("on_select" in slot) {
             slot.on_select();
         }
+
+        // page changes automatically stay open, other slots have to opt in
+        if (!("page" in slot) && !slot.stay_open) {
+            setSelfDismiss(true);
+        }
     };
 
     useEffect(() => {
         if (!controls) return;
         controls.current = { select: (i) => on_slot(current_page.slots[i]!) };
     });
+
+    if (self_dismiss) {
+        return null;
+    }
 
     return (
         <Container pixelSize={0.0025} width={200} height={200} positionType="relative" color="white">
