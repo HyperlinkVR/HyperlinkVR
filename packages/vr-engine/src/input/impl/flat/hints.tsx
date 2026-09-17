@@ -31,7 +31,8 @@ export type HintAction =
     "ui_navigate" |
     "ui_accept" |
     "ui_cancel" |
-    "close_watch";
+    "close_watch" |
+    "quick_menu";
 
 export type HintLayer = "default" | "verbose" | "not_sprinting" | "sprinting" | "not_holding" | "holding" | "holding_throwable" | "holding_useable" | "charging_throw" | "watch_ui";
 
@@ -68,7 +69,8 @@ const HINTS: Record<HintDevice, Partial<Record<HintAction, InputHint>>> = {
         ui_navigate: { glyphs: [key("↑"), key("↓"), key("←"), key("→")], label: "Navigate" },
         ui_accept: { glyphs: [key("Enter")], label: "Accept / interact" },
         ui_cancel: { glyphs: [key("Esc")], label: "Cancel / back" },
-        close_watch: { glyphs: [], label: "Click outside to close" }
+        close_watch: { glyphs: [], label: "Click outside to close" },
+        quick_menu: { glyphs: [key("Q")], label: "Quick menu (hold)" }
     },
 
     xbox: {
@@ -87,7 +89,8 @@ const HINTS: Record<HintDevice, Partial<Record<HintAction, InputHint>>> = {
         ui_navigate: { glyphs: [pf("analog-l-any"), text("/"), pf("dpad-left"), pf("dpad-right"), pf("dpad-up"), pf("dpad-down")], label: "Navigate" },
         ui_accept: { glyphs: [pf("xbox-a")], label: "Accept / interact" },
         ui_cancel: { glyphs: [pf("xbox-b")], label: "Cancel / back" },
-        close_watch: { glyphs: [pf("xbox-menu")], label: "Close watch" }
+        close_watch: { glyphs: [pf("xbox-menu")], label: "Close watch" },
+        quick_menu: { glyphs: [pf("xbox-left-shoulder")], label: "Quick menu (hold)" }
     },
     playstation: {
         move: { glyphs: [pf("analog-l-any")], label: "Move" },
@@ -105,7 +108,8 @@ const HINTS: Record<HintDevice, Partial<Record<HintAction, InputHint>>> = {
         ui_navigate: { glyphs: [pf("analog-l-any"), text("/"), pf("dpad-left"), pf("dpad-right"), pf("dpad-up"), pf("dpad-down")], label: "Navigate" },
         ui_accept: { glyphs: [pf("sony-a")], label: "Accept / interact" },
         ui_cancel: { glyphs: [pf("sony-b")], label: "Cancel / back" },
-        close_watch: { glyphs: [pf("sony-options")], label: "Close watch" }
+        close_watch: { glyphs: [pf("sony-options")], label: "Close watch" },
+        quick_menu: { glyphs: [pf("sony-left-shoulder")], label: "Quick menu (hold)" }
     },
     switch: {
         move: { glyphs: [pf("analog-l-any")], label: "Move" },
@@ -123,12 +127,13 @@ const HINTS: Record<HintDevice, Partial<Record<HintAction, InputHint>>> = {
         ui_navigate: { glyphs: [pf("analog-l-any"), text("/"), pf("nintendo-dpad-left"), pf("nintendo-dpad-right"), pf("nintendo-dpad-up"), pf("nintendo-dpad-down")], label: "Navigate" },
         ui_accept: { glyphs: [pf("xbox-b")], label: "Accept / interact" }, // nintendo bottom face button
         ui_cancel: { glyphs: [pf("xbox-a")], label: "Cancel / back" }, // nintendo right face button
-        close_watch: { glyphs: [pf("nintendo-plus")], label: "Close watch" }
+        close_watch: { glyphs: [pf("nintendo-plus")], label: "Close watch" },
+        quick_menu: { glyphs: [pf("nintendo-left-shoulder")], label: "Quick menu (hold)" }
     }
 };
 
 const HINT_LAYERS: Record<HintLayer, HintAction[]> = {
-    default: ["watch", "free_cursor"],
+    default: ["watch", "free_cursor", "quick_menu"],
     verbose: ["move", "jump"],
     not_sprinting: ["sprint"],
     sprinting: ["stop_sprinting"],
