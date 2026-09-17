@@ -2,13 +2,21 @@ import { useSessionMode } from "@hyperlinkvr/react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Container, Fullscreen, Text } from "@react-three/uikit";
 import { ArrowLeft, Camera, Smile } from "@react-three/uikit-lucide";
-import { RefObject, useEffect, useMemo, useRef, useState } from "react";
+import {
+    ComponentRef,
+    RefObject,
+    useEffect,
+    useMemo,
+    useRef,
+    useState
+} from "react";
 import { Group, Vector3 } from "three";
 
 
 
 import { PlayerExpression, usePlayerExpression } from "../contexts";
 import { GadgetName, usePlayerGadgets } from "../contexts/PlayerGadgetsContext";
+import { useFlatFrameInput } from "../input/impl/flat/bindings";
 import { useXRHandAttachment } from "../input/impl/xr/useXRHandAttachment";
 import { useQuickMenuHeld } from "../input/system_input";
 
@@ -23,8 +31,8 @@ const OFFSETS = [
 ] as const;
 
 interface BaseSlot {
-    icon: React.ReactNode,
-    stay_open?: boolean
+    icon: React.ReactNode;
+    stay_open?: boolean;
 }
 
 type SlotAction =
@@ -32,26 +40,33 @@ type SlotAction =
     | { expression: PlayerExpression }
     | { on_select: () => void };
 
-type Slot = (BaseSlot & SlotAction) | (Omit<BaseSlot, "stay_open"> & { page: Page | null }) | null;
+type Slot =
+    | (BaseSlot & SlotAction)
+    | (Omit<BaseSlot, "stay_open"> & { page: Page | null })
+    | null;
 
 type Page = { slots: [Slot, Slot, Slot, Slot] };
 
 type QuickMenuHandle = { select: (i: number) => void };
+
 const SELECT_RADIUS = 0.06;
 const REARM_RADIUS = 0.03;
 
+const FLAT_SELECT_RADIUS = DIST;
+const FLAT_REARM_RADIUS = 15;
+const FLAT_CURSOR_SENSITIVITY = 0.5;
+
 // which quadrant a menu-local xy offset points at: up=0 down=1 left=2 right=3
 const direction_index = (x: number, y: number) =>
-    Math.abs(x) > Math.abs(y) ? (x > 0 ? 3 : 2) : (y > 0 ? 0 : 1);
-
+    Math.abs(x) > Math.abs(y) ? (x > 0 ? 3 : 2) : y > 0 ? 0 : 1;
 
 const LUCIDE_PROPS = {
-    width: 30 as const,
-}
+    width: 30 as const
+};
 
 const TEXT_PROPS = {
-    fontSize: 30 as const,
-}
+    fontSize: 30 as const
+};
 
 const expression_page: Page = {
     slots: [
@@ -77,20 +92,19 @@ const root: Page = {
     ]
 };
 
-// TODO: set icon size so it scales properly on flat (will need to adjust pixelsize)
-// TODO: replace the click on flat with mouse hovering?
-// TODO: free cursor when open
-// TODO: controller stick input for flat
-
-const QuickMenuItems = ({ controls, active_index, on_page_changed }: {
+const QuickMenuItems = ({
+    controls,
+    active_index,
+    on_page_changed
+}: {
     controls?: RefObject<QuickMenuHandle | null>;
     active_index?: number | null;
     on_page_changed?: (page: Page) => void;
 }) => {
     const [current_page, setCurrentPage] = useState(root);
 
-    const {respawn_gadget} = usePlayerGadgets();
-    const {dispatch_expression} = usePlayerExpression();
+    const { respawn_gadget } = usePlayerGadgets();
+    const { dispatch_expression } = usePlayerExpression();
 
     const [self_dismiss, setSelfDismiss] = useState(false);
 
@@ -127,29 +141,40 @@ const QuickMenuItems = ({ controls, active_index, on_page_changed }: {
     }
 
     return (
-        <Container width={200} height={200} positionType="relative" color="white" depthWrite={false} depthTest={false}>
-            {current_page.slots.map((slot, i) =>
-                slot && (
-                    <Container
-                        key={i}
-                        positionType="absolute"
-                        inset={0}
-                        alignItems="center"
-                        justifyContent="center"
-                        transformTranslateX={OFFSETS[i]!.x}
-                        transformTranslateY={OFFSETS[i]!.y}
-                        transformScaleX={active_index === i ? 1.3 : 1}
-                        transformScaleY={active_index === i ? 1.3 : 1}
-                        onPointerDown={controls ? undefined : () => on_slot(slot)}
-                    >
-                        {slot.icon}
-                    </Container>
-                )
+        <Container
+            width={200}
+            height={200}
+            positionType="relative"
+            color="white"
+            depthWrite={false}
+            depthTest={false}
+            borderWidth={2}
+            borderColor="white"
+            borderRadius={100}
+        >
+            {current_page.slots.map(
+                (slot, i) =>
+                    slot && (
+                        <Container
+                            key={i}
+                            positionType="absolute"
+                            inset={0}
+                            alignItems="center"
+                            justifyContent="center"
+                            transformTranslateX={OFFSETS[i]!.x}
+                            transformTranslateY={OFFSETS[i]!.y}
+                            transformScaleX={active_index === i ? 1.3 : 1}
+                            transformScaleY={active_index === i ? 1.3 : 1}
+                            onPointerDown={
+                                controls ? undefined : () => on_slot(slot)
+                            }>
+                            {slot.icon}
+                        </Container>
+                    )
             )}
         </Container>
     );
 };
-
 
 const VRQuickMenu = () => {
     const { AnchorSpace, get_hand_world_pos } = useXRHandAttachment({
@@ -217,19 +242,103 @@ const VRQuickMenu = () => {
     );
 };
 
-
 const FlatQuickMenu = () => {
     const { size } = useThree();
+    const input = useFlatFrameInput();
 
     const ui_scale = useMemo(() => size.height / 360, [size.height]);
 
+    const controls = useRef<QuickMenuHandle | null>(null);
+    const virtual_cursor = useRef({ x: 0, y: 0 });
+    const armed = useRef(true);
+
+    const [active_index, set_active_index] = useState<number | null>(null);
+
+    const cursor_container_ref = useRef<ComponentRef<typeof Container>>(null);
+
+    useFrame(() => {
+        const look_dx = input.look.x;
+        const look_dy = input.look.y;
+
+        // prevent camera movement
+        // TODO: more proper locking system? or is this sustainable
+        input.look.x = 0;
+        input.look.y = 0;
+
+        let vx = virtual_cursor.current.x + look_dx * FLAT_CURSOR_SENSITIVITY;
+        let vy = virtual_cursor.current.y + look_dy * FLAT_CURSOR_SENSITIVITY;
+
+        const dist = Math.hypot(vx, vy);
+
+        if (dist > FLAT_SELECT_RADIUS) {
+            vx = (vx / dist) * FLAT_SELECT_RADIUS;
+            vy = (vy / dist) * FLAT_SELECT_RADIUS;
+        }
+
+        virtual_cursor.current.x = vx;
+        virtual_cursor.current.y = vy;
+
+        if (cursor_container_ref.current) {
+            cursor_container_ref.current.setProperties({
+                transformTranslateX: vx,
+                transformTranslateY: vy
+            });
+        }
+
+        if (dist < FLAT_REARM_RADIUS) {
+            armed.current = true;
+            if (active_index !== null) set_active_index(null);
+            return;
+        }
+
+        const i = direction_index(vx, -vy);
+        if (active_index !== i) {
+            set_active_index(i);
+        }
+
+        if (armed.current && dist >= FLAT_SELECT_RADIUS) {
+            armed.current = false;
+            controls.current?.select(i);
+        }
+    }, -1); // run before player look handling zeroes it
+
     return (
         <Fullscreen alignItems="center" justifyContent="center">
-            <Container
-                transformScaleX={ui_scale}
-                transformScaleY={ui_scale}
-            >
-                <QuickMenuItems />
+            <Container transformScaleX={ui_scale} transformScaleY={ui_scale}>
+                <QuickMenuItems
+                    controls={controls}
+                    active_index={active_index}
+                    on_page_changed={() => {
+                        // recenter cursor on page change
+                        virtual_cursor.current.x = 0;
+                        virtual_cursor.current.y = 0;
+                        cursor_container_ref.current?.setProperties({
+                            transformTranslateX: 0,
+                            transformTranslateY: 0
+                        });
+
+                        armed.current = true;
+                        set_active_index(null);
+                    }}
+                />
+
+                <Container
+                    ref={cursor_container_ref}
+                    positionType="absolute"
+                    inset={0}
+                    alignItems="center"
+                    justifyContent="center"
+                >
+                    <Container
+                        width={12}
+                        height={12}
+                        borderRadius={6}
+                        backgroundColor="white"
+                        opacity={0.7}
+                        depthWrite={false}
+                        depthTest={false}
+                    />
+                </Container>
             </Container>
         </Fullscreen>
     );
@@ -248,4 +357,4 @@ export const QuickMenu = () => {
     } else {
         return <FlatQuickMenu />;
     }
-}
+};

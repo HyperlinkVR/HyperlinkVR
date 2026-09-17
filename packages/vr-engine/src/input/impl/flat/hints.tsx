@@ -34,7 +34,7 @@ export type HintAction =
     "close_watch" |
     "quick_menu";
 
-export type HintLayer = "default" | "verbose" | "not_sprinting" | "sprinting" | "not_holding" | "holding" | "holding_throwable" | "holding_useable" | "charging_throw" | "watch_ui";
+export type HintLayer = "default" | "verbose" | "not_sprinting" | "sprinting" | "not_holding" | "holding" | "holding_throwable" | "holding_useable" | "charging_throw" | "watch_ui" | "quick_menu_open";
 
 export type HintGlyphSpec =
     | { kind: "pf"; glyph: string } // promptfont glyph, rendered via its css class
@@ -142,7 +142,8 @@ const HINT_LAYERS: Record<HintLayer, HintAction[]> = {
     holding_throwable: ["throw_tap", "throw_charge"],
     holding_useable: ["use"],
     charging_throw: ["charged_throw_execute"],
-    watch_ui: ["close_watch", "ui_navigate", "ui_accept", "ui_cancel"]
+    watch_ui: ["close_watch", "ui_navigate", "ui_accept", "ui_cancel"],
+    quick_menu_open: []
 };
 
 
@@ -168,7 +169,8 @@ const HINT_LAYER_SUPPRESSES: Partial<Record<HintLayer, HintLayer[]>> = {
     sprinting: ["not_sprinting"],
     holding: ["not_holding"],
     charging_throw: ["holding_throwable"],
-    watch_ui: ["default", "verbose", "not_sprinting", "sprinting", "not_holding", "holding", "holding_throwable", "holding_useable", "charging_throw"]
+    watch_ui: ["default", "verbose", "not_sprinting", "sprinting", "not_holding", "holding", "holding_throwable", "holding_useable", "charging_throw"],
+    quick_menu_open: ["default", "verbose", "not_sprinting", "sprinting", "not_holding", "holding", "holding_throwable", "holding_useable", "charging_throw"]
 };
 
 export const compute_hint_actions_from_layers = (layers: HintLayer[], side_filter: HintSide = "both"): HintAction[] => {
