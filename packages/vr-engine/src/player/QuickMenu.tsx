@@ -1,6 +1,6 @@
 import { useSessionMode } from "@hyperlinkvr/react";
-import { useFrame } from "@react-three/fiber";
-import { Container, Text, Fullscreen } from "@react-three/uikit";
+import { useFrame, useThree } from "@react-three/fiber";
+import { Container, Fullscreen, Text } from "@react-three/uikit";
 import { ArrowLeft, Camera, Smile } from "@react-three/uikit-lucide";
 import { RefObject, useEffect, useMemo, useRef, useState } from "react";
 import { Group, Vector3 } from "three";
@@ -13,7 +13,7 @@ import { useXRHandAttachment } from "../input/impl/xr/useXRHandAttachment";
 import { useQuickMenuHeld } from "../input/system_input";
 
 
-const DIST = 45;
+const DIST = 60;
 
 const OFFSETS = [
     { x: 0, y: -DIST }, // up
@@ -45,20 +45,33 @@ const direction_index = (x: number, y: number) =>
     Math.abs(x) > Math.abs(y) ? (x > 0 ? 3 : 2) : (y > 0 ? 0 : 1);
 
 
+const LUCIDE_PROPS = {
+    width: 30 as const,
+}
+
+const TEXT_PROPS = {
+    fontSize: 30 as const,
+}
+
 const expression_page: Page = {
-    // TODO: expression menu (move from the test menu)
     slots: [
-        { icon: <Text>:D</Text>, expression: { eyes: "default", mouth: "big_smile" } },
-        { icon: <ArrowLeft />, page: null },
-        { icon: <Text>:{"{"}</Text>, expression: { eyes: "default", mouth: "wobbly_frown" } },
+        {
+            icon: <Text {...TEXT_PROPS}>:D</Text>,
+            expression: { eyes: "default", mouth: "big_smile" }
+        },
+        { icon: <ArrowLeft {...LUCIDE_PROPS} />, page: null },
+        {
+            icon: <Text {...TEXT_PROPS}>:{"{"}</Text>,
+            expression: { eyes: "default", mouth: "wobbly_frown" }
+        },
         null
     ]
 };
 
 const root: Page = {
     slots: [
-        { icon: <Smile />, page: expression_page },
-        { icon: <Camera />, gadget: "camera" },
+        { icon: <Smile {...LUCIDE_PROPS} />, page: expression_page },
+        { icon: <Camera {...LUCIDE_PROPS} />, gadget: "camera" },
         null,
         null
     ]
@@ -114,7 +127,7 @@ const QuickMenuItems = ({ controls, active_index, on_page_changed }: {
     }
 
     return (
-        <Container width={200} height={200} positionType="relative" color="white">
+        <Container width={200} height={200} positionType="relative" color="white" depthWrite={false} depthTest={false}>
             {current_page.slots.map((slot, i) =>
                 slot && (
                     <Container
@@ -192,7 +205,7 @@ const VRQuickMenu = () => {
             <AnchorSpace />
 
             <group ref={group_ref}>
-                <Container pixelSize={0.0025}>
+                <Container pixelSize={0.002}>
                     <QuickMenuItems
                         controls={controls}
                         active_index={active_index}
@@ -204,13 +217,22 @@ const VRQuickMenu = () => {
     );
 };
 
+
 const FlatQuickMenu = () => {
-    // TODO: fullscreen presentation with mouse freed/gamepad stick?
+    const { size } = useThree();
+
+    const ui_scale = useMemo(() => size.height / 360, [size.height]);
+
     return (
-        <Fullscreen alignItems="center" justifyContent="center" depthWrite={false} depthTest={false}>
-            <QuickMenuItems />;
+        <Fullscreen alignItems="center" justifyContent="center">
+            <Container
+                transformScaleX={ui_scale}
+                transformScaleY={ui_scale}
+            >
+                <QuickMenuItems />
+            </Container>
         </Fullscreen>
-    )
+    );
 };
 
 export const QuickMenu = () => {
