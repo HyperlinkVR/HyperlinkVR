@@ -16,7 +16,6 @@ import { useSessionMode } from "../../../react/src/contexts/SessionMode";
 import { useWebSDKMessaging } from "../contexts";
 import type { ExpressionMouth } from "../contexts/PlayerExpressionContext";
 import { PlayerExpressionProvider, usePlayerExpression } from "../contexts/PlayerExpressionContext";
-import { PhotoCamera } from "../gadgets/PhotoCamera";
 import { BodyHUD } from "../hud/BodyHUD";
 import { FlatHUD } from "../hud/FlatHUD";
 import { HeadHUD } from "../hud/HeadHUD";
@@ -38,7 +37,8 @@ import { Vignette } from "./Vignette";
 import { WristWatch } from "./WristWatch";
 import { KeyboardSlot } from "./KeyboardSlot";
 import { QuickMenu } from "./QuickMenu";
-import { PlayerGadgetsProvider, usePlayerGadgets } from "../contexts/PlayerGadgetsContext";
+import { PlayerGadgetsProvider } from "../contexts/PlayerGadgetsContext";
+import { Gadgets } from "../gadgets";
 
 
 const MouthTest = ({
@@ -101,16 +101,6 @@ const ExpressionTest = () => {
         </group>
     );
 };
-
-const Gadgets = () => {
-    const {active_gadgets} = usePlayerGadgets();
-
-    return (
-        <group name="GadgetsRoot">
-            {active_gadgets.camera.active && <PhotoCamera key={active_gadgets.camera.spawn_key} />}
-        </group>
-    );
-}
 
 export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>; can_move?: boolean }) => {
     const origin_ref = useRef<Group>(null);
