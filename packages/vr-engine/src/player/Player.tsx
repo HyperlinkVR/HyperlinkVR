@@ -41,6 +41,7 @@ import { WristWatch } from "./WristWatch";
 import { KeyboardRenderer } from "@hyperlinkvr/ui-3d";
 import { useFrame } from "@react-three/fiber";
 import { KeyboardSlot } from "./KeyboardSlot";
+import { QuickMenu } from "./QuickMenu";
 
 
 const MouthTest = ({
@@ -302,6 +303,7 @@ export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>
                             <ExpressionTest />
                             <OriginHUD />
                             <KeyboardSlot />
+                            <QuickMenu />
                         </XROrigin>
                         <BodyHUD />
                         <HeadHUD />
@@ -314,6 +316,7 @@ export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>
                             <FlatHandsPublisher />
                             <FlatCameraRig origin={origin_ref} />
                             <ExpressionTest />
+                            <QuickMenu />
                         </group>
                         <FlatHUD />
                         {can_move && !seated && <FlatLocomotion origin={origin_ref} />}
