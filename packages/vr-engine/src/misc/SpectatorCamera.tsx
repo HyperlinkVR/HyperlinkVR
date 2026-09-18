@@ -1,12 +1,12 @@
 import { useSetting } from "@hyperlinkvr/react";
 import { Text, useGLTF } from "@react-three/drei";
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import type { Group } from "three";
 
 
 
 import { FollowPlayer } from "../interaction/FollowPlayer";
-import { Grabbable } from "../interaction/Grabbable";
+import { Grabbable, GrabbableRef } from "../interaction/Grabbable";
 import { LayerGroup } from "../render/LayerGroup";
 import { Layer } from "../render/layers";
 import { MixedRealityCameraController } from "../render/MixedRealityCameraController";
@@ -26,6 +26,16 @@ const SpectatorCameraInternal = () => {
     const {scene: camera_scene} = useGLTF(camera);
 
     const camera_model_ref = useRef<Group>(null);
+    const on_camera_ref = useCallback(
+        (grabbable: GrabbableRef) => {
+            if (!grabbable) {
+                return;
+            }
+
+            camera_model_ref.current = grabbable.group;
+        },
+        []
+    )
 
     const config = useMemo(() => {
         if (mode === "first_person") {
@@ -51,7 +61,7 @@ const SpectatorCameraInternal = () => {
                     rotation={[0, Math.PI/12, 0]}
                 >
                     <Grabbable
-                        ref={camera_model_ref}
+                        ref={on_camera_ref}
                         on_trigger_start={() => setFollowPlayer(!follow_player)}
                         grab_distance={0.25}
                         enabled={mode !== "first_person"}
