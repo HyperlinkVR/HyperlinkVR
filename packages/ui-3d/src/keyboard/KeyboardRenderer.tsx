@@ -108,6 +108,28 @@ const Keyboard = ({
         return sfx_refs.current[sfx_index];
     }, []);
 
+
+    // TODO: ability to hide typed text hint
+    const [typed_text, setTypedText] = useState("");
+    useEffect(() => {
+        if (!target) {
+            setTypedText("");
+            return;
+        }
+
+        // read initial value
+        setTypedText(target.value);
+
+        const on_change = () => {
+            setTypedText(target.value);
+        };
+
+        target.addEventListener("input", on_change);
+        return () => {
+            target.removeEventListener("input", on_change);
+        };
+    }, [target]);
+
     const press = useCallback(
         (action: KeyAction) => {
             switch (action.kind) {
@@ -206,7 +228,7 @@ const Keyboard = ({
                     alignItems="center"
                     paddingX={4}>
                     <Text fontSize={12} color="#888888">
-                        {keyboard_layout.label}
+                        {typed_text}
                     </Text>
                     <Container
                         width={KEY_HEIGHT}
