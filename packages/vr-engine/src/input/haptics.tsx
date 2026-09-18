@@ -48,7 +48,6 @@ interface TaggedHapticActuator {
 // chrome uses vibrationActuator, firefox uses hapticActuators
 const access_actuators = (gamepad: Gamepad, tags: ActuatorTags = {}): ReadonlyArray<TaggedHapticActuator> => {
     if (gamepad.vibrationActuator) {
-        console.log("Found vibrationActuator on gamepad:", gamepad.id, gamepad.vibrationActuator);
         return [{ actuator: gamepad.vibrationActuator, tags }];
     } else if (gamepad.hapticActuators) {
         return gamepad.hapticActuators.map((actuator) => ({ actuator, tags }));

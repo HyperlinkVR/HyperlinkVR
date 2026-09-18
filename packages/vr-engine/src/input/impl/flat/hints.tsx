@@ -200,7 +200,6 @@ export const compute_hint_actions_from_layers = (layers: HintLayer[], side_filte
         }
     }
     const visible_layers = layers.filter((layer) => !suppressed.has(layer));
-    console.log("compute_hint_actions_from_layers", { layers, side_filter, suppressed: Array.from(suppressed), visible_layers });
 
     const actions = new Set<HintAction>();
     for (const layer of visible_layers) {
