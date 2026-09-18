@@ -15,6 +15,7 @@ import { active_pipeline } from "../render/GraphicsPipeline";
 import { ArrowLeft, X } from "@react-three/uikit-lucide";
 import { MAX_CAPTION_LENGTH } from "@hyperlinkvr/hypergram-schemas/v1";
 import { useKeyboardInput } from "@hyperlinkvr/ui-3d";
+import { useHaptics } from "../input/haptics";
 
 
 const DISPLAY_ASPECT = 16 / 9;
@@ -506,6 +507,8 @@ export const PhotoCamera = () => {
 
     const can_capture = useRef(true);
 
+    const {rumble} = useHaptics();
+
     const handle_capture = useCallback(
         () => {
             // lock out capture for a short time while waiting for the shutter effect to be seen (and for the control switch to happen)
@@ -513,6 +516,11 @@ export const PhotoCamera = () => {
             setTimeout(() => {
                 can_capture.current = true;
             }, SHUTTER_TIME * 2);
+
+            rumble({
+                intensity: { value: 0.5 },
+                duration_ms: 100
+            })
 
             const sfx = sfx_ref.current;
             if (!sfx) return;
@@ -562,5 +570,4 @@ export const PhotoCamera = () => {
 }
 
 // TODO: square guide, or just stop making them square online
-// TODO: controller haptics (abstracted in input providers, and used in multiple places)
 // TODO: lock flat input whilst focused on input fields

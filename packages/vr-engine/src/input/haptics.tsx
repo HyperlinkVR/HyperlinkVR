@@ -24,6 +24,7 @@ export interface HapticRumbleEvent {
     type: "rumble"
     intensity: HapticIntensity;
     duration_ms: number;
+    vr_hand?: "left" | "right";
     start_delay_ms?: number;
 }
 
@@ -35,12 +36,18 @@ interface HapticSleepEvent {
 export type HapticEvent = HapticRumbleEvent | HapticSleepEvent;
 export type HapticPattern = ReadonlyArray<HapticEvent>;
 
+interface ActuatorTags {
+    hand?: "left" | "right";
+}
+
+type TaggedHapticActuator = GamepadHapticActuator & ActuatorTags;
+
 // chrome uses vibrationActuator, firefox uses hapticActuators
-const access_actuators = (gamepad: Gamepad): ReadonlyArray<GamepadHapticActuator> => {
+const access_actuators = (gamepad: Gamepad, tags: ActuatorTags = {}): ReadonlyArray<GamepadHapticActuator> => {
     if (gamepad.vibrationActuator) {
-        return [gamepad.vibrationActuator];
+        return [{...gamepad.vibrationActuator, ...tags}];
     } else if (gamepad.hapticActuators) {
-        return gamepad.hapticActuators;
+        return gamepad.hapticActuators.map((actuator) => ({...actuator, ...tags}));
     } else {
         return [];
     }
@@ -54,13 +61,18 @@ interface HapticsContextType {
 
 const HapticsContext = createContext<HapticsContextType | null>(null);
 
-const BaseHapticsProvider = ({collect_actuators, children}: {children: React.ReactNode, collect_actuators: () => ReadonlyArray<GamepadHapticActuator>}) => {
-    const actuators = useRef<ReadonlyArray<GamepadHapticActuator>>([]);
+interface HapticImpl {
+    collect_actuators: () => ReadonlyArray<TaggedHapticActuator>;
+    filter_actuators?: (actuators: ReadonlyArray<TaggedHapticActuator>, event: Omit<HapticRumbleEvent, "type">) => ReadonlyArray<TaggedHapticActuator>;
+}
+
+const BaseHapticsProvider = ({impl, children}: {children: React.ReactNode, impl: HapticImpl}) => {
+    const actuators = useRef<ReadonlyArray<TaggedHapticActuator>>([]);
 
     useEffect(() => {
-        actuators.current = collect_actuators();
+        actuators.current = impl.collect_actuators();
         console.log("Collected haptic actuators:", actuators.current);
-    }, [collect_actuators]);
+    }, [impl.collect_actuators]);
 
     const rumble = useCallback(
         (event: Omit<HapticRumbleEvent, "type">) => {
@@ -99,9 +111,11 @@ const BaseHapticsProvider = ({collect_actuators, children}: {children: React.Rea
                 }
             })();
 
+            const filtered_actuators = impl.filter_actuators ? impl.filter_actuators(actuators.current, event) : actuators.current;
+
             // browsers cant agree on a spec :(
             return Promise.all(
-                actuators.current.map(async (actuator) => {
+                filtered_actuators.map(async (actuator) => {
                     if ("playEffect" in actuator && actuator.playEffect) {
                         return actuator.playEffect("dual-rumble", {
                             startDelay: event.start_delay_ms ?? 0,
@@ -172,12 +186,12 @@ const FlatHapticsProvider = ({children}: {children: React.ReactNode}) => {
             return navigator
                 .getGamepads()
                 .filter((gp): gp is Gamepad => gp !== null && gp.connected)
-                .flatMap(access_actuators);
+                .flatMap((gp) => access_actuators(gp))
         }
     }, [flat_device]);
 
     return (
-        <BaseHapticsProvider collect_actuators={collect_actuators}>
+        <BaseHapticsProvider impl={{collect_actuators}}>
             {children}
         </BaseHapticsProvider>
     );
@@ -186,22 +200,41 @@ const FlatHapticsProvider = ({children}: {children: React.ReactNode}) => {
 const XRHapticsProvider = ({children}: {children: React.ReactNode}) => {
     const xr_inputs = useXRInputSourceStates();
 
-    const collect_actuators = useCallback(() => {
-        // collect xr controllers that have haptic actuators
-        return xr_inputs
-            .filter((input) => input.type === "controller")
-            .flatMap((input) => {
-                const gamepad = input.inputSource.gamepad;
-                if (gamepad) {
-                    return access_actuators(gamepad);
-                } else {
-                    return [];
-                }
-            });
-    }, [xr_inputs]);
+    const collect_actuators = useCallback(
+        () => {
+            // collect xr controllers that have haptic actuators
+            return xr_inputs
+                .filter((input) => input.type === "controller")
+                .flatMap((input) => {
+                    const gamepad = input.inputSource.gamepad;
+                    if (gamepad) {
+                        let hand: "left" | "right" | "none" | undefined = input.inputSource.handedness;
+                        if (hand === "none") {
+                            hand = undefined;
+                        }
+
+                        return access_actuators(gamepad, {hand});
+                    } else {
+                        return [];
+                    }
+                });
+        },
+        [xr_inputs]
+    );
+
+    const filter_actuators = useCallback(
+        (actuators: ReadonlyArray<TaggedHapticActuator>, event: HapticRumbleEvent) => {
+            if (event.vr_hand) {
+                return actuators.filter((actuator) => actuator.hand === undefined || actuator.hand === event.vr_hand);
+            } else {
+                return actuators;
+            }
+        },
+        []
+    );
 
     return (
-        <BaseHapticsProvider collect_actuators={collect_actuators}>
+        <BaseHapticsProvider impl={{collect_actuators, filter_actuators}}>
             {children}
         </BaseHapticsProvider>
     );
