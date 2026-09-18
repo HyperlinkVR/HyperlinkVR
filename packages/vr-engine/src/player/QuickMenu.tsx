@@ -2,14 +2,7 @@ import { useSessionMode } from "@hyperlinkvr/react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Container, Fullscreen, Text } from "@react-three/uikit";
 import { ArrowLeft, Camera, Smile } from "@react-three/uikit-lucide";
-import {
-    ComponentRef,
-    RefObject,
-    useEffect,
-    useMemo,
-    useRef,
-    useState
-} from "react";
+import { ComponentRef, RefObject, useEffect, useMemo, useRef, useState } from "react";
 import { Euler, Group, Quaternion, Vector3 } from "three";
 
 
@@ -17,10 +10,9 @@ import { Euler, Group, Quaternion, Vector3 } from "three";
 import { PlayerExpression, usePlayerExpression } from "../contexts";
 import { GadgetName, usePlayerGadgets } from "../contexts/PlayerGadgetsContext";
 import { useFlatFrameInput } from "../input/impl/flat/bindings";
+import { useHintState, useSetHintState } from "../input/impl/flat/hints";
 import { useXRHandAttachment } from "../input/impl/xr/useXRHandAttachment";
 import { useQuickMenuHeld } from "../input/system_input";
-import {useSetHintState} from "../input/impl/flat/hints";
-
 
 const DIST = 60;
 
@@ -278,9 +270,13 @@ const FlatQuickMenu = () => {
     const virtual_cursor = useRef({ x: 0, y: 0 });
     const armed = useRef(true);
 
+    const {device} = useHintState();
+
     const [active_index, set_active_index] = useState<number | null>(null);
 
     const cursor_container_ref = useRef<ComponentRef<typeof Container>>(null);
+
+    const ignore_until_release = useRef(false);
 
     useFrame(() => {
         const look_dx = input.look.x;
@@ -291,8 +287,36 @@ const FlatQuickMenu = () => {
         input.look.x = 0;
         input.look.y = 0;
 
-        let vx = virtual_cursor.current.x + look_dx * FLAT_CURSOR_SENSITIVITY;
-        let vy = virtual_cursor.current.y + look_dy * FLAT_CURSOR_SENSITIVITY;
+        if (ignore_until_release.current) {
+            if (look_dx === 0 && look_dy === 0) {
+                ignore_until_release.current = false;
+            }
+            return;
+        }
+
+        let vx: number;
+        let vy: number;
+
+        // mouse mode is an additive delta, controller mode is an absolute stick position scaled to the menu radius (with a slight deadzone and easing)
+        // TODO: still delta the controller but zero on release (to allow it to lerp into place smoothly)
+        if (device === "kbm") {
+            vx = virtual_cursor.current.x + look_dx * FLAT_CURSOR_SENSITIVITY;
+            vy = virtual_cursor.current.y + look_dy * FLAT_CURSOR_SENSITIVITY;
+        } else {
+            if (Math.abs(look_dx) < 0.1 && Math.abs(look_dy) < 0.1) {
+                vx = 0;
+                vy = 0;
+            }
+
+            vx = look_dx * FLAT_SELECT_RADIUS * 0.95;
+            vy = look_dy * FLAT_SELECT_RADIUS * 0.95;
+
+            if (Math.abs(vx) < 0.75 && Math.abs(vy) < 0.75) {
+                // divide the force to ease it
+                vx *= 0.5;
+                vy *= 0.5;
+            }
+        }
 
         const dist = Math.hypot(vx, vy);
 
@@ -343,8 +367,7 @@ const FlatQuickMenu = () => {
                             transformTranslateY: 0
                         });
 
-                        // TODO: wait for new stick input before resuming movement
-                        // TODO: automatically zero when stick released (dont use look delta for controller, treat it like a stick surface)
+                        ignore_until_release.current = true;
 
                         armed.current = true;
                         set_active_index(null);
