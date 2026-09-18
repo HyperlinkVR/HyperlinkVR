@@ -1,21 +1,30 @@
+import { MAX_CAPTION_LENGTH } from "@hyperlinkvr/hypergram-schemas/v1";
 import { useSessionMode } from "@hyperlinkvr/react";
+import { useKeyboardInput } from "@hyperlinkvr/ui-3d";
 import { PerspectiveCamera, PositionalAudio, useFBO } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Container, Image, Text } from "@react-three/uikit";
 import { Button, Input } from "@react-three/uikit-default";
+import { ArrowLeft, X } from "@react-three/uikit-lucide";
 import { RefObject, useCallback, useMemo, useRef, useState } from "react";
-import { DataTexture, LinearFilter, Mesh, PerspectiveCamera as PerspectiveCameraType, RGBAFormat, SRGBColorSpace, UnsignedByteType, type PositionalAudio as PositionalAudioType } from "three";
+import {
+    DataTexture,
+    LinearFilter,
+    Mesh,
+    PerspectiveCamera as PerspectiveCameraType,
+    RGBAFormat,
+    SRGBColorSpace,
+    UnsignedByteType,
+    type PositionalAudio as PositionalAudioType
+} from "three";
 
 
 
 import { HypergramProvider, useHypergram } from "../contexts/HypergramContext";
-import { Grabbable } from "../interaction";
+import { useHaptics } from "../input/haptics";
+import { Grabbable, GrabbableRef } from "../interaction";
 import { compute_layer_mask, Layer } from "../render";
 import { active_pipeline } from "../render/GraphicsPipeline";
-import { ArrowLeft, X } from "@react-three/uikit-lucide";
-import { MAX_CAPTION_LENGTH } from "@hyperlinkvr/hypergram-schemas/v1";
-import { useKeyboardInput } from "@hyperlinkvr/ui-3d";
-import { useHaptics } from "../input/haptics";
 
 
 const DISPLAY_ASPECT = 16 / 9;
@@ -505,6 +514,8 @@ export const PhotoCamera = () => {
     const capture_pending = useRef(false);
     const sfx_ref = useRef<PositionalAudioType>(null);
 
+    const grabbable_ref = useRef<GrabbableRef>(null);
+
     const can_capture = useRef(true);
 
     const {rumble} = useHaptics();
@@ -517,10 +528,13 @@ export const PhotoCamera = () => {
                 can_capture.current = true;
             }, SHUTTER_TIME * 2);
 
+            // rumble the hand that triggered the capture (is holding the camera)
+            const hand = grabbable_ref.current?.get_equipping_hand()?.handedness || undefined;
             rumble({
                 intensity: { value: 0.5 },
-                duration_ms: 100
-            })
+                duration_ms: 100,
+                vr_hand: hand
+            });
 
             const sfx = sfx_ref.current;
             if (!sfx) return;
@@ -538,6 +552,7 @@ export const PhotoCamera = () => {
     // TODO: way to hide hand that grabs the item so the hand is out the way of the camera
     return (
         <Grabbable
+            ref={grabbable_ref}
             sticky
             auto_equip_hand="non_watch_hand"
             position={[0, 2, 0]}

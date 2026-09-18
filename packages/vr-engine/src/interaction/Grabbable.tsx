@@ -47,6 +47,8 @@ export interface GrabbableRef {
     group: Group | null;
     equip: (hand: Hand | HandTarget) => boolean;
     release: () => void;
+    is_equipped: (hand: Hand | HandTarget) => boolean;
+    get_equipping_hand: () => Hand | null;
 }
 
 enum RigidBodyType {
@@ -657,6 +659,16 @@ export const useGrabbable = (
         }
     }, [body_ref]);
 
+    const is_equipped = useCallback(
+        () => grabbingHand.current !== null,
+        []
+    );
+
+    const get_equipping_hand = useCallback(
+        () => grabbingHand.current,
+        []
+    );
+
     useEffect(() => {
         if (auto_equip_hand && enabled && !auto_equipped.current) {
             auto_equipped.current = equip(auto_equip_hand);
@@ -1251,7 +1263,7 @@ export const useGrabbable = (
         tick_collision_restore(body, region_scale, delta);
     }, GRAB_UPDATE_PRIORITY);
 
-    return { equip, release };
+    return { equip, release, is_equipped, get_equipping_hand };
 };
 
 interface GrabbableProps extends ComponentProps<"group"> {
@@ -1306,7 +1318,7 @@ export const Grabbable = (props: GrabbableProps) => {
         [props.on_nearby_end]
     );
 
-    const { equip, release } = useGrabbable(target_ref, {
+    const { equip, release, is_equipped, get_equipping_hand } = useGrabbable(target_ref, {
         enabled: props.enabled,
         grab_distance: props.grab_distance,
         nearby_trigger_distance:
@@ -1339,9 +1351,11 @@ export const Grabbable = (props: GrabbableProps) => {
         () => ({
             group: group_ref.current,
             equip,
-            release
+            release,
+            is_equipped,
+            get_equipping_hand
         }),
-        [equip, release]
+        [equip, release, is_equipped, get_equipping_hand]
     );
 
     useOutlineEffect(target_ref, nearby_hand_count > 0);
@@ -1352,3 +1366,5 @@ export const Grabbable = (props: GrabbableProps) => {
         </group>
     );
 };
+
+// TODO: option to mirror the offset for the other hand (or not). will need to choose which hand is the base hand for the offset (or have multiple mirror modes)
