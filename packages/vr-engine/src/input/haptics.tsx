@@ -9,9 +9,9 @@ import { useHintState } from "./impl/flat/hints";
 
 interface PerMotorHapticIntensity {
     // best effort, if the device doesnt have multiple motors it uses the fallback policy
-    fine?: number;
-    heavy?: number;
-    fallback: "fine" | "heavy" | "merge";
+    weak?: number;
+    strong?: number;
+    fallback: "weak" | "strong" | "merge";
 }
 
 interface SingleHapticIntensity {
@@ -47,7 +47,9 @@ const access_actuators = (gamepad: Gamepad): ReadonlyArray<GamepadHapticActuator
 };
 
 interface HapticsContextType {
-
+    rumble: (event: Omit<HapticRumbleEvent, "type">) => Promise<(boolean | GamepadHapticsResult)[]>;
+    stop_rumble: () => Promise<(boolean | GamepadHapticsResult)[]>;
+    rumble_pattern: (pattern: HapticPattern) => Promise<void>;
 }
 
 const HapticsContext = createContext<HapticsContextType | null>(null);
@@ -60,10 +62,99 @@ const BaseHapticsProvider = ({collect_actuators, children}: {children: React.Rea
         console.log("Collected haptic actuators:", actuators.current);
     }, [collect_actuators]);
 
-    // logic upon actuatrors to be shared lives here
+    const rumble = useCallback(
+        (event: Omit<HapticRumbleEvent, "type">) => {
+            const consolidated_intensity = (() => {
+                if ("value" in event.intensity) {
+                    return event.intensity.value;
+                } else {
+                    switch (event.intensity.fallback) {
+                        case "weak":
+                            return event.intensity.weak ?? 0;
+                        case "strong":
+                            return event.intensity.strong ?? 0;
+                        case "merge":
+                            return ((event.intensity.weak ?? 0) + (event.intensity.strong ?? 0)) / 2;
+                    }
+                }
+            })();
+
+            const weak_magnitude = (() => {
+                if ("value" in event.intensity) {
+                    return consolidated_intensity;
+                } else if ("weak" in event.intensity) {
+                    return event.intensity.weak ?? consolidated_intensity;
+                } else {
+                    return consolidated_intensity;
+                }
+            })();
+
+            const strong_magnitude = (() => {
+                if ("value" in event.intensity) {
+                    return consolidated_intensity;
+                } else if ("strong" in event.intensity) {
+                    return event.intensity.strong ?? consolidated_intensity;
+                } else {
+                    return consolidated_intensity;
+                }
+            })();
+
+            // browsers cant agree on a spec :(
+            return Promise.all(
+                actuators.current.map(async (actuator) => {
+                    if ("playEffect" in actuator && actuator.playEffect) {
+                        return actuator.playEffect("dual-rumble", {
+                            startDelay: event.start_delay_ms ?? 0,
+                            duration: event.duration_ms,
+                            weakMagnitude: weak_magnitude,
+                            strongMagnitude: strong_magnitude,
+                        });
+                    } else if ("pulse" in actuator && actuator.pulse) {
+                        await new Promise((resolve) => setTimeout(resolve, event.start_delay_ms ?? 0));
+                        return actuator.pulse(consolidated_intensity, event.duration_ms);
+                    } else {
+                        console.warn("Browser does not support playEffect or pulse on haptic actuator:", actuator);
+                        return false;
+                    }
+                })
+            );
+        },
+        [actuators]
+    );
+
+    const stop_rumble = useCallback(
+        () => {
+            return Promise.all(
+                actuators.current.map(async (actuator) => {
+                    if ("reset" in actuator && actuator.reset) {
+                        return actuator.reset();
+                    } else if ("pulse" in actuator && actuator.pulse) {
+                        return actuator.pulse(0, 1);
+                    } else {
+                        console.warn("Browser does not support reset or pulse on haptic actuator:", actuator);
+                        return false;
+                    }
+                })
+            );
+        },
+        [actuators]
+    );
+
+    const rumble_pattern = useCallback(
+        async (pattern: HapticPattern) => {
+            for (const event of pattern) {
+                if (event.type === "rumble") {
+                    await rumble(event);
+                } else if (event.type === "sleep") {
+                    await new Promise((resolve) => setTimeout(resolve, event.duration_ms));
+                }
+            }
+        },
+        [rumble]
+    );
 
     return (
-        <HapticsContext.Provider value={{}}>
+        <HapticsContext.Provider value={{ rumble, stop_rumble, rumble_pattern }}>
             {children}
         </HapticsContext.Provider>
     );
