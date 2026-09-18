@@ -531,7 +531,7 @@ export const PhotoCamera = () => {
             // rumble the hand that triggered the capture (is holding the camera)
             const hand = grabbable_ref.current?.get_equipping_hand()?.handedness || undefined;
             rumble({
-                intensity: { value: 0.5 },
+                intensity: { value: 1 },
                 duration_ms: 100,
                 vr_hand: hand
             });
