@@ -3,14 +3,7 @@ import { PlayerMonitorSchema } from "@hyperlinkvr/vr-engine-schemas";
 import { Text } from "@react-three/drei";
 import { XROrigin } from "@react-three/xr";
 import { Suspense, useEffect, useImperativeHandle, useMemo, useRef } from "react";
-import {
-    BoxGeometry,
-    ConeGeometry,
-    ExtrudeGeometry,
-    Group,
-    Shape
-} from "three";
-import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils";
+import { ExtrudeGeometry, Group, Shape } from "three";
 
 
 
@@ -30,6 +23,7 @@ import { XRHandsPublisher } from "../input/impl/xr/hands";
 import { XRLocomotion } from "../input/impl/xr/locomotion";
 import { XRSystemInput } from "../input/impl/xr/system_input";
 import { register_input_monitor, unregister_input_monitor } from "../monitors/input_monitor_registry";
+import { Layer, LayerGroup } from "../render";
 import { useWorldLoadingStateStore } from "../stores/WorldLoadingStateStore";
 import { Avatar } from "./Avatar";
 import { FlatCameraRig } from "./FlatCameraRig";
@@ -41,7 +35,6 @@ import { useIsSeated } from "./seating";
 import { LOCAL_PLAYER_SUBJECT } from "./subject";
 import { Vignette } from "./Vignette";
 import { WristWatch } from "./WristWatch";
-
 
 const MouthTest = ({
     mouth_name,
@@ -156,11 +149,11 @@ const PlayspaceMarker = () => {
     }
 
     return (
-        <group position={[0,0,0]} name="PlayspaceMarker">
+        <LayerGroup layers={[Layer.HUD]} position={[0,0.01,0]} name="PlayspaceMarker">
             <mesh geometry={arrow_geometry}>
                 <meshBasicMaterial color="green" transparent opacity={0.15} />
             </mesh>
-        </group>
+        </LayerGroup>
     );
 }
 
