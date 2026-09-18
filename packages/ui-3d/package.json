@@ -18,6 +18,7 @@
         "@react-three/uikit": "catalog:",
         "@react-three/uikit-default": "catalog:",
         "@react-three/uikit-lucide": "catalog:",
+        "@react-three/drei": "catalog:",
         "zustand": "catalog:"
     },
     "devDependencies": {

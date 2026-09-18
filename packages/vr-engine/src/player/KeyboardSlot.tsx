@@ -1,6 +1,5 @@
 import { KeyboardRenderer } from "@hyperlinkvr/ui-3d";
 import { useFrame, useThree } from "@react-three/fiber";
-import { Container } from "@react-three/uikit";
 import { useRef } from "react";
 import { Group } from "three";
 
@@ -22,9 +21,7 @@ export const KeyboardSlot = () => {
 
     return (
         <group ref={keyboard_group_ref}  position={[0, 0, -0.5]} rotation={[-Math.PI/4, 0, 0]}>
-            <Container pixelSize={0.001}>
-                <KeyboardRenderer />
-            </Container>
+            <KeyboardRenderer pixelSize={0.001} />
         </group>
     );
 };

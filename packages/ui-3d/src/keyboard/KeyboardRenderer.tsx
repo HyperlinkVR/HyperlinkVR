@@ -1,15 +1,10 @@
 import { useSetting } from "@hyperlinkvr/react";
+import { PositionalAudio } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { Container, Text } from "@react-three/uikit";
 import { Globe } from "@react-three/uikit-lucide";
-import {
-    ComponentRef,
-    useCallback,
-    useEffect,
-    useMemo,
-    useRef,
-    useState
-} from "react";
+import { ComponentRef, useCallback, useEffect, useMemo, useRef, useState, Suspense } from "react";
+import type { PositionalAudio as PositionalAudioType } from "three";
 import { MathUtils } from "three";
 
 
@@ -23,6 +18,9 @@ import { backspace, insert_text, submit } from "./write";
 const KEYBOARD_WIDTH = 560;
 const KEY_HEIGHT = 44;
 const GAP = 6;
+
+// @ts-ignore
+const KEYPRESS_SOUNDS = import.meta.glob("../../assets/keypress/*.opus", {eager: true, query: "?url", import: "default"});
 
 const key_label = (key: Key) => {
     if (key.label != null) return key.label;
@@ -69,12 +67,23 @@ const LocalePicker = ({ on_select }: { on_select: (id: KeyboardLayout["id"]) => 
     </Container>
 );
 
-const Keyboard = ({visible = true, on_hidden}: {visible?: boolean; on_hidden?: () => void}) => {
+const Keyboard = ({
+    visible = true,
+    on_hidden,
+    pixelSize = 1
+}: {
+    visible?: boolean;
+    on_hidden?: () => void;
+    pixelSize?: number;
+}) => {
     // TODO: way for certain inputs to force a specific layout, good for numpads etc
     // TODO: way to render fixed always in world keyboard (for dom mirror) that doesnt attach to store and can emit directly to a target
 
     const [requested_layout, set_requested_layout] = useSetting("keyboard_layout");
-    const keyboard_layout = useMemo(() => choose_layout(requested_layout), [requested_layout]);
+    const keyboard_layout = useMemo(
+        () => choose_layout(requested_layout),
+        [requested_layout]
+    );
 
     const target = useKeyboardStore((s) => s.target);
 
@@ -82,6 +91,22 @@ const Keyboard = ({visible = true, on_hidden}: {visible?: boolean; on_hidden?: (
     const [picker_open, setPickerOpen] = useState(false);
     // shift-once: return to the default page after the next character is inserted
     const pending_unshift = useRef(false);
+
+    const sfx_refs = useRef<Array<PositionalAudioType | null>>([]);
+    const sfx_rng_bag = useRef<Array<number>>([]);
+
+    const choose_sfx = useCallback(() => {
+        if (sfx_rng_bag.current.length === 0) {
+            sfx_rng_bag.current = Array.from(
+                Array(sfx_refs.current.length).keys()
+            );
+        }
+
+        const index = Math.floor(Math.random() * sfx_rng_bag.current.length);
+        const sfx_index = sfx_rng_bag.current[index]!;
+        sfx_rng_bag.current.splice(index, 1);
+        return sfx_refs.current[sfx_index];
+    }, []);
 
     const press = useCallback(
         (action: KeyAction) => {
@@ -108,6 +133,13 @@ const Keyboard = ({visible = true, on_hidden}: {visible?: boolean; on_hidden?: (
                     setPage("shift");
                     break;
             }
+
+            // play a (non repeating) random keypress sound
+            const sound = choose_sfx();
+            if (sound) {
+                sound.offset = 0;
+                sound.play();
+            }
         },
         [target, keyboard_layout]
     );
@@ -123,10 +155,13 @@ const Keyboard = ({visible = true, on_hidden}: {visible?: boolean; on_hidden?: (
 
     const container_ref = useRef<ComponentRef<typeof Container> | null>(null);
     const opacity_ref = useRef(0);
-    const set_container = useCallback((container: ComponentRef<typeof Container> | null) => {
-        container_ref.current = container;
-        if (container) container.setProperties({ opacity: 0 }); // start transparent before the frame loop takes over
-    }, []);
+    const set_container = useCallback(
+        (container: ComponentRef<typeof Container> | null) => {
+            container_ref.current = container;
+            if (container) container.setProperties({ opacity: 0 }); // start transparent before the frame loop takes over
+        },
+        []
+    );
 
     // fade in and out when visibility changes (but don't unmount, that's for the parent)
     useFrame((_, delta) => {
@@ -134,10 +169,11 @@ const Keyboard = ({visible = true, on_hidden}: {visible?: boolean; on_hidden?: (
         if (!container) return;
 
         const target_opacity = visible ? 1 : 0;
-        opacity_ref.current = MathUtils.lerp(
+        opacity_ref.current = MathUtils.damp(
             opacity_ref.current,
             target_opacity,
-            delta * 10
+            10,
+            delta
         );
 
         container.setProperties({ opacity: opacity_ref.current });
@@ -148,50 +184,85 @@ const Keyboard = ({visible = true, on_hidden}: {visible?: boolean; on_hidden?: (
     });
 
     // guard against a page a shift-once/goto pointed at that this layout doesn't define
-    const rows = keyboard_layout.pages[page] ?? keyboard_layout.pages[keyboard_layout.default_page]!;
+    const rows =
+        keyboard_layout.pages[page] ??
+        keyboard_layout.pages[keyboard_layout.default_page]!;
 
     return (
-        <Container
-            ref={set_container}
-            width={KEYBOARD_WIDTH}
-            flexDirection="column"
-            gap={GAP}
-            padding={GAP}
-            borderRadius={10}
-            backgroundColor="#1e1e1e"
-        >
-            <Container flexDirection="row" justifyContent="space-between" alignItems="center" paddingX={4}>
-                <Text fontSize={12} color="#888888">{keyboard_layout.label}</Text>
+        <>
+            <Container
+                ref={set_container}
+                width={KEYBOARD_WIDTH}
+                flexDirection="column"
+                gap={GAP}
+                padding={GAP}
+                borderRadius={10}
+                backgroundColor="#1e1e1e"
+                pixelSize={pixelSize}
+            >
                 <Container
-                    width={KEY_HEIGHT}
-                    height={KEY_HEIGHT * 0.66}
-                    borderRadius={6}
-                    justifyContent="center"
+                    flexDirection="row"
+                    justifyContent="space-between"
                     alignItems="center"
-                    backgroundColor={picker_open ? "#505050" : "#3a3a3a"}
-                    hover={{ backgroundColor: "#505050" }}
-                    onPointerDown={() => setPickerOpen((open) => !open)}
-                >
-                    <Globe width={18} color="white" />
+                    paddingX={4}>
+                    <Text fontSize={12} color="#888888">
+                        {keyboard_layout.label}
+                    </Text>
+                    <Container
+                        width={KEY_HEIGHT}
+                        height={KEY_HEIGHT * 0.66}
+                        borderRadius={6}
+                        justifyContent="center"
+                        alignItems="center"
+                        backgroundColor={picker_open ? "#505050" : "#3a3a3a"}
+                        hover={{ backgroundColor: "#505050" }}
+                        onPointerDown={() => setPickerOpen((open) => !open)}>
+                        <Globe width={18} color="white" />
+                    </Container>
                 </Container>
+
+                {picker_open ? (
+                    <LocalePicker on_select={select_layout} />
+                ) : (
+                    rows.map((row, r) => (
+                        <Container
+                            key={r}
+                            flexDirection="row"
+                            gap={GAP}
+                            justifyContent="center">
+                            {row.map((item, k) => (
+                                <KeyButton
+                                    key={k}
+                                    item={item}
+                                    on_press={press}
+                                />
+                            ))}
+                        </Container>
+                    ))
+                )}
             </Container>
 
-            {picker_open ? (
-                <LocalePicker on_select={select_layout} />
-            ) : (
-                rows.map((row, r) => (
-                    <Container key={r} flexDirection="row" gap={GAP} justifyContent="center">
-                        {row.map((item, k) => (
-                            <KeyButton key={k} item={item} on_press={press} />
-                        ))}
-                    </Container>
-                ))
-            )}
-        </Container>
+            <Suspense fallback={null}>
+                {Object.values(KEYPRESS_SOUNDS).map((url, index) => (
+                    <PositionalAudio
+                        key={index}
+                        ref={(ref) => {
+                            if (ref) {
+                                sfx_refs.current[index] = ref;
+                            }
+                        }}
+                        url={url as string}
+                        distance={1}
+                        loop={false}
+                        autoplay={false}
+                    />
+                ))}
+            </Suspense>
+        </>
     );
 };
 
-export const KeyboardRenderer = () => {
+export const KeyboardRenderer = ({pixelSize = 1}: {pixelSize?: number}) => {
     const is_open = useKeyboardStore((s) => s.is_open);
     const [mounted, setMounted] = useState(is_open);
 
@@ -205,5 +276,5 @@ export const KeyboardRenderer = () => {
         return null;
     }
 
-    return <Keyboard visible={is_open} on_hidden={() => setMounted(false)} />;
+    return <Keyboard visible={is_open} on_hidden={() => setMounted(false)} pixelSize={pixelSize} />;
 };
