@@ -32,7 +32,8 @@ export type HintAction =
     "ui_accept" |
     "ui_cancel" |
     "close_watch" |
-    "quick_menu";
+    "quick_menu" |
+    "quick_menu_open";
 
 export type HintLayer = "default" | "verbose" | "not_sprinting" | "sprinting" | "not_holding" | "holding" | "holding_throwable" | "holding_useable" | "charging_throw" | "watch_ui" | "quick_menu_open";
 
@@ -70,7 +71,8 @@ const HINTS: Record<HintDevice, Partial<Record<HintAction, InputHint>>> = {
         ui_accept: { glyphs: [key("Enter")], label: "Accept / interact" },
         ui_cancel: { glyphs: [key("Esc")], label: "Cancel / back" },
         close_watch: { glyphs: [], label: "Click outside to close" },
-        quick_menu: { glyphs: [key("Q")], label: "Quick menu (hold)" }
+        quick_menu: { glyphs: [key("Q")], label: "Quick menu (hold)" },
+        quick_menu_open: { glyphs: [], label: "Move mouse towards an item" }
     },
 
     xbox: {
@@ -90,7 +92,8 @@ const HINTS: Record<HintDevice, Partial<Record<HintAction, InputHint>>> = {
         ui_accept: { glyphs: [pf("xbox-a")], label: "Accept / interact" },
         ui_cancel: { glyphs: [pf("xbox-b")], label: "Cancel / back" },
         close_watch: { glyphs: [pf("xbox-menu")], label: "Close watch" },
-        quick_menu: { glyphs: [pf("xbox-left-shoulder")], label: "Quick menu (hold)" }
+        quick_menu: { glyphs: [pf("xbox-left-shoulder")], label: "Quick menu (hold)" },
+        quick_menu_open: { glyphs: [], label: "Move right stick towards an item" }
     },
     playstation: {
         move: { glyphs: [pf("analog-l-any")], label: "Move" },
@@ -109,7 +112,8 @@ const HINTS: Record<HintDevice, Partial<Record<HintAction, InputHint>>> = {
         ui_accept: { glyphs: [pf("sony-a")], label: "Accept / interact" },
         ui_cancel: { glyphs: [pf("sony-b")], label: "Cancel / back" },
         close_watch: { glyphs: [pf("sony-options")], label: "Close watch" },
-        quick_menu: { glyphs: [pf("sony-left-shoulder")], label: "Quick menu (hold)" }
+        quick_menu: { glyphs: [pf("sony-left-shoulder")], label: "Quick menu (hold)" },
+        quick_menu_open: { glyphs: [], label: "Move right stick towards an item" }
     },
     switch: {
         move: { glyphs: [pf("analog-l-any")], label: "Move" },
@@ -128,7 +132,8 @@ const HINTS: Record<HintDevice, Partial<Record<HintAction, InputHint>>> = {
         ui_accept: { glyphs: [pf("xbox-b")], label: "Accept / interact" }, // nintendo bottom face button
         ui_cancel: { glyphs: [pf("xbox-a")], label: "Cancel / back" }, // nintendo right face button
         close_watch: { glyphs: [pf("nintendo-plus")], label: "Close watch" },
-        quick_menu: { glyphs: [pf("nintendo-left-shoulder")], label: "Quick menu (hold)" }
+        quick_menu: { glyphs: [pf("nintendo-left-shoulder")], label: "Quick menu (hold)" },
+        quick_menu_open: { glyphs: [], label: "Move right stick towards an item" }
     }
 };
 
@@ -143,13 +148,13 @@ const HINT_LAYERS: Record<HintLayer, HintAction[]> = {
     holding_useable: ["use"],
     charging_throw: ["charged_throw_execute"],
     watch_ui: ["close_watch", "ui_navigate", "ui_accept", "ui_cancel"],
-    quick_menu_open: []
+    quick_menu_open: ["quick_menu_open"]
 };
 
 
 type HintSide = "left" | "right" | "both";
 
-const HINT_LAYER_ORDER_LEFT: HintLayer[] = ["default", "verbose", "watch_ui", "not_sprinting", "sprinting"];
+const HINT_LAYER_ORDER_LEFT: HintLayer[] = ["default", "verbose", "watch_ui", "not_sprinting", "sprinting", "quick_menu_open"];
 const HINT_LAYER_ORDER_RIGHT: HintLayer[] = ["holding_useable", "not_holding", "holding", "holding_throwable", "charging_throw"];
 const HINT_LAYER_OVERALL_ORDER: HintLayer[] = [...HINT_LAYER_ORDER_LEFT, ...HINT_LAYER_ORDER_RIGHT];
 
@@ -195,6 +200,7 @@ export const compute_hint_actions_from_layers = (layers: HintLayer[], side_filte
         }
     }
     const visible_layers = layers.filter((layer) => !suppressed.has(layer));
+    console.log("compute_hint_actions_from_layers", { layers, side_filter, suppressed: Array.from(suppressed), visible_layers });
 
     const actions = new Set<HintAction>();
     for (const layer of visible_layers) {

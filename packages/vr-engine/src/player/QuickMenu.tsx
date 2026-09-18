@@ -19,6 +19,7 @@ import { GadgetName, usePlayerGadgets } from "../contexts/PlayerGadgetsContext";
 import { useFlatFrameInput } from "../input/impl/flat/bindings";
 import { useXRHandAttachment } from "../input/impl/xr/useXRHandAttachment";
 import { useQuickMenuHeld } from "../input/system_input";
+import {useSetHintState} from "../input/impl/flat/hints";
 
 
 const DIST = 60;
@@ -107,6 +108,14 @@ const QuickMenuItems = ({
     const { dispatch_expression } = usePlayerExpression();
 
     const [self_dismiss, setSelfDismiss] = useState(false);
+
+    const {remove_layer} = useSetHintState();
+
+    useEffect(() => {
+        if (self_dismiss) {
+            remove_layer("quick_menu_open", true);
+        }
+    }, [self_dismiss]);
 
     const on_slot = (slot: Slot) => {
         if (!slot) return;
@@ -367,6 +376,16 @@ const FlatQuickMenu = () => {
 export const QuickMenu = () => {
     const visible = useQuickMenuHeld();
     const mode = useSessionMode();
+
+    const {add_layer, remove_layer} = useSetHintState();
+
+    useEffect(() => {
+        if (visible) {
+            add_layer("quick_menu_open");
+        } else {
+            remove_layer("quick_menu_open", true);
+        }
+    }, [visible, add_layer, remove_layer]);
 
     if (!visible) {
         return null;
