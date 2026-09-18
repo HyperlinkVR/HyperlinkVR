@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { useKeyboardScope } from "./scope";
 import type { KeyboardTarget } from "./store";
 import { useKeyboardStore } from "./store";
+import { useSessionMode } from "@hyperlinkvr/react";
 
 
 // low level access
@@ -17,13 +18,14 @@ export const useKeyboardTarget = () => {
 interface KeyboardInputOptions {
     ref?: React.RefObject<VanillaInput | null> | null;
     onFocusChange?: (focused: boolean) => void;
+    on_submit?: () => void;
 
     // override the surface scope, defaults to the nearest <KeyboardScope>
     scope?: string | null;
 }
 
 // high level access for inputs that want to automatically open the keyboard when focused, and close it when blurred
-export const useKeyboardInput = ({ ref, onFocusChange, scope }: KeyboardInputOptions = {}) => {
+export const useKeyboardInput = ({ ref, onFocusChange, on_submit, scope }: KeyboardInputOptions = {}) => {
     const internal = useRef<VanillaInput | null>(null);
 
     // unmount cleanup can still see the element after react has already called the ref callback with null
@@ -61,6 +63,38 @@ export const useKeyboardInput = ({ ref, onFocusChange, scope }: KeyboardInputOpt
         },
         [open, close, onFocusChange, resolved_scope]
     );
+
+    // bind dom target submission to the onSubmit callback
+    useEffect(() => {
+        const input = internal.current;
+        if (!input) return;
+
+        const handle_submit = () => {
+            on_submit?.();
+        };
+
+        input.element.addEventListener("submit", handle_submit);
+        return () => {
+            input.element.removeEventListener("submit", handle_submit);
+        };
+    }, [on_submit]);
+
+    // for flat ui, also bind the global enter key to submit (uikit doesnt handle it by default!)
+    const mode = useSessionMode();
+    useEffect(() => {
+        if (mode !== "flat") return;
+
+        const handle_keydown = (e: KeyboardEvent) => {
+            if (e.key === "Enter") {
+                on_submit?.();
+            }
+        };
+
+        window.addEventListener("keydown", handle_keydown);
+        return () => {
+            window.removeEventListener("keydown", handle_keydown);
+        };
+    }, [on_submit, mode]);
 
     return { ref: set_ref, onFocusChange: handle_focus_change };
 };

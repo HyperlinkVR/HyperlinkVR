@@ -29,7 +29,7 @@ export const KeyboardSlot = () => {
     });
 
     return (
-        <group ref={keyboard_group_ref}  position={[0, 0, -0.5]} rotation={[-Math.PI/4, 0, 0]}>
+        <group ref={keyboard_group_ref} position={[0, 0, -0.5]} rotation={[-Math.PI/4, 0, 0]}>
             <KeyboardRenderer pixelSize={0.001} />
         </group>
     );

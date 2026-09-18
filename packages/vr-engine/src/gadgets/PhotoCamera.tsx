@@ -175,7 +175,9 @@ const HypergramPostControls = ({ texture, buffer, go_back, on_success }: { textu
 
                 <Container width={40} height={5}>
                     <Input
-                        {...useKeyboardInput()}
+                        {...useKeyboardInput({
+                            on_submit: () => post_to_hypergram(caption_input)
+                        })}
                         value={caption_input}
                         onValueChange={(val) => {
                             if (val.length <= MAX_CAPTION_LENGTH) {
