@@ -1,4 +1,5 @@
 import { resolve } from "node:path";
+import { execSync } from "node:child_process";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite"
@@ -6,6 +7,13 @@ import tailwindcss from "@tailwindcss/vite"
 const source_root = resolve(import.meta.dirname, "src");
 
 const page = (...segments: string[]) => resolve(source_root, ...segments);
+
+let commit_hash: string;
+try {
+    commit_hash = execSync("git rev-parse --short HEAD").toString().trim();
+} catch (e) {
+    commit_hash = "unknown commit";
+}
 
 export default defineConfig({
     root: source_root,
@@ -16,6 +24,10 @@ export default defineConfig({
     server: {
         port: 5176,
         host: true
+    },
+
+    define: {
+        __COMMIT_HASH__: JSON.stringify(commit_hash)
     },
 
     build: {

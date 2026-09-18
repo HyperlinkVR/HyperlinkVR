@@ -13,6 +13,8 @@ interface NavigationBarProps {
     on_url_submit: (url: string) => void;
 }
 
+declare const __COMMIT_HASH__: string;
+
 const WorldsMenu = ({on_choose}: {on_choose: (url: string) => void}) => {
     const [favourite_worlds] = useStorage("sync", "favourite_worlds", [] as string[]);
 
@@ -31,6 +33,8 @@ const WorldsMenu = ({on_choose}: {on_choose: (url: string) => void}) => {
                         ))}
                     </>
                 )}
+
+                <p className="text-center text-xs opacity-25 mt-2">{__COMMIT_HASH__}</p>
             </div>
         </div>
     );
