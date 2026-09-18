@@ -40,14 +40,18 @@ interface ActuatorTags {
     hand?: "left" | "right";
 }
 
-type TaggedHapticActuator = GamepadHapticActuator & ActuatorTags;
+interface TaggedHapticActuator {
+    actuator: GamepadHapticActuator;
+    tags: ActuatorTags;
+}
 
 // chrome uses vibrationActuator, firefox uses hapticActuators
-const access_actuators = (gamepad: Gamepad, tags: ActuatorTags = {}): ReadonlyArray<GamepadHapticActuator> => {
+const access_actuators = (gamepad: Gamepad, tags: ActuatorTags = {}): ReadonlyArray<TaggedHapticActuator> => {
     if (gamepad.vibrationActuator) {
-        return [{...gamepad.vibrationActuator, ...tags}];
+        console.log("Found vibrationActuator on gamepad:", gamepad.id, gamepad.vibrationActuator);
+        return [{ actuator: gamepad.vibrationActuator, tags }];
     } else if (gamepad.hapticActuators) {
-        return gamepad.hapticActuators.map((actuator) => ({...actuator, ...tags}));
+        return gamepad.hapticActuators.map((actuator) => ({ actuator, tags }));
     } else {
         return [];
     }
@@ -115,7 +119,7 @@ const BaseHapticsProvider = ({impl, children}: {children: React.ReactNode, impl:
 
             // browsers cant agree on a spec :(
             return Promise.all(
-                filtered_actuators.map(async (actuator) => {
+                filtered_actuators.map(async ({actuator}) => {
                     if ("playEffect" in actuator && actuator.playEffect) {
                         return actuator.playEffect("dual-rumble", {
                             startDelay: event.start_delay_ms ?? 0,
@@ -139,7 +143,7 @@ const BaseHapticsProvider = ({impl, children}: {children: React.ReactNode, impl:
     const stop_rumble = useCallback(
         () => {
             return Promise.all(
-                actuators.current.map(async (actuator) => {
+                actuators.current.map(async ({actuator}) => {
                     if ("reset" in actuator && actuator.reset) {
                         return actuator.reset();
                     } else if ("pulse" in actuator && actuator.pulse) {
@@ -223,9 +227,9 @@ const XRHapticsProvider = ({children}: {children: React.ReactNode}) => {
     );
 
     const filter_actuators = useCallback(
-        (actuators: ReadonlyArray<TaggedHapticActuator>, event: HapticRumbleEvent) => {
+        (actuators: ReadonlyArray<TaggedHapticActuator>, event: Omit<HapticRumbleEvent, "type">) => {
             if (event.vr_hand) {
-                return actuators.filter((actuator) => actuator.hand === undefined || actuator.hand === event.vr_hand);
+                return actuators.filter((actuator) => actuator.tags.hand === undefined || actuator.tags.hand === event.vr_hand);
             } else {
                 return actuators;
             }
