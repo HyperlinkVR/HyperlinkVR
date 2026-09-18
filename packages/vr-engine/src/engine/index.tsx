@@ -66,6 +66,7 @@ import { FlatNavConsentGate, useNavConsent, VRNavConsentGate } from "./NavConsen
 
 
 import "../loader-config";
+import { HapticsProvider } from "../input/haptics";
 
 
 
@@ -251,7 +252,7 @@ const SceneContents = ({
     useFilterContactPair(filter_contact_pair);
 
     return (
-        <>
+        <HapticsProvider>
             <FloorCollider />
 
             <Sky
@@ -292,7 +293,7 @@ const SceneContents = ({
             {/*TODO: should ssao even be in use in vr? if not, then may as well use react-three postprocessing (which doesn't work in vr but prob more battle tested than out own ao sahder) */}
 
             {extra_in_origin || null}
-        </>
+        </HapticsProvider>
     );
 };
 
@@ -574,7 +575,8 @@ const EngineHostInternal = memo(
                                                                                 }
                                                                                 onReset={() =>
                                                                                     window.location.reload()
-                                                                                }>
+                                                                                }
+                                                                            >
                                                                                 <GatedSceneContents
                                                                                     mode="vr"
                                                                                     player_ref={player_ref}
