@@ -40,8 +40,6 @@ export const NavigationBar = ({initial_url = "", on_url_submit}: NavigationBarPr
     const [input_url, setInputURL] = useState(initial_url);
     const [committed_url, setCommittedURL] = useState(initial_url);
 
-    // TODO: generation key to reload on renav
-
     const commit_url = useCallback(
         (url: string) => {
             if (!url.startsWith("http://") && !url.startsWith("https://")) {
