@@ -231,6 +231,21 @@ export const settings_def = build_settings({
         }
     },
 
+    playspace_marker: {
+        default_value: true,
+        ui: {
+            common: {
+                label: "Playspace marker",
+                description: "Show a small marker on the floor to indicate the center of the playspace",
+                widget: {
+                    type: "switch"
+                },
+                breadcrumbs: ["Comfort", "VR"],
+                conditional: (_, mode) => !mode || mode === "vr"
+            }
+        }
+    },
+
     vr_locomotion: {
         default_value: "walk" as "walk" | "teleport",
         ui: {
@@ -244,7 +259,7 @@ export const settings_def = build_settings({
                         { label: "Teleport", value: "teleport" }
                     ]
                 },
-                breadcrumbs: ["Comfort", "VR Movement"],
+                breadcrumbs: ["Comfort", "VR", "Movement"],
                 conditional: (_, mode) => !mode || mode === "vr"
             }
         }
@@ -264,7 +279,7 @@ export const settings_def = build_settings({
                         { label: "Right", value: "right" }
                     ]
                 },
-                breadcrumbs: ["Comfort", "VR Movement"],
+                breadcrumbs: ["Comfort", "VR", "Movement"],
                 conditional: (_, mode) => !mode || mode === "vr"
             }
         }
@@ -283,7 +298,7 @@ export const settings_def = build_settings({
                         { label: "Smooth", value: "smooth" }
                     ]
                 },
-                breadcrumbs: ["Comfort", "VR Movement"],
+                breadcrumbs: ["Comfort", "VR", "Movement"],
                 conditional: (_, mode) => !mode || mode === "vr"
             }
         }
@@ -307,7 +322,7 @@ export const settings_def = build_settings({
                         { label: "90°", value: 90 }
                     ]
                 },
-                breadcrumbs: ["Comfort", "VR Movement"],
+                breadcrumbs: ["Comfort", "VR", "Movement"],
                 conditional: (settings, mode) => settings.vr_rotation === "snap" && (!mode || mode === "vr")
             }
         }
@@ -326,7 +341,7 @@ export const settings_def = build_settings({
                     precision_dp: 0,
                     unit: "°/s"
                 },
-                breadcrumbs: ["Comfort", "VR Movement"],
+                breadcrumbs: ["Comfort", "VR", "Movement"],
                 conditional: (settings, mode) => settings.vr_rotation === "smooth" && (!mode || mode === "vr")
             }
         }
@@ -346,7 +361,7 @@ export const settings_def = build_settings({
                     precision_dp: 0,
                     unit: "%"
                 },
-                breadcrumbs: ["Comfort", "VR Movement"],
+                breadcrumbs: ["Comfort", "VR", "Movement"],
                 conditional: (_, mode) => !mode || mode === "vr"
             }
         }

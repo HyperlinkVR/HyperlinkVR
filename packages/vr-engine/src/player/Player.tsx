@@ -2,13 +2,15 @@ import { useMessageEngine, useSetting, useWorldSession } from "@hyperlinkvr/reac
 import { PlayerMonitorSchema } from "@hyperlinkvr/vr-engine-schemas";
 import { Text } from "@react-three/drei";
 import { XROrigin } from "@react-three/xr";
+import { Suspense, useEffect, useImperativeHandle, useMemo, useRef } from "react";
 import {
-    Suspense,
-    useEffect,
-    useImperativeHandle,
-    useRef
-} from "react";
-import type { Group } from "three";
+    BoxGeometry,
+    ConeGeometry,
+    ExtrudeGeometry,
+    Group,
+    Shape
+} from "three";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils";
 
 
 
@@ -16,6 +18,8 @@ import { useSessionMode } from "../../../react/src/contexts/SessionMode";
 import { useWebSDKMessaging } from "../contexts";
 import type { ExpressionMouth } from "../contexts/PlayerExpressionContext";
 import { PlayerExpressionProvider, usePlayerExpression } from "../contexts/PlayerExpressionContext";
+import { PlayerGadgetsProvider } from "../contexts/PlayerGadgetsContext";
+import { Gadgets } from "../gadgets";
 import { BodyHUD } from "../hud/BodyHUD";
 import { FlatHUD } from "../hud/FlatHUD";
 import { HeadHUD } from "../hud/HeadHUD";
@@ -29,16 +33,14 @@ import { register_input_monitor, unregister_input_monitor } from "../monitors/in
 import { useWorldLoadingStateStore } from "../stores/WorldLoadingStateStore";
 import { Avatar } from "./Avatar";
 import { FlatCameraRig } from "./FlatCameraRig";
+import { KeyboardSlot } from "./KeyboardSlot";
 import { set_local_player_origin } from "./player_position_registry";
 import { PlayerKinematics } from "./PlayerKinematics";
+import { QuickMenu } from "./QuickMenu";
 import { useIsSeated } from "./seating";
 import { LOCAL_PLAYER_SUBJECT } from "./subject";
 import { Vignette } from "./Vignette";
 import { WristWatch } from "./WristWatch";
-import { KeyboardSlot } from "./KeyboardSlot";
-import { QuickMenu } from "./QuickMenu";
-import { PlayerGadgetsProvider } from "../contexts/PlayerGadgetsContext";
-import { Gadgets } from "../gadgets";
 
 
 const MouthTest = ({
@@ -101,6 +103,66 @@ const ExpressionTest = () => {
         </group>
     );
 };
+
+const PlayspaceMarker = () => {
+    const [visible] = useSetting("playspace_marker");
+
+    const arrow_geometry = useMemo(() => {
+        const shape = new Shape()
+
+        const width = 0.1
+        const shaft_length = 0.1
+        const head_length = 0.05
+
+        const half_width = width / 2
+
+        // back edge
+        shape.moveTo(-half_width, shaft_length)
+        shape.lineTo(half_width, shaft_length)
+
+        // to shaft base
+        shape.lineTo(half_width, 0)
+
+        // to arrowhead base
+        shape.lineTo(half_width, 0)
+
+        // to arrowhead tip
+        shape.lineTo(0, -head_length)
+
+        // mirror to other side of arrowhead
+        shape.lineTo(-half_width, 0)
+        shape.lineTo(-half_width, 0)
+        shape.closePath()
+
+        const thickness = 0.04
+        const extrude_settings = {
+            depth: thickness,
+            bevelEnabled: true,
+            bevelSize: 0.01,
+            bevelThickness: 0.01,
+            bevelSegments: 1
+        }
+
+        const geom = new ExtrudeGeometry(shape, extrude_settings)
+
+        geom.rotateX(Math.PI / 2)
+        geom.translate(0, thickness / 2, 0)
+
+        return geom
+    }, [])
+
+    if (!visible) {
+        return null;
+    }
+
+    return (
+        <group position={[0,0,0]} name="PlayspaceMarker">
+            <mesh geometry={arrow_geometry}>
+                <meshBasicMaterial color="green" transparent opacity={0.15} />
+            </mesh>
+        </group>
+    );
+}
 
 export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>; can_move?: boolean }) => {
     const origin_ref = useRef<Group>(null);
@@ -303,6 +365,7 @@ export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>
                                 <OriginHUD />
                                 <KeyboardSlot />
                                 <QuickMenu />
+                                <PlayspaceMarker/>
                             </XROrigin>
                             <BodyHUD />
                             <HeadHUD />
