@@ -921,6 +921,9 @@ importers:
       bippy:
         specifier: ^0.5.43
         version: 0.5.43(react@19.2.7)
+      lucide-react:
+        specifier: 'catalog:'
+        version: 1.21.0(react@19.2.7)
       quarks.r3f:
         specifier: ^0.17.1
         version: 0.17.1(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(react@19.2.7)(three.quarks@0.17.1(three@0.185.0))(three@0.185.0)

@@ -1,9 +1,12 @@
-import { useCallback, useEffect, useRef } from "react";
+import { ArrowUpFromDot, Hand } from "lucide-react";
+import { useCallback, useRef } from "react";
 
 
 
 import { useFlatFrameInput, useFlatInputState } from "./bindings";
 import { useHintState } from "./hints";
+
+const WALK_THRESHOLD = 0.8;
 
 
 const TouchJoystick = () => {
@@ -32,6 +35,8 @@ const TouchJoystick = () => {
         []
     );
 
+    const sprint_timer = useRef<number | null>(null);
+
     const handle_pointermove = useCallback(
         (e: React.PointerEvent) => {
             if (e.pointerType === "mouse") return;
@@ -59,12 +64,29 @@ const TouchJoystick = () => {
             const normalised_x = delta_x / max_radius;
             const normalised_y = -(delta_y / max_radius);
 
-            frame_input.move.x = normalised_x;
-            frame_input.move.y = normalised_y;
+            const magnitude = Math.hypot(normalised_x, normalised_y);
+
+            if (magnitude > WALK_THRESHOLD) {
+                // circle proportion 0.8-1 = sprint 1
+                // TODO: add some expression to the sprint speed
+
+                const scale = 1 / magnitude;
+                frame_input.move.x = normalised_x * scale;
+                frame_input.move.y = normalised_y * scale;
+
+                frame_input.sprint = true;
+            } else {
+                // circle proportion 0-0.8 = walk 0-1
+
+                const factor = 1 / WALK_THRESHOLD;
+                frame_input.move.x = normalised_x * factor;
+                frame_input.move.y = normalised_y * factor;
+                frame_input.sprint = false;
+            }
 
             set_joy_pos(delta_x, delta_y);
         },
-        [frame_input.move, set_joy_pos]
+        [frame_input, set_joy_pos]
     );
 
     const handle_touchend = useCallback(
@@ -80,7 +102,7 @@ const TouchJoystick = () => {
     return (
         <div
             ref={circle_ref}
-            className="relative rounded-full border-2 border-white/30 bg-white/5 flex items-center justify-center aspect-square w-50 pointer-events-auto"
+            className="relative rounded-full border-2 border-white/30 bg-white/5 flex items-center justify-center aspect-square w-[175px] pointer-events-auto"
 
             onPointerDown={handle_pointermove}
             onPointerMove={handle_pointermove}
@@ -88,13 +110,26 @@ const TouchJoystick = () => {
         >
             <div
                 ref={joy_ref}
-                className="absolute rounded-full bg-white/30 flex items-center justify-center aspect-square w-20 pointer-events-none"
+                className="absolute rounded-full bg-white/30 flex items-center justify-center aspect-square w-[85px] pointer-events-none"
             />
         </div>
     )
 }
 
+const ActionButton = ({index, children, on_down, on_up}: {index: number, children: React.ReactNode, on_down?: () => void, on_up?: () => void}) => (
+    <button
+        className="bg-gray-600/40 w-[75px] aspect-square rounded-full flex items-center justify-center text-white pointer-events-auto"
+        style={{marginRight: `${index * 50}px`}}
+        onPointerDown={on_down}
+        onPointerUp={on_up}
+        onContextMenu={(e) => e.preventDefault()}
+    >
+        {children}
+    </button>
+);
+
 export const TouchControls = () => {
+    const frame_input = useFlatFrameInput();
     const state_input = useFlatInputState();
 
     const {device} = useHintState();
@@ -104,10 +139,21 @@ export const TouchControls = () => {
     }
 
     return (
-        <div className="w-full h-full fixed inset-0 z-2 pointer-events-none">
-            <div className="absolute bottom-10 left-10">
-                <TouchJoystick />
+        <div className="w-full fixed bottom-[calc(env(safe-area-inset-bottom,0px)+36px)] px-[36px] z-2 pointer-events-none flex items-end justify-between">
+            <TouchJoystick />
+
+            <div className="flex flex-col gap-[25px] justify-end items-end">
+                <ActionButton index={1} on_down={() => frame_input.grab = true} on_up={() => frame_input.grab = false}>
+                    <Hand />
+                </ActionButton>
+
+                <ActionButton index={0} on_down={() => frame_input.jump = true} on_up={() => frame_input.jump = false}>
+                    <ArrowUpFromDot />
+                </ActionButton>
             </div>
         </div>
-    )
+    );
 }
+
+// TODO: use and throw buttons when item held
+// TODO: should grabbing always be sticky on touch?

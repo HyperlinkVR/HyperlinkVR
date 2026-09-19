@@ -44,6 +44,7 @@
         "react": "catalog:",
         "react-dom": "catalog:",
         "react-error-boundary": "catalog:",
+        "lucide-react": "catalog:",
         "three": "catalog:",
         "three.quarks": "^0.17.1",
         "troika-three-text": "catalog:",
