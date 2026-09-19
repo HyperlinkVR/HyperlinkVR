@@ -1,6 +1,10 @@
 import { z } from "zod";
-import {bindable} from "./binding";
-import {HexColorSchema} from "./colors";
+
+
+
+import { bindable } from "./binding";
+import { HexColorSchema } from "./colors";
+
 
 export const HUDSlotSchema = z.object({
     vertical: z.enum(["top", "middle", "bottom"]),
@@ -48,10 +52,42 @@ export const HUDTextComponentSchema = HUDComponentBaseSchema.extend({
 export type HUDTextComponent = z.infer<typeof HUDTextComponentSchema>;
 export type HUDTextComponentInput = z.input<typeof HUDTextComponentSchema>;
 
-// will add more components later, just a test for now
+export const HUDSizeOrPercentageSchema = z.union([
+    z.number().nonnegative(),
+    z.templateLiteral([z.number().min(0).max(100), z.literal("%")])
+]);
+export type HUDSizeOrPercentage = z.infer<typeof HUDSizeOrPercentageSchema>;
+
+export const HUDProgressComponentSchema = HUDComponentBaseSchema.extend({
+    type: z.literal("progress"),
+    height: HUDSizeOrPercentageSchema.default(10),
+    width: HUDSizeOrPercentageSchema.default("100%"),
+    fg_color: HexColorSchema.optional().default(0xffffff),
+    bg_color: HexColorSchema.optional().default(0x555555),
+    min: z.number().default(0),
+    max: z.number().default(100),
+    value: z.number().default(0)
+}).superRefine(((obj, ctx) => {
+    if (obj.max < obj.min) {
+        ctx.addIssue({
+            code: "custom",
+            message: "max cannot be less than min"
+        });
+    }
+
+    if (obj.value > obj.max || obj.value < obj.min) {
+        ctx.addIssue({
+            code: "custom",
+            message: "value not in range min-max"
+        });
+    }
+}));
+export type HUDProgressComponent = z.infer<typeof HUDProgressComponentSchema>;
+export type HUDProgressComponentInput = z.input<typeof HUDProgressComponentSchema>;
 
 export const HUDComponentSchema = z.discriminatedUnion("type", [
-    HUDTextComponentSchema
+    HUDTextComponentSchema,
+    HUDProgressComponentSchema
 ]);
 export type HUDComponent = z.infer<typeof HUDComponentSchema>;
 export type HUDComponentInput = z.input<typeof HUDComponentSchema>;
