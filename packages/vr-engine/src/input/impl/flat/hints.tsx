@@ -12,7 +12,7 @@ import {
 } from "react";
 import { useSetting } from "@hyperlinkvr/react";
 
-export type HintDevice = "kbm" | "xbox" | "playstation" | "switch";
+export type HintDevice = "kbm" | "xbox" | "playstation" | "switch" | "touch";
 
 // TODO: cancel throw action
 export type HintAction =
@@ -134,6 +134,9 @@ const HINTS: Record<HintDevice, Partial<Record<HintAction, InputHint>>> = {
         close_watch: { glyphs: [pf("nintendo-plus")], label: "Close watch" },
         quick_menu: { glyphs: [pf("nintendo-left-shoulder")], label: "Quick menu (hold)" },
         quick_menu_open: { glyphs: [], label: "Move right stick towards an item" }
+    },
+    touch: {
+
     }
 };
 
@@ -346,12 +349,20 @@ export const HintDevicePublisher = () => {
     const {set_device} = useSetHintState();
 
     useEffect(() => {
-        const on_kbm_activity = () => set_device("kbm");
-        window.addEventListener("keydown", on_kbm_activity);
-        window.addEventListener("mousedown", on_kbm_activity);
+        const on_keyboard_activity = () => set_device("kbm");
+        const on_pointer_activity = (e: PointerEvent) => {
+            if (e.pointerType === "mouse") {
+                set_device("kbm");
+            } else {
+                set_device("touch");
+            }
+        }
+
+        window.addEventListener("keydown", on_keyboard_activity);
+        window.addEventListener("pointerdown", on_pointer_activity);
         return () => {
-            window.removeEventListener("keydown", on_kbm_activity);
-            window.removeEventListener("mousedown", on_kbm_activity);
+            window.removeEventListener("keydown", on_keyboard_activity);
+            window.removeEventListener("pointerdown", on_pointer_activity);
         };
     }, [set_device]);
 

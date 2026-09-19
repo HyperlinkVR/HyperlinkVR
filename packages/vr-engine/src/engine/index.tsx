@@ -10,7 +10,6 @@ import { memo, Suspense, useCallback, useEffect, useImperativeHandle, useMemo, u
 import { ErrorBoundary, getErrorMessage, type FallbackProps } from "react-error-boundary";
 import type { Group } from "three";
 import { ACESFilmicToneMapping, HalfFloatType, Mesh, MeshBasicMaterial, WebGLRenderer } from "three";
-import { configureTextBuilder } from "troika-three-text";
 
 
 
@@ -28,7 +27,7 @@ import { WebSDKMessagingProvider } from "../contexts/WebSDKMessagingContext";
 import { SceneDebug } from "../debug/SceneDebug";
 import { HUDSync } from "../hud/HUDSync";
 import { HandsProvider } from "../input/hands";
-import { FlatInputProvider } from "../input/impl/flat/bindings";
+import { FlatInputRunner } from "../input/impl/flat/bindings";
 import { Crosshair } from "../input/impl/flat/Crosshair";
 import { FlatClickRaycaster } from "../input/impl/flat/FlatClickRaycaster";
 import { AutoHintGlyphs, HintDevicePublisher, HintStateProvider } from "../input/impl/flat/hints";
@@ -67,6 +66,7 @@ import { FlatNavConsentGate, useNavConsent, VRNavConsentGate } from "./NavConsen
 
 import "../loader-config";
 import { HapticsProvider } from "../input/haptics";
+import { TouchControls } from "../input/impl/flat/TouchControls";
 
 
 
@@ -502,7 +502,7 @@ const EngineHostInternal = memo(
                                 <LocalAssetWarningBanner />
 
                                 <div
-                                    className={`w-full h-full relative ${mode === "vr" ? "max-w-[calc(100vh*16/9)] max-h-[calc(100vw*9/16)]" : ""}`}
+                                    className={`w-full h-full relative touch-none ${mode === "vr" ? "max-w-[calc(100vh*16/9)] max-h-[calc(100vw*9/16)]" : ""}`}
                                     ref={canvas_container_ref}
                                 >
                                     {mode === "vr" && <LogoOverlay />}
@@ -534,6 +534,8 @@ const EngineHostInternal = memo(
                                             <p className="text-white">Spectator view disabled</p>
                                         </div>
                                     )}
+
+                                    {mode === "flat" && <TouchControls />}
 
                                     <AvatarProvider>
                                         <PlayerOriginProvider value={player_ref}>
@@ -597,11 +599,10 @@ const EngineHostInternal = memo(
                                                                                 window.location.reload()
                                                                             }
                                                                         >
-                                                                            <FlatInputProvider>
-                                                                                <FlatClickRaycaster />
-                                                                                <FlatAvatarHands />
-                                                                                <GatedSceneContents mode="flat" player_ref={player_ref} />
-                                                                            </FlatInputProvider>
+                                                                            <FlatInputRunner />
+                                                                            <FlatClickRaycaster />
+                                                                            <FlatAvatarHands />
+                                                                            <GatedSceneContents mode="flat" player_ref={player_ref} />
                                                                         </ErrorBoundary>
                                                                     )}
                                                                 </WorldPhysics>
