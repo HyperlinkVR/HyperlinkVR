@@ -1,6 +1,7 @@
 import type { DeviceProfile, GPUFamily } from "@hyperlinkvr/types";
 import { get_setting } from "./settings";
 import { StorageEngine } from "./storage";
+import { getGPUTier } from "@pmndrs/detect-gpu";
 
 
 
@@ -50,14 +51,39 @@ const probe_gpu = (): string | null => {
     return renderer;
 };
 
-const detect_profile = (): DeviceProfile => {
+const detect_profile = async (): Promise<DeviceProfile> => {
+    const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
+    const is_standalone = STANDALONE_UA_HINTS.some((re) => re.test(ua));
+
     const gpu = probe_gpu();
+
     if (gpu) {
         const family = gpu_family(gpu);
+
+        // some devices (especially mobile) hide what gpu they are, so use pmndrs first and foremost, guessing based on family otherwise
+        let report;
+        try {
+            report = await getGPUTier();
+        } catch {
+            report = null;
+        }
+
+        const is_low_tier = report ? report.tier < 3 : is_low_power_family(family);
+
+        if (family === "apple" && report) {
+            return {
+                low_power: is_low_tier,
+                is_standalone,
+                gpu: report?.gpu ? `Apple GPU (${report.gpu}?)` : gpu,
+                gpu_family: "apple",
+                detected_via: "gpu"
+            };
+        }
+
         const low_power = is_low_power_family(family);
         return {
             low_power,
-            is_standalone: low_power,
+            is_standalone,
             gpu,
             gpu_family: family,
             detected_via: "gpu"
@@ -65,10 +91,8 @@ const detect_profile = (): DeviceProfile => {
     }
 
     // no GPU string, fall back to sniffing the user agent
-    const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
-    const is_standalone = STANDALONE_UA_HINTS.some((re) => re.test(ua));
     return {
-        low_power: is_standalone,
+        low_power: is_standalone, // only a guess possible!
         is_standalone,
         gpu: null,
         gpu_family: "unknown",
@@ -87,7 +111,7 @@ export const get_device_profile = async (local_storage: StorageEngine<"local">, 
     }
 
     if (!cached_detected_profile) {
-        cached_detected_profile = detect_profile();
+        cached_detected_profile = await detect_profile();
     }
 
     return cached_detected_profile;

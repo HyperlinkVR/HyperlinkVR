@@ -9,6 +9,7 @@
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {
-        "@hyperlinkvr/types": "workspace:*"
+        "@hyperlinkvr/types": "workspace:*",
+        "@pmndrs/detect-gpu": "^6.0.22"
     }
 }

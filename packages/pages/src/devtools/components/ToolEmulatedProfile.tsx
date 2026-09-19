@@ -61,12 +61,22 @@ const DEVICE_PRESETS: Record<
             detected_via: "gpu"
         }
     },
-    apple_mobile: {
-        label: "iPhone / iPad (Apple GPU)",
+    apple_mobile_low: {
+        label: "Older iPhone / iPad (Apple A12 GPU)",
         profile: {
             low_power: true,
             is_standalone: false,
-            gpu: "Apple GPU",
+            gpu: "Apple GPU (apple a12 gpu?)",
+            gpu_family: "apple",
+            detected_via: "gpu"
+        }
+    },
+    apple_mobile_high: {
+        label: "Newer iPhone / iPad (Apple A15/A16 GPU)",
+        profile: {
+            low_power: false,
+            is_standalone: false,
+            gpu: "Apple GPU (apple a15 gpu?)",
             gpu_family: "apple",
             detected_via: "gpu"
         }
@@ -135,7 +145,6 @@ export const ToolDeviceProfileEmulation = () => {
             emulated_profile?.gpu === preset.gpu &&
             emulated_profile?.gpu_family === preset.gpu_family &&
             emulated_profile?.low_power === preset.low_power &&
-            emulated_profile?.tier === preset.tier &&
             emulated_profile?.is_standalone === preset.is_standalone
         );
     });
