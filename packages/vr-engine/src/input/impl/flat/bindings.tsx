@@ -87,11 +87,16 @@ export const useFlatInputStore = create<FlatInputStore>((set) => ({
     close_watch: () => set({ watch_presented: false })
 }));
 
-export const useFlatInputState = (): FlatInputState => {
+export const useFlatInputState = (): FlatInputState & {
+    set_watch_presented: (val: boolean) => void;
+    set_cursor_free: (val: boolean) => void;
+} => {
     const watch_presented = useFlatInputStore((s) => s.watch_presented);
     const cursor_free = useFlatInputStore((s) => s.cursor_free);
+    const set_watch_presented = useFlatInputStore((s) => s.set_watch_presented);
+    const set_cursor_free = useFlatInputStore((s) => s.set_cursor_free);
 
-    return { watch_presented, cursor_free };
+    return { watch_presented, cursor_free, set_watch_presented, set_cursor_free };
 };
 
 // imperative controls, e.g. so the watch can close itself on cancel-at-root

@@ -1,10 +1,11 @@
-import { ArrowUpFromDot, Hand } from "lucide-react";
+import { ArrowUpFromDot, Hand, Watch } from "lucide-react";
 import { useCallback, useRef } from "react";
 
 
 
 import { useFlatFrameInput, useFlatInputState } from "./bindings";
 import { useHintState } from "./hints";
+
 
 const WALK_THRESHOLD = 0.8;
 
@@ -116,16 +117,42 @@ const TouchJoystick = () => {
     )
 }
 
-const ActionButton = ({index, children, on_down, on_up}: {index: number, children: React.ReactNode, on_down?: () => void, on_up?: () => void}) => (
+const ActionButton = ({
+    index = 0,
+    direction = "right",
+    small = false,
+    children,
+    on_down,
+    on_up,
+    title
+}: {
+    index?: number;
+    direction?: "left" | "right";
+    small?: boolean;
+    children: React.ReactNode;
+    on_down?: () => void;
+    on_up?: () => void;
+    title?: string;
+}) => (
     <button
-        className="bg-gray-600/40 w-[75px] aspect-square rounded-full flex items-center justify-center text-white pointer-events-auto"
-        style={{marginRight: `${index * 50}px`}}
+        className={`bg-gray-600/40 ${small ? "w-[40px]" : "w-[75px]"} aspect-square rounded-full flex items-center justify-center text-white pointer-events-auto`}
+        style={{
+            marginRight: direction === "right" ? `${index * 50}px` : 0,
+            marginLeft: direction === "left" ? `${index * 50}px` : 0
+        }}
         onPointerDown={on_down}
         onPointerUp={on_up}
         onContextMenu={(e) => e.preventDefault()}
+        title={title}
     >
         {children}
     </button>
+);
+
+const ControlContainer = ({children, className}: {children: React.ReactNode, className?: string}) => (
+    <div className={`w-full fixed px-[36px] z-2 pointer-events-none flex items-end justify-between ${className}`}>
+        {children}
+    </div>
 );
 
 export const TouchControls = () => {
@@ -139,19 +166,27 @@ export const TouchControls = () => {
     }
 
     return (
-        <div className="w-full fixed bottom-[calc(env(safe-area-inset-bottom,0px)+36px)] px-[36px] z-2 pointer-events-none flex items-end justify-between">
-            <TouchJoystick />
-
-            <div className="flex flex-col gap-[25px] justify-end items-end">
-                <ActionButton index={1} on_down={() => frame_input.grab = true} on_up={() => frame_input.grab = false}>
-                    <Hand />
+        <>
+            <ControlContainer className="top-[calc(env(safe-area-inset-top,0px)+36px)]">
+                <ActionButton small on_up={() => state_input.set_watch_presented(!state_input.watch_presented)} title="Toggle watch">
+                    <Watch />
                 </ActionButton>
+            </ControlContainer>
 
-                <ActionButton index={0} on_down={() => frame_input.jump = true} on_up={() => frame_input.jump = false}>
-                    <ArrowUpFromDot />
-                </ActionButton>
-            </div>
-        </div>
+            <ControlContainer className="bottom-[calc(env(safe-area-inset-bottom,0px)+36px)]">
+                <TouchJoystick />
+
+                <div className="flex flex-col gap-[25px] justify-end items-end">
+                    <ActionButton index={1} on_down={() => frame_input.grab = true} on_up={() => frame_input.grab = false} title="Grab / Release">
+                        <Hand />
+                    </ActionButton>
+
+                    <ActionButton index={0} on_down={() => frame_input.jump = true} on_up={() => frame_input.jump = false} title="Jump">
+                        <ArrowUpFromDot />
+                    </ActionButton>
+                </div>
+            </ControlContainer>
+        </>
     );
 }
 
