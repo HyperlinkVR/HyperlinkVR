@@ -6,7 +6,7 @@ import { create } from "zustand";
 
 
 import { useSystemInputStore } from "../../system_input";
-import { useSetHintState } from "./hints";
+import { useHintState, useSetHintState } from "./hints";
 
 
 // TODO: crouch
@@ -215,8 +215,20 @@ export const FlatInputRunner = () => {
     const watch_presented_ref = useRef(watch_presented);
     const cursor_free_explicit = useRef(false);
 
+    const { device } = useHintState();
+
     const apply_cursor = useCallback(() => {
         const canvas = gl.domElement;
+
+        // always unlock on touchscreen
+        if (device === "touch") {
+            if (document.pointerLockElement === canvas) {
+                document.exitPointerLock();
+            }
+            set_cursor_free(true);
+            return;
+        }
+
         const next_cursor_free = cursor_free_explicit.current || watch_presented_ref.current;
 
         if (next_cursor_free) {
@@ -236,7 +248,15 @@ export const FlatInputRunner = () => {
         }
 
         set_cursor_free(next_cursor_free);
-    }, [gl.domElement, set_cursor_free]);
+    }, [device, gl.domElement, set_cursor_free]);
+
+    // whenever changing to touch device, unlock cursor
+    useEffect(() => {
+        if (device === "touch") {
+            set_cursor_free(true);
+            apply_cursor();
+        }
+    }, [apply_cursor, device, set_cursor_free]);
 
     // Sync state to ref and apply side effects when watch toggles
     useEffect(() => {
@@ -288,33 +308,65 @@ export const FlatInputRunner = () => {
         const on_keydown = on_key(true);
         const on_keyup = on_key(false);
 
-        const on_pointermove = (event: PointerEvent) => {
-            if (event.pointerType === "mouse" && document.pointerLockElement !== canvas) return; // only when locked (look mode) if kbm
+        const last_touch = { x: 0, y: 0, active: false };
 
-            frame_input.look.x += event.movementX;
-            frame_input.look.y += event.movementY;
+        const on_pointermove = (event: PointerEvent) => {
+            if (event.pointerType === "mouse") {
+                // mouse only looks when cursor locked
+                if (document.pointerLockElement !== canvas) return;
+
+                // locked cursor uses movementX/Y
+                frame_input.look.x += event.movementX;
+                frame_input.look.y += event.movementY;
+                return;
+            }
+
+            // unlocked touch mode doesnt have movementX/Y, so track delta manually
+
+            if (!last_touch.active || watch_presented_ref.current) return;
+
+            const delta_x = event.clientX - last_touch.x;
+            const delta_y = event.clientY - last_touch.y;
+
+            last_touch.x = event.clientX;
+            last_touch.y = event.clientY;
+
+            frame_input.look.x += delta_x;
+            frame_input.look.y += delta_y;
         };
 
         // click canvas to (re)capture look. while locked, RMB = grab, LMB = use
         // world-UI clicks are handled separately by FlatClickRaycaster
         const on_down = (event: PointerEvent) => {
+            if (event.pointerType !== "mouse") {
+                last_touch.x = event.clientX;
+                last_touch.y = event.clientY;
+                last_touch.active = true;
+                return;
+            }
+
             const locked = document.pointerLockElement === canvas;
-            if (!locked && !cursor_free_explicit.current && !watch_presented_ref.current) {
+            if (
+                !locked &&
+                !cursor_free_explicit.current &&
+                !watch_presented_ref.current
+            ) {
                 canvas.requestPointerLock();
                 return;
             }
 
-            if (!locked) return; // only arm world buttons while actually locked
-
-            // on touchscreen, explicit onscreen buttons are used
-            if (event.pointerType !== "mouse") return;
+            if (!locked) return;
 
             if (event.button === 0) mouse_buttons.use = true;
             if (event.button === 2) mouse_buttons.grab = true;
         };
+
         const on_up = (event: PointerEvent) => {
             // on touchscreen, explicit onscreen buttons are used
-            if (event.pointerType !== "mouse") return;
+            if (event.pointerType !== "mouse") {
+                last_touch.active = false;
+                return;
+            }
 
             if (event.button === 0) mouse_buttons.use = false;
             if (event.button === 2) mouse_buttons.grab = false;
@@ -355,6 +407,10 @@ export const FlatInputRunner = () => {
     const ui_repeat = useRef(make_ui_repeat_channels());
 
     useFrame((_frame_state, delta) => {
+        if (device === "touch") {
+            return;
+        }
+
         // most recently active standard-mapping pad wins, falling back to the last one used
         const gamepads = navigator.getGamepads();
         for (const candidate of gamepads) {
