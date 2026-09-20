@@ -28,7 +28,7 @@ import {
 import { useObjectRefsOptional } from "../contexts";
 import type { Hand } from "../input/hands";
 import { useHands } from "../input/hands";
-import type { HintLayer } from "../input/impl/flat/hints";
+import  { HintLayer, useHintState } from "../input/impl/flat/hints";
 import { useSetHintState } from "../input/impl/flat/hints";
 import { FULL_THROW_CHARGE_S } from "../input/values";
 import {
@@ -430,6 +430,10 @@ export const useGrabbable = (
         max_throw_speed = DEFAULT_MAX_THROW_SPEED
     }: UseGrabbableProps = {}
 ) => {
+    // touch screen is always sticky
+    const {device} = useHintState();
+    const resolved_sticky = useMemo(() => device === "touch" || sticky, [device, sticky]);
+
     const hands = useHands();
     const obj_refs = useObjectRefsOptional();
     const body_ref = obj_refs?.rigid_body ?? null;
@@ -462,7 +466,7 @@ export const useGrabbable = (
     const sticky_release_armed = useRef(false);
 
     const should_release = (hand: Hand) => {
-        if (!sticky) return !hand.grab.pressed;
+        if (!resolved_sticky) return !hand.grab.pressed;
 
         if (!sticky_release_armed.current) {
             sticky_release_armed.current = !hand.grab.pressed;
@@ -1116,7 +1120,7 @@ export const useGrabbable = (
             ) {
                 perform_grab(hand, ray_ok || snap_to_hand);
             } else if (grabbingHand.current === hand && should_release(hand)) {
-                if (sticky) {
+                if (resolved_sticky) {
                     throw_lockout.current.add(hand);
                 }
                 release_held(

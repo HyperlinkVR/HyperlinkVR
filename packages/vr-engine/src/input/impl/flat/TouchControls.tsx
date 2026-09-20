@@ -1,5 +1,12 @@
-import { ArrowUpFromDot, Hand, Watch } from "lucide-react";
-import { useCallback, useRef } from "react";
+import {
+    ArrowUpFromDot,
+    CircleArrowOutUpLeft,
+    CircleDot,
+    Hand,
+    HandGrab,
+    Watch
+} from "lucide-react";
+import { useCallback, useMemo, useRef } from "react";
 
 
 
@@ -35,8 +42,6 @@ const TouchJoystick = () => {
         },
         []
     );
-
-    const sprint_timer = useRef<number | null>(null);
 
     const handle_pointermove = useCallback(
         (e: React.PointerEvent) => {
@@ -155,11 +160,21 @@ const ControlContainer = ({children, className}: {children: React.ReactNode, cla
     </div>
 );
 
+const StaggeredContainer = ({children, className}: {children: React.ReactNode, className?: string}) => (
+    <div className={`flex flex-col gap-[25px] justify-end items-end ${className}`}>
+        {children}
+    </div>
+);
+
 export const TouchControls = () => {
     const frame_input = useFlatFrameInput();
     const state_input = useFlatInputState();
 
-    const {device} = useHintState();
+    const {device, layers} = useHintState();
+
+    const holding = useMemo(() => layers.includes("holding"), [layers]);
+    const holding_throwable = useMemo(() => layers.includes("holding_throwable"), [layers]);
+    const holding_useable = useMemo(() => layers.includes("holding_useable"), [layers]);
 
     if (device !== "touch") {
         return null;
@@ -176,19 +191,32 @@ export const TouchControls = () => {
             <ControlContainer className="bottom-[calc(env(safe-area-inset-bottom,0px)+36px)]">
                 <TouchJoystick />
 
-                <div className="flex flex-col gap-[25px] justify-end items-end">
-                    <ActionButton index={1} on_down={() => frame_input.grab = true} on_up={() => frame_input.grab = false} title="Grab / Release">
-                        <Hand />
-                    </ActionButton>
+                <div className="flex">
+                    <StaggeredContainer>
+                        {holding_throwable ? (
+                            <ActionButton index={1} on_down={() => frame_input.throw_held = true} on_up={() => frame_input.throw_held = false} title="Throw">
+                                <CircleArrowOutUpLeft />
+                            </ActionButton>
+                        ) : <div className="w-[75px] aspect-square" />}
 
-                    <ActionButton index={0} on_down={() => frame_input.jump = true} on_up={() => frame_input.jump = false} title="Jump">
-                        <ArrowUpFromDot />
-                    </ActionButton>
+                        {holding_useable ? (
+                            <ActionButton index={0} on_down={() => frame_input.use = true} on_up={() => frame_input.use = false} title="Use">
+                                <CircleDot />
+                            </ActionButton>
+                        ) : <div className="w-[75px] aspect-square" />}
+                    </StaggeredContainer>
+
+                    <StaggeredContainer>
+                        <ActionButton index={1} on_down={() => frame_input.grab = true} on_up={() => frame_input.grab = false} title="Grab / Release">
+                            {holding ? <Hand /> : <HandGrab />}
+                        </ActionButton>
+
+                        <ActionButton index={0} on_down={() => frame_input.jump = true} on_up={() => frame_input.jump = false} title="Jump">
+                            <ArrowUpFromDot />
+                        </ActionButton>
+                    </StaggeredContainer>
                 </div>
             </ControlContainer>
         </>
     );
 }
-
-// TODO: use and throw buttons when item held
-// TODO: should grabbing always be sticky on touch?
