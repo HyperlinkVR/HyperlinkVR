@@ -16,6 +16,7 @@ import { add_report_sink } from "../engine/report_outbox";
 import { set_world_authority } from "./authority";
 import { REPORT_CHANNEL } from "./command_bus";
 import { useNetSession } from "./NetSession";
+import { local_to_session } from "./session_clock";
 
 export const MultiplayerSync = () => {
     const { room, peers, mode } = useNetSession();
@@ -38,7 +39,10 @@ export const MultiplayerSync = () => {
             return;
         }
         return add_report_sink((reports) => {
-            room.send("host", REPORT_CHANNEL, JSON.stringify(reports), "reliable");
+            // convert each report's ts from local to session time so the host reads a consistent
+            // timeline (its own reports are already session time — host offset is 0)
+            const in_session = reports.map((report) => ({ ...report, ts: local_to_session(report.ts) }));
+            room.send("host", REPORT_CHANNEL, JSON.stringify(in_session), "reliable");
         });
     }, [is_shared_client, room]);
 

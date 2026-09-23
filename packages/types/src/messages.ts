@@ -130,6 +130,8 @@ interface WebSDKModifyEngineObjectAction extends BaseWebSDKActionMessage {
     object_id: string;
     changes: EngineObjectModification;
     tween?: Tween;
+    // session time the tween started, stamped by the host at broadcast so peers share its phase (#9)
+    tween_started_at?: number;
 }
 
 interface WebSDKRefreshEngineObjectAction extends BaseWebSDKActionMessage {

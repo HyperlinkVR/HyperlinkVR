@@ -49,9 +49,6 @@ export const publish_reports = (reports: ReportEvent[]) => {
 };
 
 export const fire_triggers = (source_id: string, object_id: string, payload: unknown) => {
-    if (!speaks_for(object_id)) {
-        return;
-    }
-
-    run_triggers(source_id, payload);
+    // the authority runs every trigger; a non-authority still runs `local` (cosmetic) ones
+    run_triggers(source_id, payload, speaks_for(object_id));
 };

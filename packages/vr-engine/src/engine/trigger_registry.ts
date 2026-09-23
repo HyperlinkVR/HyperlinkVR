@@ -71,7 +71,10 @@ const matches_filter = (payload: any, filter: TriggerEventFilter | undefined): b
     return true;
 };
 
-export const run_triggers = (source_id: string, payload: any) => {
+// `authoritative` is whether this engine owns the source (host for world/objects). a
+// non-authoritative engine (a shared client) still runs `local` triggers — instant cosmetic
+// reactions to its own player's actions — but skips the rest, which the host runs and replicates.
+export const run_triggers = (source_id: string, payload: any, authoritative: boolean) => {
     const triggers = triggers_by_source.get(source_id);
     if (!triggers) return;
 
@@ -79,6 +82,7 @@ export const run_triggers = (source_id: string, payload: any) => {
 
     for (const trigger of triggers) {
         if (trigger.source.id !== source_id) continue;
+        if (!authoritative && !trigger.local) continue;
         if (!matches_filter(payload, trigger.event_filter)) continue;
 
         if (trigger.cooldown_ms && trigger.cooldown_ms > 0) {

@@ -109,6 +109,14 @@ export class TriggerBuilder extends BaseBuilder<TriggerInput> {
         return this;
     }
 
+    // run this trigger on the acting player's own client for instant feedback, instead of only on
+    // the host. use for cosmetic reactions (muzzle flash, sound) — it can't change shared state, so
+    // the authoritative consequence still needs a host-side (default) trigger or a report handler.
+    local(local = true) {
+        this._internal.local = local;
+        return this;
+    }
+
     build(): Trigger {
         // the schema enforces this too, but the builder can say which trigger
         if (this._internal.targets.length === 0) {

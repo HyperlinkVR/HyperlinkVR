@@ -24,6 +24,11 @@ export const TriggerSchema = z.object({
     event_filter: TriggerEventFilterSchema.optional(),
     targets: z.array(TriggerTargetSchema).min(1),
     cooldown_ms: z.number().int().nonnegative().optional(),
+    // a local trigger runs on the engine where its source event fired (the acting player's client),
+    // regardless of authority — for instant cosmetic reactions (muzzle flash, sound). it can't touch
+    // shared state (its commands stay local), so it needs no anticheat. an authoritative trigger
+    // (default) runs only on the host, which owns the shared consequence.
+    local: z.boolean().optional(),
 });
 export type Trigger = z.infer<typeof TriggerSchema>;
 export type TriggerInput = z.input<typeof TriggerSchema>;

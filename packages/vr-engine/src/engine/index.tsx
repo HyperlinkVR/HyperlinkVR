@@ -77,6 +77,7 @@ import { FlatNavConsentGate, useNavConsent, VRNavConsentGate } from "./NavConsen
 
 
 import "../loader-config";
+import { ClockSync } from "../net/ClockSync";
 import { CommandSync } from "../net/CommandSync";
 import { MultiplayerSync } from "../net/MultiplayerSync";
 import { HapticsProvider } from "../input/haptics";
@@ -516,6 +517,7 @@ const EngineHostInternal = memo(
                                 <WorldSessionListener />
                                 <CommandSync />
                                 <MultiplayerSync />
+                                <ClockSync />
 
                                 <EngineObjectSync />
                                 <AnimationSync />

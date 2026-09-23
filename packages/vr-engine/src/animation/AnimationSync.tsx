@@ -3,6 +3,7 @@ import {AnimationSchema, safe_parse_and_adopt} from "@hyperlinkvr/vr-engine-sche
 
 import {useWebSDKMessaging} from "../contexts/WebSDKMessagingContext";
 import {register_command_handler} from "../engine/trigger_registry";
+import {session_to_local} from "../net/session_clock";
 import {pause_animation, release_animation, resume_animation, seek_animation, start_animation, stop_animation} from "./playback";
 
 export const AnimationSync = () => {
@@ -15,14 +16,18 @@ export const AnimationSync = () => {
         const run_command = async (animation_id: string, command: string, args?: any) => {
             const now = performance.now();
 
+            // fired_at is a *session* timestamp (so every peer starts the animation at the same
+            // moment); convert it to this peer's local clock. identity on host/solo. falls back to
+            // now for direct calls with no fired_at.
+            const fired_at = args?.fired_at !== undefined ? session_to_local(args.fired_at) : now;
+
             switch (command) {
                 case "play":
-                    // fired_at from a trigger keeps peers in phase, falling back to now for direct calls
-                    resume_animation(animation_id, args?.fired_at ?? now);
+                    resume_animation(animation_id, fired_at);
                     break;
                 case "restart":
-                    seek_animation(animation_id, 0, args?.fired_at ?? now);
-                    resume_animation(animation_id, args?.fired_at ?? now);
+                    seek_animation(animation_id, 0, fired_at);
+                    resume_animation(animation_id, fired_at);
                     break;
                 case "pause":
                     pause_animation(animation_id, now);

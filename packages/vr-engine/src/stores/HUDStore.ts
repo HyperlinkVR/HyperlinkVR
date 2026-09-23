@@ -22,6 +22,8 @@ interface HUDStoreState {
     next_sequence: number;
 
     add_element: (element: CreatedHUDElement) => void;
+    // replace the whole set from a late-join snapshot (#13)
+    hydrate: (elements: Record<string, StoredHUDElement>, next_sequence: number) => void;
     remove_element: (element_id: string) => void;
     get_element: (element_id: string) => StoredHUDElement | undefined;
     modify_element: (
@@ -85,6 +87,8 @@ export const useHUDStore = create<HUDStoreState>((set, get) => ({
         },
         next_sequence: state.next_sequence + 1
     })),
+
+    hydrate: (elements, next_sequence) => set({elements, next_sequence}),
 
     remove_element: (element_id) => set((state) => {
         const {[element_id]: removed, ...remaining} = state.elements;

@@ -11,6 +11,7 @@ import {get_object_refs} from "./object_ref_registry";
 import {apply_modification, sample_live_transform} from "./object_modification";
 import {cancel_active_tween, set_active_tween} from "../animation/tween_registry";
 import {cancel_active_seek} from "../animation/seek_registry";
+import {session_to_local} from "../net/session_clock";
 import {clear_object_ready, wait_for_object_ready} from "./object_ready_registry";
 import {list_animation_channels} from "../animation/channel_registry";
 import {collection_child_id, collection_parent_id} from "./collection_ids";
@@ -153,7 +154,11 @@ export const EngineObjectSync = () => {
                     to: target,
                     easing: message.tween.easing,
                     duration_ms: message.tween.ms,
-                    start_ms: performance.now(),
+                    // session start (host-stamped) → local, so the tween is at the same phase on
+                    // every peer even when the modify arrives a latency hop late. identity on host/solo.
+                    start_ms: message.tween_started_at !== undefined
+                        ? session_to_local(message.tween_started_at)
+                        : performance.now(),
                     on_complete: () => {
                         const current = useEngineObjectStore.getState().get_object(message.object_id);
                         if (!current) return; // destroyed before completion

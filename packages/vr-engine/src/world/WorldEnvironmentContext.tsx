@@ -2,6 +2,7 @@ import {createContext, useContext, useEffect, useState} from "react";
 import type {WorldEnvFull} from "@hyperlinkvr/vr-engine-schemas";
 import { WorldEnvSchema} from "@hyperlinkvr/vr-engine-schemas";
 import {useWebSDKMessaging} from "../contexts";
+import {register_world_env_applier, set_current_world_env} from "./world_env_registry";
 
 export const WORLD_ENV_DEFAULT: WorldEnvFull = {
     sky: {
@@ -97,6 +98,19 @@ export const FixedWorldEnvironmentProvider = WorldEnvironmentContext.Provider;
 export const SDKWorldEnvironmentProvider = ({children}: {children: React.ReactNode}) => {
     const [world_env, setWorldEnv] = useState<WorldEnvFull>(WORLD_ENV_DEFAULT);
     const {on_action} = useWebSDKMessaging();
+
+    // bridge to the late-join snapshot: expose the current value, and let a snapshot drive us
+    useEffect(() => {
+        set_current_world_env(world_env);
+    }, [world_env]);
+
+    useEffect(() => {
+        register_world_env_applier(setWorldEnv);
+        return () => {
+            register_world_env_applier(null);
+            set_current_world_env(null);
+        };
+    }, []);
 
     useEffect(() => {
         const unlisten_reset = on_action("HVRSDK_RESET_WORLD_ENV", (message, reply) => {
