@@ -28,7 +28,7 @@ import { useWorldLoadingStateStore } from "../stores/WorldLoadingStateStore";
 import { Avatar } from "./Avatar";
 import { FlatCameraRig } from "./FlatCameraRig";
 import { KeyboardSlot } from "./KeyboardSlot";
-import { set_local_player_origin } from "./player_position_registry";
+import { set_local_player_id, set_local_player_origin } from "./player_position_registry";
 import { PlayerKinematics } from "./PlayerKinematics";
 import { QuickMenu } from "./QuickMenu";
 import { useIsSeated } from "./seating";
@@ -175,6 +175,12 @@ export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>
     const {id: tab_id} = useWorldSession();
     // the local player's stable account id (matches SDK player.get_id()); null for guests
     const local_id = useAuthSession()?.uuid ?? null;
+
+    // publish it so report_outbox can stamp who caused each report (e.player in shared worlds)
+    useEffect(() => {
+        set_local_player_id(local_id);
+        return () => set_local_player_id(null);
+    }, [local_id]);
 
     const seated = useIsSeated();
 

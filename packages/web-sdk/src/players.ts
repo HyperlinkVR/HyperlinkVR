@@ -252,14 +252,23 @@ export const resolve_username_to_uuid = async (username: string): Promise<string
 };
 
 export interface SpawnInfo {
-    mode: "vr" | "flat";
+    // omitted for a remote player — the host doesn't know their mode
+    mode?: "vr" | "flat";
+    // true for a remote player the host learned about via presence (shared worlds)
+    remote?: boolean;
 }
 
 type SpawnCallback = (player: Player, info: SpawnInfo) => void;
+type LeaveCallback = (player: Player) => void;
 
 const spawn_callbacks = new Set<SpawnCallback>();
+const leave_callbacks = new Set<LeaveCallback>();
 
-// fires when a player enters the world (rig + colliders live)
+// everyone currently in the world, keyed by stable id (the local player is keyed under LOCAL)
+const live_players = new Map<string, Player>();
+const player_key = (id: string | null) => id ?? LOCAL_TARGET_KEY;
+
+// fires when a player enters the world (the local player, or a remote one on the host)
 export const on_spawn = (callback: SpawnCallback): (() => void) => {
     spawn_callbacks.add(callback);
     return () => {
@@ -267,14 +276,40 @@ export const on_spawn = (callback: SpawnCallback): (() => void) => {
     };
 };
 
+// fires when a remote player leaves
+export const on_leave = (callback: LeaveCallback): (() => void) => {
+    leave_callbacks.add(callback);
+    return () => {
+        leave_callbacks.delete(callback);
+    };
+};
+
+// everyone present right now (local + any remote players the host has learned about)
+export const list = (): Player[] => [...live_players.values()];
+
 /** @internal */
 export const _dispatch_spawn = (event: NamedWebSDKEvent<"HVRSDK_PLAYER_SPAWNED">) => {
     const player = new Player(event.id);
+    live_players.set(player_key(event.id), player);
     for (const callback of spawn_callbacks) {
         try {
-            callback(player, {mode: event.mode});
+            callback(player, {mode: event.mode, remote: event.remote});
         } catch (error) {
             console.error("Error in player spawn callback:", error);
+        }
+    }
+};
+
+/** @internal */
+export const _dispatch_leave = (event: NamedWebSDKEvent<"HVRSDK_PLAYER_LEFT">) => {
+    const key = player_key(event.id);
+    const player = live_players.get(key) ?? new Player(event.id);
+    live_players.delete(key);
+    for (const callback of leave_callbacks) {
+        try {
+            callback(player);
+        } catch (error) {
+            console.error("Error in player leave callback:", error);
         }
     }
 };

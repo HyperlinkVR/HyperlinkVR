@@ -2,6 +2,9 @@ import type { SendTarget } from "@hyperlinkvr/core";
 import type { WebSDKActionMessage, WebSDKActionName } from "@hyperlinkvr/types";
 
 export const COMMAND_CHANNEL = "cmd";
+// client → host: reports its player caused (button presses, grabs, triggers), so the host's page
+// runs the world logic for them (#14). tagged with the client's player id.
+export const REPORT_CHANNEL = "reports";
 export const SNAPSHOT_REQUEST_CHANNEL = "snapshot-req";
 export const SNAPSHOT_CHANNEL = "snapshot";
 

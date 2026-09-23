@@ -1,6 +1,7 @@
 import type { ReportEvent } from "@hyperlinkvr/vr-engine-schemas";
 
 import { has_world_authority, is_simulated_locally } from "../net/authority";
+import { get_local_player_id } from "../player/player_position_registry";
 import { run_triggers } from "./trigger_registry";
 
 // every report and trigger firing leaves the engine through here
@@ -28,7 +29,12 @@ export const publish_reports = (reports: ReportEvent[]) => {
         return;
     }
 
-    const own = reports.filter((report) => speaks_for(report.object_id));
+    // stamp each report with the local player's id, so the host's page can attribute who caused it
+    // (a client forwards these, already tagged, to the host)
+    const player = get_local_player_id();
+    const own = reports
+        .filter((report) => speaks_for(report.object_id))
+        .map((report) => ({ ...report, player }));
     if (own.length === 0) {
         return;
     }

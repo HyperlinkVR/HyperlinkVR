@@ -13,6 +13,17 @@ export const set_local_player_origin = (origin: Group | null) => {
     local_origin = origin;
 };
 
+// the local player's stable id (auth uuid, null for a guest). reports are stamped with this so the
+// host's page can attribute who caused them (e.player). a client's forwarded reports carry its own
+// id; the host's own reports carry the host's.
+let local_player_id: string | null = null;
+
+export const set_local_player_id = (id: string | null) => {
+    local_player_id = id;
+};
+
+export const get_local_player_id = (): string | null => local_player_id;
+
 // writes the local player's world position into `out`, returning false if the
 // rig isn't mounted yet (so a caller can skip this frame)
 export const get_player_position = (out: Vector3): boolean => {

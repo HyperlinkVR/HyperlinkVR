@@ -78,6 +78,7 @@ import { FlatNavConsentGate, useNavConsent, VRNavConsentGate } from "./NavConsen
 
 import "../loader-config";
 import { CommandSync } from "../net/CommandSync";
+import { MultiplayerSync } from "../net/MultiplayerSync";
 import { HapticsProvider } from "../input/haptics";
 import { TouchControls } from "../input/impl/flat/TouchControls";
 
@@ -514,6 +515,7 @@ const EngineHostInternal = memo(
                                 <DiscordPresenceSync />
                                 <WorldSessionListener />
                                 <CommandSync />
+                                <MultiplayerSync />
 
                                 <EngineObjectSync />
                                 <AnimationSync />

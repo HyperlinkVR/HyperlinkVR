@@ -45,12 +45,14 @@
 11. [~] **Command replication [M].** The host broadcasts every command it applies on a reliable channel, and clients apply them.
 12. [x] **Client page lifecycle [S].** In shared worlds, client pages never get `READY`, and the host's "loading finished" is replicated to everyone.
 13. [~] **Late join (snapshot, not replay) [M].** A newcomer gets a serialized snapshot of current world state — each subsystem (objects, HUD, VFX, active tweens/seeks with their start-time, monitors) exposes `serialize()`/`hydrate()` — and holds a loading screen until it's hydrated. Not a command-log replay: replaying timing-dependent commands (a tween that started 10s ago) is the fragility to avoid — a snapshot captures `tween X 40% through, started at session-time T` instead. The stores are already serializable and ID-keyed (`EngineObjectStore.objects`), and this same serialization feeds `net.state` / host migration (#28).
-14. [ ] **Report routing [M].** Client engines send reports to the host's page with `player` attached. Player-targeted actions (teleport, send to world, player monitors) go to that player's engine.
+14. [x] **Report routing [M].** Client engines send reports to the host's page with `player` attached. Player-targeted actions (teleport, send to world, player monitors) go to that player's engine.
 15. [ ] **Per-player HUD and effects [S].** Using the scope the HUD already has.
-16. [ ] **SDK [S].** `e.player`, `players.on_spawn` fires for remote players on the host, `players.list()` and `on_leave`, and `.create()` throws on clients.
+16. [x] **SDK [S].** `e.player`, `players.on_spawn` fires for remote players on the host, `players.list()` and `on_leave`, and `.create()` throws on clients.
 17. [ ] **Host leaves [S].** For v1, the instance simply ends.
 18. [ ] **Games [S].** Port clubhouse, or a button and score world, to `shared`.
 19. [ ] **WebTransport [S].** for the unreliable channel (making it a hybrid transport, with WebSocket for reliable. Maybe fallback to WebSocket for unreliable if WebTransport isn't available, but need to be careful that all parties agree, so don't do that yet)
+
+TODO: what about triggers? some might be better off as client side reactions rather than on the host (e.g. click to fire gun), unless triggers were just a symptom of monitors being a bad way to do inputs. But could have a flag + a local light trigger runner (or just authority). Need to think about how the permission works for general command triggering to prevent cheating (unless its left up to games/prefabs, maybe with some utilities to help + some basic correctness checking e.g. buttons could check player proximity is within reach range)
 
 **Milestone: button, score and HUD games are multiplayer.**
 
