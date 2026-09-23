@@ -15,7 +15,7 @@ export const Crosshair = () => {
     
 
     useEffect(() => {
-        setVisible(cursor_free || quick_menu_open || devtools_photo_mode);
+        setVisible(!cursor_free || quick_menu_open || devtools_photo_mode);
     }, [cursor_free, quick_menu_open, devtools_photo_mode]);
 
     if (!visible) {
