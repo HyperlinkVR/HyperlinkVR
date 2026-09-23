@@ -18,6 +18,7 @@ import { attach_content_window, attach_host_window, backend, navigate_from_ui, n
 import { NavigationBar } from "./components/NavigationBar";
 import { SquareButton } from "./components/SquareButton";
 import { X } from "lucide-react";
+import { DefaultContextProviders } from "./contexts/DefaultContextProviders";
 
 
 const App = () => {
@@ -38,6 +39,7 @@ const App = () => {
     }, []);
 
     const [url, setURL] = useState(location.hash ? location.hash.substring(1) : location.origin);
+    const [navigation_generation, setNavigationGeneration] = useState(0);
 
     // TODO: should there be a confirm prompt if navigating from hash or is it obvious enough
 
@@ -51,10 +53,13 @@ const App = () => {
 
     useEffect(() => {
         set_current_url(url);
-    }, [url]);
+    }, [url, navigation_generation]);
 
     useEffect(() => {
-        set_navigate_callback(setURL);
+        set_navigate_callback((url) => {
+            setURL(url);
+            setNavigationGeneration((gen) => gen + 1);
+        });
     }, []);
 
     const content_iframe_ref = useRef<HTMLIFrameElement>(null);
@@ -100,21 +105,23 @@ const App = () => {
     }, [on_iframe_window_requested]);
 
     return (
-        <main className="h-screen w-screen flex flex-col">
-            {!loaded && <div className="h-screen w-screen fixed inset-0 bg-slate-800 flex flex-col items-center justify-center">
-                <LoadingSpinner className="text-white" />
-            </div>}
+        <DefaultContextProviders>
+            <main className="h-screen w-screen flex flex-col">
+                {!loaded && <div className="h-screen w-screen fixed inset-0 bg-slate-800 flex flex-col items-center justify-center">
+                    <LoadingSpinner className="text-white" />
+                </div>}
 
-            <NavigationBar on_url_submit={navigate_from_ui} initial_url={url} />
+                <NavigationBar on_url_submit={navigate_from_ui} initial_url={url} />
 
-            <iframe name="hvr-host-frame" ref={handle_host_iframe} src={`./windows/vr_host/?tab=${SINGLE_TAB_ID}`} allowFullScreen className="flex-1" />
-            <iframe name={CONTENT_FRAME_NAME} ref={handle_content_iframe} src={url} className="hidden" onLoad={notify_content_loaded} />
+                <iframe name="hvr-host-frame" ref={handle_host_iframe} src={`./windows/vr_host/?tab=${SINGLE_TAB_ID}`} allowFullScreen className="flex-1" />
+                <iframe key={navigation_generation} name={CONTENT_FRAME_NAME} ref={handle_content_iframe} src={url} className="hidden" onLoad={notify_content_loaded} />
 
-            <div className={`h-screen w-screen fixed inset-0 bg-slate-800 ${window_iframe_url ? "flex flex-col items-end justify-center" : "hidden"}`} aria-hidden={!window_iframe_url} role="dialog">
-                <SquareButton label={<X />} on_click={() => {window_closed.current = true; setWindowIFrameURL(null)}} title="Close window" className=" h-10 transition bg-gray-500 hover:bg-red-600" />
-                <iframe name="hvr-window-frame" ref={window_iframe_ref} src={window_iframe_url || "about:blank"} className="w-full h-full" />
-            </div>
-        </main>
+                <div className={`h-screen w-screen fixed inset-0 bg-slate-800 ${window_iframe_url ? "flex flex-col items-end justify-center" : "hidden"}`} aria-hidden={!window_iframe_url} role="dialog">
+                    <SquareButton label={<X />} on_click={() => {window_closed.current = true; setWindowIFrameURL(null)}} title="Close window" className=" h-10 transition bg-gray-500 hover:bg-red-600" />
+                    <iframe name="hvr-window-frame" ref={window_iframe_ref} src={window_iframe_url || "about:blank"} className="w-full h-full" />
+                </div>
+            </main>
+        </DefaultContextProviders>
     );
 }
 

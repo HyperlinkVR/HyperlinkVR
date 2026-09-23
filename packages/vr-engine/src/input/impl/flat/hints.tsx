@@ -12,7 +12,7 @@ import {
 } from "react";
 import { useSetting } from "@hyperlinkvr/react";
 
-export type HintDevice = "kbm" | "xbox" | "playstation" | "switch";
+export type HintDevice = "kbm" | "xbox" | "playstation" | "switch" | "touch";
 
 // TODO: cancel throw action
 export type HintAction =
@@ -31,9 +31,11 @@ export type HintAction =
     "ui_navigate" |
     "ui_accept" |
     "ui_cancel" |
-    "close_watch";
+    "close_watch" |
+    "quick_menu" |
+    "quick_menu_open";
 
-export type HintLayer = "default" | "verbose" | "not_sprinting" | "sprinting" | "not_holding" | "holding" | "holding_throwable" | "holding_useable" | "charging_throw" | "watch_ui";
+export type HintLayer = "default" | "verbose" | "not_sprinting" | "sprinting" | "not_holding" | "holding" | "holding_throwable" | "holding_useable" | "charging_throw" | "watch_ui" | "quick_menu_open";
 
 export type HintGlyphSpec =
     | { kind: "pf"; glyph: string } // promptfont glyph, rendered via its css class
@@ -68,7 +70,9 @@ const HINTS: Record<HintDevice, Partial<Record<HintAction, InputHint>>> = {
         ui_navigate: { glyphs: [key("↑"), key("↓"), key("←"), key("→")], label: "Navigate" },
         ui_accept: { glyphs: [key("Enter")], label: "Accept / interact" },
         ui_cancel: { glyphs: [key("Esc")], label: "Cancel / back" },
-        close_watch: { glyphs: [], label: "Click outside to close" }
+        close_watch: { glyphs: [], label: "Click outside to close" },
+        quick_menu: { glyphs: [key("Q")], label: "Quick menu (hold)" },
+        quick_menu_open: { glyphs: [], label: "Move mouse towards an item" }
     },
 
     xbox: {
@@ -87,7 +91,9 @@ const HINTS: Record<HintDevice, Partial<Record<HintAction, InputHint>>> = {
         ui_navigate: { glyphs: [pf("analog-l-any"), text("/"), pf("dpad-left"), pf("dpad-right"), pf("dpad-up"), pf("dpad-down")], label: "Navigate" },
         ui_accept: { glyphs: [pf("xbox-a")], label: "Accept / interact" },
         ui_cancel: { glyphs: [pf("xbox-b")], label: "Cancel / back" },
-        close_watch: { glyphs: [pf("xbox-menu")], label: "Close watch" }
+        close_watch: { glyphs: [pf("xbox-menu")], label: "Close watch" },
+        quick_menu: { glyphs: [pf("xbox-left-shoulder")], label: "Quick menu (hold)" },
+        quick_menu_open: { glyphs: [], label: "Move right stick towards an item" }
     },
     playstation: {
         move: { glyphs: [pf("analog-l-any")], label: "Move" },
@@ -105,7 +111,9 @@ const HINTS: Record<HintDevice, Partial<Record<HintAction, InputHint>>> = {
         ui_navigate: { glyphs: [pf("analog-l-any"), text("/"), pf("dpad-left"), pf("dpad-right"), pf("dpad-up"), pf("dpad-down")], label: "Navigate" },
         ui_accept: { glyphs: [pf("sony-a")], label: "Accept / interact" },
         ui_cancel: { glyphs: [pf("sony-b")], label: "Cancel / back" },
-        close_watch: { glyphs: [pf("sony-options")], label: "Close watch" }
+        close_watch: { glyphs: [pf("sony-options")], label: "Close watch" },
+        quick_menu: { glyphs: [pf("sony-left-shoulder")], label: "Quick menu (hold)" },
+        quick_menu_open: { glyphs: [], label: "Move right stick towards an item" }
     },
     switch: {
         move: { glyphs: [pf("analog-l-any")], label: "Move" },
@@ -123,12 +131,17 @@ const HINTS: Record<HintDevice, Partial<Record<HintAction, InputHint>>> = {
         ui_navigate: { glyphs: [pf("analog-l-any"), text("/"), pf("nintendo-dpad-left"), pf("nintendo-dpad-right"), pf("nintendo-dpad-up"), pf("nintendo-dpad-down")], label: "Navigate" },
         ui_accept: { glyphs: [pf("xbox-b")], label: "Accept / interact" }, // nintendo bottom face button
         ui_cancel: { glyphs: [pf("xbox-a")], label: "Cancel / back" }, // nintendo right face button
-        close_watch: { glyphs: [pf("nintendo-plus")], label: "Close watch" }
+        close_watch: { glyphs: [pf("nintendo-plus")], label: "Close watch" },
+        quick_menu: { glyphs: [pf("nintendo-left-shoulder")], label: "Quick menu (hold)" },
+        quick_menu_open: { glyphs: [], label: "Move right stick towards an item" }
+    },
+    touch: {
+
     }
 };
 
 const HINT_LAYERS: Record<HintLayer, HintAction[]> = {
-    default: ["watch", "free_cursor"],
+    default: ["watch", "free_cursor", "quick_menu"],
     verbose: ["move", "jump"],
     not_sprinting: ["sprint"],
     sprinting: ["stop_sprinting"],
@@ -137,13 +150,14 @@ const HINT_LAYERS: Record<HintLayer, HintAction[]> = {
     holding_throwable: ["throw_tap", "throw_charge"],
     holding_useable: ["use"],
     charging_throw: ["charged_throw_execute"],
-    watch_ui: ["close_watch", "ui_navigate", "ui_accept", "ui_cancel"]
+    watch_ui: ["close_watch", "ui_navigate", "ui_accept", "ui_cancel"],
+    quick_menu_open: ["quick_menu_open"]
 };
 
 
 type HintSide = "left" | "right" | "both";
 
-const HINT_LAYER_ORDER_LEFT: HintLayer[] = ["default", "verbose", "watch_ui", "not_sprinting", "sprinting"];
+const HINT_LAYER_ORDER_LEFT: HintLayer[] = ["default", "verbose", "watch_ui", "not_sprinting", "sprinting", "quick_menu_open"];
 const HINT_LAYER_ORDER_RIGHT: HintLayer[] = ["holding_useable", "not_holding", "holding", "holding_throwable", "charging_throw"];
 const HINT_LAYER_OVERALL_ORDER: HintLayer[] = [...HINT_LAYER_ORDER_LEFT, ...HINT_LAYER_ORDER_RIGHT];
 
@@ -163,7 +177,8 @@ const HINT_LAYER_SUPPRESSES: Partial<Record<HintLayer, HintLayer[]>> = {
     sprinting: ["not_sprinting"],
     holding: ["not_holding"],
     charging_throw: ["holding_throwable"],
-    watch_ui: ["default", "verbose", "not_sprinting", "sprinting", "not_holding", "holding", "holding_throwable", "holding_useable", "charging_throw"]
+    watch_ui: ["default", "verbose", "not_sprinting", "sprinting", "not_holding", "holding", "holding_throwable", "holding_useable", "charging_throw"],
+    quick_menu_open: ["default", "verbose", "not_sprinting", "sprinting", "not_holding", "holding", "holding_throwable", "holding_useable", "charging_throw"]
 };
 
 export const compute_hint_actions_from_layers = (layers: HintLayer[], side_filter: HintSide = "both"): HintAction[] => {
@@ -334,12 +349,20 @@ export const HintDevicePublisher = () => {
     const {set_device} = useSetHintState();
 
     useEffect(() => {
-        const on_kbm_activity = () => set_device("kbm");
-        window.addEventListener("keydown", on_kbm_activity);
-        window.addEventListener("mousedown", on_kbm_activity);
+        const on_keyboard_activity = () => set_device("kbm");
+        const on_pointer_activity = (e: PointerEvent) => {
+            if (e.pointerType === "mouse") {
+                set_device("kbm");
+            } else {
+                set_device("touch");
+            }
+        }
+
+        window.addEventListener("keydown", on_keyboard_activity);
+        window.addEventListener("pointerdown", on_pointer_activity);
         return () => {
-            window.removeEventListener("keydown", on_kbm_activity);
-            window.removeEventListener("mousedown", on_kbm_activity);
+            window.removeEventListener("keydown", on_keyboard_activity);
+            window.removeEventListener("pointerdown", on_pointer_activity);
         };
     }, [set_device]);
 

@@ -4,7 +4,7 @@ import { Matrix4, PerspectiveCamera, Vector3, type Object3D, type Quaternion, ty
 
 
 
-import type { PlayerOriginContextType} from "../contexts";
+import type { PlayerOriginContextType } from "../contexts";
 import { usePlayerOrigin } from "../contexts";
 import { Eye } from "../types";
 import { active_pipeline } from "./GraphicsPipeline";
@@ -127,24 +127,26 @@ export const SpectatorCameraController = ({config = camera_controller_configs.fi
         const xr_state = gl.xr.enabled;
         const render_target = gl.getRenderTarget();
 
-        gl.xr.enabled = false;
-        gl.setRenderTarget(null);
-        gl.clear();
 
-        // substitute our spectator camera into the render pass to ensure it actually gets used for the render, not the headset arraycamera
-        const render_pass = active_pipeline.passes.find((p: any) => p.isRenderPass);
-        const prev_cam = (render_pass as any)?.camera;
-        if (render_pass) (render_pass as any).camera = spec_camera;
+        const render_passes = active_pipeline.passes.filter(
+            (p) => (p as any)?.isRenderPass === true || (p as any)?.is_render_pass === true
+        );
+        const prev_cams = render_passes.map((p) => (p as any).camera);
 
-        // push the new frame to the render
-        gl.render(scene, spec_camera);
+        try {
+            gl.xr.enabled = false;
+            gl.setRenderTarget(null);
+            gl.clear();
 
-        // restore the previous camera to the render pass so that the headset view continues to render correctly
-        if (render_pass) (render_pass as any).camera = prev_cam;
+            for (const p of render_passes) (p as any).camera = spec_camera;
 
-        // restore old render target and xr state to continue rendering the headset view
-        gl.setRenderTarget(render_target);
-        gl.xr.enabled = xr_state;
+            // push the new frame to the render
+            gl.render(scene, spec_camera);
+        } finally {
+            render_passes.forEach((p, i) => { (p as any).camera = prev_cams[i]; });
+            gl.setRenderTarget(render_target);
+            gl.xr.enabled = xr_state;
+        }
     }, 1);
 
     return null;

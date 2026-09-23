@@ -1,16 +1,13 @@
-import { useFrame, useThree } from "@react-three/fiber";
-import {
-    createContext,
-    useCallback,
-    useContext,
-    useEffect,
-    useMemo,
-    useRef,
-    useState,
-    type ReactNode
-} from "react";
-import { useSetHintState } from "./hints";
 import { dispatch_ui_nav } from "@hyperlinkvr/watch-ui";
+import { useFrame, useThree } from "@react-three/fiber";
+import { useCallback, useEffect, useRef } from "react";
+import { create } from "zustand";
+
+
+
+import { useSystemInputStore } from "../../system_input";
+import { useHintState, useSetHintState } from "./hints";
+
 
 // TODO: crouch
 // TODO: sprint toggle option, both here and in xr
@@ -74,14 +71,32 @@ export interface FlatInputState {
     cursor_free: boolean; // true if the watch is presented or explicitly freed with Alt / Select
 }
 
-const FlatInputStateContext = createContext<FlatInputState | null>(null);
+interface FlatInputStore extends FlatInputState {
+    set_watch_presented: (val: boolean) => void;
+    set_cursor_free: (val: boolean) => void;
+    toggle_watch: () => void;
+    close_watch: () => void;
+}
 
-export const useFlatInputState = (): FlatInputState => {
-    const value = useContext(FlatInputStateContext);
-    if (value === null) {
-        throw new Error("useFlatInputState must be used within a FlatInputProvider");
-    }
-    return value;
+export const useFlatInputStore = create<FlatInputStore>((set) => ({
+    watch_presented: false,
+    cursor_free: false,
+    set_watch_presented: (val) => set({ watch_presented: val }),
+    set_cursor_free: (val) => set({ cursor_free: val }),
+    toggle_watch: () => set((s) => ({ watch_presented: !s.watch_presented })),
+    close_watch: () => set({ watch_presented: false })
+}));
+
+export const useFlatInputState = (): FlatInputState & {
+    set_watch_presented: (val: boolean) => void;
+    set_cursor_free: (val: boolean) => void;
+} => {
+    const watch_presented = useFlatInputStore((s) => s.watch_presented);
+    const cursor_free = useFlatInputStore((s) => s.cursor_free);
+    const set_watch_presented = useFlatInputStore((s) => s.set_watch_presented);
+    const set_cursor_free = useFlatInputStore((s) => s.set_cursor_free);
+
+    return { watch_presented, cursor_free, set_watch_presented, set_cursor_free };
 };
 
 // imperative controls, e.g. so the watch can close itself on cancel-at-root
@@ -90,14 +105,11 @@ export interface FlatInputControls {
     close_watch: () => void;
 }
 
-const FlatInputControlsContext = createContext<FlatInputControls | null>(null);
-
 export const useFlatInputControls = (): FlatInputControls => {
-    const value = useContext(FlatInputControlsContext);
-    if (value === null) {
-        throw new Error("useFlatInputControls must be used within a FlatInputProvider");
-    }
-    return value;
+    const toggle_watch = useFlatInputStore((s) => s.toggle_watch);
+    const close_watch = useFlatInputStore((s) => s.close_watch);
+
+    return { toggle_watch, close_watch };
 };
 
 export enum StandardControllerInput {
@@ -195,25 +207,33 @@ const update_ui_repeat = (
     return false;
 };
 
-export const FlatInputProvider = ({ children }: { children: ReactNode }) => {
+export const FlatInputRunner = () => {
     const { gl } = useThree();
 
-    const [watch_presented, set_watch_presented] = useState(false);
-    const [cursor_free, set_cursor_free] = useState(false);
-
-    const ui_state = useMemo<FlatInputState>(
-        () => ({ watch_presented, cursor_free }),
-        [watch_presented, cursor_free]
-    );
+    const watch_presented = useFlatInputStore((s) => s.watch_presented);
+    const set_cursor_free = useFlatInputStore((s) => s.set_cursor_free);
+    const toggle_watch = useFlatInputStore((s) => s.toggle_watch);
 
     const { add_layer, remove_layer } = useSetHintState();
     // TODO: inline hint device setting here rather than sep component
 
-    const watch_presented_ref = useRef(false);
+    const watch_presented_ref = useRef(watch_presented);
     const cursor_free_explicit = useRef(false);
+
+    const { device } = useHintState();
 
     const apply_cursor = useCallback(() => {
         const canvas = gl.domElement;
+
+        // always unlock on touchscreen
+        if (device === "touch") {
+            if (document.pointerLockElement === canvas) {
+                document.exitPointerLock();
+            }
+            set_cursor_free(true);
+            return;
+        }
+
         const next_cursor_free = cursor_free_explicit.current || watch_presented_ref.current;
 
         if (next_cursor_free) {
@@ -233,28 +253,28 @@ export const FlatInputProvider = ({ children }: { children: ReactNode }) => {
         }
 
         set_cursor_free(next_cursor_free);
-    }, [gl.domElement]);
+    }, [device, gl.domElement, set_cursor_free]);
 
-    const toggle_watch = useCallback(() => {
-        watch_presented_ref.current = !watch_presented_ref.current;
-        set_watch_presented(watch_presented_ref.current);
+    // whenever changing to touch device, unlock cursor
+    useEffect(() => {
+        if (device === "touch") {
+            set_cursor_free(true);
+            apply_cursor();
+        }
+    }, [apply_cursor, device, set_cursor_free]);
+
+    // Sync state to ref and apply side effects when watch toggles
+    useEffect(() => {
+        const did_close = watch_presented_ref.current && !watch_presented;
+        watch_presented_ref.current = watch_presented;
         apply_cursor();
 
-        if (watch_presented_ref.current) {
+        if (watch_presented) {
             add_layer("watch_ui");
-        } else {
+        } else if (did_close) {
             remove_layer("watch_ui", true);
         }
-    }, [apply_cursor]);
-
-    const close_watch = useCallback(() => {
-        if (watch_presented_ref.current) toggle_watch();
-    }, [toggle_watch]);
-
-    const controls = useMemo<FlatInputControls>(
-        () => ({ toggle_watch, close_watch }),
-        [toggle_watch, close_watch]
-    );
+    }, [watch_presented, apply_cursor, add_layer, remove_layer]);
 
     useEffect(() => {
         const canvas = gl.domElement;
@@ -293,27 +313,66 @@ export const FlatInputProvider = ({ children }: { children: ReactNode }) => {
         const on_keydown = on_key(true);
         const on_keyup = on_key(false);
 
-        const on_mousemove = (event: MouseEvent) => {
-            if (document.pointerLockElement !== canvas) return; // only when locked (look mode)
-            frame_input.look.x += event.movementX;
-            frame_input.look.y += event.movementY;
+        const last_touch = { x: 0, y: 0, active: false };
+
+        const on_pointermove = (event: PointerEvent) => {
+            if (event.pointerType === "mouse") {
+                // mouse only looks when cursor locked
+                if (document.pointerLockElement !== canvas) return;
+
+                // locked cursor uses movementX/Y
+                frame_input.look.x += event.movementX;
+                frame_input.look.y += event.movementY;
+                return;
+            }
+
+            // unlocked touch mode doesnt have movementX/Y, so track delta manually
+
+            if (!last_touch.active || watch_presented_ref.current) return;
+
+            const delta_x = event.clientX - last_touch.x;
+            const delta_y = event.clientY - last_touch.y;
+
+            last_touch.x = event.clientX;
+            last_touch.y = event.clientY;
+
+            frame_input.look.x += delta_x;
+            frame_input.look.y += delta_y;
         };
 
         // click canvas to (re)capture look. while locked, RMB = grab, LMB = use
         // world-UI clicks are handled separately by FlatClickRaycaster
-        const on_down = (event: MouseEvent) => {
+        const on_down = (event: PointerEvent) => {
+            if (event.pointerType !== "mouse") {
+                last_touch.x = event.clientX;
+                last_touch.y = event.clientY;
+                last_touch.active = true;
+                return;
+            }
+
             const locked = document.pointerLockElement === canvas;
-            if (!locked && !cursor_free_explicit.current && !watch_presented_ref.current) {
+            if (
+                !locked &&
+                !cursor_free_explicit.current &&
+                !watch_presented_ref.current
+            ) {
                 canvas.requestPointerLock();
                 return;
             }
 
-            if (!locked) return; // only arm world buttons while actually locked
+            if (!locked) return;
 
             if (event.button === 0) mouse_buttons.use = true;
             if (event.button === 2) mouse_buttons.grab = true;
         };
-        const on_up = (event: MouseEvent) => {
+
+        const on_up = (event: PointerEvent) => {
+            // on touchscreen, explicit onscreen buttons are used
+            if (event.pointerType !== "mouse") {
+                last_touch.active = false;
+                return;
+            }
+
             if (event.button === 0) mouse_buttons.use = false;
             if (event.button === 2) mouse_buttons.grab = false;
         };
@@ -322,17 +381,17 @@ export const FlatInputProvider = ({ children }: { children: ReactNode }) => {
 
         window.addEventListener("keydown", on_keydown);
         window.addEventListener("keyup", on_keyup);
-        canvas.addEventListener("mousemove", on_mousemove);
-        canvas.addEventListener("mousedown", on_down);
-        window.addEventListener("mouseup", on_up);
+        canvas.addEventListener("pointermove", on_pointermove);
+        canvas.addEventListener("pointerdown", on_down);
+        window.addEventListener("pointerup", on_up);
         canvas.addEventListener("contextmenu", no_context);
 
         return () => {
             window.removeEventListener("keydown", on_keydown);
             window.removeEventListener("keyup", on_keyup);
-            canvas.removeEventListener("mousemove", on_mousemove);
-            canvas.removeEventListener("mousedown", on_down);
-            window.removeEventListener("mouseup", on_up);
+            canvas.removeEventListener("pointermove", on_pointermove);
+            canvas.removeEventListener("pointerdown", on_down);
+            window.removeEventListener("pointerup", on_up);
             canvas.removeEventListener("contextmenu", no_context);
             keys.clear();
             mouse_buttons.use = false;
@@ -353,6 +412,10 @@ export const FlatInputProvider = ({ children }: { children: ReactNode }) => {
     const ui_repeat = useRef(make_ui_repeat_channels());
 
     useFrame((_frame_state, delta) => {
+        if (device === "touch") {
+            return;
+        }
+
         // most recently active standard-mapping pad wins, falling back to the last one used
         const gamepads = navigator.getGamepads();
         for (const candidate of gamepads) {
@@ -379,6 +442,7 @@ export const FlatInputProvider = ({ children }: { children: ReactNode }) => {
         let pad_jump = false;
         let pad_sprint = false;
         let pad_throw = false;
+        let pad_quick_menu = false;
 
         // held levels this frame, edge/repeat-filtered at the end
         const ui_levels = make_ui_state();
@@ -397,6 +461,8 @@ export const FlatInputProvider = ({ children }: { children: ReactNode }) => {
                 apply_cursor();
             }
             pad_select_previous.current = select_pressed;
+
+            pad_quick_menu = buttons[StandardControllerInput.L_BUMPER]?.pressed ?? false;
 
             // trigger hysteresis
             const grab_value = buttons[StandardControllerInput.L_TRIGGER]?.value ?? 0;
@@ -521,21 +587,19 @@ export const FlatInputProvider = ({ children }: { children: ReactNode }) => {
         frame_input.sprint = sprint;
         frame_input.throw_held = throw_held;
 
+        // system UI intents are scheme-neutral, so they go to the shared store
+        // rather than frame_input (Q or bumper, momentary). the setter no-ops
+        // when unchanged, so pushing every frame is cheap
+        useSystemInputStore.getState().set_quick_menu_held(keys.has("KeyQ") || pad_quick_menu);
+
         // world actions are suspended while browsing the watch
         frame_input.jump = !watch_open && (keys.has("Space") || pad_jump);
         frame_input.grab = !watch_open && (mouse_buttons.grab || pad_grab_held.current);
         frame_input.use = !watch_open && (mouse_buttons.use || pad_use_held.current);
     }, -10); // before default-priority consumers of frame_input
 
-    return (
-        <FlatInputStateContext.Provider value={ui_state}>
-            <FlatInputControlsContext.Provider value={controls}>
-                {children}
-            </FlatInputControlsContext.Provider>
-        </FlatInputStateContext.Provider>
-    );
+    return null;
 };
-
 
 // we push the events to the watch ui to avoid cyclical dep
 export const FlatWatchUINavDriver = () => {

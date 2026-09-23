@@ -18,7 +18,6 @@ import { memo, Suspense, useCallback, useEffect, useImperativeHandle, useMemo, u
 import { ErrorBoundary, getErrorMessage, type FallbackProps } from "react-error-boundary";
 import type { Group } from "three";
 import { ACESFilmicToneMapping, HalfFloatType, Mesh, MeshBasicMaterial, WebGLRenderer } from "three";
-import { configureTextBuilder } from "troika-three-text";
 
 
 
@@ -36,7 +35,7 @@ import { WebSDKMessagingProvider } from "../contexts/WebSDKMessagingContext";
 import { SceneDebug } from "../debug/SceneDebug";
 import { HUDSync } from "../hud/HUDSync";
 import { HandsProvider } from "../input/hands";
-import { FlatInputProvider } from "../input/impl/flat/bindings";
+import { FlatInputRunner } from "../input/impl/flat/bindings";
 import { Crosshair } from "../input/impl/flat/Crosshair";
 import { FlatClickRaycaster } from "../input/impl/flat/FlatClickRaycaster";
 import { AutoHintGlyphs, HintDevicePublisher, HintStateProvider } from "../input/impl/flat/hints";
@@ -75,8 +74,16 @@ import { EngineObjectSync } from "./EngineObjectSync";
 import { FlatLoadingScreen, VRLoadingScreen } from "./LoadingScreen";
 import { FlatNavConsentGate, useNavConsent, VRNavConsentGate } from "./NavConsentGate";
 
+
+
 import "../loader-config";
 import { CommandSync } from "../net/CommandSync";
+import { HapticsProvider } from "../input/haptics";
+import { TouchControls } from "../input/impl/flat/TouchControls";
+
+
+
+
 
 export const xr_store = createXRStore({
     controller: XRAvatarHand,
@@ -258,7 +265,7 @@ const SceneContents = ({
     useFilterContactPair(filter_contact_pair);
 
     return (
-        <>
+        <HapticsProvider>
             <FloorCollider />
 
             <Sky
@@ -300,7 +307,7 @@ const SceneContents = ({
             {/*TODO: should ssao even be in use in vr? if not, then may as well use react-three postprocessing (which doesn't work in vr but prob more battle tested than out own ao sahder) */}
 
             {extra_in_origin || null}
-        </>
+        </HapticsProvider>
     );
 };
 
@@ -417,13 +424,15 @@ const DiscordPresenceSync = () => {
                     url
                 }
             ]
-        }).catch((err => {
+        }).catch((err) => {
             console.error("Failed to set Discord activity:", err);
-        }));
+        });
     }, [url, world_metadata, set_activity, show_world]);
 
     return null;
 }
+
+const anim_logo_svg = new URL("../../../assets/hyperlinkvr_anim.svg", import.meta.url).href;
 
 const EngineHostInternal = memo(
     ({ on_ready, mode }: { on_ready: () => void; mode: "vr" | "flat" }) => {
@@ -491,6 +500,8 @@ const EngineHostInternal = memo(
             return "soft";
         }, [shadows]);
 
+        const [spec_cam_mode] = useSetting("spectator_view");
+
         return (
             <SessionModeProvider value={mode}>
                 <WorldSessionProvider>
@@ -513,7 +524,7 @@ const EngineHostInternal = memo(
                                 <LocalAssetWarningBanner />
 
                                 <div
-                                    className={`w-full h-full relative ${mode === "vr" ? "max-w-[calc(100vh*16/9)] max-h-[calc(100vw*9/16)]" : ""}`}
+                                    className={`w-full h-full relative touch-none ${mode === "vr" ? "max-w-[calc(100vh*16/9)] max-h-[calc(100vw*9/16)]" : ""}`}
                                     ref={canvas_container_ref}
                                 >
                                     {mode === "vr" && <LogoOverlay />}
@@ -539,6 +550,15 @@ const EngineHostInternal = memo(
 
                                     {loading && <FlatLoadingScreen />}
                                     {mode === "flat" && <FlatNavConsentGate />}
+
+                                    {mode === "vr" && spec_cam_mode === "off" && (
+                                        <div className="fixed top-0 left-0 w-full h-full pointer-events-none z-4 bg-black flex flex-col items-center justify-center gap-2">
+                                            <img src={anim_logo_svg} className="w-32 h-32" />
+                                            <p className="text-white">Spectator view disabled</p>
+                                        </div>
+                                    )}
+
+                                    {mode === "flat" && <TouchControls />}
 
                                     <AvatarProvider>
                                         <PlayerOriginProvider value={player_ref}>
@@ -580,7 +600,8 @@ const EngineHostInternal = memo(
                                                                                 }
                                                                                 onReset={() =>
                                                                                     window.location.reload()
-                                                                                }>
+                                                                                }
+                                                                            >
                                                                                 <GatedSceneContents
                                                                                     mode="vr"
                                                                                     player_ref={player_ref}
@@ -601,11 +622,10 @@ const EngineHostInternal = memo(
                                                                                 window.location.reload()
                                                                             }
                                                                         >
-                                                                            <FlatInputProvider>
-                                                                                <FlatClickRaycaster />
-                                                                                <FlatAvatarHands />
-                                                                                <GatedSceneContents mode="flat" player_ref={player_ref} />
-                                                                            </FlatInputProvider>
+                                                                            <FlatInputRunner />
+                                                                            <FlatClickRaycaster />
+                                                                            <FlatAvatarHands />
+                                                                            <GatedSceneContents mode="flat" player_ref={player_ref} />
                                                                         </ErrorBoundary>
                                                                     )}
                                                                 </WorldPhysics>

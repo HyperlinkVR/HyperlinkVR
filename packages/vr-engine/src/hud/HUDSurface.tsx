@@ -1,14 +1,13 @@
 import { useAuthSession, useSetting } from "@hyperlinkvr/react";
 import type { HUDSlot, HUDVRAnchor } from "@hyperlinkvr/vr-engine-schemas";
-import { Container, Text } from "@react-three/uikit";
-import { Suspense, useEffect, useMemo } from "react";
+import { Container } from "@react-three/uikit";
+import { Suspense, useMemo } from "react";
 
 
 
 import type { ResolvedHUDElement as StoreResolvedHUDElement } from "../stores/HUDStore";
 import { useHUDStore } from "../stores/HUDStore";
-import { mark_hud_element_ready } from "./hud_ready_registry";
-
+import { HUDComponentView } from "./components";
 
 export const HUD_CANVAS_WIDTH = 1920;
 export const HUD_CANVAS_HEIGHT = 1080;
@@ -39,28 +38,6 @@ const HORIZONTAL_ALIGN = {
 
 const VERTICALS = ["top", "middle", "bottom"] as const;
 const HORIZONTALS = ["left", "center", "right"] as const;
-
-const HUDComponentView = ({element}: {element: StoreResolvedHUDElement}) => {
-    useEffect(() => {
-        mark_hud_element_ready(element.id);
-    }, [element.id]);
-
-    // TODO: replace this with calls to imported components when more are added for cleanliness, since text is just a test it can be inlined
-
-    switch (element.component.type) {
-        case "text":
-            return (
-                <Text
-                    fontSize={element.component.font_size}
-                    color={element.component.color}
-                >
-                    {element.component.text}
-                </Text>
-            );
-        default:
-            return null;
-    }
-};
 
 const HUDElementView = ({element}: {element: StoreResolvedHUDElement}) => {
     if (element.offset) {

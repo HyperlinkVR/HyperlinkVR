@@ -1,0 +1,19 @@
+{
+    "name": "@hyperlinkvr/hypergram-read-host",
+    "version": "0.0.1",
+    "private": true,
+    "type": "module",
+    "exports": {
+        ".": "./src/index.ts"
+    },
+    "scripts": {
+        "build": "tsc --build",
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@hyperlinkvr/hypergram-schemas": "workspace:*",
+        "@ts-rest/core": "catalog:",
+        "zod": "catalog:"
+    },
+    "devDependencies": {}
+}

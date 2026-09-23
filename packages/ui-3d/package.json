@@ -1,0 +1,28 @@
+{
+    "name": "@hyperlinkvr/ui-3d",
+    "version": "0.0.1",
+    "private": true,
+    "main": "src/index.ts",
+    "types": "src/index.ts",
+    "scripts": {
+        "build": "tsc --build",
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@hyperlinkvr/react": "workspace:*",
+        "@hyperlinkvr/types": "workspace:*",
+        "react": "catalog:",
+        "react-dom": "catalog:",
+        "three": "catalog:",
+        "@react-three/fiber": "catalog:",
+        "@react-three/uikit": "catalog:",
+        "@react-three/uikit-default": "catalog:",
+        "@react-three/uikit-lucide": "catalog:",
+        "@react-three/drei": "catalog:",
+        "zustand": "catalog:"
+    },
+    "devDependencies": {
+        "@types/three": "catalog:",
+        "@types/react": "catalog:"
+    }
+}

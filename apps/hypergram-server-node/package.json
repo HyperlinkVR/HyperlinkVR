@@ -1,0 +1,22 @@
+{
+    "name": "@hyperlinkvr/hypergram-server-node",
+    "type": "module",
+    "version": "0.0.1",
+    "private": true,
+    "description": "",
+    "scripts": {
+        "dev": "tsx watch src/index.ts",
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@hono/node-server": "^2.1.1",
+        "@hyperlinkvr/hypergram-read-host": "workspace:*",
+        "@hyperlinkvr/hypergram-schemas": "workspace:*",
+        "@hyperlinkvr/hypergram-server-lib": "workspace:*"
+    },
+    "devDependencies": {
+        "@types/node": "catalog:",
+        "tsx": "^4.19.2",
+        "typescript": "5.9.3"
+    }
+}

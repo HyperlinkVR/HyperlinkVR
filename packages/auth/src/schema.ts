@@ -59,7 +59,7 @@ export const StaticIdentityRecordSchema = z.object({
 export type StaticIdentityRecord = z.infer<typeof StaticIdentityRecordSchema>;
 
 
-export const AuthManifestSchema_VERSION = 1;
+export const AuthManifestSchema_VERSION = 2;
 export const AuthManifestSchema = z
     .object({
         $schema: z
@@ -89,7 +89,10 @@ export const AuthManifestSchema = z
             .optional()
             .describe(
                 "[STATIC ONLY] Describe how users can submit their static identity record to the host, e.g. 'Email your static identity record to...', 'open a GitHub PR at ...', 'upload at ...' etc."
-            )
+            ),
+
+        hypergram_read_api_base: z.httpUrl().optional()
+            .describe("Hypergram read API base (omit if Hypergram is not set up. The camera will not be available to your users if so)")
     })
     .superRefine((data, ctx) => {
         // static submit hint should not be provided if static auth is not supported

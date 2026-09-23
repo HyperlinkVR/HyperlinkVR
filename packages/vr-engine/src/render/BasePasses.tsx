@@ -40,6 +40,8 @@ export const SceneRenderPass = () => {
             camera.layers.mask = current_mask;
         };
 
+        (render_pass as any).is_render_pass = true;
+
         return render_pass;
     }, [scene, camera]);
 

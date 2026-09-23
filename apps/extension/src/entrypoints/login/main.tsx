@@ -1,6 +1,6 @@
 import { LoginPage } from "@hyperlinkvr/pages/login";
 import ReactDOM from "react-dom/client";
-import { DefaultContextProviders } from "~/contexts/DefaultContextProviders";
+import { DefaultContextProviders } from "../../contexts/DefaultContextProviders";
 
 const LoginUI = () => {
     return (

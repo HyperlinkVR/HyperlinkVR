@@ -1,12 +1,12 @@
 import { useSetting } from "@hyperlinkvr/react";
 import { Text, useGLTF } from "@react-three/drei";
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import type { Group } from "three";
 
 
 
 import { FollowPlayer } from "../interaction/FollowPlayer";
-import { Grabbable } from "../interaction/Grabbable";
+import { Grabbable, GrabbableRef } from "../interaction/Grabbable";
 import { LayerGroup } from "../render/LayerGroup";
 import { Layer } from "../render/layers";
 import { MixedRealityCameraController } from "../render/MixedRealityCameraController";
@@ -16,7 +16,7 @@ import { EnhancedBillboard } from "../interaction";
 
 const camera = new URL("../../assets/misc/camera/camera.glb", import.meta.url).href;
 
-export const SpectatorCamera = () => {
+const SpectatorCameraInternal = () => {
     const [mode] = useSetting("spectator_view");
 
     const [horiz_fov] = useSetting("third_person_fov");
@@ -26,6 +26,16 @@ export const SpectatorCamera = () => {
     const {scene: camera_scene} = useGLTF(camera);
 
     const camera_model_ref = useRef<Group>(null);
+    const on_camera_ref = useCallback(
+        (grabbable: GrabbableRef) => {
+            if (!grabbable) {
+                return;
+            }
+
+            camera_model_ref.current = grabbable.group;
+        },
+        []
+    )
 
     const config = useMemo(() => {
         if (mode === "first_person") {
@@ -38,7 +48,7 @@ export const SpectatorCamera = () => {
             throw new Error(`Unknown spectator_view mode: ${mode}`);
         }
     }, [mode]);
-// TODO: might want to actually hide from the first person cam too for MR mode
+
     return (
         <>
             <LayerGroup
@@ -51,7 +61,7 @@ export const SpectatorCamera = () => {
                     rotation={[0, Math.PI/12, 0]}
                 >
                     <Grabbable
-                        ref={camera_model_ref}
+                        ref={on_camera_ref}
                         on_trigger_start={() => setFollowPlayer(!follow_player)}
                         grab_distance={0.25}
                         enabled={mode !== "first_person"}
@@ -79,7 +89,15 @@ export const SpectatorCamera = () => {
         </>
     );
 };
-// TODO: option to toggle between follow origin and staying static with trigger (show text that faces you with "Following")
-// TODO: fix position of grabbable and the actual camera with locomotion now enabled
+
+export const SpectatorCamera = () => {
+    const [mode] = useSetting("spectator_view");
+
+    if (mode === "off") {
+        return null;
+    }
+
+    return <SpectatorCameraInternal />;
+}
 
 // TODO: full scene re-render happens when this changes!!!!!!!

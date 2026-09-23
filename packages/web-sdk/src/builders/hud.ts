@@ -1,4 +1,4 @@
-import type { CreatedHUDElement, HUDComponentInput, HUDDispatch, HUDDispatchInput, HUDElementModification, HUDElementModificationInput, HUDSlotOrShorthand, HUDTextComponentInput, HUDVRAnchor, TweenEasingInput } from "@hyperlinkvr/vr-engine-schemas";
+import type { CreatedHUDElement, HexColor, HUDComponentInput, HUDDispatch, HUDDispatchInput, HUDElementModification, HUDElementModificationInput, HUDProgressComponentInput, HUDSizeOrPercentage, HUDSlotOrShorthand, HUDTextComponentInput, HUDVRAnchor, TweenEasingInput } from "@hyperlinkvr/vr-engine-schemas";
 import { HUDDispatchSchema, HUDElementModificationSchema, TweenSchema } from "@hyperlinkvr/vr-engine-schemas";
 
 
@@ -133,6 +133,8 @@ export class HUDElementModificationBuilder<ComponentInput extends HUDComponentIn
             throw new Error("Only offset and component changes may be tweened");
         }
 
+        // TODO: rejection of additional discrete tweens defined on subclasses
+
         const built_modification = this.build();
         const tween = TweenSchema.parse({
             ms: duration_ms,
@@ -179,6 +181,21 @@ export interface HUDTextHandle extends HUDElementHandleBase<HUDTextComponentInpu
     for_player(username: string | null): HUDTextHandle;
 
     set_text(text: string): Promise<void>;
+    set_color(color: HexColor): Promise<void>;
+    set_font_size(size: number): Promise<void>;
+}
+
+/** @group HUD */
+export interface HUDProgressHandle extends HUDElementHandleBase<HUDProgressComponentInput> {
+    for_player(username: string | null): HUDProgressHandle;
+
+    set_min(min: number): Promise<void>;
+    set_max(max: number): Promise<void>;
+    set_value(value: number): Promise<void>;
+    set_fg_color(color: HexColor): Promise<void>;
+    set_bg_color(color: HexColor): Promise<void>;
+    set_height(size: HUDSizeOrPercentage): Promise<void>;
+    set_width(size: HUDSizeOrPercentage): Promise<void>;
 }
 
 /** @group HUD */
@@ -339,21 +356,75 @@ export class HUDTextBuilder extends HUDElementBuilder<HUDTextComponentInput, HUD
         return this.update_component({font_size});
     }
 
-    set_color(color: HUDTextComponentInput["color"]) {
+    set_color(color: HexColor) {
         return this.update_component({color});
     }
+
+    // TODO: color tweening
 
     protected extend_handle(core: HUDHandleCore<HUDTextComponentInput, HUDTextHandle>): HUDTextHandle {
         return {
             ...core,
-            // sugar for core.modify().set_component({text}).apply()
-            set_text: (text) => core.modify().set_component({text}).apply()
+            set_text: (text) => core.modify().set_component({text}).apply(),
+            set_color: (color) => core.modify().set_component({color}).apply(),
+            set_font_size: (size) => core.modify().set_component({font_size: size}).apply()
         };
     }
 }
 
 /** @group HUD */
 export const hud_text = (name: string, text: string) => new HUDTextBuilder(name, text);
+
+
+/** @group HUD */
+export class HUDProgressBuilder extends HUDElementBuilder<HUDProgressComponentInput, HUDProgressHandle> {
+    constructor(name: string) {
+        super(name, {type: "progress"});
+    }
+
+    set_min(min: number) {
+        return this.update_component({min});
+    }
+
+    set_max(max: number) {
+        return this.update_component({max});
+    }
+
+    set_value(value: number) {
+        return this.update_component({value});
+    }
+
+    set_width(width: HUDSizeOrPercentage) {
+        return this.update_component({width});
+    }
+
+    set_height(height: HUDSizeOrPercentage) {
+        return this.update_component({height});
+    }
+
+    set_fg_color(color: HexColor) {
+        return this.update_component({fg_color: color});
+    }
+
+    set_bg_color(color: HexColor) {
+        return this.update_component({bg_color: color});
+    }
+
+    // TODO: value and color tweening
+
+    protected extend_handle(core: HUDHandleCore<HUDProgressComponentInput, HUDProgressHandle>): HUDProgressHandle {
+        return {
+            ...core,
+            set_min: (min) => core.modify().set_component({min}).apply(),
+            set_max: (max) => core.modify().set_component({max}).apply(),
+            set_value: (value) => core.modify().set_component({value}).apply(),
+            set_width: (width) => core.modify().set_component({width}).apply(),
+            set_height: (height) => core.modify().set_component({height}).apply(),
+            set_fg_color: (color) => core.modify().set_component({fg_color: color}).apply(),
+            set_bg_color: (color) => core.modify().set_component({bg_color: color}).apply()
+        };
+    }
+}
 
 /*
 usage example

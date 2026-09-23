@@ -2,15 +2,17 @@ import { useAuthSession, useMessageEngine, useSetting, useWorldSession } from "@
 import { PlayerMonitorSchema } from "@hyperlinkvr/vr-engine-schemas";
 import { Text } from "@react-three/drei";
 import { XROrigin } from "@react-three/xr";
-import { Suspense, useEffect, useImperativeHandle, useRef } from "react";
-import type { Group } from "three";
+import { Suspense, useEffect, useImperativeHandle, useMemo, useRef } from "react";
+import { ExtrudeGeometry, Group, Shape } from "three";
 
 
 
-import { useWebSDKMessaging } from "../contexts";
-import type { ExpressionMouth} from "../contexts/PlayerExpressionContext";
-import { PlayerExpressionProvider, usePlayerExpression } from "../contexts/PlayerExpressionContext";
 import { useSessionMode } from "../../../react/src/contexts/SessionMode";
+import { useWebSDKMessaging } from "../contexts";
+import type { ExpressionMouth } from "../contexts/PlayerExpressionContext";
+import { PlayerExpressionProvider, usePlayerExpression } from "../contexts/PlayerExpressionContext";
+import { PlayerGadgetsProvider } from "../contexts/PlayerGadgetsContext";
+import { Gadgets } from "../gadgets";
 import { BodyHUD } from "../hud/BodyHUD";
 import { FlatHUD } from "../hud/FlatHUD";
 import { HeadHUD } from "../hud/HeadHUD";
@@ -19,17 +21,20 @@ import { FlatHandsPublisher } from "../input/impl/flat/hands";
 import { FlatLocomotion } from "../input/impl/flat/locomotion";
 import { XRHandsPublisher } from "../input/impl/xr/hands";
 import { XRLocomotion } from "../input/impl/xr/locomotion";
+import { XRSystemInput } from "../input/impl/xr/system_input";
 import { register_input_monitor, unregister_input_monitor } from "../monitors/input_monitor_registry";
+import { Layer, LayerGroup } from "../render";
 import { useWorldLoadingStateStore } from "../stores/WorldLoadingStateStore";
 import { Avatar } from "./Avatar";
 import { FlatCameraRig } from "./FlatCameraRig";
-import { PlayerKinematics } from "./PlayerKinematics";
+import { KeyboardSlot } from "./KeyboardSlot";
 import { set_local_player_origin } from "./player_position_registry";
+import { PlayerKinematics } from "./PlayerKinematics";
+import { QuickMenu } from "./QuickMenu";
 import { useIsSeated } from "./seating";
 import { LOCAL_PLAYER_SUBJECT } from "./subject";
 import { Vignette } from "./Vignette";
 import { WristWatch } from "./WristWatch";
-
 
 const MouthTest = ({
     mouth_name,
@@ -91,6 +96,66 @@ const ExpressionTest = () => {
         </group>
     );
 };
+
+const PlayspaceMarker = () => {
+    const [visible] = useSetting("playspace_marker");
+
+    const arrow_geometry = useMemo(() => {
+        const shape = new Shape()
+
+        const width = 0.1
+        const shaft_length = 0.1
+        const head_length = 0.05
+
+        const half_width = width / 2
+
+        // back edge
+        shape.moveTo(-half_width, shaft_length)
+        shape.lineTo(half_width, shaft_length)
+
+        // to shaft base
+        shape.lineTo(half_width, 0)
+
+        // to arrowhead base
+        shape.lineTo(half_width, 0)
+
+        // to arrowhead tip
+        shape.lineTo(0, -head_length)
+
+        // mirror to other side of arrowhead
+        shape.lineTo(-half_width, 0)
+        shape.lineTo(-half_width, 0)
+        shape.closePath()
+
+        const thickness = 0.04
+        const extrude_settings = {
+            depth: thickness,
+            bevelEnabled: true,
+            bevelSize: 0.01,
+            bevelThickness: 0.01,
+            bevelSegments: 1
+        }
+
+        const geom = new ExtrudeGeometry(shape, extrude_settings)
+
+        geom.rotateX(Math.PI / 2)
+        geom.translate(0, thickness / 2, 0)
+
+        return geom
+    }, [])
+
+    if (!visible) {
+        return null;
+    }
+
+    return (
+        <LayerGroup layers={[Layer.HUD]} position={[0,0.01,0]} name="PlayspaceMarker">
+            <mesh geometry={arrow_geometry}>
+                <meshBasicMaterial color="green" transparent opacity={0.15} />
+            </mesh>
+        </LayerGroup>
+    );
+}
 
 export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>; can_move?: boolean }) => {
     const origin_ref = useRef<Group>(null);
@@ -275,37 +340,46 @@ export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>
     return (
         <group name="Player">
             <PlayerExpressionProvider>
-                <Suspense fallback={null}> {/* TODO: can have a little fallback avatar while it loads, just a gray or translucent placeholder akin to vrchat */}
-                    <Avatar />
-                </Suspense>
+                <PlayerGadgetsProvider>
+                    <Suspense fallback={null}> {/* TODO: can have a little fallback avatar while it loads, just a gray or translucent placeholder akin to vrchat */}
+                        <Avatar />
+                    </Suspense>
 
-                <WristWatch />
+                    <WristWatch />
 
-                <PlayerKinematics />
+                    <PlayerKinematics />
 
-                {session_mode === "vr" ? (
-                    <>
-                        <Vignette />
-                        <XROrigin ref={origin_ref}>
-                            <XRHandsPublisher />
-                            <ExpressionTest />
-                            <OriginHUD />
-                        </XROrigin>
-                        <BodyHUD />
-                        <HeadHUD />
-                        {can_move && !seated && <XRLocomotion origin={origin_ref} />}
-                    </>
-                ) : (
-                    <>
-                        <group ref={origin_ref} name="FlatOrigin">
-                            <FlatHandsPublisher />
-                            <FlatCameraRig origin={origin_ref} />
-                            <ExpressionTest />
-                        </group>
-                        <FlatHUD />
-                        {can_move && !seated && <FlatLocomotion origin={origin_ref} />}
-                    </>
-                )}
+                    <Gadgets />
+
+                    {session_mode === "vr" ? (
+                        <>
+                            <Vignette />
+                            <XROrigin ref={origin_ref}>
+                                <XRHandsPublisher />
+                                <ExpressionTest />
+                                <OriginHUD />
+                                <KeyboardSlot />
+                                <QuickMenu />
+                                <PlayspaceMarker/>
+                            </XROrigin>
+                            <BodyHUD />
+                            <HeadHUD />
+                            <XRSystemInput />
+                            {can_move && !seated && <XRLocomotion origin={origin_ref} />}
+                        </>
+                    ) : (
+                        <>
+                            <group ref={origin_ref} name="FlatOrigin">
+                                <FlatHandsPublisher />
+                                <FlatCameraRig origin={origin_ref} />
+                                <ExpressionTest />
+                                <QuickMenu />
+                            </group>
+                            <FlatHUD />
+                            {can_move && !seated && <FlatLocomotion origin={origin_ref} />}
+                        </>
+                    )}
+                </PlayerGadgetsProvider>
             </PlayerExpressionProvider>
         </group>
     );

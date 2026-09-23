@@ -1,3 +1,5 @@
+import { DeviceProfile } from "./device_profile";
+
 export type SettingValueType = Exclude<any, null>;
 
 export type NumberWidget =
@@ -77,6 +79,9 @@ export interface Setting<V extends SettingValueType> {
     default_value: V;
     local_only?: boolean; // default false, if true, setting will not be placed into sync storage. note that changing this will make the setting value reset as a different storage engine is used
     ui?: UIDefinition<V>; // if omitted, the setting will have no associated widget and must be implemented manually
+    force_value?: (props: {
+        device_profile: DeviceProfile;
+    }) => { value: V; persists: boolean } | null; // if provided, this function will be called to determine the value of the setting, and the setting will be read-only. if persists is true, the value will be saved to storage, otherwise it will not. if null is returned, the setting will be read-write and can be changed by the user
 }
 
 const build_settings = <T extends Record<string, Omit<Setting<any>, "key">>>(
@@ -131,6 +136,8 @@ export const settings_def = build_settings({
 
     spectator_view: {
         default_value: "first_person" as
+            | "off"
+            // TODO: crop option, cheap first person
             | "first_person"
             | "third_person"
             | "mixed_reality",
@@ -141,6 +148,7 @@ export const settings_def = build_settings({
                 widget: {
                     type: "select",
                     options: [
+                        { label: "Off (cheapest)", value: "off" },
                         { label: "First Person", value: "first_person" },
                         { label: "Third Person", value: "third_person" },
                         { label: "Mixed Reality", value: "mixed_reality" }
@@ -150,6 +158,14 @@ export const settings_def = build_settings({
                 breadcrumbs: ["General", "Spectator Camera"],
                 conditional: (_, mode) => !mode || mode === "vr"
             }
+        },
+        force_value: ({device_profile}) => {
+            // force spectator view off on low power devices or standalone devices, as it is too expensive to render and won't be used anyway since the player can't see it
+            if (device_profile.low_power || device_profile.is_standalone) {
+                return { value: "off", persists: true };
+            }
+
+            return null;
         }
     },
 
@@ -215,6 +231,21 @@ export const settings_def = build_settings({
         }
     },
 
+    playspace_marker: {
+        default_value: true,
+        ui: {
+            common: {
+                label: "Playspace marker",
+                description: "Show a small marker on the floor to indicate the center of the playspace",
+                widget: {
+                    type: "switch"
+                },
+                breadcrumbs: ["Comfort", "VR"],
+                conditional: (_, mode) => !mode || mode === "vr"
+            }
+        }
+    },
+
     vr_locomotion: {
         default_value: "walk" as "walk" | "teleport",
         ui: {
@@ -228,7 +259,7 @@ export const settings_def = build_settings({
                         { label: "Teleport", value: "teleport" }
                     ]
                 },
-                breadcrumbs: ["Comfort", "VR Movement"],
+                breadcrumbs: ["Comfort", "VR", "Movement"],
                 conditional: (_, mode) => !mode || mode === "vr"
             }
         }
@@ -248,7 +279,7 @@ export const settings_def = build_settings({
                         { label: "Right", value: "right" }
                     ]
                 },
-                breadcrumbs: ["Comfort", "VR Movement"],
+                breadcrumbs: ["Comfort", "VR", "Movement"],
                 conditional: (_, mode) => !mode || mode === "vr"
             }
         }
@@ -267,7 +298,7 @@ export const settings_def = build_settings({
                         { label: "Smooth", value: "smooth" }
                     ]
                 },
-                breadcrumbs: ["Comfort", "VR Movement"],
+                breadcrumbs: ["Comfort", "VR", "Movement"],
                 conditional: (_, mode) => !mode || mode === "vr"
             }
         }
@@ -291,7 +322,7 @@ export const settings_def = build_settings({
                         { label: "90°", value: 90 }
                     ]
                 },
-                breadcrumbs: ["Comfort", "VR Movement"],
+                breadcrumbs: ["Comfort", "VR", "Movement"],
                 conditional: (settings, mode) => settings.vr_rotation === "snap" && (!mode || mode === "vr")
             }
         }
@@ -310,7 +341,7 @@ export const settings_def = build_settings({
                     precision_dp: 0,
                     unit: "°/s"
                 },
-                breadcrumbs: ["Comfort", "VR Movement"],
+                breadcrumbs: ["Comfort", "VR", "Movement"],
                 conditional: (settings, mode) => settings.vr_rotation === "smooth" && (!mode || mode === "vr")
             }
         }
@@ -330,7 +361,7 @@ export const settings_def = build_settings({
                     precision_dp: 0,
                     unit: "%"
                 },
-                breadcrumbs: ["Comfort", "VR Movement"],
+                breadcrumbs: ["Comfort", "VR", "Movement"],
                 conditional: (_, mode) => !mode || mode === "vr"
             }
         }
@@ -526,6 +557,10 @@ export const settings_def = build_settings({
         }
     },
 
+    keyboard_layout: {
+        default_value: {locale: "en-GB", variant: "qwerty"} as {locale: string; variant?: string},
+    },
+
     debug_ray_hits: {
         default_value: false,
         local_only: true
@@ -626,6 +661,16 @@ export const settings_def = build_settings({
                 widget: { type: "range", min: 0, max: 100, precision_dp: 0, unit: "%" }
             }
         }
+    },
+
+    devtools_emulated_device_profile: {
+        default_value: null as DeviceProfile | null,
+        local_only: true
+    },
+
+    devtools_hypergram_override: {
+        default_value: "" as string,
+        local_only: true
     }
 });
 

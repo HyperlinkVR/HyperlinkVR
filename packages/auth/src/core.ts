@@ -83,6 +83,29 @@ type IdentityResolution =
     | SuccessfulIdentityResolution
     | FailedIdentityResolution;
 
+export const fetch_auth_manifest = async (
+    host: string
+): Promise<AuthManifest | null> => {
+    const url = new URL("/.well-known/hyperlinkvr/auth-manifest.json", `https://${host}`);
+    const response = await fetch(url.toString());
+    if (!response.ok) {
+        throw new Error(`Failed to fetch auth manifest from host: ${response.statusText}`);
+    }
+
+    const manifest_data = await response.json();
+    if (!manifest_data) {
+        throw new Error("Auth manifest is empty");
+    }
+
+    // validate manifest against schema
+    const { success, error } = AuthManifestSchema.safeParse(manifest_data);
+    if (!success) {
+        throw new Error(`Invalid auth manifest: ${error}`);
+    }
+
+    return manifest_data as AuthManifest;
+};
+
 export const resolve_identity = async (
     identity: Identity,
     storage: StorageEngine<"local">
@@ -111,34 +134,14 @@ export const resolve_identity = async (
     }
 
     // now reach out to the host to see what auth methods they support
-    // TODO: handle host more safely
-    const manifest_response = await fetch(
-        `https://${identity.host}/.well-known/hyperlinkvr/auth-manifest.json`
-    );
-    if (!manifest_response.ok) {
+    let manifest_data: AuthManifest | null = null;
+    try {
+        manifest_data = await fetch_auth_manifest(identity.host);
+    } catch (err) {
         return {
             resolved: false,
-            allowed: {},
-            error: `Failed to fetch auth manifest from host: ${manifest_response.statusText}`
-        };
-    }
-
-    const manifest_data = await manifest_response.json();
-    if (!manifest_data) {
-        return {
-            resolved: false,
-            allowed: {},
-            error: "Auth manifest is empty"
-        };
-    }
-
-    // validate manifest against schema
-    const { success, error } = AuthManifestSchema.safeParse(manifest_data);
-    if (!success) {
-        return {
-            resolved: false,
-            allowed: {},
-            error: `Invalid auth manifest: ${error}`
+            error: (err as Error).message,
+            allowed: {}
         };
     }
 

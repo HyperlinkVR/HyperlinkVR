@@ -7,13 +7,13 @@ packages:
 catalog:
   '@react-three/drei': ^10.7.7
   '@react-three/fiber': ^9.6.1
-  '@react-three/handle': ^6.6.30
   '@react-three/rapier': ^2.2.0
   '@react-three/uikit': ^1.0.74
   '@react-three/uikit-default': ^1.0.74
   '@react-three/uikit-lucide': ^1.0.74
   '@react-three/xr': ^6.6.30
   '@tailwindcss/vite': 4.3.1
+  '@ts-rest/core': ^3.53.0-rc.1
   '@types/node': 20.11.5
   '@types/react': 19.2.3
   '@types/react-dom': 19.2.3
@@ -42,6 +42,7 @@ onlyBuiltDependencies:
   - lmdb
   - msgpackr-extract
   - sharp
+  - workerd
 
 overrides:
   three: ^0.185.0

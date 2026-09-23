@@ -1,0 +1,32 @@
+{
+    "name": "@hyperlinkvr/hypergram",
+    "type": "module",
+    "version": "0.0.1",
+    "private": true,
+    "description": "",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview",
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@hyperlinkvr/hypergram-schemas": "workspace:*",
+        "@hyperlinkvr/styles": "workspace:*",
+        "@hyperlinkvr/types": "workspace:*",
+        "@hyperlinkvr/ui-dom": "workspace:*",
+        "@ts-rest/core": "catalog:",
+        "lucide-react": "catalog:",
+        "react": "catalog:",
+        "react-dom": "catalog:"
+    },
+    "devDependencies": {
+        "@tailwindcss/vite": "catalog:",
+        "@types/react": "catalog:",
+        "@types/react-dom": "catalog:",
+        "@vitejs/plugin-react": "^6.1.1",
+        "tailwindcss": "catalog:",
+        "typescript": "5.9.3",
+        "vite": "^8.1.0"
+    }
+}

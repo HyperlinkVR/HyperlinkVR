@@ -1,34 +1,22 @@
-// import { useFlatInputState } from "./bindings";
-
-import { useEffect, useState } from "react";
 import { useSetting } from "@hyperlinkvr/react";
+import { useEffect, useState } from "react";
+
+
+import { useQuickMenuHeld } from "../../system_input";
+import { useFlatInputState } from "./bindings";
+
 
 export const Crosshair = () => {
-    // annoying to manage provider for this, just read from dom instead
-    // const {cursor_free} = useFlatInputState();
-    //
-    // if (cursor_free) {
-    //     return null;
-    // }
+    const {cursor_free} = useFlatInputState();
+    const quick_menu_open = useQuickMenuHeld();
+    const [devtools_photo_mode] = useSetting("devtools_flat_photo_mode");
 
     const [visible, setVisible] = useState(true);
+    
 
     useEffect(() => {
-        const handle_pointer_lock_change = () => {
-            const is_locked = document.pointerLockElement !== null;
-            setVisible(is_locked);
-        };
-
-        document.addEventListener("pointerlockchange", handle_pointer_lock_change);
-        handle_pointer_lock_change();
-
-        return () => {
-            document.removeEventListener("pointerlockchange", handle_pointer_lock_change);
-        };
-    }, []);
-
-    const [devtools_photo_mode] = useSetting("devtools_flat_photo_mode");
-    if (devtools_photo_mode) return null;
+        setVisible(cursor_free || quick_menu_open || devtools_photo_mode);
+    }, [cursor_free, quick_menu_open, devtools_photo_mode]);
 
     if (!visible) {
         return null;

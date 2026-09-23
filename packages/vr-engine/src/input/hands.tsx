@@ -40,6 +40,8 @@ export interface Hand {
     readonly trigger: ButtonState;
     readonly pose: RefObject<HandPose>;
     readonly throw_intent?: ThrowIntent;
+    // true when the ray pointer is over something clickable; drives the point pose and ray visibility
+    readonly hovering?: RefObject<boolean>;
 }
 
 const HandsContext = createContext<Hand[] | null>(null);
