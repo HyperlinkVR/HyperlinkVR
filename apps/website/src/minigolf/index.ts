@@ -222,6 +222,7 @@ hyperlinkvr.on_ready(async () => {
                         new h.TriggerTargetBuilder("sfx", "play").build()
                     ])
                     .set_event_filter({"type": "enter"})
+                    .local()
                     .build()
                 )
                 .create()
@@ -472,6 +473,7 @@ hyperlinkvr.on_ready(async () => {
                     new h.TriggerTargetBuilder("load_sfx", "play").build(),
                 ])
                 .set_event_filter({"type": "enter"})
+                .local()
                 .build()
         )
         .create();
@@ -570,6 +572,7 @@ hyperlinkvr.on_ready(async () => {
                     new h.TriggerTargetBuilder({target: created_cannon, name: "fire_sfx"}, "play").build()
                 ])
                 .set_event_filter({"type": "press"})
+                .local()
                 .build()
         )
         // screen shake on fire
@@ -579,6 +582,7 @@ hyperlinkvr.on_ready(async () => {
                     new h.TriggerTargetBuilder({target: vfx, name: "shake"}, "pulse").build()
                 ])
                 .set_event_filter({"type": "press"})
+                .local()
                 .build()
         )
         .create();

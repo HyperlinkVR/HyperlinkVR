@@ -145,10 +145,12 @@ export const apply_zombot_behaviour = async (created_zombot: hvr.builders.Engine
         )
         .add_trigger(new h.TriggerBuilder("moving")
             .add_target(new h.TriggerTargetBuilder({target: wheel_anim, name: "wheel_anim"}, "play").build())
+            .local()
             .build()
         )
         .add_trigger(new h.TriggerBuilder("stopped")
             .add_target(new h.TriggerTargetBuilder({target: wheel_anim, name: "wheel_anim"}, "stop").build())
+            .local()
             .build()
         )
         .apply();
