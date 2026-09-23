@@ -13,13 +13,13 @@
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {
-        "@hyperlinkvr/ui-dom": "workspace:*",
         "@hyperlinkvr/styles": "workspace:*",
         "@hyperlinkvr/types": "workspace:*",
+        "@hyperlinkvr/ui-dom": "workspace:*",
         "@hyperlinkvr/web-sdk": "workspace:*",
+        "lucide-react": "catalog:",
         "react": "catalog:",
-        "react-dom": "catalog:",
-        "lucide-react": "catalog:"
+        "react-dom": "catalog:"
     },
     "devDependencies": {
         "@hyperlinkvr/web-sdk": "workspace:*",
@@ -28,6 +28,7 @@
         "@types/react-dom": "catalog:",
         "@vitejs/plugin-react": "^6.1.1",
         "tailwindcss": "catalog:",
+        "terser": "^5.51.2",
         "typescript": "5.9.3",
         "vite": "^8.1.0"
     }
