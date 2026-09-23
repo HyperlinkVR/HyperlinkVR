@@ -14,6 +14,7 @@ const make_cdn_config = (entry, file_name, is_first) => ({
     },
     build: {
         target: "es2020",
+        minify: is_dev ? false : "terser", // esbuild minified code breaks for ios safari (the blight on humanity)
         watch: is_dev ? {} : undefined,
         outDir: is_dev ? "public/cdn" : "dist/cdn",
         emptyOutDir: is_first,
