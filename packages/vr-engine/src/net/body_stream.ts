@@ -15,6 +15,9 @@ interface BodySample {
     t: number;
     p: [number, number, number];
     q: [number, number, number, number];
+    // linear/angular velocity, only used when this engine takes the body over (e.g. its owner left)
+    v: [number, number, number];
+    w: [number, number, number];
 }
 
 const scratch = new Vector3();
@@ -38,6 +41,10 @@ class BodyBuffer {
         while (this.#samples.length > 2 && newest - this.#samples[0]!.t > HISTORY_MS) {
             this.#samples.shift();
         }
+    }
+
+    newest(): BodySample | null {
+        return this.#samples[this.#samples.length - 1] ?? null;
     }
 
     // writes the pose to show at render_t (session time); holds the newest once we run past it (a
@@ -80,6 +87,12 @@ export const push_body_sample = (id: string, sample: BodySample) => {
 };
 
 export const get_body_buffers = (): ReadonlyMap<string, BodyBuffer> => buffers;
+
+// last velocity we heard for a body, so taking it over continues its motion instead of freezing it
+export const latest_body_velocity = (id: string) => {
+    const newest = buffers.get(id)?.newest();
+    return newest ? { v: newest.v, w: newest.w } : null;
+};
 
 export const forget_body = (id: string) => {
     buffers.delete(id);

@@ -19,8 +19,7 @@ import { resolve_object_node } from "../interaction/util/target_resolution";
 import { build_collision_groups, GROUP_PROP, GROUP_WORLD } from "../physics/collision_groups";
 import { register_collider_collision_info } from "../physics/collision_hooks";
 import { useWorldHinge } from "../physics/physics_constraints";
-import { set_remote_simulator } from "../net/authority";
-import { useNetSession } from "../net/NetSession";
+import { register_dynamic_body } from "../net/ownership";
 import {
     rotation_to_quaternion,
     rotation_to_quaternion_array
@@ -467,28 +466,19 @@ const ObjectPhysicsInternal = ({
     // body-owned types (fixed/dynamic/kinematic-vel) place the body directly from the transform.
     const body_transform = rb.type === "kinematic-pos" ? undefined : transform;
 
-    // #20: in a shared world the host simulates every dynamic body, so on a client it becomes
-    // kinematic and follows the host's stream (PhysicsSync). only the RigidBody's type flips —
-    // rb.type stays "dynamic", so collider/decouple decisions are unchanged, and rapier switches the
-    // body in place rather than rebuilding it. registering the host as its simulator also stops this
-    // engine reporting the body's physics events (report_outbox speaks_for), which the host owns.
-    const { room, mode } = useNetSession();
+    // #20/#22: dynamic bodies take part in shared ownership. whoever owns one simulates it; on every
+    // other engine PhysicsSync flips it kinematic and drives it from the owner's stream. that flip is
+    // done imperatively each frame rather than through the RigidBody `type` prop: a prop change makes
+    // rapier re-apply the type, which would undo a grab's kinematic hold the moment a claim lands.
     const object_id = refs?.id;
-    const host_simulated = rb.type === "dynamic"
-        && mode === "shared"
-        && !!room
-        && room.self.id !== room.host()
-        && !!object_id;
-
     useEffect(() => {
-        if (!host_simulated || !object_id || !room) {
+        if (rb.type !== "dynamic" || !object_id) {
             return;
         }
-        set_remote_simulator(object_id, room.host());
-        return () => set_remote_simulator(object_id, null);
-    }, [host_simulated, object_id, room]);
+        return register_dynamic_body(object_id);
+    }, [rb.type, object_id]);
 
-    const body_type = host_simulated ? "kinematicPosition" : RB_TYPE[rb.type];
+    const body_type = RB_TYPE[rb.type];
 
     const local_ref = useRef<RapierRigidBody>(null);
     const rb_ref = refs?.rigid_body || local_ref;

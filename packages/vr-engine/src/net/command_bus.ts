@@ -10,8 +10,10 @@ export const COMMAND_CHANNEL = "cmd";
 export const REPORT_CHANNEL = "reports";
 // clock sync ping/pong so a client can estimate its offset to host (session) time (#9)
 export const CLOCK_CHANNEL = "clock";
-// host → clients, unreliable: poses of moving dynamic bodies the host simulates (#21)
+// owner → everyone, unreliable: poses + velocities of moving dynamic bodies it simulates (#21/#22)
 export const PHYSICS_CHANNEL = "physics";
+// reliable: body ownership — client claims/releases to the host, host's owner broadcasts (#22)
+export const OWNERSHIP_CHANNEL = "ownership";
 export const SNAPSHOT_REQUEST_CHANNEL = "snapshot-req";
 export const SNAPSHOT_CHANNEL = "snapshot";
 

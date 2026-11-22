@@ -40,6 +40,7 @@ import {
 import { CAPSULE_RADIUS, get_capsule_world_position } from "../player/motion";
 import { rotation_to_quaternion } from "../util/rotation";
 import { clear_object_holder, set_object_holder } from "./util/holders";
+import { can_claim_body, claim_body, is_dynamic_body, on_body_owner_change, owns_body } from "../net/ownership";
 
 export type HandTarget = "watch_hand" | "non_watch_hand" | "left" | "right";
 
@@ -554,6 +555,12 @@ export const useGrabbable = (
 
     const perform_grab = useCallback(
         (hand: Hand, use_snap = true) => {
+            // shared worlds (#22): another peer's claimed body is in their hand (or mid-throw)
+            const owned_id = obj_refs && is_dynamic_body(obj_refs.id) ? obj_refs.id : null;
+            if (owned_id && !can_claim_body(owned_id)) {
+                return;
+            }
+
             const body = body_ref?.current ?? null;
             snapped_grab.current = use_snap;
 
@@ -583,6 +590,8 @@ export const useGrabbable = (
             grabbingHand.current = hand;
             claim_hand(hand, grabbable_id);
             if (obj_refs) set_object_holder(obj_refs.id, hand);
+            // take the body so this hand drives it now; the host confirms or takes it back
+            if (owned_id) claim_body(owned_id);
             on_grab_start?.(hand);
             publish_held(true);
 
@@ -901,6 +910,23 @@ export const useGrabbable = (
             restore_countdown.current = player_ignore_release_delay;
         }
     };
+
+    // shared worlds (#22): if the host refuses our claim (someone else got there first), let go — the
+    // body is theirs, and PhysicsSync starts following them again
+    const release_held_ref = useRef(release_held);
+    release_held_ref.current = release_held;
+    useEffect(() => {
+        const id = obj_refs?.id;
+        if (!id) {
+            return;
+        }
+        return on_body_owner_change((changed) => {
+            if (changed !== id || !grabbingHand.current || owns_body(id)) {
+                return;
+            }
+            release_held_ref.current(grabbingHand.current, body_ref?.current ?? null, new Vector3());
+        });
+    }, [obj_refs?.id, body_ref]);
 
     const compose_aim_world_matrix = (
         hand: Hand,
