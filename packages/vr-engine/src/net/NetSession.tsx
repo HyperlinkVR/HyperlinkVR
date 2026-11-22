@@ -12,13 +12,18 @@ interface RoomState {
     host: PeerID | null;
 }
 
+// why a shared session ended under us. v1 has no host migration (#28), so either of these ends the
+// instance for this player — the world's logic and state lived on the host's page
+export type SessionEnd = "host-left" | "connection-lost";
+
 interface NetSession extends RoomState {
     mode: MultiplayerMode;
+    ended: SessionEnd | null;
 }
 
 const NO_SESSION: RoomState = { room: null, peers: [], host: null };
 
-const NetSessionContext = createContext<NetSession>({ ...NO_SESSION, mode: "solo" });
+const NetSessionContext = createContext<NetSession>({ ...NO_SESSION, mode: "solo", ended: null });
 
 // TODO: instance selection (invites etc), everyone on a world shares one for now
 const DEFAULT_INSTANCE = "main";
@@ -47,6 +52,7 @@ export const NetSessionProvider = ({ children }: { children: React.ReactNode }) 
     const shared = mode === "shared";
 
     const [session, setSession] = useState<RoomState>(NO_SESSION);
+    const [ended, setEnded] = useState<SessionEnd | null>(null);
 
     useEffect(() => {
         if (!network || !world || !shared) {
@@ -56,6 +62,7 @@ export const NetSessionProvider = ({ children }: { children: React.ReactNode }) 
         let room: NetworkRoom | null = null;
         let cancelled = false;
         let unlisten = () => {};
+        setEnded(null);
 
         network
             .join({ world, instance: DEFAULT_INSTANCE }, { username, id: uuid })
@@ -66,11 +73,25 @@ export const NetSessionProvider = ({ children }: { children: React.ReactNode }) 
                 }
 
                 room = joined;
+                const original_host = joined.host();
 
                 const sync = () => setSession({ room: joined, peers: joined.peers(), host: joined.host() });
                 unlisten = joined.on_event((event) => {
                     if (event.type === "closed") {
                         setSession(NO_SESSION);
+                        // our own leave() closes with "left"; anything else dropped us
+                        if (event.reason !== "left") {
+                            setEnded((current) => current ?? "connection-lost");
+                        }
+                        return;
+                    }
+
+                    // the host only changes when the host leaves. the world's logic and state lived on
+                    // its page, so nothing carries over to the new host — end the instance (v1, #17)
+                    if (event.type === "host-changed" && event.host !== original_host) {
+                        setEnded("host-left");
+                        setSession(NO_SESSION);
+                        joined.leave();
                         return;
                     }
 
@@ -90,7 +111,7 @@ export const NetSessionProvider = ({ children }: { children: React.ReactNode }) 
         };
     }, [network, world, shared, username, uuid]);
 
-    return <NetSessionContext.Provider value={{ ...session, mode }}>{children}</NetSessionContext.Provider>;
+    return <NetSessionContext.Provider value={{ ...session, mode, ended }}>{children}</NetSessionContext.Provider>;
 };
 
 export const useNetSession = () => useContext(NetSessionContext);

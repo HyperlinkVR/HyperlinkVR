@@ -13,14 +13,23 @@ import { useEffect, useRef } from "react";
 
 import { useWebSDKMessaging } from "../contexts/WebSDKMessagingContext";
 import { add_report_sink } from "../engine/report_outbox";
+import { request_watch_modal } from "../player/watch_event_bus";
 import { set_world_authority } from "./authority";
 import { REPORT_CHANNEL } from "./command_bus";
 import { useNetSession } from "./NetSession";
 import { local_to_session } from "./session_clock";
 
 export const MultiplayerSync = () => {
-    const { room, peers, mode } = useNetSession();
+    const { room, peers, mode, ended } = useNetSession();
     const { emit_event, connected } = useWebSDKMessaging();
+
+    // #17: tell the player their session ended (the watch modal lets them stay or go browse)
+    useEffect(() => {
+        if (!ended) {
+            return;
+        }
+        void request_watch_modal("session_ended_modal", { reason: ended }, "stay");
+    }, [ended]);
 
     const is_host = !!room && room.self.id === room.host();
     const is_shared_client = mode === "shared" && !!room && !is_host;
