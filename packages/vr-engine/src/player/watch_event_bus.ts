@@ -19,6 +19,7 @@ export interface WatchShowModalScreenEvent<TResult = unknown>
     args?: Record<string, unknown>;
     resolve?: (result: TResult) => void;
     dismiss_value?: TResult;
+    close_on_resolve?: boolean;
 }
 
 export type WatchEvent<TResult = unknown> =
@@ -48,7 +49,8 @@ export const dispatch_watch_event = <TResult = unknown>(
 export const request_watch_modal = function<TResult = unknown>(
     screen: ScreenName,
     args: Record<string, unknown> | undefined,
-    dismiss_value: TResult
+    dismiss_value: TResult,
+    close_on_resolve = true
 ): Promise<TResult> {
     return new Promise<TResult>((resolve) => {
         let settled = false;
@@ -63,7 +65,8 @@ export const request_watch_modal = function<TResult = unknown>(
             screen,
             args,
             resolve: settle,
-            dismiss_value
+            dismiss_value,
+            close_on_resolve
         });
     });
 }

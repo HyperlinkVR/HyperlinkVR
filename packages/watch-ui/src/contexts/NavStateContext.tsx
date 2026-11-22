@@ -28,6 +28,7 @@ interface NavStateContextType {
     set_detach?: (detached: boolean) => void;
     detached?: boolean;
     detachable?: boolean;
+    request_close?: () => void;
 
     begin_modal: (
         screen_name: ScreenName,
@@ -40,7 +41,7 @@ interface NavStateContextType {
 
 const NavStateContext = createContext<NavStateContextType | null>(null);
 
-export const NavStateProvider = ({ children, options }: { children: React.ReactNode, options?: { detachable?: boolean, set_detach?: (detached: boolean) => void, detached?: boolean } }) => {
+export const NavStateProvider = ({ children, options }: { children: React.ReactNode, options?: { detachable?: boolean, set_detach?: (detached: boolean) => void, detached?: boolean, request_close?: () => void } }) => {
     const [backwards, setBackwards] = useState<NavStackEntry[]>([]);
     const [forwards, setForwards] = useState<NavStackEntry[]>([]);
 
@@ -66,6 +67,7 @@ export const NavStateProvider = ({ children, options }: { children: React.ReactN
         resolve: (value: any) => void;
         dismiss_value: unknown;
         settled: boolean;
+        close_on_resolve: boolean;
     } | null>(null);
 
     const settle_pending_modal = useCallback((value?: unknown) => {
@@ -78,9 +80,17 @@ export const NavStateProvider = ({ children, options }: { children: React.ReactN
 
     const resolve_modal = useCallback(
         (result?: unknown) => {
+            const current_modal = modal_ref.current;
+            if (!current_modal || current_modal.settled) return;
+
+            const should_close = current_modal.close_on_resolve ?? true;
             settle_pending_modal(result);
+
+            if (should_close) {
+                options?.request_close?.();
+            }
         },
-        [settle_pending_modal]
+        [settle_pending_modal, options?.request_close]
     );
 
     const apply_screen_change = useCallback(
@@ -162,7 +172,8 @@ export const NavStateProvider = ({ children, options }: { children: React.ReactN
             screen_name: ScreenName,
             args: ScreenArguments = {},
             resolve?: (result: any) => void,
-            dismiss_value: unknown = undefined
+            dismiss_value: unknown = undefined,
+            close_on_resolve = true
         ) => {
             if (modal_ref.current && !modal_ref.current.settled) {
                 settle_pending_modal(modal_ref.current.dismiss_value);
@@ -172,7 +183,8 @@ export const NavStateProvider = ({ children, options }: { children: React.ReactN
                 ? {
                       resolve,
                       dismiss_value,
-                      settled: false
+                      settled: false,
+                      close_on_resolve
                   }
                 : null;
 

@@ -36,6 +36,7 @@ import { useIsSeated } from "./seating";
 import { LOCAL_PLAYER_SUBJECT } from "./subject";
 import { Vignette } from "./Vignette";
 import { WristWatch } from "./WristWatch";
+import { request_watch_modal } from "./watch_event_bus";
 
 const MouthTest = ({
     mouth_name,
@@ -265,7 +266,7 @@ export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>
             });
         });
 
-        const unlisten_send_to_world = on_action("HVRSDK_PLAYER_SEND_TO_WORLD", (message, reply) => {
+        const unlisten_send_to_world = on_action("HVRSDK_PLAYER_SEND_TO_WORLD", async (message, reply) => {
             // verify url
             try {
                 new URL(message.url);
@@ -277,24 +278,38 @@ export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>
                 return;
             }
 
-            // TODO: implement prompt, for now will always send
-            // prompt behaviours: show = always show a prompt, try_skip = try to skip the prompt if possible (same origin/trust check to implement), but otherwise show it, skip_or_fail = skip the prompt if possible, but if it cannot be skipped then auto-fail
+            // prompt behaviours:
+            // - show = always show a prompt
+            // - try_skip = try to skip the prompt if possible (same origin/trust check to implement) but otherwise show it
+            // - skip_or_fail = skip the prompt if possible, but if it cannot be skipped then auto-fail
 
-            // ask the background to send them there
-            messenger.send({
-                action: "HVR_NAVIGATE",
-                url: message.url,
-                tab: tab_id
-            }).then(() => reply({
-                // chance they might never get this, but it's not their problem at that point, the new page will load
-                for: "HVRSDK_PLAYER_SEND_TO_WORLD",
-                going: true
-            })).catch((err) => {
+            // TODO: implement other prompt behaviours, show is the only one implemented for now
+
+            const permitted = await request_watch_modal<boolean | null>("world_navigate_modal", { url: message.url }, null);
+
+            if (permitted) {
+                // ask the background to send them there
+                messenger.send({
+                    action: "HVR_NAVIGATE",
+                    url: message.url,
+                    tab: tab_id
+                }).then(() => reply({
+                    // chance they might never get this, but it's not their problem at that point, the new page will load
+                    for: "HVRSDK_PLAYER_SEND_TO_WORLD",
+                    going: true
+                })).catch((err) => {
+                    reply({
+                        for: "HVRSDK_PLAYER_SEND_TO_WORLD",
+                        error: err.message || "Failed to send player to world"
+                    });
+                });
+            } else {
+                // denied or dismissed
                 reply({
                     for: "HVRSDK_PLAYER_SEND_TO_WORLD",
-                    error: err.message || "Failed to send player to world"
+                    going: false
                 });
-            });
+            }
         });
 
         const unlisten_add_monitor = on_action("HVRSDK_PLAYER_ADD_MONITOR", (message, reply) => {

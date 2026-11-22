@@ -143,23 +143,17 @@ const CurrentScreen = () => {
     );
 }
 
-const FocusNavBridge = ({
-    children,
-    on_request_close
-}: {
-    children: ReactNode;
-    on_request_close?: () => void;
-}) => {
-    const { backwards, back } = useNavState();
+const FocusNavBridge = ({ children}: { children: ReactNode; }) => {
+    const { backwards, back, request_close } = useNavState();
 
     // cancel walks the screen stack first, at the root it closes the watch
     const on_back = useCallback(() => {
         if (backwards.length > 0) {
             back();
         } else {
-            on_request_close?.();
+            request_close?.();
         }
-    }, [backwards.length, back, on_request_close]);
+    }, [backwards.length, back, request_close]);
 
     return <FocusNavProvider on_back={on_back}>{children}</FocusNavProvider>;
 };
@@ -227,9 +221,9 @@ export const WatchUI = ({
             onPointerMove={(e) => e.stopPropagation()}
             onWheel={(e) => e.stopPropagation()}
         >
-            <NavStateProvider options={{detached, detachable, set_detach}}>
+            <NavStateProvider options={{detached, detachable, set_detach, request_close: on_request_close}}>
                 <WatchHandleExpose handle_ref={ref} />
-                <FocusNavBridge on_request_close={on_request_close}>
+                <FocusNavBridge>
                     <CurrentScreen />
                 </FocusNavBridge>
             </NavStateProvider>
