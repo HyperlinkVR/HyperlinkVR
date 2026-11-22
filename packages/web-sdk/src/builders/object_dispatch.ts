@@ -6,6 +6,7 @@ import { EngineObjectDispatchSchema, EngineObjectModificationSchema, TweenSchema
 
 import { subscribe_report } from "../event_bus";
 import { send_via_rtc } from "../messenger";
+import type { Player } from "../players";
 import { BaseBuilder } from "./base";
 import { _INTERACTION_API_MAKERS } from "./interactions";
 import { _PREFAB_API_MAKERS } from "./prefabs";
@@ -21,6 +22,11 @@ interface EngineObjectHandleBase {
     modify: () => EngineObjectModificationBuilder;
     seek: () => SeekBuilder;
     refresh: () => Promise<void>;
+    // pin this object's physics to a player (shared worlds): their engine always simulates it, so
+    // their interactions with it are instant, and nobody else can grab or push it. the local player
+    // pins it to the host; null unpins it (back to the host, grabbable by anyone). only takes effect
+    // on the host; a no-op in solo.
+    set_ownership: (player: Player | string | null) => Promise<void>;
 }
 
 /** @group Objects */
@@ -1014,6 +1020,22 @@ export class EngineObjectDispatchBuilder<T extends EngineObject = EngineObject> 
                     }));
 
                     ret_val.object = Object.freeze(refreshed.object);
+                },
+                set_ownership: async (player: Player | string | null) => {
+                    if (burned) {
+                        throw new Error("This object has already been destroyed.");
+                    }
+
+                    // null unpins. a Player's stored id is null for the local player (the host), so the
+                    // pin intent is sent explicitly rather than inferred from the id
+                    const pin = player !== null;
+                    const owner = player === null || typeof player === "string" ? player : player.get_stored_id();
+                    await send_via_rtc({
+                        action: "HVRSDK_SET_OBJECT_OWNERSHIP",
+                        object_id: created.object.id,
+                        pin,
+                        owner
+                    });
                 },
                 parent: (built_object.object.type === "collection" && created.member_channels)
                     ? build_member_handle(built_object.object.parent, created.member_channels.parent, binding_ids)

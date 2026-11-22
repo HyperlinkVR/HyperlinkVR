@@ -50,15 +50,37 @@
           .screen_shake("shake")
           .apply();
 
+        // basketball prefab: dynamic + grabbable, no external assets
+        const make_ball = (x) => new h.EngineObjectDispatchBuilder(new h.StandardPrefabBuilder("basketball").build())
+          .set_position(x, 1.5, -2)
+          .create();
+
+        // #24 pinned ownership: every player gets their own ball, pinned to them. their engine always
+        // simulates it (instant to grab/throw), and nobody else can grab it — try grabbing someone
+        // else's. pinned balls line up to the right of the button in join order.
+        const pinned_balls = new Map();
+        let next_slot = 0;
+
         // fires on the host for the local player AND for each remote player that joins
         hyperlinkvr.players.on_spawn(async (player, info) => {
           const id = await player.get_id();
           console.log("[mptest] player spawned:", id, "remote:", !!info.remote);
+
+          if (pinned_balls.has(id)) return;
+          const ball = await make_ball(1.2 + next_slot++ * 0.6);
+          pinned_balls.set(id, ball);
+          await ball.set_ownership(player);
+          console.log("[mptest] pinned ball", ball.object.id, "to", id);
         });
 
         hyperlinkvr.players.on_leave(async (player) => {
           const id = await player.get_id();
           console.log("[mptest] player left:", id);
+
+          // the engine already hands a leaver's pinned bodies back to the host; tidy it away too
+          const ball = pinned_balls.get(id);
+          pinned_balls.delete(id);
+          await ball?.destroy();
         });
 
         // a fixed button; any player can press it. the press report reaches the host (even from a
@@ -89,6 +111,10 @@
             .local()
             .build())
           .create();
+
+        // #22 grab handoff: one unpinned ball anyone can grab. a grab claims it through the host;
+        // the thrower keeps it until it comes to rest, then it goes back to the host.
+        await make_ball(-1.2);
 
         hyperlinkvr.finished_loading();
         console.log("[mptest] finished loading");

@@ -22,7 +22,11 @@ let send_to_host: ((request: OwnershipRequest) => void) | null = null;
 
 const dynamic_bodies = new Set<string>();
 const overrides = new Map<string, PeerID>();
+// pinned overrides (#24) stay with their owner: no hand-back at rest, and nobody else can claim them
+const pinned = new Set<string>();
 const listeners = new Set<(id: string) => void>();
+// host only: replicates an ownership change to everyone (set by PhysicsSync)
+let broadcast: ((id: string, owner: PeerID | null, pinned: boolean) => void) | null = null;
 
 export const get_body_owner = (id: string): PeerID | null => overrides.get(id) ?? default_owner;
 
@@ -32,15 +36,28 @@ export const owns_body = (id: string): boolean => {
     return !owner || owner === self_id;
 };
 
-// grabbable here unless another peer has claimed it (it's in their hand, or their throw is in flight)
+// grabbable here unless another peer has it: claimed (in their hand, or their throw is in flight),
+// or pinned to them (#24 — including pinned to the host)
 export const can_claim_body = (id: string): boolean => {
+    if (pinned.has(id)) {
+        const owner = get_body_owner(id);
+        return !owner || owner === self_id;
+    }
     const override = overrides.get(id);
     return !override || override === self_id;
 };
 
 export const is_dynamic_body = (id: string): boolean => dynamic_bodies.has(id);
+export const is_body_pinned = (id: string): boolean => pinned.has(id);
 export const get_dynamic_bodies = (): ReadonlySet<string> => dynamic_bodies;
 export const get_owner_overrides = (): [string, PeerID][] => [...overrides];
+
+// everything that differs from "host owns it, unpinned" — claims, and pins (including pins to the
+// host, which have no override). what a newcomer needs to be told
+export const get_ownership_table = (): [string, PeerID | null, boolean][] => {
+    const ids = new Set([...overrides.keys(), ...pinned]);
+    return [...ids].map((id) => [id, get_body_owner(id), pinned.has(id)]);
+};
 
 const apply = (id: string) => {
     if (!dynamic_bodies.has(id)) {
@@ -70,6 +87,7 @@ export const configure_ownership = (self: PeerID | null, host: PeerID | null) =>
     self_id = self;
     default_owner = host;
     overrides.clear();
+    pinned.clear();
     for (const id of dynamic_bodies) {
         notify(id);
     }
@@ -79,6 +97,10 @@ export const set_ownership_sender = (sender: ((request: OwnershipRequest) => voi
     send_to_host = sender;
 };
 
+export const set_ownership_broadcaster = (fn: ((id: string, owner: PeerID | null, pinned: boolean) => void) | null) => {
+    broadcast = fn;
+};
+
 // ObjectPhysics registers every dynamic body so it can take part
 export const register_dynamic_body = (id: string): (() => void) => {
     dynamic_bodies.add(id);
@@ -86,18 +108,31 @@ export const register_dynamic_body = (id: string): (() => void) => {
     return () => {
         dynamic_bodies.delete(id);
         overrides.delete(id);
+        pinned.delete(id);
         set_remote_simulator(id, null);
     };
 };
 
-// null hands the body back to the default owner (the host)
-export const set_body_owner = (id: string, owner: PeerID | null) => {
+// null (or the host) hands the body to the default owner. pinning is independent of who owns it, so
+// a body can be pinned to the host too
+export const set_body_owner = (id: string, owner: PeerID | null, pin = false) => {
     if (owner && owner !== default_owner) {
         overrides.set(id, owner);
     } else {
         overrides.delete(id);
     }
+    if (pin) {
+        pinned.add(id);
+    } else {
+        pinned.delete(id);
+    }
     notify(id);
+};
+
+// host only: change ownership and replicate it
+export const assign_body_owner = (id: string, owner: PeerID | null, pin = false) => {
+    set_body_owner(id, owner, pin);
+    broadcast?.(id, owner, pin);
 };
 
 // a grab here takes the body optimistically (so the hand drives it this frame), and asks the host.
@@ -110,7 +145,10 @@ export const claim_body = (id: string) => {
     send_to_host?.({ type: "claim", id });
 };
 
-// hand a claimed body back to the host once it's at rest
+// hand a claimed body back to the host once it's at rest (never a pinned one — it stays with its owner)
 export const release_body = (id: string) => {
+    if (pinned.has(id)) {
+        return;
+    }
     send_to_host?.({ type: "release", id });
 };

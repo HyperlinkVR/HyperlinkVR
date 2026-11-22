@@ -1048,6 +1048,11 @@ export const useGrabbable = (
             target_ref.current.matrixWorld
         );
 
+        // a body another peer owns (pinned, or claimed mid-throw) isn't offered to our hands at all:
+        // no bid, so no outline/hint, and the hand stays free to pick whatever is behind it
+        const claimable =
+            !obj_refs || !is_dynamic_body(obj_refs.id) || can_claim_body(obj_refs.id);
+
         for (const hand of hands) {
             const gripObj = hand.grip.current;
             if (!gripObj) continue;
@@ -1103,8 +1108,9 @@ export const useGrabbable = (
             const proximity_counts = !flat_mode;
 
             if (
-                (proximity_counts && distance < nearby_trigger_distance) ||
-                hovered
+                claimable &&
+                ((proximity_counts && distance < nearby_trigger_distance) ||
+                    hovered)
             ) {
                 const bid_distance = hovered
                     ? HOVER_BID_PRIORITY + crosshair_distance!

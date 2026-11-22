@@ -125,6 +125,17 @@ interface WebSDKDestroyEngineObjectAction extends BaseWebSDKActionMessage {
     object_id: string;
 }
 
+// pin a dynamic object's physics to one player (#24): their engine always simulates it, and nobody
+// else can grab or claim it. null hands it back to the host. only the host's page can set this.
+interface WebSDKSetObjectOwnershipAction extends BaseWebSDKActionMessage {
+    action: "HVRSDK_SET_OBJECT_OWNERSHIP";
+    object_id: string;
+    // true pins to `owner`; false unpins (back to the host, claimable by a grab)
+    pin: boolean;
+    // player id (as e.player / players.on_spawn give it). null = the local player, i.e. the host
+    owner: string | null;
+}
+
 interface WebSDKModifyEngineObjectAction extends BaseWebSDKActionMessage {
     action: "HVRSDK_MODIFY_ENGINE_OBJECT";
     object_id: string;
@@ -308,6 +319,7 @@ export type WebSDKActionMessage =
     | WebSDKRTCAnswerAction
     | WebSDKCreateEngineObjectAction
     | WebSDKDestroyEngineObjectAction
+    | WebSDKSetObjectOwnershipAction
     | WebSDKModifyEngineObjectAction
     | WebSDKRefreshEngineObjectAction
     | WebSDKSeekEngineObjectAction
@@ -488,6 +500,12 @@ interface WebSDKObjectDestroyedReplyMessage extends BaseWebSDKReplyMessage {
     object_id: string;
 }
 
+interface WebSDKObjectOwnershipSetReplyMessage extends BaseWebSDKReplyMessage {
+    for: "HVRSDK_SET_OBJECT_OWNERSHIP";
+    object_id: string;
+    success: true;
+}
+
 interface WebSDKObjectModifiedReplyMessage extends BaseWebSDKReplyMessage {
     for: "HVRSDK_MODIFY_ENGINE_OBJECT";
     object_id: string;
@@ -653,6 +671,7 @@ export type WebSDKReplyMessage =
     | WebSDKRTCOfferReplyMessage
     | WebSDKObjectCreatedReplyMessage
     | WebSDKObjectDestroyedReplyMessage
+    | WebSDKObjectOwnershipSetReplyMessage
     | WebSDKObjectModifiedReplyMessage
     | WebSDKObjectRefreshReplyMessage
     | WebSDKSeekEngineObjectReplyMessage

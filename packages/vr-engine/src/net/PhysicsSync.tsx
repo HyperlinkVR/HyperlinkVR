@@ -13,6 +13,7 @@ import { useFrame } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
 import { Quaternion, Vector3 } from "three";
 
+import { useWebSDKMessaging } from "../contexts/WebSDKMessagingContext";
 import { get_object_refs } from "../engine/object_ref_registry";
 import { is_object_held } from "../interaction/util/holders";
 import { is_simulated_locally } from "./authority";
@@ -20,14 +21,18 @@ import { clear_body_buffers, forget_body, get_body_buffers, latest_body_velocity
 import { OWNERSHIP_CHANNEL, PHYSICS_CHANNEL } from "./command_bus";
 import { useNetSession } from "./NetSession";
 import {
+    assign_body_owner,
     configure_ownership,
     get_body_owner,
     get_dynamic_bodies,
     get_owner_overrides,
+    get_ownership_table,
+    is_body_pinned,
     on_body_owner_change,
     owns_body,
     release_body,
     set_body_owner,
+    set_ownership_broadcaster,
     set_ownership_sender
 } from "./ownership";
 import { session_now } from "./session_clock";
@@ -50,13 +55,16 @@ interface PhysicsFrame {
 }
 
 type OwnershipMessage =
+    // client → host: my physics is live (PhysicsSync mounted), so I can simulate and receive ownership
+    | { type: "ready" }
     | { type: "claim"; id: string }
     | { type: "release"; id: string }
-    | { type: "owner"; id: string; owner: PeerID | null }
-    | { type: "table"; owners: [string, PeerID][] };
+    | { type: "owner"; id: string; owner: PeerID | null; pinned?: boolean }
+    | { type: "table"; owners: [string, PeerID | null, boolean][] };
 
 export const PhysicsSync = () => {
     const { room, mode } = useNetSession();
+    const { on_action } = useWebSDKMessaging();
     const shared = mode === "shared" && !!room;
     const is_host = shared && room.self.id === room.host();
 
@@ -69,6 +77,12 @@ export const PhysicsSync = () => {
     const rest_resends = useRef(new Map<string, number>());
     const releasing = useRef(new Set<string>());
     const since_send = useRef(0);
+
+    // host: peers whose physics is live, and pins waiting on a peer that isn't yet. a pin to a player
+    // whose scene hasn't started would leave the body simulated by nobody, so until they report ready
+    // it stays pinned to the host (simulating, ungrabbable), then moves to them
+    const ready_peers = useRef(new Set<PeerID>());
+    const pending_pins = useRef(new Map<string, PeerID>());
     const scratch = useRef({ position: new Vector3(), quaternion: new Quaternion() });
 
     // ownership follows the room. v1 has no host migration (#17), so the host is fixed for its life
@@ -94,6 +108,8 @@ export const PhysicsSync = () => {
         rest_resends.current.clear();
         releasing.current.clear();
         snapped.current.clear();
+        ready_peers.current.clear();
+        pending_pins.current.clear();
         since_send.current = 0;
     }, [room, is_host]);
 
@@ -105,13 +121,9 @@ export const PhysicsSync = () => {
         const send = (target: Parameters<typeof room.send>[0], message: OwnershipMessage) =>
             room.send(target, OWNERSHIP_CHANNEL, JSON.stringify(message), "reliable");
 
-        const assign = (id: string, owner: PeerID | null) => {
-            set_body_owner(id, owner);
-            send("others", { type: "owner", id, owner });
-        };
-
-        // a client's claims and releases go to the host. the host never asks anyone
+        // a client's claims and releases go to the host; the host's decisions go to everyone
         set_ownership_sender(is_host ? null : (request) => send("host", request));
+        set_ownership_broadcaster(is_host ? (id, owner, pinned) => send("others", { type: "owner", id, owner, pinned }) : null);
 
         const off_message = room.on_message((message) => {
             if (message.channel === PHYSICS_CHANNEL) {
@@ -133,18 +145,34 @@ export const PhysicsSync = () => {
             const request = JSON.parse(message.payload as string) as OwnershipMessage;
 
             if (is_host) {
-                if (request.type === "claim") {
+                if (request.type === "ready") {
+                    // their listener is attached now, so the table can't be lost to the join-time
+                    // buffer drain. then hand over anything we'd pinned to them while they loaded
+                    ready_peers.current.add(message.from);
+                    send({ peer: message.from }, { type: "table", owners: get_ownership_table() });
+                    for (const [id, owner] of [...pending_pins.current]) {
+                        if (owner === message.from) {
+                            pending_pins.current.delete(id);
+                            assign_body_owner(id, owner, true);
+                        }
+                    }
+                } else if (request.type === "claim") {
                     const current = get_body_owner(request.id);
-                    // taken if another peer has it, or it's in one of the host's own hands
-                    const taken = (current !== room.self.id && current !== message.from) || is_object_held(request.id);
+                    // a pinned body only ever goes to its owner. otherwise it's taken if another peer
+                    // has it, or it's in one of the host's own hands
+                    const taken = is_body_pinned(request.id)
+                        ? current !== message.from
+                        : (current !== room.self.id && current !== message.from) || is_object_held(request.id);
                     if (taken) {
                         // correct the claimer; they'll let go
-                        send({ peer: message.from }, { type: "owner", id: request.id, owner: current === room.self.id ? null : current });
+                        const owner = current === room.self.id ? null : current;
+                        send({ peer: message.from }, { type: "owner", id: request.id, owner, pinned: is_body_pinned(request.id) });
                     } else {
-                        assign(request.id, message.from);
+                        assign_body_owner(request.id, message.from, is_body_pinned(request.id));
                     }
-                } else if (request.type === "release" && get_body_owner(request.id) === message.from) {
-                    assign(request.id, null);
+                } else if (request.type === "release" && get_body_owner(request.id) === message.from
+                    && !is_body_pinned(request.id)) {
+                    assign_body_owner(request.id, null);
                 }
                 return;
             }
@@ -154,37 +182,76 @@ export const PhysicsSync = () => {
                 return;
             }
             if (request.type === "owner") {
-                set_body_owner(request.id, request.owner);
+                set_body_owner(request.id, request.owner, request.pinned ?? false);
             } else if (request.type === "table") {
-                for (const [id, owner] of request.owners) {
-                    set_body_owner(id, owner);
+                for (const [id, owner, pinned] of request.owners) {
+                    set_body_owner(id, owner, pinned);
                 }
             }
         });
 
-        // host: brief newcomers on current claims, and take back anything a leaver owned
+        // host: take back anything a leaver owned or was waiting on (newcomers are briefed on `ready`)
         const off_event = room.on_event((event) => {
-            if (!is_host) {
+            if (!is_host || event.type !== "peer-left") {
                 return;
             }
-            if (event.type === "peer-joined") {
-                send({ peer: event.peer.id }, { type: "table", owners: get_owner_overrides() });
-            } else if (event.type === "peer-left") {
-                for (const [id, owner] of get_owner_overrides()) {
-                    if (owner === event.peer_id) {
-                        assign(id, null);
-                    }
+            ready_peers.current.delete(event.peer_id);
+            // pinned or not, a leaver's bodies come back to the host, unpinned
+            for (const [id, owner] of get_owner_overrides()) {
+                if (owner === event.peer_id) {
+                    assign_body_owner(id, null);
+                }
+            }
+            for (const [id, owner] of [...pending_pins.current]) {
+                if (owner === event.peer_id) {
+                    pending_pins.current.delete(id);
+                    assign_body_owner(id, null);
                 }
             }
         });
+
+        // client: tell the host our physics is live — only once our listener above is attached
+        if (!is_host) {
+            send("host", { type: "ready" });
+        }
 
         return () => {
             off_message();
             off_event();
             set_ownership_sender(null);
+            set_ownership_broadcaster(null);
             clear_body_buffers();
         };
     }, [shared, room, is_host]);
+
+    // #24: the sdk pins an object's physics to a player. ownership is host-authored like everything
+    // else shared — a client's (inert) page asking is refused, and solo has nobody to pin to
+    useEffect(() => on_action("HVRSDK_SET_OBJECT_OWNERSHIP", (message, reply) => {
+        if (shared && !is_host) {
+            reply({ for: "HVRSDK_SET_OBJECT_OWNERSHIP", error: "Only the host can set object ownership." });
+            return;
+        }
+        if (shared && room) {
+            const id = message.object_id;
+            pending_pins.current.delete(id);
+
+            if (!message.pin) {
+                // unpin: back to the host, claimable by a grab
+                assign_body_owner(id, null);
+            } else {
+                // null owner = the local player, which on the host page is the host
+                const owner = message.owner ?? room.self.id;
+                if (owner === room.self.id || ready_peers.current.has(owner)) {
+                    assign_body_owner(id, owner, true);
+                } else {
+                    // their scene isn't live yet: hold it pinned to the host until they're ready
+                    pending_pins.current.set(id, owner);
+                    assign_body_owner(id, null, true);
+                }
+            }
+        }
+        reply({ for: "HVRSDK_SET_OBJECT_OWNERSHIP", object_id: message.object_id, success: true });
+    }), [on_action, shared, is_host, room]);
 
     // runs before the physics step so kinematic targets land this frame
     useFrame((_, delta) => {
@@ -254,9 +321,9 @@ export const PhysicsSync = () => {
                     else rest_resends.current.set(id, left - 1);
                 }
 
-                // a client hands a claimed body back to the host once it has settled
+                // a client hands a claimed body back to the host once it has settled (a pinned one stays)
                 if (!is_host && !held && body.isSleeping() && !rest_resends.current.has(id)
-                    && get_body_owner(id) === room.self.id && !releasing.current.has(id)) {
+                    && get_body_owner(id) === room.self.id && !is_body_pinned(id) && !releasing.current.has(id)) {
                     releasing.current.add(id);
                     release_body(id);
                 }

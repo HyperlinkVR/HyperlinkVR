@@ -33,6 +33,7 @@ export const SessionEndedModalScreen = ({ args }: ScreenProps) => {
     // switching screen settles the modal with its dismiss value and keeps the watch open
     const handle_browse = useCallback(() => {
         change_screen("home");
+        // TODO: navigate to home page without adding to backstack so they dont back to modal
     }, [change_screen]);
 
     return (
