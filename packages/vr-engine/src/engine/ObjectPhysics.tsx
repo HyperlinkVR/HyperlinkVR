@@ -19,6 +19,8 @@ import { resolve_object_node } from "../interaction/util/target_resolution";
 import { build_collision_groups, GROUP_PROP, GROUP_WORLD } from "../physics/collision_groups";
 import { register_collider_collision_info } from "../physics/collision_hooks";
 import { useWorldHinge } from "../physics/physics_constraints";
+import { set_remote_simulator } from "../net/authority";
+import { useNetSession } from "../net/NetSession";
 import {
     rotation_to_quaternion,
     rotation_to_quaternion_array
@@ -465,6 +467,29 @@ const ObjectPhysicsInternal = ({
     // body-owned types (fixed/dynamic/kinematic-vel) place the body directly from the transform.
     const body_transform = rb.type === "kinematic-pos" ? undefined : transform;
 
+    // #20: in a shared world the host simulates every dynamic body, so on a client it becomes
+    // kinematic and follows the host's stream (PhysicsSync). only the RigidBody's type flips —
+    // rb.type stays "dynamic", so collider/decouple decisions are unchanged, and rapier switches the
+    // body in place rather than rebuilding it. registering the host as its simulator also stops this
+    // engine reporting the body's physics events (report_outbox speaks_for), which the host owns.
+    const { room, mode } = useNetSession();
+    const object_id = refs?.id;
+    const host_simulated = rb.type === "dynamic"
+        && mode === "shared"
+        && !!room
+        && room.self.id !== room.host()
+        && !!object_id;
+
+    useEffect(() => {
+        if (!host_simulated || !object_id || !room) {
+            return;
+        }
+        set_remote_simulator(object_id, room.host());
+        return () => set_remote_simulator(object_id, null);
+    }, [host_simulated, object_id, room]);
+
+    const body_type = host_simulated ? "kinematicPosition" : RB_TYPE[rb.type];
+
     const local_ref = useRef<RapierRigidBody>(null);
     const rb_ref = refs?.rigid_body || local_ref;
 
@@ -604,7 +629,7 @@ const ObjectPhysicsInternal = ({
             <RigidBody
                 ref={rb_ref}
                 name={body_name}
-                type={RB_TYPE[rb.type]}
+                type={body_type}
                 position={body_transform?.position}
                 quaternion={body_transform ? rotation_to_quaternion_array(body_transform.rotation) : undefined}
                 colliders={auto_strategy}

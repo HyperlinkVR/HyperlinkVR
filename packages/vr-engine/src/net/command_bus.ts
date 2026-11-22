@@ -10,6 +10,8 @@ export const COMMAND_CHANNEL = "cmd";
 export const REPORT_CHANNEL = "reports";
 // clock sync ping/pong so a client can estimate its offset to host (session) time (#9)
 export const CLOCK_CHANNEL = "clock";
+// host → clients, unreliable: poses of moving dynamic bodies the host simulates (#21)
+export const PHYSICS_CHANNEL = "physics";
 export const SNAPSHOT_REQUEST_CHANNEL = "snapshot-req";
 export const SNAPSHOT_CHANNEL = "snapshot";
 

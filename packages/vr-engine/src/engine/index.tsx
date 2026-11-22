@@ -48,6 +48,7 @@ import { clear_collider_collision_info, filter_contact_pair } from "../physics/c
 import { reset_authority } from "../net/authority";
 import { NetSessionProvider, useNetSession } from "../net/NetSession";
 import { NetSessionOverlay } from "../net/NetSessionOverlay";
+import { PhysicsSync } from "../net/PhysicsSync";
 import { PresenceSync } from "../net/PresenceSync";
 import { FlatAvatarHands, XRAvatarHand } from "../player/AvatarHand";
 import { Player } from "../player/Player";
@@ -290,6 +291,7 @@ const SceneContents = ({
 
             <Player can_move={!show_loader} ref={internal_ref} />
             <PresenceSync />
+            <PhysicsSync />
 
             {show_default_world && (
                 <>
