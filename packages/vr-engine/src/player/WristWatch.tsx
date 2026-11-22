@@ -1,8 +1,13 @@
 import { useSetting } from "@hyperlinkvr/react";
-import { WATCH_UI_HEIGHT, WATCH_UI_WIDTH, WatchUI } from "@hyperlinkvr/watch-ui";
+import { KeyboardScope } from "@hyperlinkvr/ui-3d";
+import {
+    WATCH_UI_HEIGHT,
+    WATCH_UI_WIDTH,
+    WatchUI,
+    WatchUIHandle
+} from "@hyperlinkvr/watch-ui";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Container } from "@react-three/uikit";
-import { KeyboardScope } from "@hyperlinkvr/ui-3d";
 import { Suspense, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import type { Group, Object3D } from "three";
 import { MathUtils, Matrix4, Quaternion, Raycaster, Vector2, Vector3 } from "three";
@@ -14,6 +19,8 @@ import { useHands } from "../input/hands";
 import { FlatWatchUINavDriver, useFlatInputControls, useFlatInputState } from "../input/impl/flat/bindings";
 import { useWatchDetachShortcut } from "../input/system_input";
 import { click_raycast_layer_mask, Layer, LayerGroup } from "../render";
+import {add_watch_event_listener} from "./watch_event_bus";
+
 
 export type WatchMode = "wrist" | "presented" | "detached";
 
@@ -57,6 +64,8 @@ const WatchUIPresentation = ({
 }: WatchUIPresentationProps) => {
     const body_group_ref = useRef<Group>(null);
     const ui_group_ref = useRef<Group>(null);
+
+    const watch_handle_ref = useRef<WatchUIHandle>(null);
 
     const [watch_hand] = useSetting("watch_hand");
     const hands = useHands();
@@ -270,6 +279,24 @@ const WatchUIPresentation = ({
         }
     });
 
+    // handle watch events
+    useEffect(() => {
+        const remove_listener = add_watch_event_listener((event) => {
+            switch (event.type) {
+                case "navigate":
+                    watch_handle_ref.current?.navigate(event.screen, event.args);
+                    break;
+                case "show_modal_screen":
+                    watch_handle_ref.current?.show_modal(event.screen, event.args, event.resolve, event.dismiss_value);
+                    break;
+            }
+        });
+
+        return () => {
+            remove_listener();
+        };
+    }, []);
+
     return (
         <>
             <group ref={body_group_ref}>
@@ -289,7 +316,13 @@ const WatchUIPresentation = ({
                     >
                         <Suspense fallback={null}> {/* TODO: little backup loading panel */}
                             <KeyboardScope name="watch" active={ui_open}>
-                                <WatchUI on_request_close={on_request_close} detached={mode === "detached"} set_detach={set_detach} detachable={detachable} />
+                                <WatchUI
+                                    ref={watch_handle_ref}
+                                    on_request_close={on_request_close}
+                                    detached={mode === "detached"}
+                                    set_detach={set_detach}
+                                    detachable={detachable}
+                                />
                             </KeyboardScope>
                         </Suspense>
                     </Container>
@@ -354,6 +387,21 @@ export const FlatWatch = () => {
     const input = useFlatInputState();
     const { close_watch } = useFlatInputControls();
 
+    // handle watch events
+    useEffect(() => {
+        const remove_listener = add_watch_event_listener((event) => {
+            switch (event.type) {
+                case "show_modal_screen":
+                    input.set_watch_presented(true);
+                    break;
+            }
+        });
+
+        return () => {
+            remove_listener();
+        };
+    }, []);
+
     return (
         <>
             <WatchUIPresentation
@@ -375,6 +423,21 @@ export const VRWatch = () => {
         if (!open_ref.current) return;
         setDetached((current) => !current);
     });
+
+    // handle watch events
+    useEffect(() => {
+        const remove_listener = add_watch_event_listener((event) => {
+            switch (event.type) {
+                case "show_modal_screen":
+                    setDetached(true);
+                    break;
+            }
+        });
+
+        return () => {
+            remove_listener();
+        };
+    }, []);
 
     return (
         <WatchUIPresentation

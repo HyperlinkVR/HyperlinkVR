@@ -1,6 +1,6 @@
 import { Container, Text } from "@react-three/uikit";
 import { Maximize2, Minimize2, Settings } from "@react-three/uikit-lucide";
-import { ReactNode, useCallback, useEffect, useMemo } from "react";
+import { ReactNode, Ref, useCallback, useEffect, useImperativeHandle, useMemo } from "react";
 import { ErrorBoundary, FallbackProps } from "react-error-boundary";
 import { DoubleSide, MeshBasicMaterial } from "three";
 import { configureTextBuilder } from "troika-three-text";
@@ -9,15 +9,16 @@ import { configureTextBuilder } from "troika-three-text";
 
 import { Crossfader, useCrossfadeOpacity } from "./animation/Crossfader";
 import { FocusableButton } from "./components/FocusableButton";
+import { WorldFavouriteButton } from "./components/WorldFavouriteButton";
 import { FocusNavProvider } from "./contexts/FocusNavContext";
 import { NavStateProvider, useNavState } from "./contexts/NavStateContext";
 import { Header } from "./layout/Header";
 import type { ScreenName } from "./screens";
 import { screens } from "./screens";
-import { WorldFavouriteButton } from "./components/WorldFavouriteButton";
 
 
 export {dispatch_ui_nav} from "./contexts/FocusNavContext";
+export type {ScreenName} from "./screens";
 
 
 // its not happy! turn off web workers
@@ -163,7 +164,50 @@ const FocusNavBridge = ({
     return <FocusNavProvider on_back={on_back}>{children}</FocusNavProvider>;
 };
 
-export const WatchUI = ({on_request_close, set_detach, detached, detachable}: {on_request_close?: () => void, set_detach?: (detached: boolean) => void, detached?: boolean, detachable?: boolean}) => {
+export interface WatchUIHandle {
+    navigate: (screen: ScreenName, args?: Record<string, unknown>) => void;
+    show_modal: (
+        screen: ScreenName,
+        args?: Record<string, unknown>,
+        resolve?: (result: any) => void,
+        dismiss_value?: unknown
+    ) => void;
+}
+
+const WatchHandleExpose = ({ handle_ref }: { handle_ref?: Ref<WatchUIHandle>; }) => {
+    const { change_screen, begin_modal } = useNavState();
+
+    useImperativeHandle(
+        handle_ref,
+        () => ({
+            navigate: (screen, args) => {
+                change_screen(screen, args);
+            },
+            show_modal: (screen, args, resolve, dismiss_value) => {
+                begin_modal(screen, args, resolve, dismiss_value);
+            }
+        }),
+        [change_screen]
+    );
+
+    return null;
+};
+
+interface WatchUIProps {
+    on_request_close?: () => void;
+    set_detach?: (detached: boolean) => void;
+    detached?: boolean;
+    detachable?: boolean;
+    ref?: Ref<WatchUIHandle>;
+}
+
+export const WatchUI = ({
+    on_request_close,
+    set_detach,
+    detached,
+    detachable,
+    ref
+}: WatchUIProps) => {
     return (
         <Container
             width={WATCH_UI_WIDTH}
@@ -184,6 +228,7 @@ export const WatchUI = ({on_request_close, set_detach, detached, detachable}: {o
             onWheel={(e) => e.stopPropagation()}
         >
             <NavStateProvider options={{detached, detachable, set_detach}}>
+                <WatchHandleExpose handle_ref={ref} />
                 <FocusNavBridge on_request_close={on_request_close}>
                     <CurrentScreen />
                 </FocusNavBridge>
