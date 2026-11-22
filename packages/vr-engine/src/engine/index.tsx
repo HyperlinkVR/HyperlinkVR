@@ -82,15 +82,28 @@ import { CommandSync } from "../net/CommandSync";
 import { MultiplayerSync } from "../net/MultiplayerSync";
 import { HapticsProvider } from "../input/haptics";
 import { TouchControls } from "../input/impl/flat/TouchControls";
+import { is_standalone_ua } from "@hyperlinkvr/core";
 
 
 
+// desktop chromium 156+ ships native WebXR layers, but its OpenXR path (SteamVR / Link / etc)
+// never presents projection layer frames, so the headset shows "this page is not responding".
+// three's WebXRManager picks projection layers purely by sniffing XRWebGLBinding.prototype,
+// so we hide createProjectionLayer to force the XRWebGLLayer fallback and don't request the feature.
+// standalone browsers (quest etc) are unaffected and keep layers.
+// thanks guys...
+// https://github.com/godotengine/godot/issues/125293
+const use_native_xr_layers = is_standalone_ua();
 
+if (!use_native_xr_layers && typeof XRWebGLBinding !== "undefined" && "createProjectionLayer" in XRWebGLBinding.prototype) {
+    delete (XRWebGLBinding.prototype as Partial<XRWebGLBinding>).createProjectionLayer;
+}
 
 export const xr_store = createXRStore({
     controller: XRAvatarHand,
     handTracking: false,
-    offerSession: false
+    offerSession: false,
+    layers: use_native_xr_layers
 });
 
 // three.js's WebXRManager only calls `gl.makeXRCompatible()` lazily, on
