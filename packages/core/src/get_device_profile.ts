@@ -1,11 +1,24 @@
 import type { DeviceProfile, GPUFamily } from "@hyperlinkvr/types";
-import { get_setting } from "./settings";
-import { StorageEngine } from "./storage";
 import { getGPUTier } from "@pmndrs/detect-gpu";
 
 
 
-const STANDALONE_UA_HINTS = [/OculusBrowser/i, /Quest/i, /Pico/i, /Wolvic/i, /VR Browser/i];
+import { get_setting } from "./settings";
+import { StorageEngine } from "./storage";
+
+
+const STANDALONE_UA_HINTS = [
+    /OculusBrowser/i,
+    /Quest/i,
+    /Pico/i,
+    /Wolvic/i,
+    /VR Browser/i
+];
+
+export const is_standalone_ua = (): boolean => {
+    const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
+    return STANDALONE_UA_HINTS.some((re) => re.test(ua));
+};
 
 const gpu_family = (gpu: string): GPUFamily => {
     const s = gpu.toLowerCase();
@@ -52,8 +65,7 @@ const probe_gpu = (): string | null => {
 };
 
 const detect_profile = async (): Promise<DeviceProfile> => {
-    const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
-    const is_standalone = STANDALONE_UA_HINTS.some((re) => re.test(ua));
+    const is_standalone = is_standalone_ua();
 
     const gpu = probe_gpu();
 
