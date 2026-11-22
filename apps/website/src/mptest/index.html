@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="hyperlinkvr" content="supported" />
+
+    <script data-cfasync="false" src="/cdn/sdk_fallback.js"></script>
+    <script data-cfasync="false">
+      // minimal shared-world test: a button anyone can press bumps a shared counter shown in the
+      // HUD. exercises the command bus (host authors the button + HUD), report routing (a client's
+      // press reaches the host), the player SDK (on_spawn / e.player), and the late-join snapshot
+      // (a late joiner should see the current count). max_players > 1 in hvr-world.json -> shared.
+      hyperlinkvr.on_ready(async () => {
+        await hyperlinkvr.connect();
+        console.log("[mptest] connected");
+
+        const h = hyperlinkvr.builders;
+
+        // the shared count lives here, on the host's page (only the host runs this logic)
+        let count = 0;
+
+        // per-player presses: one HUD element per player, scoped with .player(id) so each client
+        // only renders its own. keyed by the presser's id; the promise map stops two quick presses
+        // from creating the element twice before the first create resolves.
+        const presses = new Map();
+        const press_huds = new Map();
+        const bump_player = async (id) => {
+          const n = (presses.get(id) ?? 0) + 1;
+          presses.set(id, n);
+
+          if (!press_huds.has(id)) {
+            press_huds.set(id, h.hud_text("presses", `Your presses: ${n}`)
+              .set_slot("top-left")
+              .set_font_size(32)
+              .player(id)
+              .create());
+            return;
+          }
+
+          (await press_huds.get(id)).set_text(`Your presses: ${n}`);
+        };
+
+        // global HUD element -> shown to everyone, host-authored, replicated + in the snapshot
+        const counter_hud = await h.hud_text("counter", "Count: 0")
+          .set_slot("top-center")
+          .set_font_size(44)
+          .create();
+
+        // asset-free cosmetic for the local trigger demo (same pattern as minigolf's cannon)
+        const vfx = await new h.VFXStackBuilder()
+          .screen_shake("shake")
+          .apply();
+
+        // fires on the host for the local player AND for each remote player that joins
+        hyperlinkvr.players.on_spawn(async (player, info) => {
+          const id = await player.get_id();
+          console.log("[mptest] player spawned:", id, "remote:", !!info.remote);
+        });
+
+        hyperlinkvr.players.on_leave(async (player) => {
+          const id = await player.get_id();
+          console.log("[mptest] player left:", id);
+        });
+
+        // a fixed button; any player can press it. the press report reaches the host (even from a
+        // remote client, via report routing), which owns the shared count.
+        await new h.EngineObjectDispatchBuilder(
+          new h.ButtonPrefabBuilder()
+            .named("counter_btn")
+            .set_label("Press me")
+            .set_reports_press(true)
+            .set_fixed(true)
+            .build()
+        )
+          .set_position(0, 1, -2)
+          .on("counter_btn", (event) => {
+            if (event.payload.type !== "press") return;
+            count++;
+            // event.player is the presser's stable id (server-stamped), null for a guest
+            counter_hud.set_text(`Count: ${count}  (last: ${event.player ?? "guest"})`);
+            bump_player(event.player ?? null);
+            console.log("[mptest] pressed by", event.player, "-> count", count);
+          })
+          // local trigger: shake the presser's own screen instantly, no host round-trip. the
+          // effect isn't replicated, so only the person who pressed feels it. (object trigger, so
+          // pre-#20 a client runs it with or without .local() — the flag doesn't flip here yet.)
+          .add_trigger(new h.TriggerBuilder("counter_btn")
+            .set_event_filter({ type: "press" })
+            .set_targets([new h.TriggerTargetBuilder({ target: vfx, name: "shake" }, "pulse").build()])
+            .local()
+            .build())
+          .create();
+
+        hyperlinkvr.finished_loading();
+        console.log("[mptest] finished loading");
+      });
+    </script>
+
+    <link rel="icon" href="/hyperlinkvr_anim.svg" type="image/svg+xml">
+  </head>
+  <body>
+    mp test — press the button :)
+  </body>
+</html>

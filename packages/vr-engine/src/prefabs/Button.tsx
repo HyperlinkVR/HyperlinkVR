@@ -8,7 +8,7 @@ import { mergeVertices, toCreasedNormals } from "three/examples/jsm/utils/Buffer
 
 
 import { ObjectPhysics } from "../engine/ObjectPhysics";
-import { useAuthSession } from "@hyperlinkvr/react";
+import { useLocalPlayerId } from "../net/NetSession";
 
 import { useObjectBinding } from "../hooks/useObjectBinding";
 import { Grabbable } from "../interaction";
@@ -76,7 +76,9 @@ type ButtonProps = PrefabProps<ButtonPrefab> & {
 export const Button = (props: ButtonProps) => {
     const {emit_report, on_prefab_command} = useObjectBinding(props.binding);
     // the local player's stable account id (matches SDK player.get_id()); null for guests
-    const local_id = useAuthSession()?.uuid ?? null;
+    // the presser's id as every engine knows it (peer id in a room) so a forwarded press attributes
+    // to the right player — a guest's raw auth id is null, which the host can't tell apart
+    const local_id = useLocalPlayerId();
 
     const geometry = useMemo(() => {
         // The front rounding comes from a positive outward bevel.

@@ -1,6 +1,7 @@
 import type { SendTarget } from "@hyperlinkvr/core";
 import type { WebSDKActionMessage, WebSDKActionName } from "@hyperlinkvr/types";
 
+import { get_local_player_id } from "../player/player_position_registry";
 import { session_now } from "./session_clock";
 
 export const COMMAND_CHANNEL = "cmd";
@@ -17,8 +18,8 @@ export type Origin = "page" | "network";
 interface CommandSpec {
     // fill in host-authored ids before replication (create-style actions)
     mint?: (message: WebSDKActionMessage) => void;
-    // stamp a session timestamp before replication, so a timed action (animation start) begins at
-    // the same session moment on every peer — the client converts it back to its local clock (#9)
+    // rewrite host-local values into shared ones before replication: session timestamps for timed
+    // actions (#9), and "null = local player" into the host's own player id
     stamp?: (message: WebSDKActionMessage) => void;
 }
 
@@ -36,12 +37,24 @@ const COMMAND_SPECS: Partial<Record<WebSDKActionName, CommandSpec>> = {
     },
     HVRSDK_DESTROY_ENGINE_OBJECT: {},
 
+    // the sdk uses null for "the local player". on the host that means the host, so resolve it to
+    // the host's id before replicating — otherwise a null scope/target means "whoever reads it"
     HVRSDK_CREATE_HUD_ELEMENT: {
         mint: (m: any) => { m.id ??= crypto.randomUUID(); },
+        stamp: (m: any) => {
+            const scope = m.element?.scope;
+            if (scope && scope !== "global" && Array.isArray(scope.ids)) {
+                scope.ids = scope.ids.map((id: string | null) => id ?? get_local_player_id());
+            }
+        },
     },
-    HVRSDK_UPDATE_HUD_ELEMENT: {},
+    HVRSDK_UPDATE_HUD_ELEMENT: {
+        stamp: (m: any) => { if (m.target_id === null) m.target_id = get_local_player_id(); },
+    },
     HVRSDK_DESTROY_HUD_ELEMENT: {},
-    HVRSDK_RESET_HUD: {},
+    HVRSDK_RESET_HUD: {
+        stamp: (m: any) => { if (m.target_id === null) m.target_id = get_local_player_id(); },
+    },
 
     HVRSDK_SET_VFX: {},
     HVRSDK_VFX_COMMAND: {},

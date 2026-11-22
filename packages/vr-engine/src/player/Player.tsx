@@ -1,4 +1,4 @@
-import { useAuthSession, useMessageEngine, useSetting, useWorldSession } from "@hyperlinkvr/react";
+import { useMessageEngine, useSetting, useWorldSession } from "@hyperlinkvr/react";
 import { PlayerMonitorSchema } from "@hyperlinkvr/vr-engine-schemas";
 import { Text } from "@react-three/drei";
 import { XROrigin } from "@react-three/xr";
@@ -23,6 +23,7 @@ import { XRHandsPublisher } from "../input/impl/xr/hands";
 import { XRLocomotion } from "../input/impl/xr/locomotion";
 import { XRSystemInput } from "../input/impl/xr/system_input";
 import { register_input_monitor, unregister_input_monitor } from "../monitors/input_monitor_registry";
+import { useLocalPlayerId } from "../net/NetSession";
 import { Layer, LayerGroup } from "../render";
 import { useWorldLoadingStateStore } from "../stores/WorldLoadingStateStore";
 import { Avatar } from "./Avatar";
@@ -173,8 +174,9 @@ export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>
     const {on_action, emit_event, connected} = useWebSDKMessaging();
     const messenger = useMessageEngine();
     const {id: tab_id} = useWorldSession();
-    // the local player's stable account id (matches SDK player.get_id()); null for guests
-    const local_id = useAuthSession()?.uuid ?? null;
+    // the local player's id as every engine knows it: the peer id in a room (what the host stamps
+    // on forwarded reports), else the account uuid, null for a solo guest
+    const local_id = useLocalPlayerId();
 
     // publish it so report_outbox can stamp who caused each report (e.player in shared worlds)
     useEffect(() => {

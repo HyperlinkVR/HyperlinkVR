@@ -1,4 +1,4 @@
-import { useAuthSession, useSetting } from "@hyperlinkvr/react";
+import { useSetting } from "@hyperlinkvr/react";
 import type { HUDSlot, HUDVRAnchor } from "@hyperlinkvr/vr-engine-schemas";
 import { Container } from "@react-three/uikit";
 import { Suspense, useMemo } from "react";
@@ -6,6 +6,7 @@ import { Suspense, useMemo } from "react";
 
 
 import type { ResolvedHUDElement as StoreResolvedHUDElement } from "../stores/HUDStore";
+import { useLocalPlayerId } from "../net/NetSession";
 import { useHUDStore } from "../stores/HUDStore";
 import { HUDComponentView } from "./components";
 
@@ -90,9 +91,9 @@ export const HUDSurface = ({
     width = HUD_CANVAS_WIDTH,
     height = HUD_CANVAS_HEIGHT
 }: HUDSurfaceProps) => {
-    // the local player's stable account id (matches SDK player.get_id() and the id engine events
-    // carry); null for guests. this renderer only shows the local player's own hud.
-    const id = useAuthSession()?.uuid ?? null;
+    // the local player's id as every engine knows it (peer id in a room, account uuid otherwise,
+    // null for a solo guest). this renderer only shows the local player's own hud.
+    const id = useLocalPlayerId();
 
     const elements = useHUDStore((state) => state.elements);
 

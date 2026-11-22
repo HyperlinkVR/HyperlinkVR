@@ -94,3 +94,13 @@ export const NetSessionProvider = ({ children }: { children: React.ReactNode }) 
 };
 
 export const useNetSession = () => useContext(NetSessionContext);
+
+// the id this player is known by. in a room that's the peer id — what the host stamps on forwarded
+// reports and what remote spawns carry, so every engine agrees on it (for a logged-in user the node
+// adopts the account uuid as the peer id, so it's the same value). outside a room it's the account
+// uuid, null for a solo guest. use this, not the raw auth uuid, for anything player-scoped.
+export const useLocalPlayerId = (): string | null => {
+    const { room } = useNetSession();
+    const uuid = useAuthSession()?.uuid ?? null;
+    return room?.self.id ?? uuid;
+};

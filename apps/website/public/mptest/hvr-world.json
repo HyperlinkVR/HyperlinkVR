@@ -1,0 +1,22 @@
+{
+    "$schema": "https://hyperlink.surf/schemas/WorldMetadata_v1.json",
+    "version": 1,
+    "supports": {
+        "vr": "yes",
+        "flat": "yes",
+        "low_power": "yes",
+        "teleport": true
+    },
+    "languages": ["en"],
+    "max_players": 8,
+    "recommended_players": 4,
+    "title": "MP Test",
+    "category": "other",
+    "tags": ["test"],
+    "additional_contributors": [],
+    "gallery": [],
+    "content_flags": [],
+    "vr_comfort": "comfortable",
+    "preloads": [],
+    "endorsements": []
+}
