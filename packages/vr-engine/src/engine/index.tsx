@@ -26,6 +26,7 @@ import { AnimationRunner } from "../animation/AnimationRunner";
 import { AnimationSync } from "../animation/AnimationSync";
 import { SeekRunner } from "../animation/SeekRunner";
 import { SeekSync } from "../animation/SeekSync";
+import { wait_for_all_objects_ready } from "./object_ready_registry";
 import { TweenRunner } from "../animation/TweenRunner";
 import { DOMMirror } from "../browser/DOMMirror";
 import { URLBar } from "../browser/URLBar";
@@ -241,11 +242,16 @@ const SceneContents = ({
         }
     }, [support, setWorldEnv]);
 
-    // reset world env and player position/rotation on new document load
+    // reset world env and player position/rotation on new document load. only when the generation
+    // actually changes: support / setWorldEnv can change later in the same document, and re-running
+    // then would yank a player the world has already placed (e.g. a shared client the host teleported
+    // to spawn) back to the origin
+    const reset_generation_ref = useRef(0);
     useEffect(() => {
-        if (doc_generation === 0) {
+        if (doc_generation === 0 || doc_generation === reset_generation_ref.current) {
             return;
         }
+        reset_generation_ref.current = doc_generation;
 
         setWorldEnv(support === "supported" ? WORLD_ENV_DEFAULT : WORLD_ENV_GRAYSPACE);
 
@@ -369,6 +375,9 @@ const WorldSessionListener = () => {
     const { mode, room } = useNetSession();
     const suppress_page = mode === "shared" && !!room && room.self.id !== room.host();
 
+    const suppress_page_ref = useRef(suppress_page);
+    suppress_page_ref.current = suppress_page;
+
     const set_world_ready = useWorldLoadingStateStore((store) => store.set_world_ready);
     const reset_for_new_document = useWorldLoadingStateStore((store) => store.reset_for_new_document);
     const clear_all_objects = useEngineObjectStore((store) => store.clear_all_objects);
@@ -378,7 +387,16 @@ const WorldSessionListener = () => {
     useEffect(() => {
         const unlisten = on_action("HVRSDK_LOADING_FINISHED", (_message, reply) => {
             console.log("World signalled ready");
-            set_world_ready(true);
+            if (suppress_page_ref.current) {
+                // a shared client gets this replicated from the host, whose page awaited its own
+                // creates, not ours: wait until our copies have loaded too
+                void wait_for_all_objects_ready().then(() => {
+                    set_world_ready(true);
+                    useWorldLoadingStateStore.getState().set_synced_with_host(true);
+                });
+            } else {
+                set_world_ready(true);
+            }
 
             reply({
                 for: "HVRSDK_LOADING_FINISHED",
@@ -611,42 +629,41 @@ const EngineHostInternal = memo(
 
                                                                     <SceneDebug />
 
-                                                                    {mode === "vr" ? (
-                                                                        <XR store={xr_store}>
-                                                                            <ErrorBoundary
-                                                                                FallbackComponent={
-                                                                                    VRErrorFallback
-                                                                                }
-                                                                                onReset={() =>
-                                                                                    window.location.reload()
-                                                                                }
-                                                                            >
-                                                                                <GatedSceneContents
-                                                                                    mode="vr"
-                                                                                    player_ref={player_ref}
-                                                                                    extra_in_origin={
-                                                                                        <Suspense fallback={null}>
-                                                                                            <SpectatorCamera />
-                                                                                        </Suspense>
-                                                                                    }
-                                                                                />
-                                                                            </ErrorBoundary>
-                                                                        </XR>
-                                                                    ) : (
+                                                                    {/* one tree for both modes: the scene must sit at the same place in
+                                                                        the tree whatever the mode, or switching vr <-> flat (which happens
+                                                                        when you click in) remounts the whole scene — reloading every object
+                                                                        and resetting the player to the origin. so XR wraps flat too (it's
+                                                                        inert without a session) and the mode-only bits are slotted in place */}
+                                                                    <XR store={xr_store}>
                                                                         <ErrorBoundary
                                                                             FallbackComponent={
-                                                                                FlatErrorFallback
+                                                                                mode === "vr" ? VRErrorFallback : FlatErrorFallback
                                                                             }
                                                                             onReset={() =>
                                                                                 window.location.reload()
                                                                             }
                                                                         >
-                                                                            <FlatInputRunner />
-                                                                            <FlatClickRaycaster />
-                                                                            <FlatAvatarHands />
-                                                                            <GatedSceneContents mode="flat" player_ref={player_ref} />
+                                                                            {mode === "flat" && (
+                                                                                <>
+                                                                                    <FlatInputRunner />
+                                                                                    <FlatClickRaycaster />
+                                                                                    <FlatAvatarHands />
+                                                                                </>
+                                                                            )}
+                                                                            <GatedSceneContents
+                                                                                mode={mode}
+                                                                                player_ref={player_ref}
+                                                                                extra_in_origin={
+                                                                                    mode === "vr" ? (
+                                                                                        <Suspense fallback={null}>
+                                                                                            <SpectatorCamera />
+                                                                                        </Suspense>
+                                                                                    ) : undefined
+                                                                                }
+                                                                            />
                                                                         </ErrorBoundary>
-                                                                    )}
+                                                                    </XR>
+
                                                                 </WorldPhysics>
                                                             </SDKWorldEnvironmentProvider>
                                                         </HandsProvider>

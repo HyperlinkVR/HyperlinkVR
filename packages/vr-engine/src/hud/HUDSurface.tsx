@@ -92,7 +92,7 @@ export const HUDSurface = ({
     height = HUD_CANVAS_HEIGHT
 }: HUDSurfaceProps) => {
     // the local player's id as every engine knows it (peer id in a room, account uuid otherwise,
-    // null for a solo guest). this renderer only shows the local player's own hud.
+    // minted for a solo guest). this renderer only shows the local player's own hud.
     const id = useLocalPlayerId();
 
     const elements = useHUDStore((state) => state.elements);

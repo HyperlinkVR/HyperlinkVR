@@ -6,6 +6,7 @@ import type {
 import {
     useObjectRefs,
 } from "../contexts";
+import { useEngineObjectStore } from "../stores/EngineObjectStore";
 
 
 const ready_ids = new Set<string>();
@@ -106,4 +107,14 @@ const ObjectReadyPoll = ({
     });
 
     return null;
+};
+
+// every object the engine currently has (mounted or still queued) has loaded. a shared client gates
+// its world_ready on this: its objects arrive in a snapshot / replicated creates rather than through
+// its own page awaiting each create(), so without it the player would spawn (and be teleported, and
+// have their ball simulated) onto colliders that haven't loaded yet
+export const wait_for_all_objects_ready = () => {
+    const { objects, pending } = useEngineObjectStore.getState();
+    const ids = [...Object.keys(objects), ...pending.map((object) => object.id)];
+    return Promise.all(ids.map((id) => wait_for_object_ready(id))).then(() => undefined);
 };

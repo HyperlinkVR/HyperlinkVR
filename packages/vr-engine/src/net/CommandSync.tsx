@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { useWebSDKMessaging } from "../contexts/WebSDKMessagingContext";
 import { sample_live_transform } from "../engine/object_modification";
 import { get_object_refs } from "../engine/object_ref_registry";
+import { wait_for_all_objects_ready } from "../engine/object_ready_registry";
 import { useEngineObjectStore } from "../stores/EngineObjectStore";
 import { type StoredHUDElement, useHUDStore } from "../stores/HUDStore";
 import { useVFXStore } from "../stores/VFXStore";
@@ -105,8 +106,14 @@ export const CommandSync = () => {
                     apply_world_env(snapshot.world_env);
                 }
 
+                // only once what we just hydrated has actually loaded, so the player doesn't spawn
+                // onto (or get teleported to) ground that isn't there yet
                 if (snapshot.world_ready) {
-                    useWorldLoadingStateStore.getState().set_world_ready(true);
+                    void wait_for_all_objects_ready().then(() => {
+                        const loading = useWorldLoadingStateStore.getState();
+                        loading.set_world_ready(true);
+                        loading.set_synced_with_host(true);
+                    });
                 }
             }
         });

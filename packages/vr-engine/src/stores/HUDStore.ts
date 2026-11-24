@@ -68,12 +68,14 @@ const merge_override = (element: StoredHUDElement, override: HUDOverride | undef
     return merged;
 };
 
+// a stored null id is the sdk's "local player" shorthand from a command this engine applied without
+// replicating (solo, or before the host could rewrite it), so it always means this engine's player
 const in_scope = (element: StoredHUDElement, id: string | null) => {
     if (element.scope === "global") {
         return true;
     }
 
-    return element.scope.ids.includes(id);
+    return element.scope.ids.includes(id) || element.scope.ids.includes(null);
 };
 
 export const useHUDStore = create<HUDStoreState>((set, get) => ({
@@ -158,7 +160,7 @@ export const useHUDStore = create<HUDStoreState>((set, get) => ({
 
         return Object.values(get().elements)
             .filter((stored) => in_scope(stored, id))
-            .map((stored) => merge_override(stored, stored.overrides[key]))
+            .map((stored) => merge_override(stored, stored.overrides[key] ?? stored.overrides[LOCAL_PLAYER_KEY]))
             .filter((element) => element.visible)
             .filter((element) => anchor === null || element.vr_anchor === anchor)
             .sort((left, right) => left.order - right.order || left.sequence - right.sequence);

@@ -14,6 +14,8 @@ import {useWorldEnvironment} from "../world/WorldEnvironmentContext";
 import {CAPSULE_RADIUS, consume_player_movement, set_capsule_world_position} from "./motion";
 import {PLAYER_COLLISION_GROUPS, EXCLUDE_SENSORS} from "../physics/collision_groups";
 import {get_active_seat} from "./seating";
+import {get_player_teleport_seq} from "./player_position_registry";
+import {useWorldLoadingStateStore} from "../stores/WorldLoadingStateStore";
 
 const WORLD_UP = new Vector3(0, 1, 0);
 
@@ -65,7 +67,8 @@ const KILL_LEVEL_Y = -50;
 export const PlayerKinematics = () => {
     const origin_ref = usePlayerOrigin();
     const { world, rapier, rigidBodyStates } = useRapier();
-    const { camera } = useThree();
+    const { camera, gl } = useThree();
+    const session_mode = useSessionMode();
 
     const velocity_y = useRef(0);
     const jump_pressed_ref = useRef(false);
@@ -75,6 +78,7 @@ export const PlayerKinematics = () => {
     const requested = useRef(new Vector3());
 
     const last_grounded_pos = useRef(new Vector3(0, 0, 0));
+    const seen_teleport_seq = useRef(get_player_teleport_seq());
 
     const seat_captured = useRef(false);
     const seat_yaw_offset = useRef(0);
@@ -145,6 +149,23 @@ export const PlayerKinematics = () => {
         const origin = origin_ref.current;
         if (!origin) return;
 
+        // the world placed us: that's a placement, not movement. drop any fall speed (a player falls the
+        // whole time a world loads, so they'd arrive at terminal velocity and punch straight through the
+        // floor they were placed on), and make it the point a fall reset returns to
+        const teleport_seq = get_player_teleport_seq();
+        if (teleport_seq !== seen_teleport_seq.current) {
+            seen_teleport_seq.current = teleport_seq;
+            velocity_y.current = 0;
+            last_grounded_pos.current.copy(origin.position);
+        }
+
+        // nothing to stand on until the world has loaded, so hold still rather than fall through the void
+        // (and fall-reset to wherever) while the loader is up
+        if (useWorldLoadingStateStore.getState().loading) {
+            velocity_y.current = 0;
+            return;
+        }
+
         const seat = get_active_seat();
         if (seat) {
             seat.anchor.updateWorldMatrix(true, false);
@@ -195,7 +216,16 @@ export const PlayerKinematics = () => {
         }
         seat_captured.current = false;
 
-        camera.getWorldPosition(head_world.current);
+        // the capsule stands under the head. in vr mode with no session running yet (before you've
+        // entered), the XR origin doesn't carry the camera, so the camera sits wherever it was left
+        // (near world 0,0) while the origin is wherever the world placed us — standing the capsule
+        // under that camera puts it at the wrong x/z (inside whatever's there), and resolving it out
+        // sinks the origin through the floor. so until a session is presenting, stand on the origin
+        if (session_mode === "vr" && !gl.xr.isPresenting) {
+            head_world.current.set(origin.position.x, origin.position.y + MAX_PLAYER_HEIGHT, origin.position.z);
+        } else {
+            camera.getWorldPosition(head_world.current);
+        }
 
         // scale the capsule to the player's current head height (so they can crouch under stuff)
         const head_height = head_world.current.y - origin.position.y + HEAD_CLEARANCE;
@@ -277,8 +307,7 @@ export const PlayerKinematics = () => {
         );
     });
 
-    const mode = useSessionMode();
-    return mode === "vr" ? (
+    return session_mode === "vr" ? (
         <VRJumpButton jump_pressed_ref={jump_pressed_ref} />
     ) : (
         <FlatJumpButton jump_pressed_ref={jump_pressed_ref} />

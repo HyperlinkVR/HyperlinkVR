@@ -1,6 +1,6 @@
 import { useSessionMode } from "@hyperlinkvr/react";
 import { useXRInputSourceStates } from "@react-three/xr";
-import { createContext, useCallback, useContext, useEffect, useRef } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef } from "react";
 
 
 
@@ -71,6 +71,9 @@ interface HapticImpl {
 
 const BaseHapticsProvider = ({impl, children}: {children: React.ReactNode, impl: HapticImpl}) => {
     const actuators = useRef<ReadonlyArray<TaggedHapticActuator>>([]);
+    // the impl swaps with the session mode; read it live so the stable callbacks below see the current one
+    const impl_ref = useRef(impl);
+    impl_ref.current = impl;
 
     useEffect(() => {
         actuators.current = impl.collect_actuators();
@@ -114,7 +117,8 @@ const BaseHapticsProvider = ({impl, children}: {children: React.ReactNode, impl:
                 }
             })();
 
-            const filtered_actuators = impl.filter_actuators ? impl.filter_actuators(actuators.current, event) : actuators.current;
+            const filter = impl_ref.current.filter_actuators;
+            const filtered_actuators = filter ? filter(actuators.current, event) : actuators.current;
 
             // browsers cant agree on a spec :(
             return Promise.all(
@@ -177,7 +181,7 @@ const BaseHapticsProvider = ({impl, children}: {children: React.ReactNode, impl:
     );
 }
 
-const FlatHapticsProvider = ({children}: {children: React.ReactNode}) => {
+const useFlatHapticImpl = (): HapticImpl => {
     const {device: flat_device} = useHintState();
 
     const collect_actuators = useCallback(() => {
@@ -193,14 +197,10 @@ const FlatHapticsProvider = ({children}: {children: React.ReactNode}) => {
         }
     }, [flat_device]);
 
-    return (
-        <BaseHapticsProvider impl={{collect_actuators}}>
-            {children}
-        </BaseHapticsProvider>
-    );
+    return useMemo(() => ({collect_actuators}), [collect_actuators]);
 }
 
-const XRHapticsProvider = ({children}: {children: React.ReactNode}) => {
+const useXRHapticImpl = (): HapticImpl => {
     const xr_inputs = useXRInputSourceStates();
 
     const collect_actuators = useCallback(
@@ -236,21 +236,22 @@ const XRHapticsProvider = ({children}: {children: React.ReactNode}) => {
         []
     );
 
-    return (
-        <BaseHapticsProvider impl={{collect_actuators, filter_actuators}}>
-            {children}
-        </BaseHapticsProvider>
-    );
+    return useMemo(() => ({collect_actuators, filter_actuators}), [collect_actuators, filter_actuators]);
 }
 
+// one provider whatever the mode: the children must never move in the tree when the session mode
+// changes (it flips when you click in), or the whole scene under it remounts — every object and
+// collider reloads and the player resets. so both impls are always built and the mode just picks one
+// (XR wraps flat mode too, so the xr input hook is always available)
 export const HapticsProvider = ({children}: {children: React.ReactNode}) => {
     const session_mode = useSessionMode();
+    const flat_impl = useFlatHapticImpl();
+    const xr_impl = useXRHapticImpl();
 
     return (
-        <>
-            {session_mode === "flat" && <FlatHapticsProvider>{children}</FlatHapticsProvider>}
-            {session_mode === "vr" && <XRHapticsProvider>{children}</XRHapticsProvider>}
-        </>
+        <BaseHapticsProvider impl={session_mode === "vr" ? xr_impl : flat_impl}>
+            {children}
+        </BaseHapticsProvider>
     );
 }
 

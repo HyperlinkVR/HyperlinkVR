@@ -37,11 +37,11 @@ const create_player_state = (
     };
 };
 
-const players = new Map<string | null, PlayerState>();
+const players = new Map<string, PlayerState>();
 
 interface StoreSnapshot {
     hole: number;
-    players: Map<string | null, Omit<PlayerState, "last_pos">>; // last_pos will be there, but don't use it, it won't be updated in real time
+    players: Map<string, Omit<PlayerState, "last_pos">>; // last_pos will be there, but don't use it, it won't be updated in real time
 }
 
 const game_state_listeners = new Set<() => void>();
@@ -127,22 +127,25 @@ export const compute_hole_pars = () => {
     notify_hole_info();
 };
 
-const get_my_username = async () => {
-    const me = await hyperlinkvr.auth.whoami();
-    if (!me.info) {
-        throw new Error("Failed to get my username");
-    }
-
-    const identity = me.info.identity;
-    return `${identity.name}@${identity.host}`;
-}
+// ids mid-add_player: players.set only happens after several awaits, so without this a duplicate
+// spawn arriving meanwhile would pass the players.has check and create a second putter and ball
+const adding = new Set<string>();
 
 export const add_player = async (player: hvr.players.Player, spawn_pos: [number, number, number] = [0, 0, 0]) => {
-    const id = await player.get_id();
-    if (players.has(id)) {
+    const id = player.get_id();
+    if (players.has(id) || adding.has(id)) {
         console.warn(`Player ${id} already exists`);
         return;
     }
+    adding.add(id);
+    try {
+        await create_player(player, id, spawn_pos);
+    } finally {
+        adding.delete(id);
+    }
+};
+
+const create_player = async (player: hvr.players.Player, id: string, spawn_pos: [number, number, number]) => {
 
     // random neon putter color, and the ball automatically matches just like real mini golf :)
     const putter = new h.GolfPutterPrefabBuilder().random_color().build();
@@ -171,8 +174,29 @@ export const add_player = async (player: hvr.players.Player, spawn_pos: [number,
         })
         .create();
 
-    players.set(id, create_player_state(await player.get_username() || await get_my_username(), created_ball, created_putter, putter.color));
+    // pin both to their player: their engine simulates the ball, so their putter hitting it is instant,
+    // and nobody else can grab their putter or ball. no-op in solo
+    await created_putter.set_ownership(player);
+    await created_ball.set_ownership(player);
+
+    players.set(id, create_player_state((await player.get_username()) ?? "Guest", created_ball, created_putter, putter.color));
     notify_game_state();
+};
+
+export const remove_player = async (player: hvr.players.Player) => {
+    const id = await player.get_id();
+    const state = players.get(id);
+    if (!state) return;
+
+    players.delete(id);
+    notify_game_state();
+
+    await Promise.allSettled([state.ball.destroy(), state.putter.destroy()]);
+
+    // the leaver may have been the last one still playing the hole
+    if (current_hole > 0 && players.size > 0 && Array.from(players.values()).every((s) => s.finished_this_hole)) {
+        next_hole();
+    }
 };
 
 let current_hole = 0;
@@ -258,7 +282,7 @@ export const get_owner_of_ball = (ball_object_id: string) => {
     return undefined;
 }
 
-export const get_ball_of_player = (id: string | null) => {
+export const get_ball_of_player = (id: string) => {
     const state = players.get(id);
     if (!state) {
         throw new Error(`Player ${id} not found`);
@@ -276,7 +300,7 @@ export const get_ball_by_object_id = (ball_object_id: string) => {
     return get_ball_of_player(owner);
 }
 
-export const scored_on_hole = async (id: string | null) => {
+export const scored_on_hole = async (id: string) => {
     if (current_hole === 0) {
         return;
     }
@@ -314,7 +338,7 @@ export const scored_on_hole = async (id: string | null) => {
     }
 }
 
-export const take_stroke = (id: string | null) => {
+export const take_stroke = (id: string) => {
     if (current_hole === 0) {
         return;
     }
@@ -334,7 +358,7 @@ export const take_stroke = (id: string | null) => {
     notify_game_state();
 }
 
-export const stroke_at_rest = (id: string | null) => {
+export const stroke_at_rest = (id: string) => {
     if (current_hole === 0) {
         return;
     }
@@ -396,7 +420,9 @@ const dev_cheats = {
         }
     },
 
-    tp_to_ball: async (id: string | null = null) => {
+    // id defaults to the local player
+    tp_to_ball: async (id?: string) => {
+        id ??= (await hyperlinkvr.players.me()).get_id();
         const state = players.get(id);
         if (!state) {
             throw new Error(`Player ${id} not found`);
@@ -408,7 +434,8 @@ const dev_cheats = {
         player.teleport_to(ball_obj.transform.position, ball_obj.transform.rotation[1]);
     },
 
-    tp_ball_to_me: async (id: string | null = null) => {
+    tp_ball_to_me: async (id?: string) => {
+        id ??= (await hyperlinkvr.players.me()).get_id();
         const state = players.get(id);
         if (!state) {
             throw new Error(`Player ${id} not found`);

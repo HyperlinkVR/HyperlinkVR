@@ -34,7 +34,7 @@ export const publish_reports = (reports: ReportEvent[]) => {
     const player = get_local_player_id();
     const own = reports
         .filter((report) => speaks_for(report.object_id))
-        .map((report) => ({ ...report, player }));
+        .map((report) => (player ? { ...report, player } : report));
     if (own.length === 0) {
         return;
     }

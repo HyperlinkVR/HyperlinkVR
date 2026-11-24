@@ -14,6 +14,12 @@ export const CLOCK_CHANNEL = "clock";
 export const PHYSICS_CHANNEL = "physics";
 // reliable: body ownership — client claims/releases to the host, host's owner broadcasts (#22)
 export const OWNERSHIP_CHANNEL = "ownership";
+// a client tells the host its player has actually spawned (world hydrated), so the host page's
+// players.on_spawn fires once the player can stand somewhere, not on room join
+export const SPAWN_CHANNEL = "spawn";
+// host → a client: a player-targeted action (teleport, position, ...) for that client's player, and
+// the client's reply back (#14)
+export const PLAYER_ACTION_CHANNEL = "player-action";
 export const SNAPSHOT_REQUEST_CHANNEL = "snapshot-req";
 export const SNAPSHOT_CHANNEL = "snapshot";
 

@@ -5,10 +5,10 @@ export interface ReportEventEnvelope<TKind extends string, TPayload> {
     object_id: string; // owning object
     kind: TKind; // discriminator
     ts: number; // host-side event time
-    // stable id of the player whose engine produced this report (null for a guest). in shared
-    // worlds a client forwards its reports to the host tagged with this, so the host's page can
-    // attribute them via e.player. undefined in singleplayer where there's only one player.
-    player?: string | null;
+    // the session player id of the player whose engine produced this report. in shared worlds a
+    // client forwards its reports to the host tagged with this, so the host's page can attribute
+    // them via e.player. absent only if a report fires before the local player exists.
+    player?: string;
     payload: TPayload;
 }
 
@@ -124,8 +124,8 @@ export interface BasketballHoopPrefabPayload {
 
 export interface ButtonPrefabPayload {
     type: "press" | "release";
-    // stable account id of the presser; null = local player
-    id: string | null;
+    // the presser's session player id
+    id: string;
 }
 
 interface GolfBallPrefabStruckPayload {

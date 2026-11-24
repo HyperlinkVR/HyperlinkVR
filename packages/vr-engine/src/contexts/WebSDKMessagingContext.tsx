@@ -9,6 +9,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 
 import { add_report_sink } from "../engine/report_outbox";
 import { route_command } from "../net/command_bus";
+import { forward_player_action } from "../net/player_actions";
 import { useNetSession } from "../net/NetSession";
 import { clear_collider_collision_info } from "../physics/collision_hooks";
 import { useEngineObjectStore } from "../stores/EngineObjectStore";
@@ -24,8 +25,9 @@ interface WebSDKMessagingContextType {
     on_action: <M extends WebSDKActionName>(action_filter: M, callback: (message: NamedAction<M>, reply: (message: NamedReply<M> | WebSDKErrorReply<M>) => void) => void) => () => void;
     emit_event: (message: WebSDKEventMessage) => void;
 
-    // apply a command replicated from the host (called by CommandSync)
-    apply_remote_command: (message: any) => void;
+    // apply a command replicated from the host (called by CommandSync), or a player action the host
+    // forwarded to us (MultiplayerSync), whose reply goes back to the host
+    apply_remote_command: (message: any, reply?: (message: any) => void) => void;
 
     connected: boolean;
 }
@@ -112,20 +114,27 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
             return;
         }
 
+        const reply = (reply_message: NamedReply<any> | WebSDKErrorReply) => {
+            send_over_data_channel({ ...reply_message, correlation_id: data.correlation_id });
+        };
+
+        // on the host, an action aimed at a remote player goes to their engine (#14)
+        if (forward_player_action(data, reply)) {
+            return;
+        }
+
         if (!route_command(data, "page")) {
             return;
         }
 
-        dispatch_action(data, (reply_message: NamedReply<any> | WebSDKErrorReply) => {
-            send_over_data_channel({ ...reply_message, correlation_id: data.correlation_id });
-        });
+        dispatch_action(data, reply);
     }, [messenger, send_over_data_channel, dispatch_action]);
 
-    const apply_remote_command = useCallback((data: any) => {
+    const apply_remote_command = useCallback((data: any, reply: (message: any) => void = () => {}) => {
         if (!("action" in data)) {
             return;
         }
-        dispatch_action(data, () => {});
+        dispatch_action(data, reply);
     }, [dispatch_action]);
 
     // TODO: this code kinda sucks, same for how the background handles it. but it works :)

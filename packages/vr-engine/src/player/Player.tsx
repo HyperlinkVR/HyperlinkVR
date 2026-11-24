@@ -1,8 +1,8 @@
-import { useMessageEngine, useSetting, useWorldSession } from "@hyperlinkvr/react";
+import { useAuthSession, useMessageEngine, useSetting, useWorldSession } from "@hyperlinkvr/react";
 import { PlayerMonitorSchema } from "@hyperlinkvr/vr-engine-schemas";
 import { Text } from "@react-three/drei";
 import { XROrigin } from "@react-three/xr";
-import { Suspense, useEffect, useImperativeHandle, useMemo, useRef } from "react";
+import { Suspense, useCallback, useEffect, useImperativeHandle, useMemo, useRef } from "react";
 import { ExtrudeGeometry, Group, Shape } from "three";
 
 
@@ -23,13 +23,14 @@ import { XRHandsPublisher } from "../input/impl/xr/hands";
 import { XRLocomotion } from "../input/impl/xr/locomotion";
 import { XRSystemInput } from "../input/impl/xr/system_input";
 import { register_input_monitor, unregister_input_monitor } from "../monitors/input_monitor_registry";
-import { useLocalPlayerId } from "../net/NetSession";
+import { SPAWN_CHANNEL } from "../net/command_bus";
+import { useLocalPlayerId, useNetSession } from "../net/NetSession";
 import { Layer, LayerGroup } from "../render";
 import { useWorldLoadingStateStore } from "../stores/WorldLoadingStateStore";
 import { Avatar } from "./Avatar";
 import { FlatCameraRig } from "./FlatCameraRig";
 import { KeyboardSlot } from "./KeyboardSlot";
-import { set_local_player_id, set_local_player_origin } from "./player_position_registry";
+import { mark_player_teleported, set_local_player_id, set_local_player_origin } from "./player_position_registry";
 import { PlayerKinematics } from "./PlayerKinematics";
 import { QuickMenu } from "./QuickMenu";
 import { useIsSeated } from "./seating";
@@ -163,6 +164,21 @@ export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>
     const origin_ref = useRef<Group>(null);
     useImperativeHandle(ref, () => origin_ref.current!);
 
+    // the origin is a different object per mode (XROrigin in vr, a plain group in flat), so switching
+    // mode (which happens when you click in) swaps in a fresh origin at 0,0. carry the old one's
+    // placement over, or the switch silently undoes wherever the world put the player (spawn teleport)
+    const last_origin = useRef<Group | null>(null);
+    const attach_origin = useCallback((node: Group | null) => {
+        if (node && last_origin.current && last_origin.current !== node) {
+            node.position.copy(last_origin.current.position);
+            node.rotation.copy(last_origin.current.rotation);
+        }
+        if (node) {
+            last_origin.current = node;
+        }
+        origin_ref.current = node;
+    }, []);
+
     const session_mode = useSessionMode();
 
     // expose the origin group for synchronous per-frame readers (e.g. seek).
@@ -178,6 +194,9 @@ export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>
     // the local player's id as every engine knows it: the peer id in a room (what the host stamps
     // on forwarded reports), else the account uuid, null for a solo guest
     const local_id = useLocalPlayerId();
+    const { mode: net_mode, room, ended: session_ended } = useNetSession();
+    const auth_session = useAuthSession();
+    const in_room = room !== null;
 
     // publish it so report_outbox can stamp who caused each report (e.player in shared worlds)
     useEffect(() => {
@@ -188,6 +207,7 @@ export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>
     const seated = useIsSeated();
 
     const world_ready = useWorldLoadingStateStore((store) => store.world_ready);
+    const synced_with_host = useWorldLoadingStateStore((store) => store.synced_with_host);
     const spawned_for_world = useRef(false);
 
     useEffect(() => {
@@ -202,17 +222,39 @@ export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>
             return;
         }
 
+        // in a shared world, hold the spawn until we're in the room so it carries our peer id (what every
+        // other engine and every forwarded report knows us by), not the pre-join uuid/null. if the session
+        // fails outright, spawn anyway so the world still starts
+        if (net_mode === "shared" && !in_room && !session_ended) {
+            return;
+        }
+
+        // a shared client's page doesn't run the world, the host's does: announce the spawn there
+        // instead, once we hold the host's world and it has loaded (not off a world_ready left over
+        // from our page running the world solo before the room joined — the host would teleport us
+        // into a world that's about to be wiped). the host emits it to its page as a remote spawn
+        if (room && room.self.id !== room.host()) {
+            if (!synced_with_host) {
+                return;
+            }
+            spawned_for_world.current = true;
+            room.send("host", SPAWN_CHANNEL, JSON.stringify({ mode: session_mode }), "reliable");
+            return;
+        }
+
         spawned_for_world.current = true;
         try {
             emit_event({
                 type: "HVRSDK_PLAYER_SPAWNED",
                 id: local_id,
+                username: auth_session?.username ?? null,
+                account_id: auth_session?.uuid ?? null,
                 mode: session_mode
             });
         } catch (error) {
             console.warn("Failed to emit player spawn event", error);
         }
-    }, [world_ready, connected, session_mode, emit_event, local_id]);
+    }, [world_ready, synced_with_host, connected, session_mode, emit_event, local_id, net_mode, room, in_room, session_ended, auth_session]);
 
     useEffect(() => {
         // TODO: these ignore target username on the message and assume its for us, nothing to do rn but just remember this is the case when multiplayer happens
@@ -255,6 +297,7 @@ export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>
             if (yaw !== undefined) {
                 origin_ref.current.rotation.y = yaw;
             }
+            mark_player_teleported();
 
             const new_pos = origin_ref.current.position;
             const new_yaw = origin_ref.current.rotation.y;
@@ -377,7 +420,7 @@ export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>
                     {session_mode === "vr" ? (
                         <>
                             <Vignette />
-                            <XROrigin ref={origin_ref}>
+                            <XROrigin ref={attach_origin}>
                                 <XRHandsPublisher />
                                 <ExpressionTest />
                                 <OriginHUD />
@@ -392,7 +435,7 @@ export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>
                         </>
                     ) : (
                         <>
-                            <group ref={origin_ref} name="FlatOrigin">
+                            <group ref={attach_origin} name="FlatOrigin">
                                 <FlatHandsPublisher />
                                 <FlatCameraRig origin={origin_ref} />
                                 <ExpressionTest />

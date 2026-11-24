@@ -427,16 +427,21 @@ interface WebSDKBatchEngineObjectReportEventMessage extends BaseWebSDKEventMessa
 
 interface WebSDKPlayerSpawnedEventMessage extends BaseWebSDKEventMessage {
     type: "HVRSDK_PLAYER_SPAWNED";
-    id: string | null;
-    // the local player's mode; omitted for a remote player, whose mode the host doesn't know
+    // the player's id for this session (peer id in a room). never null
+    id: string;
+    // the player's display handle (name@host), null for guests. lets the page name remote players
+    username?: string | null;
+    // the durable account uuid, null for guests. key anything that must outlive the session on this
+    account_id?: string | null;
+    // the player's mode (a remote player's comes with its spawn announcement)
     mode?: "vr" | "flat";
-    // true when this is a remote player the host learned about via presence (shared worlds)
+    // true when this is a remote player that announced its spawn to the host (shared worlds)
     remote?: boolean;
 }
 
 interface WebSDKPlayerLeftEventMessage extends BaseWebSDKEventMessage {
     type: "HVRSDK_PLAYER_LEFT";
-    id: string | null;
+    id: string;
 }
 
 export type WebSDKEventMessage =

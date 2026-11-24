@@ -13,7 +13,7 @@ export const set_local_player_origin = (origin: Group | null) => {
     local_origin = origin;
 };
 
-// the local player's stable id (auth uuid, null for a guest). reports are stamped with this so the
+// the local player's id (useLocalPlayerId; null only before the Player mounts). reports are stamped with this so the
 // host's page can attribute who caused them (e.player). a client's forwarded reports carry its own
 // id; the host's own reports carry the host's.
 let local_player_id: string | null = null;
@@ -31,3 +31,14 @@ export const get_player_position = (out: Vector3): boolean => {
     local_origin.getWorldPosition(out);
     return true;
 };
+
+// bumped whenever the world places the player (HVRSDK_PLAYER_TELEPORT_TO), so PlayerKinematics can
+// treat it as a placement rather than movement: drop any fall speed built up before it, and make the
+// target the fall-reset point
+let teleport_seq = 0;
+
+export const mark_player_teleported = () => {
+    teleport_seq++;
+};
+
+export const get_player_teleport_seq = () => teleport_seq;

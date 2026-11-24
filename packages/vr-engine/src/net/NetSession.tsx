@@ -116,12 +116,17 @@ export const NetSessionProvider = ({ children }: { children: React.ReactNode }) 
 
 export const useNetSession = () => useContext(NetSessionContext);
 
-// the id this player is known by. in a room that's the peer id — what the host stamps on forwarded
-// reports and what remote spawns carry, so every engine agrees on it (for a logged-in user the node
-// adopts the account uuid as the peer id, so it's the same value). outside a room it's the account
-// uuid, null for a solo guest. use this, not the raw auth uuid, for anything player-scoped.
-export const useLocalPlayerId = (): string | null => {
+// a solo guest has no account and no room, but still needs a player id: minted once per page load
+const SOLO_GUEST_ID = `guest-${crypto.randomUUID()}`;
+
+// the id this player is known by — never null, so null can only ever mean "the local player" as
+// shorthand, never "a guest" (whether someone has an account is a separate fact: account_id). in a
+// room that's the peer id — what the host stamps on forwarded reports and what remote spawns carry,
+// so every engine agrees on it (for a logged-in user the node adopts the account uuid as the peer
+// id, so it's the same value). outside a room it's the account uuid, or a minted id for a guest.
+// use this, not the raw auth uuid, for anything player-scoped.
+export const useLocalPlayerId = (): string => {
     const { room } = useNetSession();
     const uuid = useAuthSession()?.uuid ?? null;
-    return room?.self.id ?? uuid;
+    return room?.self.id ?? uuid ?? SOLO_GUEST_ID;
 };

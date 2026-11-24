@@ -1,5 +1,4 @@
 import {send_via_rtc} from "./messenger";
-import {whoami} from "./auth";
 import type {PlayerMonitor, ReportEvent} from "@hyperlinkvr/vr-engine-schemas";
 import {subscribe_report} from "./event_bus";
 import type {NamedWebSDKEvent} from "@hyperlinkvr/types";
@@ -10,66 +9,80 @@ interface RegisteredMonitor {
     unsubscribe: () => void;
 }
 
-// get_current_player() creeates a fresh Player every call, so anything stored on an instance is lost the moment a second one is made
-// TODO: is it better to bookkeep player classes as a whole? probably
-const monitors_by_target = new Map<string, Map<string, RegisteredMonitor>>();
+// several Player handles can exist for one player, so per-player state lives here, keyed by id, not on instances
+const monitors_by_player = new Map<string, Map<string, RegisteredMonitor>>();
 
-const LOCAL_TARGET_KEY = "@local";
-
-const target_key = (username: string | null) => username ?? LOCAL_TARGET_KEY;
-
-const monitors_for = (username: string | null): Map<string, RegisteredMonitor> => {
-    const key = target_key(username);
-    let registered = monitors_by_target.get(key);
+const monitors_for = (id: string): Map<string, RegisteredMonitor> => {
+    let registered = monitors_by_player.get(id);
     if (!registered) {
         registered = new Map();
-        monitors_by_target.set(key, registered);
+        monitors_by_player.set(id, registered);
     }
     return registered;
 };
 
-export class Player {
-    // null targets the local player; otherwise the stable account uuid of the target
-    readonly #id: string | null = null;
+interface PlayerRecord {
+    username: string | null;
+    account_id: string | null;
+}
 
-    constructor(id: string | null = null) {
+// everyone currently in the world, and what their spawn told us about them, keyed by player id
+const live_players = new Map<string, Player>();
+const records = new Map<string, PlayerRecord>();
+
+let local_player: Player | null = null;
+const local_player_waiters: ((player: Player) => void)[] = [];
+
+/**
+ * A player in the world. Get one from {@link on_spawn}, {@link me} or {@link list}, or wrap an id
+ * you were given (e.g. `e.player` on a report).
+ *
+ * Every player has an id for this session, guests included. Whether they have an account is a
+ * separate question: see {@link Player.get_account_id} and {@link Player.is_guest}.
+ */
+export class Player {
+    readonly #id: string;
+
+    constructor(id: string) {
+        if (typeof id !== "string" || id.length === 0) {
+            throw new TypeError("A Player needs a player id. Use players.me() for the local player.");
+        }
         this.#id = id;
     }
 
-    // the stored target id as given (null = local); does not resolve the local player's uuid
-    get_stored_id(): string | null {
+    /**
+     * This player's id for the session: the peer id in a shared world (a logged-in player's is
+     * their account uuid; a guest's is minted and only lasts the connection). Key session state
+     * (scores, turns, owned objects) on this. Never null.
+     */
+    get_id(): string {
         return this.#id;
     }
 
-    // the stable account uuid — the durable id to key game state on (scoreboards, etc). resolves
-    // the local player's id via whoami. null for guests / unauthed. this is what the SDK
-    // identifies players by; the username is a mutable, human-facing handle.
-    async get_id(): Promise<string | null> {
-        if (this.#id !== null) {
-            return this.#id;
-        }
-        const res = await whoami();
-        return res?.info?.uuid ?? null;
+    /** @deprecated use {@link Player.get_id} */
+    get_stored_id(): string {
+        return this.#id;
     }
 
+    /**
+     * The durable account uuid, or null for a guest. Key anything that must outlive the session
+     * (leaderboards, saves) on this.
+     */
+    get_account_id(): string | null {
+        return records.get(this.#id)?.account_id ?? null;
+    }
+
+    is_guest(): boolean {
+        return this.get_account_id() === null;
+    }
+
+    is_local(): boolean {
+        return local_player !== null && local_player.#id === this.#id;
+    }
+
+    /** The player's display handle (`name@host`), or null for a guest. */
     async get_username(): Promise<string | null> {
-        // only the local player's handle is resolvable without the room roster yet (TODO: remote)
-        if (this.#id !== null) {
-            return null;
-        }
-
-        const res = await whoami();
-        if (!res) {
-            throw new Error("Failed to get player identity");
-        }
-
-        if (res.info === null) {
-            // guest mode
-            return null;
-        }
-
-        const {identity} = res.info;
-        return `${identity.name}@${identity.host}`;
+        return records.get(this.#id)?.username ?? null;
     }
 
     async get_position() {
@@ -235,28 +248,43 @@ export class Player {
     }
 }
 
-export const get_current_player = () => {
-    return new Player();
-}
-
-// resolve a username handle to its stable account uuid, for keying game state by id when you only
-// have a handle. only the local player resolves without the room roster yet (others return null
-// until the player registry lands).
-export const resolve_username_to_uuid = async (username: string): Promise<string | null> => {
-    const res = await whoami();
-    if (!res?.info?.uuid) {
-        return null;
+/** The local player, once they've spawned. */
+export const me = (): Promise<Player> => {
+    if (local_player) {
+        return Promise.resolve(local_player);
     }
-    const {identity} = res.info;
-    return `${identity.name}@${identity.host}` === username ? res.info.uuid : null;
+    return new Promise((resolve) => local_player_waiters.push(resolve));
+};
+
+/** @deprecated use {@link me} (or the player passed to {@link on_spawn}) */
+export const get_current_player = (): Player => {
+    if (!local_player) {
+        throw new Error("The local player hasn't spawned yet. Use `await players.me()` or players.on_spawn.");
+    }
+    return local_player;
+};
+
+/** The account uuid of a player present in the world by their handle, or null (guest / not present). */
+export const resolve_username_to_uuid = async (username: string): Promise<string | null> => {
+    for (const record of records.values()) {
+        if (record.username === username) {
+            return record.account_id;
+        }
+    }
+    return null;
 };
 
 export interface SpawnInfo {
-    // omitted for a remote player — the host doesn't know their mode
     mode?: "vr" | "flat";
-    // true for a remote player the host learned about via presence (shared worlds)
+    // true for a remote player (shared worlds, on the host)
     remote?: boolean;
 }
+
+/** A player, or a player id. */
+export type PlayerRef = Player | string;
+
+/** @internal */
+export const player_ref_id = (ref: PlayerRef): string => (typeof ref === "string" ? ref : ref.get_id());
 
 type SpawnCallback = (player: Player, info: SpawnInfo) => void;
 type LeaveCallback = (player: Player) => void;
@@ -264,9 +292,6 @@ type LeaveCallback = (player: Player) => void;
 const spawn_callbacks = new Set<SpawnCallback>();
 const leave_callbacks = new Set<LeaveCallback>();
 
-// everyone currently in the world, keyed by stable id (the local player is keyed under LOCAL)
-const live_players = new Map<string, Player>();
-const player_key = (id: string | null) => id ?? LOCAL_TARGET_KEY;
 
 // fires when a player enters the world (the local player, or a remote one on the host)
 export const on_spawn = (callback: SpawnCallback): (() => void) => {
@@ -290,7 +315,14 @@ export const list = (): Player[] => [...live_players.values()];
 /** @internal */
 export const _dispatch_spawn = (event: NamedWebSDKEvent<"HVRSDK_PLAYER_SPAWNED">) => {
     const player = new Player(event.id);
-    live_players.set(player_key(event.id), player);
+    live_players.set(event.id, player);
+    records.set(event.id, {username: event.username ?? null, account_id: event.account_id ?? null});
+    if (!event.remote) {
+        local_player = player;
+        for (const resolve of local_player_waiters.splice(0)) {
+            resolve(player);
+        }
+    }
     for (const callback of spawn_callbacks) {
         try {
             callback(player, {mode: event.mode, remote: event.remote});
@@ -302,9 +334,8 @@ export const _dispatch_spawn = (event: NamedWebSDKEvent<"HVRSDK_PLAYER_SPAWNED">
 
 /** @internal */
 export const _dispatch_leave = (event: NamedWebSDKEvent<"HVRSDK_PLAYER_LEFT">) => {
-    const key = player_key(event.id);
-    const player = live_players.get(key) ?? new Player(event.id);
-    live_players.delete(key);
+    const player = live_players.get(event.id) ?? new Player(event.id);
+    live_players.delete(event.id);
     for (const callback of leave_callbacks) {
         try {
             callback(player);
@@ -312,4 +343,6 @@ export const _dispatch_leave = (event: NamedWebSDKEvent<"HVRSDK_PLAYER_LEFT">) =
             console.error("Error in player leave callback:", error);
         }
     }
+    records.delete(event.id);
+    monitors_by_player.delete(event.id);
 };

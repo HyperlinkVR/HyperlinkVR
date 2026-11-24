@@ -4,13 +4,14 @@ import { HUDDispatchSchema, HUDElementModificationSchema, TweenSchema } from "@h
 
 
 import { send_via_rtc } from "../messenger";
+import { player_ref_id, type PlayerRef } from "../players";
 import { BaseBuilder } from "./base";
 import type { BindingMap } from "./triggers";
 
 
-// undefined writes the element's own scope, a value writes one player's override
+// undefined writes the element's own scope, a player id writes that player's override
 /** @group HUD */
-export type HUDUpdateTarget = string | null | undefined;
+export type HUDUpdateTarget = string | undefined;
 
 /** @group HUD */
 export class HUDElementModificationBuilder<ComponentInput extends HUDComponentInput>
@@ -23,13 +24,13 @@ export class HUDElementModificationBuilder<ComponentInput extends HUDComponentIn
         this.#target = target;
     }
 
-    // rescope the handle to a player id (uuid); null = local player
-    for_player(id: string | null) {
+    // rescope the modification to one player's override
+    for_player(player: PlayerRef) {
         if (this.#burned) {
             throw new Error("This modification builder has already been applied.");
         }
 
-        this.#target = id;
+        this.#target = player_ref_id(player);
         return this;
     }
 
@@ -167,18 +168,18 @@ export interface HUDElementHandleBase<ComponentInput extends HUDComponentInput> 
 /** @group HUD */
 export type HUDHandleCore<ComponentInput extends HUDComponentInput, Handle> =
     HUDElementHandleBase<ComponentInput> & {
-    for_player(username: string | null): Handle;
+    for_player(player: PlayerRef): Handle;
 };
 
 /** @group HUD */
 export interface HUDElementHandle<ComponentInput extends HUDComponentInput>
     extends HUDElementHandleBase<ComponentInput> {
-    for_player(username: string | null): HUDElementHandle<ComponentInput>;
+    for_player(player: PlayerRef): HUDElementHandle<ComponentInput>;
 }
 
 /** @group HUD */
 export interface HUDTextHandle extends HUDElementHandleBase<HUDTextComponentInput> {
-    for_player(username: string | null): HUDTextHandle;
+    for_player(player: PlayerRef): HUDTextHandle;
 
     set_text(text: string): Promise<void>;
     set_color(color: HexColor): Promise<void>;
@@ -187,7 +188,7 @@ export interface HUDTextHandle extends HUDElementHandleBase<HUDTextComponentInpu
 
 /** @group HUD */
 export interface HUDProgressHandle extends HUDElementHandleBase<HUDProgressComponentInput> {
-    for_player(username: string | null): HUDProgressHandle;
+    for_player(player: PlayerRef): HUDProgressHandle;
 
     set_min(min: number): Promise<void>;
     set_max(max: number): Promise<void>;
@@ -252,17 +253,17 @@ export abstract class HUDElementBuilder<
         return this;
     }
 
-    // null means the local player
-    player(id: string | null) {
-        this._internal.scope = {type: "player", ids: [id]};
+    // only this player sees it
+    player(player: PlayerRef) {
+        this._internal.scope = {type: "player", ids: [player_ref_id(player)]};
         return this;
     }
 
-    players(...ids: (string | null)[]) {
-        if (ids.length === 0) {
-            throw new Error("players needs at least one id. Use global() for everyone.");
+    players(...players: PlayerRef[]) {
+        if (players.length === 0) {
+            throw new Error("players needs at least one player. Use global() for everyone.");
         }
-        this._internal.scope = {type: "player", ids};
+        this._internal.scope = {type: "player", ids: players.map(player_ref_id)};
         return this;
     }
 
@@ -331,7 +332,7 @@ export abstract class HUDElementBuilder<
                     return new HUDElementModificationBuilder<ComponentInput>(created.id, bound_target);
                 },
 
-                for_player: (username) => make_handle(username)
+                for_player: (player) => make_handle(player_ref_id(player))
             };
 
             return this.extend_handle(core);

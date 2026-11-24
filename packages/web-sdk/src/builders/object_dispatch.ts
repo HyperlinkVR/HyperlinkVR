@@ -6,7 +6,7 @@ import { EngineObjectDispatchSchema, EngineObjectModificationSchema, TweenSchema
 
 import { subscribe_report } from "../event_bus";
 import { send_via_rtc } from "../messenger";
-import type { Player } from "../players";
+import { type Player, player_ref_id } from "../players";
 import { BaseBuilder } from "./base";
 import { _INTERACTION_API_MAKERS } from "./interactions";
 import { _PREFAB_API_MAKERS } from "./prefabs";
@@ -1026,10 +1026,9 @@ export class EngineObjectDispatchBuilder<T extends EngineObject = EngineObject> 
                         throw new Error("This object has already been destroyed.");
                     }
 
-                    // null unpins. a Player's stored id is null for the local player (the host), so the
-                    // pin intent is sent explicitly rather than inferred from the id
+                    // null unpins
                     const pin = player !== null;
-                    const owner = player === null || typeof player === "string" ? player : player.get_stored_id();
+                    const owner = player === null ? null : player_ref_id(player);
                     await send_via_rtc({
                         action: "HVRSDK_SET_OBJECT_OWNERSHIP",
                         object_id: created.object.id,
