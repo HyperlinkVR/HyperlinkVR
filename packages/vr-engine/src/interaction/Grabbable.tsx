@@ -40,7 +40,7 @@ import {
 import { CAPSULE_RADIUS, get_capsule_world_position } from "../player/motion";
 import { rotation_to_quaternion } from "../util/rotation";
 import { clear_object_holder, set_object_holder } from "./util/holders";
-import { can_claim_body, claim_body, is_dynamic_body, on_body_owner_change, owns_body } from "../net/ownership";
+import { can_claim_body, claim_body, is_networked_object, on_body_owner_change, owns_body, register_grab_target } from "../net/ownership";
 
 export type HandTarget = "watch_hand" | "non_watch_hand" | "left" | "right";
 
@@ -555,8 +555,8 @@ export const useGrabbable = (
 
     const perform_grab = useCallback(
         (hand: Hand, use_snap = true) => {
-            // shared worlds (#22): another peer's claimed body is in their hand (or mid-throw)
-            const owned_id = obj_refs && is_dynamic_body(obj_refs.id) ? obj_refs.id : null;
+            // shared worlds (#22/#23): another peer's claimed body or held object is in their hand (or mid-throw)
+            const owned_id = obj_refs && is_networked_object(obj_refs.id) ? obj_refs.id : null;
             if (owned_id && !can_claim_body(owned_id)) {
                 return;
             }
@@ -913,6 +913,16 @@ export const useGrabbable = (
 
     // shared worlds (#22): if the host refuses our claim (someone else got there first), let go — the
     // body is theirs, and PhysicsSync starts following them again
+    // #23: register what this grab moves, so if the object isn't a dynamic body it can still be held
+    // across peers (claimed by its holder, who streams the pose; everyone else follows)
+    useEffect(() => {
+        const id = obj_refs?.id;
+        if (!id) {
+            return;
+        }
+        return register_grab_target(id, target_ref);
+    }, [obj_refs?.id, target_ref]);
+
     const release_held_ref = useRef(release_held);
     release_held_ref.current = release_held;
     useEffect(() => {
@@ -1051,7 +1061,7 @@ export const useGrabbable = (
         // a body another peer owns (pinned, or claimed mid-throw) isn't offered to our hands at all:
         // no bid, so no outline/hint, and the hand stays free to pick whatever is behind it
         const claimable =
-            !obj_refs || !is_dynamic_body(obj_refs.id) || can_claim_body(obj_refs.id);
+            !obj_refs || !is_networked_object(obj_refs.id) || can_claim_body(obj_refs.id);
 
         for (const hand of hands) {
             const gripObj = hand.grip.current;

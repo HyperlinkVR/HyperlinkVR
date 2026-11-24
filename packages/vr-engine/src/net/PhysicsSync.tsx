@@ -11,7 +11,8 @@
 import type { PeerID } from "@hyperlinkvr/core";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
-import { Quaternion, Vector3 } from "three";
+import type { Object3D } from "three";
+import { Matrix4, Quaternion, Vector3 } from "three";
 
 import { useWebSDKMessaging } from "../contexts/WebSDKMessagingContext";
 import { get_object_refs } from "../engine/object_ref_registry";
@@ -25,9 +26,12 @@ import {
     configure_ownership,
     get_body_owner,
     get_dynamic_bodies,
+    get_grab_target,
+    get_held_objects,
     get_owner_overrides,
     get_ownership_table,
     is_body_pinned,
+    is_held_object,
     on_body_owner_change,
     owns_body,
     release_body,
@@ -39,6 +43,22 @@ import { session_now } from "./session_clock";
 
 const SEND_INTERVAL_MS = 1000 / 30;
 const REST_RESENDS = 3;
+
+// drives a node to a world pose through its parent, for held objects with no body (#23)
+const scratch_inverse = new Matrix4();
+const scratch_parent_q = new Quaternion();
+const set_world_pose = (node: Object3D, position: Vector3, quaternion: Quaternion) => {
+    const parent = node.parent;
+    if (!parent) {
+        node.position.copy(position);
+        node.quaternion.copy(quaternion);
+        return;
+    }
+    parent.updateWorldMatrix(true, false);
+    node.position.copy(position).applyMatrix4(scratch_inverse.copy(parent.matrixWorld).invert());
+    parent.getWorldQuaternion(scratch_parent_q);
+    node.quaternion.copy(scratch_parent_q.invert().multiply(quaternion));
+};
 
 // mirrors rapier's enum (as Grabbable does) to avoid importing rapier-compat here
 enum RigidBodyType {
@@ -339,6 +359,61 @@ export const PhysicsSync = () => {
                 entries.push([id, p.x, p.y, p.z, q.x, q.y, q.z, q.w, v.x, v.y, v.z, w.x, w.y, w.z]);
             }
 
+            // held objects (#23): grabbables that aren't dynamic bodies. their holder streams them while
+            // they're in hand (plus the usual few resends once let go), then a client hands them
+            // straight back: with no physics there's nothing to settle
+            for (const id of get_held_objects()) {
+                if (!is_simulated_locally(id)) {
+                    continue;
+                }
+
+                const held = is_object_held(id);
+                let send = false;
+                if (held) {
+                    awake.current.add(id);
+                    rest_resends.current.delete(id);
+                    send = true;
+                } else if (awake.current.has(id)) {
+                    awake.current.delete(id);
+                    rest_resends.current.set(id, REST_RESENDS);
+                }
+
+                const left = rest_resends.current.get(id);
+                if (left !== undefined) {
+                    send = true;
+                    if (left <= 1) rest_resends.current.delete(id);
+                    else rest_resends.current.set(id, left - 1);
+                }
+
+                if (!is_host && !held && !rest_resends.current.has(id)
+                    && get_body_owner(id) === room.self.id && !is_body_pinned(id) && !releasing.current.has(id)) {
+                    releasing.current.add(id);
+                    release_body(id);
+                }
+
+                if (!send) {
+                    continue;
+                }
+
+                // a kinematic body if it has one (the grab drives that), else the node the grab moves
+                const body = get_object_refs(id)?.current?.rigid_body.current;
+                const { position, quaternion } = scratch.current;
+                if (body && body.isValid()) {
+                    const p = body.translation();
+                    const q = body.rotation();
+                    position.set(p.x, p.y, p.z);
+                    quaternion.set(q.x, q.y, q.z, q.w);
+                } else {
+                    const target = get_grab_target(id);
+                    if (!target) {
+                        continue;
+                    }
+                    target.getWorldPosition(position);
+                    target.getWorldQuaternion(quaternion);
+                }
+                entries.push([id, position.x, position.y, position.z, quaternion.x, quaternion.y, quaternion.z, quaternion.w, 0, 0, 0, 0, 0, 0]);
+            }
+
             if (entries.length > 0) {
                 const frame: PhysicsFrame = { t: session_now(), b: entries };
                 room.send("others", PHYSICS_CHANNEL, JSON.stringify(frame), "unreliable");
@@ -358,6 +433,29 @@ export const PhysicsSync = () => {
             }
 
             const body = refs.rigid_body.current;
+
+            // held objects (#23): drive their kinematic body, or the node the grab moves
+            if (is_held_object(id)) {
+                if (is_simulated_locally(id) || !buffer.sample(render_t, position, quaternion)) {
+                    continue;
+                }
+                if (body && body.isValid()) {
+                    if (!snapped.current.has(id) || body.bodyType() !== RigidBodyType.KinematicPositionBased) {
+                        body.setTranslation(position, true);
+                        body.setRotation(quaternion, true);
+                        snapped.current.add(id);
+                    }
+                    body.setNextKinematicTranslation(position);
+                    body.setNextKinematicRotation(quaternion);
+                } else {
+                    const target = get_grab_target(id);
+                    if (target) {
+                        set_world_pose(target, position, quaternion);
+                    }
+                }
+                continue;
+            }
+
             if (!body || !body.isValid() || is_simulated_locally(id)
                 || body.bodyType() !== RigidBodyType.KinematicPositionBased) {
                 continue;

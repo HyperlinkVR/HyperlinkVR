@@ -4,7 +4,7 @@ import { PositionalAudio } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useXRInputSourceState } from "@react-three/xr";
 import type { ParticleSystemRef } from "quarks.r3f";
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { Audio, AudioLoader, Euler, MathUtils, Vector3 } from "three";
 import type { DirectionalLight, Group, Object3D, PointLight, PositionalAudio as PositionalAudioType, SpotLight } from "three";
 
@@ -33,8 +33,17 @@ interface InteractionWrapperProps<I extends Interaction = Interaction> {
     children: React.ReactNode;
 }
 
+// every grabbable report (grab, release, proximity, trigger) is the local player's hand acting, and
+// only fires on their engine: it speaks for them even before they own the body (proximity fires
+// while the host still owns it, so the default "owner speaks" would drop it)
+const LOCAL_PLAYER_SUBJECT = { kind: "local_player" } as const;
+
 const GrabbableWrapper = ({interaction, children}: InteractionWrapperProps<GrabbableInteraction>) => {
-    const {emit_report} = useObjectBinding(interaction.binding);
+    const {emit_report: emit_object_report} = useObjectBinding(interaction.binding);
+    const emit_report = useCallback(
+        (body: Parameters<typeof emit_object_report>[0]) => emit_object_report(body, LOCAL_PLAYER_SUBJECT),
+        [emit_object_report]
+    );
 
     // TODO: should we pass through the root ref? or let the wrapper impls manage their own?
     // TODO: implement commands and maybe even discrete animation channels
