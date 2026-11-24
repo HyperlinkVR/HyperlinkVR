@@ -25,6 +25,9 @@ type InteractedBodyPart = InteractedHand | InteractedHeadOrTorso;
 
 export type InteractedPlayer = InteractedBodyPart & {
     type: "player"
+    // which player: their session player id. set for raycast hits on remote players' bodies and on
+    // the local player's; absent only if the local player id isn't known yet
+    player_id?: string;
 }
 
 export interface InteractedObject {

@@ -40,6 +40,7 @@ export const WORLD_ENV_DEFAULT: WorldEnvFull = {
 
     physics: {
         gravity: -9.81,
+        player_collisions: false,
     }
 }
 
@@ -80,6 +81,7 @@ export const WORLD_ENV_GRAYSPACE: WorldEnvFull = {
 
     physics: {
         gravity: -9.81,
+        player_collisions: false,
     }
 };
 

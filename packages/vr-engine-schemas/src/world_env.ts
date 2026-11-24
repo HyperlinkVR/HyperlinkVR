@@ -42,7 +42,10 @@ export const WorldFogSchema = z.object({
 export type WorldFog = z.infer<typeof WorldFogSchema>;
 
 export const WorldPhysicsSchema = z.object({
-    gravity: z.number().default(-9.81)
+    gravity: z.number().default(-9.81),
+    // shared worlds: whether players block each other's movement (their bodies collide with each
+    // other's). off by default, so players walk through one another
+    player_collisions: z.boolean().default(false)
 });
 export type WorldPhysics = z.infer<typeof WorldPhysicsSchema>;
 export type WorldPhysicsInput = z.input<typeof WorldPhysicsSchema>;

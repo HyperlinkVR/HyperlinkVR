@@ -14,6 +14,7 @@ import {useWorldEnvironment} from "../world/WorldEnvironmentContext";
 import {CAPSULE_RADIUS, consume_player_movement, set_capsule_world_position} from "./motion";
 import {PLAYER_COLLISION_GROUPS, EXCLUDE_SENSORS} from "../physics/collision_groups";
 import {get_active_seat} from "./seating";
+import {REMOTE_AVATAR_PREFIX} from "../interaction/util/target_resolution";
 import {get_player_teleport_seq} from "./player_position_registry";
 import {useWorldLoadingStateStore} from "../stores/WorldLoadingStateStore";
 
@@ -90,6 +91,8 @@ export const PlayerKinematics = () => {
     const head_local = useRef(new Vector3());
 
     const { world_env } = useWorldEnvironment();
+    const player_collisions_ref = useRef(world_env.physics.player_collisions);
+    player_collisions_ref.current = world_env.physics.player_collisions;
 
     const should_hit_environment = useCallback(
         (collider: RapierCollider): boolean => {
@@ -98,12 +101,17 @@ export const PlayerKinematics = () => {
 
             const name = rigidBodyStates.get(body.handle)?.object.name ?? "";
 
-            const is_player_part =
+            // never our own body. another player's (#25) only when the world turns player collisions on:
+            // by default players walk through each other (no body-blocking doorways)
+            if (name.startsWith(REMOTE_AVATAR_PREFIX)) {
+                return player_collisions_ref.current;
+            }
+            const is_own_part =
                 name.startsWith("avatar_head_rb") ||
                 name.startsWith("avatar_torso_rb") ||
                 name.startsWith("avatar_hand_rb");
 
-            return !is_player_part;
+            return !is_own_part;
         },
         [rigidBodyStates]
     );

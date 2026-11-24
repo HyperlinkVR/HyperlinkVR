@@ -159,6 +159,16 @@ export class WorldEnvBuilder extends BaseBuilder<WorldEnvInput> {
         return this;
     }
 
+    // shared worlds: players block each other's movement instead of walking through one another.
+    // blocking only: each player's movement runs on their own engine, so nobody can be shoved
+    set_player_collisions(enabled: boolean) {
+        if (!this._internal.physics) {
+            this._internal.physics = {};
+        }
+        this._internal.physics.player_collisions = enabled;
+        return this;
+    }
+
     build(): WorldEnv {
         return WorldEnvSchema.parse(this._internal);
     }
