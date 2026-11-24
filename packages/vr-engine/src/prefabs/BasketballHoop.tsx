@@ -10,7 +10,7 @@ import { ObjectPhysics } from "../engine/ObjectPhysics";
 import { useObjectBinding } from "../hooks/useObjectBinding";
 import { useObjectShadows } from "../hooks/useObjectShadows";
 import { ParticleEmitter } from "../interaction/ParticleEmitter";
-import { resolve_interacted, TriggerVolume } from "../interaction/TriggerVolume";
+import { interacted_subject, resolve_interacted, TriggerVolume } from "../interaction/TriggerVolume";
 import type { PrefabProps } from "../types";
 import { PrefabRoot } from "./PrefabRoot";
 
@@ -146,7 +146,7 @@ export const BasketballHoop = ({
                                         ? interacted.object_id
                                         : undefined
                             }
-                        });
+                        }, interacted_subject(interacted));
 
                         if (enable_sfx !== false) {
                             const audio = audio_ref.current;

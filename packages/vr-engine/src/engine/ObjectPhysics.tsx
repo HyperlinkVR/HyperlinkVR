@@ -5,7 +5,7 @@ import type { CollisionEnterPayload, CollisionPayload, RapierRigidBody, RigidBod
 import { BallCollider, CapsuleCollider, CuboidCollider, CylinderCollider, MeshCollider, RigidBody, useRapier } from "@react-three/rapier";
 import type { ComponentProps} from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { EulerOrder, Group, Mesh} from "three";
+import type { EulerOrder, Group, Mesh, Object3D } from "three";
 import { Euler, MeshBasicMaterial, Quaternion, Vector3 } from "three";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils";
 
@@ -19,7 +19,26 @@ import { resolve_object_node } from "../interaction/util/target_resolution";
 import { build_collision_groups, GROUP_PROP, GROUP_WORLD } from "../physics/collision_groups";
 import { register_collider_collision_info } from "../physics/collision_hooks";
 import { useWorldHinge } from "../physics/physics_constraints";
-import { register_dynamic_body } from "../net/ownership";
+import { is_dynamic_body, register_dynamic_body } from "../net/ownership";
+import type { ReportSubject } from "./report_outbox";
+
+// who speaks for a collision this object reports. a networked body speaks for itself (its owner's
+// copy is the real one: the default). anything else (static, animated) exists on every engine, so
+// the cause decides: an object hitting it is the host's to report (derived from the streamed path,
+// see ReportSubject), the local player's body is theirs
+const collision_subject = (self_id: string | undefined, other_object: Object3D | null | undefined): ReportSubject | undefined => {
+    if (self_id && is_dynamic_body(self_id)) {
+        return undefined;
+    }
+    const other_id = resolve_object_node(other_object ?? null)?.userData?.object_id as string | undefined;
+    if (other_id) {
+        return { kind: "object", id: other_id };
+    }
+    if (other_object?.name.startsWith("avatar_")) {
+        return { kind: "local_player" };
+    }
+    return { kind: "world" };
+};
 import {
     rotation_to_quaternion,
     rotation_to_quaternion_array
@@ -585,11 +604,11 @@ const ObjectPhysicsInternal = ({
             emit_report({
                 kind: "physics-collision",
                 payload: event_payload
-            });
+            }, collision_subject(object_id, payload.other.rigidBodyObject));
 
             on_collision_enter?.(payload);
         },
-        [world, physics.report_collisions, emit_report, on_collision_enter]
+        [world, physics.report_collisions, emit_report, on_collision_enter, object_id]
     );
 
     const report_collision_exit = useCallback(
@@ -607,11 +626,11 @@ const ObjectPhysicsInternal = ({
                     type: "exit",
                     other_object_id
                 }
-            });
+            }, collision_subject(object_id, payload.other.rigidBodyObject));
 
             on_collision_exit?.(payload);
         },
-        [physics.report_collisions, emit_report, on_collision_exit]
+        [physics.report_collisions, emit_report, on_collision_exit, object_id]
     );
 
     return (

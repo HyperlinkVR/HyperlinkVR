@@ -3,10 +3,9 @@
 //
 // scope note: a client forwards every report its engine produces. player-caused reports (button
 // presses, grabs, trigger-enters, raycasts, input) are unambiguous — they only fire on the engine
-// where that player is local, so they can't double-fire on the host. object-state reports (physics
-// collisions, object monitors) still fire on both engines because both simulate locally, so those
-// double-fire until per-object authority exists (#20). world monitors are already handled: a client
-// hands world authority to the host below, so they run host-only.
+// where that player is local, so they can't double-fire on the host. object-caused reports (zones,
+// collisions) are spoken for by one engine via their subject (report_outbox ReportSubject, #20), and
+// world monitors run host-only because a client hands world authority to the host below.
 
 import type { ReportEvent } from "@hyperlinkvr/vr-engine-schemas";
 import { useEffect, useRef } from "react";

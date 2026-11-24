@@ -3,7 +3,7 @@ import {useCallback, useEffect, useRef} from "react";
 
 import {useObjectRefsOptional} from "../contexts/ObjectRefsContext";
 import { useWebSDKMessaging } from "../contexts/WebSDKMessagingContext";
-import {fire_triggers, publish_reports} from "../engine/report_outbox";
+import {fire_triggers, publish_reports, type ReportSubject, speaks_for_subject} from "../engine/report_outbox";
 import {register_command_handler} from "../engine/trigger_registry";
 import type {AnimationChannel} from "../animation/channel_registry";
 import { register_animation_channels} from "../animation/channel_registry";
@@ -25,13 +25,17 @@ export const useObjectBinding = (binding: BindingConfig | undefined) => {
     const source_id = binding?.id;
 
     const emit_report = useCallback(
-        (body: ReportBody) => {
+        // subject: what caused this, when it isn't this object itself (see ReportSubject). decides which
+        // engine speaks for the report, so e.g. a ball entering a zone reports once, from its owner
+        (body: ReportBody, subject?: ReportSubject) => {
             if (!source_id || !object_id) {
                 return;
             }
 
+            const speaks = subject ? speaks_for_subject(subject) : undefined;
+
             // run triggers regardless of if anything is listening
-            fire_triggers(source_id, object_id, body.payload);
+            fire_triggers(source_id, object_id, body.payload, speaks);
 
             publish_reports([
                 {
@@ -40,7 +44,7 @@ export const useObjectBinding = (binding: BindingConfig | undefined) => {
                     ts: performance.now(),
                     ...body
                 } as ReportEvent
-            ]);
+            ], speaks);
         },
         [source_id, object_id]
     );

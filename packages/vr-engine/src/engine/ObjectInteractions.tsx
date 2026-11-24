@@ -21,7 +21,7 @@ import { FollowPlayer } from "../interaction/FollowPlayer";
 import { ParticleEmitter } from "../interaction/ParticleEmitter";
 import type { RaycastHandle } from "../interaction/Raycast";
 import { Raycast } from "../interaction/Raycast";
-import { detect_trigger_direction, resolve_interacted, TriggerVolume } from "../interaction/TriggerVolume";
+import { detect_trigger_direction, interacted_subject, resolve_interacted, TriggerVolume } from "../interaction/TriggerVolume";
 import { get_capsule_world_position } from "../player/motion";
 import { is_seated_on, sit_on, stand_up } from "../player/seating";
 import { ShadowDirectionalLight, ShadowPointLight, ShadowSpotLight } from "../render";
@@ -106,7 +106,7 @@ const TriggerVolumeWrapper = ({interaction, children}: InteractionWrapperProps<T
                             } : undefined
                         };
 
-                        emit_report({ kind: "trigger-volume", payload: { type: "enter", interacted: interacted_with_positioning } });
+                        emit_report({ kind: "trigger-volume", payload: { type: "enter", interacted: interacted_with_positioning } }, interacted_subject(interacted));
                     }
                     : undefined
                 }
@@ -114,7 +114,7 @@ const TriggerVolumeWrapper = ({interaction, children}: InteractionWrapperProps<T
                     ? (payload) => {
                         const interacted = resolve_interacted(payload, interaction);
                         if (!interacted) return;
-                        emit_report({ kind: "trigger-volume", payload: { type: "exit", interacted } });
+                        emit_report({ kind: "trigger-volume", payload: { type: "exit", interacted } }, interacted_subject(interacted));
                     }
                     : undefined
                 }

@@ -10,6 +10,7 @@ import { Quaternion, Vector3 } from "three";
 
 import { get_collider_extents, useCollider, useKinematicPosition } from "../engine/ObjectPhysics";
 import { collect_tags } from "../util/tags";
+import type { ReportSubject } from "../engine/report_outbox";
 import { resolve_object_node } from "./util/target_resolution";
 
 
@@ -149,6 +150,10 @@ interface MiniInteraction {
         tag_filter?: string[];
     }
 }
+
+// who speaks for a zone event about `interacted` (see ReportSubject)
+export const interacted_subject = (interacted: NonNullable<TriggerVolumeInteractionPayload["interacted"]>): ReportSubject =>
+    interacted.type === "object" ? { kind: "object", id: interacted.object_id } : { kind: "local_player" };
 
 export const resolve_interacted = (payload: IntersectionPayload, config: MiniInteraction = {}): TriggerVolumeInteractionPayload["interacted"] | null => {
     const {part, handedness} = resolve_body_part(payload);
