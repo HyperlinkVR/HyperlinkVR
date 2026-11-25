@@ -171,7 +171,14 @@ export type ReportEventPayload =
     | GolfBallPrefabPayload
     | DistanceMonitorPayload;
 
+// a player sat on or stood up from a seat (reported by that player's own engine)
+export interface SeatInteractionPayload {
+    type: "sit" | "stand";
+    player_id: string;
+}
+
 export type ReportEvent =
+    | ReportEventEnvelope<"seat", SeatInteractionPayload>
     | ReportEventEnvelope<"trigger-volume", TriggerVolumeInteractionPayload>
     | ReportEventEnvelope<"grab", GrabInteractionPayload>
     | ReportEventEnvelope<"pos-monitor", AxesMonitorPayload>

@@ -1,6 +1,7 @@
 import type { Audio } from "three";
 
 import { session_to_local } from "../net/session_clock";
+import { get_late_join_start } from "./object_created_at";
 
 // playback commands (play/restart) carry `fired_at`, the session time they were issued (stamped by the
 // host). honouring it keeps sounds and effects in step across engines: a replicated play that arrives
@@ -13,6 +14,12 @@ export const seconds_since_fired = (args: any): number => {
         return 0;
     }
     return Math.max(0, (performance.now() - session_to_local(args.fired_at)) / 1000);
+};
+
+// seconds since an object a late joiner received was created (its autoplay started then); 0 otherwise
+export const seconds_since_late_join_start = (object_id: string | undefined): number => {
+    const start = object_id ? get_late_join_start(object_id) : undefined;
+    return start === undefined ? 0 : Math.max(0, (performance.now() - session_to_local(start)) / 1000);
 };
 
 // starts `audio` as if it had begun `elapsed` seconds ago

@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { forget_object_created, record_object_created } from "./object_created_at";
 
 import { useWebSDKMessaging } from "../contexts/WebSDKMessagingContext";
 import { useEngineObjectStore } from "../stores/EngineObjectStore";
@@ -58,6 +59,7 @@ export const EngineObjectSync = () => {
 
             const id = message.id ?? crypto.randomUUID();
             const created_object = { id, ...data };
+            record_object_created(id, message.created_at);
             console.log("(+) Creating engine object", created_object);
 
             // queue rather than mount immediately
@@ -85,6 +87,7 @@ export const EngineObjectSync = () => {
             console.log("(-) Destroyed engine object", message.object_id);
             remove_object(message.object_id);
             clear_object_ready(message.object_id);
+            forget_object_created(message.object_id);
             console.log("New object count: ", Object.keys(useEngineObjectStore.getState().objects).length)
 
             reply({

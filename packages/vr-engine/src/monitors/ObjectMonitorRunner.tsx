@@ -6,7 +6,7 @@ import { Euler, Quaternion, Vector3 } from "three";
 
 import type { ObjectRefsContextType } from "../contexts/ObjectRefsContext";
 import { get_object_refs } from "../engine/object_ref_registry";
-import { has_report_sink, publish_reports } from "../engine/report_outbox";
+import { has_report_sink, publish_reports, speaks_for_object_state } from "../engine/report_outbox";
 import type {
     CompiledMonitor} from "./object_monitor_registry";
 import {
@@ -153,7 +153,9 @@ export const ObjectMonitorRunner = () => {
             return;
         }
 
-        publish_reports(pending_reports.slice());
+        // one engine speaks for each object's state, or every peer would report it (and clients forward
+        // theirs to the host's page)
+        publish_reports(pending_reports.filter((report) => speaks_for_object_state(report.object_id)), true);
         pending_reports.length = 0;
     }, []);
 

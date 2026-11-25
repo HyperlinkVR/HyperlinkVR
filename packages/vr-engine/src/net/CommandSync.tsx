@@ -10,6 +10,7 @@ import { clear_active_seeks, get_active_seeks, set_active_seek } from "../animat
 import { clear_active_tweens, get_active_tweens, set_active_tween } from "../animation/tween_registry";
 import { useWebSDKMessaging } from "../contexts/WebSDKMessagingContext";
 import { sample_live_transform } from "../engine/object_modification";
+import { clear_object_created, get_created_at_table, mark_object_joined_late } from "../engine/object_created_at";
 import { wait_for_all_objects_ready } from "../engine/object_ready_registry";
 import { get_object_refs } from "../engine/object_ref_registry";
 import { run_command, set_trigger_replicator } from "../engine/trigger_registry";
@@ -21,6 +22,7 @@ import { WORLD_ENV_DEFAULT } from "../world/WorldEnvironmentContext";
 import { apply_world_env, get_current_world_env } from "../world/world_env_registry";
 import { COMMAND_CHANNEL, SNAPSHOT_CHANNEL, SNAPSHOT_REQUEST_CHANNEL, set_command_transport } from "./command_bus";
 import { useNetSession } from "./NetSession";
+import { clear_seats, get_seat_table, replace_seat_table } from "./seat_occupancy";
 import { get_grab_target, get_held_objects } from "./ownership";
 import { set_world_pose } from "./PhysicsSync";
 import { local_to_session, session_now, session_to_local } from "./session_clock";
@@ -50,6 +52,10 @@ interface Snapshot {
     journal: JournalEntry[];
     // held objects without a body sit where their grab node was left, not at their root (#23)
     held: [string, number, number, number, number, number, number, number][];
+    // who sits in which seat
+    seats: [string, string][];
+    // when each object was created (session time), so state that started with it can catch up
+    created_at: [string, number][];
 }
 
 // a shared client's view of the command stream around its join snapshot:
@@ -112,7 +118,9 @@ const build_snapshot = (): Snapshot => {
         tweens,
         seeks,
         journal: get_journal(),
-        held
+        held,
+        seats: get_seat_table(),
+        created_at: get_created_at_table()
     };
 };
 
@@ -163,6 +171,12 @@ export const CommandSync = () => {
         };
 
         const hydrate = async (snapshot: Snapshot) => {
+            // before the objects mount, so anything that starts with them (an autoplaying sound) knows
+            // how long ago that was
+            for (const [id, created_at] of snapshot.created_at ?? []) {
+                mark_object_joined_late(id, created_at);
+            }
+
             const { enqueue_object } = useEngineObjectStore.getState();
             for (const object of snapshot.objects) {
                 // readopt: url strings → AssetRefs
@@ -227,6 +241,8 @@ export const CommandSync = () => {
             for (const seek of snapshot.seeks ?? []) {
                 set_active_seek({ ...seek, est_vel: new Vector3() });
             }
+
+            replace_seat_table(snapshot.seats ?? []);
 
             for (const entry of snapshot.journal ?? []) {
                 if (entry.kind === "action") {
@@ -306,6 +322,8 @@ export const CommandSync = () => {
         clear_active_tweens();
         clear_active_seeks();
         clear_animations();
+        clear_seats();
+        clear_object_created();
         useWorldLoadingStateStore.getState().reset_for_new_document();
         room.send("host", SNAPSHOT_REQUEST_CHANNEL, "", "reliable");
     }, [is_shared_client, room]);

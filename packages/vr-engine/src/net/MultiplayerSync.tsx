@@ -15,8 +15,9 @@ import { add_report_sink } from "../engine/report_outbox";
 import { run_triggers } from "../engine/trigger_registry";
 import { request_watch_modal } from "../player/watch_event_bus";
 import { set_world_authority } from "./authority";
-import { PLAYER_ACTION_CHANNEL, REPORT_CHANNEL, SPAWN_CHANNEL } from "./command_bus";
+import { PLAYER_ACTION_CHANNEL, REPORT_CHANNEL, SEAT_CHANNEL, SPAWN_CHANNEL } from "./command_bus";
 import { useNetSession } from "./NetSession";
+import { clear_seats, host_handle_seat_request, host_release_player_seats, type SeatMessage, type SeatRequest, set_seat_occupant, set_seat_transport } from "./seat_occupancy";
 import { fail_player_actions_for, type PlayerActionMessage, resolve_player_action, set_player_action_transport } from "./player_actions";
 import { local_to_session } from "./session_clock";
 
@@ -181,6 +182,45 @@ export const MultiplayerSync = () => {
             }
         };
     }, [room, mode, is_host, apply_remote_command]);
+
+    // seats: clients claim/release through the host, the host settles it and tells everyone who's in each
+    useEffect(() => {
+        if (!room || mode !== "shared") {
+            return;
+        }
+
+        set_seat_transport(is_host
+            ? { broadcast: (seat_id, player) => {
+                const message: SeatMessage = { type: "occupant", seat_id, player };
+                room.send("others", SEAT_CHANNEL, JSON.stringify(message), "reliable");
+            } }
+            : { send_to_host: (request) => room.send("host", SEAT_CHANNEL, JSON.stringify(request), "reliable") });
+
+        const off_message = room.on_message((message) => {
+            if (message.channel !== SEAT_CHANNEL) {
+                return;
+            }
+            if (is_host) {
+                host_handle_seat_request(message.from, JSON.parse(message.payload as string) as SeatRequest);
+            } else if (message.from === room.host()) {
+                const update = JSON.parse(message.payload as string) as SeatMessage;
+                set_seat_occupant(update.seat_id, update.player);
+            }
+        });
+
+        const off_event = room.on_event((event) => {
+            if (is_host && event.type === "peer-left") {
+                host_release_player_seats(event.peer_id);
+            }
+        });
+
+        return () => {
+            off_message();
+            off_event();
+            set_seat_transport(null);
+            clear_seats();
+        };
+    }, [room, mode, is_host]);
 
     return null;
 };

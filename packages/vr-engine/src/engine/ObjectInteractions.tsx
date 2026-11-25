@@ -23,9 +23,11 @@ import type { RaycastHandle } from "../interaction/Raycast";
 import { Raycast } from "../interaction/Raycast";
 import { detect_trigger_direction, interacted_subject, resolve_interacted, TriggerVolume } from "../interaction/TriggerVolume";
 import { get_capsule_world_position } from "../player/motion";
+import { get_seat_occupant, leave_seat, on_seat_change, request_seat, set_seat_occupant } from "../net/seat_occupancy";
+import { get_local_player_id } from "../player/player_position_registry";
 import { is_seated_on, sit_on, stand_up } from "../player/seating";
 import { ShadowDirectionalLight, ShadowPointLight, ShadowSpotLight } from "../render";
-import { finished_one_shot, play_audio_from, seconds_since_fired } from "./timed_playback";
+import { finished_one_shot, play_audio_from, seconds_since_fired, seconds_since_late_join_start } from "./timed_playback";
 import { rotation_to_euler } from "../util/rotation";
 
 
@@ -169,9 +171,18 @@ const PositionalAudioWrapper = ({interaction, children}: InteractionWrapperProps
     // a play that arrived before the sound loaded (e.g. a late joiner's replay), with its fired_at args
     const pending_play = useRef<{args: any} | null>(null);
 
+    const {id: object_id} = useObjectRefs();
+    const autoplayed = useRef(false);
+
     useFrame(() => {
         const audio = audio_ref.current;
-        if (pending_play.current && audio?.buffer) {
+        if (!audio?.buffer) return;
+        // autoplay once loaded; a late joiner picks it up as far in as it's been playing
+        if (interaction.autoplay && !autoplayed.current) {
+            autoplayed.current = true;
+            play_audio_from(audio, seconds_since_late_join_start(object_id));
+        }
+        if (pending_play.current) {
             const {args} = pending_play.current;
             pending_play.current = null;
             play_audio_from(audio, seconds_since_fired(args));
@@ -181,6 +192,10 @@ const PositionalAudioWrapper = ({interaction, children}: InteractionWrapperProps
     useEffect(() => {
         const handle_command = async (command: string, args?: any) => {
             const audio = audio_ref.current;
+            // an explicit play/pause/stop (incl. a late joiner's replay of one) supersedes autoplay
+            if (command === "play" || command === "pause" || command === "stop") {
+                autoplayed.current = true;
+            }
             if (command === "play" && !audio?.buffer) {
                 pending_play.current = {args};
                 return {success: true};
@@ -283,7 +298,7 @@ const PositionalAudioWrapper = ({interaction, children}: InteractionWrapperProps
                 ref={audio_ref}
                 url={audio_url}
                 loop={interaction.loop}
-                autoplay={interaction.autoplay}
+                autoplay={false}
                 distance={interaction.max_distance}
                 position={interaction.offset}
             />
@@ -299,6 +314,9 @@ const GlobalAudioWrapper = ({interaction, children}: InteractionWrapperProps<Glo
     const audio = useMemo(() => new Audio(audio_listener), [audio_listener]);
 
     const audio_url = useAssetURL(interaction.url);
+    const {id: object_id} = useObjectRefs();
+    // an explicit play/pause/stop (incl. a late joiner's replay of one) supersedes autoplay
+    const playback_commanded = useRef(false);
 
     // TODO: split into per dep effects
     useEffect(() => {
@@ -309,8 +327,9 @@ const GlobalAudioWrapper = ({interaction, children}: InteractionWrapperProps<Glo
             audio.setBuffer(buffer);
             audio.setLoop(interaction.loop);
             audio.setVolume(interaction.volume ?? 1.0);
-            if (interaction.autoplay) {
-                audio.play();
+            if (interaction.autoplay && !playback_commanded.current) {
+                // a late joiner picks it up as far in as it's been playing
+                play_audio_from(audio, seconds_since_late_join_start(object_id));
             }
         });
 
@@ -335,6 +354,7 @@ const GlobalAudioWrapper = ({interaction, children}: InteractionWrapperProps<Glo
         const handle_command = async (command: string, args?: any) => {
             switch (command) {
                 case "play":
+                    playback_commanded.current = true;
                     if (!audio.buffer) {
                         pending_play.current = {args};
                         break;
@@ -342,10 +362,12 @@ const GlobalAudioWrapper = ({interaction, children}: InteractionWrapperProps<Glo
                     play_audio_from(audio, seconds_since_fired(args));
                     break;
                 case "pause":
+                    playback_commanded.current = true;
                     pending_play.current = null;
                     audio.pause();
                     break;
                 case "stop":
+                    playback_commanded.current = true;
                     pending_play.current = null;
                     audio.stop();
                     break;
@@ -810,39 +832,26 @@ const SEAT_ACTIVATE_DISTANCE = 1.2; // metres from the seat you must be within t
 const _seat_capsule = new Vector3();
 const _seat_anchor = new Vector3();
 
-// stand if already seated on this seat, otherwise sit if within distance of the anchor
-const try_toggle_seat = (
-    anchor: Object3D | null,
-    seat_id: string,
-    yaw_range_rad: [number, number] | null
-) => {
-    if (is_seated_on(seat_id)) {
-        stand_up(seat_id);
-        return;
-    }
-    if (!anchor) return;
-
+// is the local player close enough to the seat's anchor to sit by input
+const within_seat_reach = (anchor: Object3D) => {
     anchor.updateWorldMatrix(true, false);
     _seat_anchor.setFromMatrixPosition(anchor.matrixWorld);
     get_capsule_world_position(_seat_capsule);
 
     const dx = _seat_capsule.x - _seat_anchor.x;
     const dz = _seat_capsule.z - _seat_anchor.z;
-    if (dx * dx + dz * dz > SEAT_ACTIVATE_DISTANCE * SEAT_ACTIVATE_DISTANCE) return;
-
-    sit_on({ anchor, yaw_range_rad, seat_id });
+    return dx * dx + dz * dz <= SEAT_ACTIVATE_DISTANCE * SEAT_ACTIVATE_DISTANCE;
 };
 
 interface SeatActivationProps {
-    anchor_ref: React.RefObject<Group | null>;
-    seat_id: string;
-    yaw_range_rad: [number, number] | null;
+    // stand if already seated here, otherwise sit if within reach (and the seat is free)
+    on_toggle: () => void;
 }
 
 // TODO: seat highlight
 
 // VR: off-hand secondary face button (TODO: should it be configurable or just overlap grab, diff button to dismount)
-const VRSeatActivation = ({ anchor_ref, seat_id, yaw_range_rad }: SeatActivationProps) => {
+const VRSeatActivation = ({ on_toggle }: SeatActivationProps) => {
     const [locomotion_hand] = useSetting("vr_locomotion_hand");
     const sit_hand = locomotion_hand === "left" ? "right" : "left";
     const state = useXRInputSourceState("controller", sit_hand);
@@ -851,7 +860,7 @@ const VRSeatActivation = ({ anchor_ref, seat_id, yaw_range_rad }: SeatActivation
     useFrame(() => {
         const pressed = state?.gamepad["b-button"]?.state === "pressed";
         if (pressed && !was_pressed.current) {
-            try_toggle_seat(anchor_ref.current, seat_id, yaw_range_rad);
+            on_toggle();
         }
         was_pressed.current = pressed ?? false;
     });
@@ -860,14 +869,14 @@ const VRSeatActivation = ({ anchor_ref, seat_id, yaw_range_rad }: SeatActivation
 };
 
 // flat: reuses the "use" action (LMB / right trigger) (TODO: make it a sep bind perhaps, diff button to dismount)
-const FlatSeatActivation = ({ anchor_ref, seat_id, yaw_range_rad }: SeatActivationProps) => {
+const FlatSeatActivation = ({ on_toggle }: SeatActivationProps) => {
     const input = useFlatFrameInput();
     const was_pressed = useRef(false);
 
     useFrame(() => {
         const pressed = input.use;
         if (pressed && !was_pressed.current) {
-            try_toggle_seat(anchor_ref.current, seat_id, yaw_range_rad);
+            on_toggle();
         }
         was_pressed.current = pressed;
     });
@@ -880,8 +889,12 @@ const SeatActivation = (props: SeatActivationProps) => {
     return mode === "vr" ? <VRSeatActivation {...props} /> : <FlatSeatActivation {...props} />;
 };
 
+// a seat's occupant is tracked across engines (seat_occupancy): sitting by input claims it through the
+// host, and the SDK's sit/stand are replicated commands applied everywhere in order, which seat the
+// targeted player on their own engine. sit/stand reports come from the seated player's engine.
 const SeatWrapper = ({ interaction, children }: InteractionWrapperProps<SeatInteraction>) => {
     const { id } = useObjectRefs();
+    const { emit_report, on_interaction_command } = useObjectBinding(interaction.binding);
     const anchor_ref = useRef<Group>(null);
     const seat_id = `${id}:seat`;
 
@@ -897,6 +910,84 @@ const SeatWrapper = ({ interaction, children }: InteractionWrapperProps<SeatInte
         return euler;
     }, [interaction.facing]);
 
+    // live values for the stable callbacks below
+    const latest = useRef({ interaction, yaw_range_rad, emit_report });
+    latest.current = { interaction, yaw_range_rad, emit_report };
+
+    const report = useCallback((type: "sit" | "stand") => {
+        const { interaction, emit_report } = latest.current;
+        const player_id = get_local_player_id();
+        if (!player_id || !(type === "sit" ? interaction.report_sit : interaction.report_stand)) return;
+        emit_report({ kind: "seat", payload: { type, player_id } }, LOCAL_PLAYER_SUBJECT);
+    }, []);
+
+    const seat_local_player = useCallback(() => {
+        const anchor = anchor_ref.current;
+        if (!anchor || is_seated_on(seat_id)) return;
+        sit_on({ anchor, yaw_range_rad: latest.current.yaw_range_rad, seat_id });
+        report("sit");
+    }, [seat_id, report]);
+
+    const unseat_local_player = useCallback(() => {
+        if (!is_seated_on(seat_id)) return;
+        stand_up(seat_id);
+        report("stand");
+    }, [seat_id, report]);
+
+    // input: stand if seated here, else sit if in reach and the seat is free (claimed via the host)
+    const toggle = useCallback(() => {
+        const self = get_local_player_id();
+        if (is_seated_on(seat_id)) {
+            unseat_local_player();
+            if (self) leave_seat(seat_id, self);
+            return;
+        }
+        const anchor = anchor_ref.current;
+        if (!anchor || !self || !within_seat_reach(anchor)) return;
+        if (!request_seat(seat_id, self)) return;
+        seat_local_player();
+    }, [seat_id, seat_local_player, unseat_local_player]);
+
+    // someone else has the seat now (the host refused our claim, or the page seated them): get up
+    useEffect(() => on_seat_change((changed) => {
+        if (changed !== seat_id || !is_seated_on(seat_id)) return;
+        if (get_seat_occupant(seat_id) !== get_local_player_id()) {
+            unseat_local_player();
+        }
+    }), [seat_id, unseat_local_player]);
+
+    // a seat torn down frees it, and gets its occupant up
+    useEffect(() => () => {
+        if (is_seated_on(seat_id)) stand_up(seat_id);
+        set_seat_occupant(seat_id, null);
+    }, [seat_id]);
+
+    // the SDK's sit/stand: replicated to every engine in order, so occupancy agrees everywhere, and the
+    // targeted player is seated (or stood up) on their own engine. the page's call wins over anyone in it
+    useEffect(() => on_interaction_command(async (command: string, args?: any) => {
+        const player_id = typeof args?.player_id === "string" ? args.player_id : get_local_player_id();
+        if (!player_id) {
+            return {success: false, error: "No player to seat"};
+        }
+        const is_local = player_id === get_local_player_id();
+
+        switch (command) {
+            case "sit":
+                set_seat_occupant(seat_id, player_id);
+                if (is_local) seat_local_player();
+                break;
+            case "stand":
+                if (get_seat_occupant(seat_id) === player_id) {
+                    set_seat_occupant(seat_id, null);
+                }
+                if (is_local) unseat_local_player();
+                break;
+            default:
+                return {success: false, error: `Unknown command ${command}`};
+        }
+        return {success: true};
+    }), [on_interaction_command, seat_id, seat_local_player, unseat_local_player]);
+
     return (
         <>
             <group
@@ -904,7 +995,7 @@ const SeatWrapper = ({ interaction, children }: InteractionWrapperProps<SeatInte
                 position={interaction.anchor_offset}
                 rotation={facing_euler}
             />
-            <SeatActivation anchor_ref={anchor_ref} seat_id={seat_id} yaw_range_rad={yaw_range_rad} />
+            <SeatActivation on_toggle={toggle} />
             {children}
         </>
     );

@@ -5,7 +5,7 @@ import { DirectionalLightInteractionSchema, FollowPlayerInteractionSchema, Globa
 
 import { asset_url } from "../assets";
 import { send_via_rtc } from "../messenger";
-import type { Player } from "../players";
+import { type PlayerRef, player_ref_id } from "../players";
 import { BaseBuilder } from "./base";
 
 
@@ -747,11 +747,12 @@ export class SeatInteractionBuilder extends BaseBuilder<SeatInteractionInput> {
     /** @internal */
     static _make_api(object_id: string, interaction_id: string) {
         return {
-            sit: async (player: Player) => {
-                return await interaction_command(object_id, interaction_id, "sit", {username: await player.get_username()});
+            // by player id, so guests (no username) can be seated too
+            sit: async (player: PlayerRef) => {
+                return await interaction_command(object_id, interaction_id, "sit", {player_id: player_ref_id(player)});
             },
-            stand: async (player: Player) => {
-                return await interaction_command(object_id, interaction_id, "stand", {username: await player.get_username()});
+            stand: async (player: PlayerRef) => {
+                return await interaction_command(object_id, interaction_id, "stand", {player_id: player_ref_id(player)});
             },
         }
     }

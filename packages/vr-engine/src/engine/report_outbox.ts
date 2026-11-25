@@ -1,6 +1,7 @@
 import type { ReportEvent } from "@hyperlinkvr/vr-engine-schemas";
 
 import { has_world_authority, is_simulated_locally } from "../net/authority";
+import { is_networked_object } from "../net/ownership";
 import { get_local_player_id } from "../player/player_position_registry";
 import { run_triggers } from "./trigger_registry";
 
@@ -48,6 +49,12 @@ export const speaks_for_subject = (subject: ReportSubject): boolean => {
             return true;
     }
 };
+
+// who speaks for a report about an object's own state (an object monitor: its position, velocity...).
+// the engine simulating it: the owner of a networked body, else the host. not the default for every
+// report, since a player's own actions on a world object (a button press) come from their engine
+export const speaks_for_object_state = (object_id: string): boolean =>
+    is_networked_object(object_id) ? is_simulated_locally(object_id) : has_world_authority();
 
 // `speaks` overrides the per-report source check (see ReportSubject)
 export const publish_reports = (reports: ReportEvent[], speaks?: boolean) => {

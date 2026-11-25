@@ -21,6 +21,8 @@ export const SPAWN_CHANNEL = "spawn";
 // host → a client: a player-targeted action (teleport, position, ...) for that client's player, and
 // the client's reply back (#14)
 export const PLAYER_ACTION_CHANNEL = "player-action";
+// seat occupancy: a client claims/releases a seat to the host, the host broadcasts who's in it
+export const SEAT_CHANNEL = "seat";
 export const SNAPSHOT_REQUEST_CHANNEL = "snapshot-req";
 export const SNAPSHOT_CHANNEL = "snapshot";
 
@@ -36,7 +38,10 @@ interface CommandSpec {
 
 const COMMAND_SPECS: Partial<Record<WebSDKActionName, CommandSpec>> = {
     HVRSDK_CREATE_ENGINE_OBJECT: {
-        mint: (m: any) => { m.id ??= crypto.randomUUID(); },
+        mint: (m: any) => {
+            m.id ??= crypto.randomUUID();
+            m.created_at ??= session_now();
+        },
     },
     // stamp a tween's start in session time so its phase lines up across peers (#9)
     HVRSDK_MODIFY_ENGINE_OBJECT: {
@@ -79,6 +84,10 @@ const COMMAND_SPECS: Partial<Record<WebSDKActionName, CommandSpec>> = {
         stamp: (m: any) => {
             if (m.command === "play" || m.command === "restart") {
                 m.args = { ...m.args, fired_at: m.args?.fired_at ?? session_now() };
+            }
+            // seats: the sdk's "the local player" means the host here, so name it before replicating
+            if ((m.command === "sit" || m.command === "stand") && m.args && m.args.player_id == null) {
+                m.args = { ...m.args, player_id: get_local_player_id() };
             }
         },
     },

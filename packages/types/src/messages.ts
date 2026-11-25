@@ -118,6 +118,8 @@ interface WebSDKCreateEngineObjectAction extends BaseWebSDKActionMessage {
     // host-minted id, stamped by the command bus before replication so every engine agrees.
     // absent for a page action in a solo world, where the handler mints its own.
     id?: string;
+    // session time the host created it, so a late joiner can catch up state that started with it
+    created_at?: number;
 }
 
 interface WebSDKDestroyEngineObjectAction extends BaseWebSDKActionMessage {
