@@ -4,7 +4,7 @@ import { Vector3 } from "three";
 import type { ObjectRefsContextType } from "../contexts/ObjectRefsContext";
 import { body_owns_pose_for } from "../engine/object_modification";
 import { get_object_refs } from "../engine/object_ref_registry";
-import { get_player_position } from "../player/player_position_registry";
+import { sample_player_position } from "../net/player_positions";
 import type { ActiveSeek } from "./seek_registry";
 import { cancel_active_seek, get_active_seeks } from "./seek_registry";
 
@@ -30,7 +30,8 @@ const resolve_target = (seek: ActiveSeek, out: Vector3): boolean => {
         out.set(...seek.target.position);
         return true;
     }
-    if (seek.target.kind === "player") return get_player_position(out);
+    // the targeted player specifically (not whoever is local), so every engine chases the same one
+    if (seek.target.kind === "player") return sample_player_position(seek.target.id, out);
     const t = get_object_refs(seek.target.object_id)?.current;
     return !!t && read_position(t, out);
 };

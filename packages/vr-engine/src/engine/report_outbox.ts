@@ -75,6 +75,8 @@ export const publish_reports = (reports: ReportEvent[], speaks?: boolean) => {
 };
 
 export const fire_triggers = (source_id: string, object_id: string, payload: unknown, speaks?: boolean) => {
-    // the authority runs every trigger; a non-authority still runs `local` (cosmetic) ones
-    run_triggers(source_id, payload, speaks ?? speaks_for(object_id));
+    // shared triggers run on the host (or solo) when it speaks for the event; a shared client runs
+    // only `local` (cosmetic) ones. a client's own events still reach the host's triggers: the host
+    // runs them off the report the client forwards (MultiplayerSync)
+    run_triggers(source_id, payload, (speaks ?? speaks_for(object_id)) && has_world_authority());
 };

@@ -20,6 +20,52 @@ export interface ActiveAnimation {
 
 const active = new Map<string, ActiveAnimation>();
 
+// each live animation's definition as it was dispatched (plain json), so a late joiner can be given it
+const definitions = new Map<string, unknown>();
+
+export const remember_animation_definition = (id: string, raw: unknown) => {
+    definitions.set(id, raw);
+};
+
+// the playback state a late joiner needs to pick an animation up exactly where the host has it.
+// epoch is converted to/from session time by the caller
+export interface AnimationPlaybackState {
+    epoch: number;
+    paused_elapsed?: number;
+    released: boolean;
+    bases: Array<number[] | null>;
+}
+
+export const get_animation_snapshot = (): { id: string; animation: unknown; state: AnimationPlaybackState }[] => {
+    const out = [];
+    for (const running of active.values()) {
+        const animation = definitions.get(running.id);
+        if (animation === undefined) continue;
+        out.push({
+            id: running.id,
+            animation,
+            state: {
+                epoch: running.epoch,
+                paused_elapsed: running.paused_elapsed,
+                released: running.released,
+                // relative tracks' captured base poses: a joiner's object is already mid-animation,
+                // so capturing its own base would double the offset
+                bases: running.bases
+            }
+        });
+    }
+    return out;
+};
+
+export const restore_animation_state = (id: string, state: AnimationPlaybackState) => {
+    const running = active.get(id);
+    if (!running) return;
+    running.epoch = state.epoch;
+    running.paused_elapsed = state.paused_elapsed;
+    running.released = state.released;
+    running.bases = state.bases.length === running.tracks.length ? state.bases : running.tracks.map(() => null);
+};
+
 export const start_animation = (id: string, animation: Animation, epoch: number) => {
     const tracks = animation.tracks.map(compile_track);
     const derived = tracks.reduce((longest, track) => Math.max(longest, track.end_time), 0);
@@ -35,7 +81,10 @@ export const start_animation = (id: string, animation: Animation, epoch: number)
     });
 };
 
-export const stop_animation = (id: string) => active.delete(id);
+export const stop_animation = (id: string) => {
+    definitions.delete(id);
+    return active.delete(id);
+};
 
 // hold the target where it is and stop asserting/advancing, without removing the animation so it can
 // be replayed. used by the "stop" command and by the runner when a non-looping animation finishes
@@ -75,6 +124,11 @@ export const seek_animation = (id: string, time_ms: number, now: number) => {
 };
 
 export const get_active_animations = () => active.values();
+
+export const clear_animations = () => {
+    active.clear();
+    definitions.clear();
+};
 
 // elapsed rather than accumulated delta, so two peers given the same epoch agree
 export const sample_time = (running: ActiveAnimation, now: number) => {

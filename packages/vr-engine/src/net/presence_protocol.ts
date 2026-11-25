@@ -17,6 +17,9 @@ export interface PoseMessage {
     head: PoseTuple;
     left: HandTuple | null;
     right: HandTuple | null;
+    // the player's origin (their feet / playspace root) in world space: where the world thinks the
+    // player *is*, e.g. for the host's world monitors. optional so older senders still decode
+    origin?: [number, number, number];
 }
 
 export interface Appearance {
@@ -37,7 +40,8 @@ export const encode_pose = (message: PoseMessage): string =>
         t: Math.round(message.t),
         head: message.head.map(round),
         left: message.left?.map(round) ?? null,
-        right: message.right?.map(round) ?? null
+        right: message.right?.map(round) ?? null,
+        ...(message.origin ? { origin: message.origin.map(round) } : {})
     });
 
 export const decode_pose = (payload: string): PoseMessage | null => {

@@ -25,6 +25,7 @@ import { detect_trigger_direction, interacted_subject, resolve_interacted, Trigg
 import { get_capsule_world_position } from "../player/motion";
 import { is_seated_on, sit_on, stand_up } from "../player/seating";
 import { ShadowDirectionalLight, ShadowPointLight, ShadowSpotLight } from "../render";
+import { finished_one_shot, play_audio_from, seconds_since_fired } from "./timed_playback";
 import { rotation_to_euler } from "../util/rotation";
 
 
@@ -165,17 +166,35 @@ const FollowPlayerWrapper = ({interaction, children}: InteractionWrapperProps<Fo
 const PositionalAudioWrapper = ({interaction, children}: InteractionWrapperProps<PositionalAudioInteraction>) => {
     const {on_interaction_command, register_channels} = useObjectBinding(interaction.binding);
     const audio_ref = useRef<PositionalAudioType>(null);
+    // a play that arrived before the sound loaded (e.g. a late joiner's replay), with its fired_at args
+    const pending_play = useRef<{args: any} | null>(null);
+
+    useFrame(() => {
+        const audio = audio_ref.current;
+        if (pending_play.current && audio?.buffer) {
+            const {args} = pending_play.current;
+            pending_play.current = null;
+            play_audio_from(audio, seconds_since_fired(args));
+        }
+    });
 
     useEffect(() => {
         const handle_command = async (command: string, args?: any) => {
             const audio = audio_ref.current;
+            if (command === "play" && !audio?.buffer) {
+                pending_play.current = {args};
+                return {success: true};
+            }
+            if (command === "pause" || command === "stop") {
+                pending_play.current = null;
+            }
             if (!audio) {
                 return {success: false, error: "Audio not ready"};
             }
 
             switch (command) {
                 case "play":
-                    audio.play();
+                    play_audio_from(audio, seconds_since_fired(args));
                     break;
                 case "pause":
                     audio.pause();
@@ -301,16 +320,33 @@ const GlobalAudioWrapper = ({interaction, children}: InteractionWrapperProps<Glo
         };
     }, [audio_url, interaction.loop, interaction.autoplay, interaction.volume]);
 
+    // a play that arrived before the buffer loaded (e.g. a late joiner's replay), with its fired_at args
+    const pending_play = useRef<{args: any} | null>(null);
+
+    useFrame(() => {
+        if (pending_play.current && audio.buffer) {
+            const {args} = pending_play.current;
+            pending_play.current = null;
+            play_audio_from(audio, seconds_since_fired(args));
+        }
+    });
+
     useEffect(() => {
         const handle_command = async (command: string, args?: any) => {
             switch (command) {
                 case "play":
-                    audio.play();
+                    if (!audio.buffer) {
+                        pending_play.current = {args};
+                        break;
+                    }
+                    play_audio_from(audio, seconds_since_fired(args));
                     break;
                 case "pause":
+                    pending_play.current = null;
                     audio.pause();
                     break;
                 case "stop":
+                    pending_play.current = null;
                     audio.stop();
                     break;
                 case "seek": {
@@ -731,12 +767,15 @@ const ParticleEmitterWrapper = ({interaction, children}: InteractionWrapperProps
 
             switch (command) {
                 case "play":
+                    // a burst that already ran its course (a late joiner's replay) stays put
+                    if (finished_one_shot(interaction.loop, interaction.duration, seconds_since_fired(args))) break;
                     system.play();
                     break;
                 case "pause":
                     system.pause();
                     break;
-                    case "restart":
+                case "restart":
+                    if (finished_one_shot(interaction.loop, interaction.duration, seconds_since_fired(args))) break;
                     system.restart();
                     break;
                 case "stop":

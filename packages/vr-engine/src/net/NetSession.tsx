@@ -48,11 +48,18 @@ export const NetSessionProvider = ({ children }: { children: React.ReactNode }) 
     const world = url && !blocked ? world_key(url) : null;
 
     // solo vs shared is derived from max_players
-    const mode = derive_mode(useWorldMetadata(url));
-    const shared = mode === "shared";
+    const world_mode = derive_mode(useWorldMetadata(url));
+    const shared = world_mode === "shared";
 
     const [session, setSession] = useState<RoomState>(NO_SESSION);
     const [ended, setEnded] = useState<SessionEnd | null>(null);
+    // the join never happened: no server configured, unreachable, or refused
+    const [join_failed, setJoinFailed] = useState(false);
+
+    // a shared world we can't actually share runs solo, like a world whose metadata didn't resolve:
+    // never leave a player waiting on a room that isn't coming (the local spawn waits for the room in
+    // shared mode, so without this nobody would ever spawn)
+    const mode: MultiplayerMode = shared && network && !join_failed ? "shared" : "solo";
 
     useEffect(() => {
         if (!network || !world || !shared) {
@@ -63,11 +70,21 @@ export const NetSessionProvider = ({ children }: { children: React.ReactNode }) 
         let cancelled = false;
         let unlisten = () => {};
         setEnded(null);
+        setJoinFailed(false);
+
+        // a black-holed server can leave the join hanging rather than failing
+        let gave_up = false;
+        const join_timeout = setTimeout(() => {
+            gave_up = true;
+            console.warn(`Room join timed out after ${JOIN_TIMEOUT_MS}ms, running solo`);
+            setJoinFailed(true);
+        }, JOIN_TIMEOUT_MS);
 
         network
             .join({ world, instance: DEFAULT_INSTANCE }, { username, id: uuid })
             .then((joined) => {
-                if (cancelled) {
+                clearTimeout(join_timeout);
+                if (cancelled || gave_up) {
                     joined.leave();
                     return;
                 }
@@ -100,10 +117,16 @@ export const NetSessionProvider = ({ children }: { children: React.ReactNode }) 
                 sync();
             })
             .catch((error) => {
-                console.error("Failed to join room", error);
+                clearTimeout(join_timeout);
+                if (cancelled || gave_up) {
+                    return;
+                }
+                console.error("Failed to join room, running solo", error);
+                setJoinFailed(true);
             });
 
         return () => {
+            clearTimeout(join_timeout);
             cancelled = true;
             unlisten();
             room?.leave();
@@ -115,6 +138,8 @@ export const NetSessionProvider = ({ children }: { children: React.ReactNode }) 
 };
 
 export const useNetSession = () => useContext(NetSessionContext);
+
+const JOIN_TIMEOUT_MS = 10_000;
 
 // a solo guest has no account and no room, but still needs a player id: minted once per page load
 const SOLO_GUEST_ID = `guest-${crypto.randomUUID()}`;

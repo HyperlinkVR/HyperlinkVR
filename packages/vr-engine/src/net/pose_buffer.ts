@@ -11,6 +11,9 @@ const OFFSET_WINDOW_MS = 3000;
 
 const HISTORY_MS = 1000;
 
+// for a pose without an origin, a rough standing eye height to put the origin under the head
+const FALLBACK_EYE_HEIGHT = 1.6;
+
 export interface SampledHand {
     visible: boolean;
     position: Vector3;
@@ -23,11 +26,13 @@ export interface SampledPose {
     head_quaternion: Quaternion;
     left: SampledHand;
     right: SampledHand;
+    // the player's origin (feet). senders that don't include it get one under the head, at floor level
+    origin: Vector3;
 }
 
 export const make_sampled_pose = (): SampledPose => {
     const hand = (): SampledHand => ({ visible: false, position: new Vector3(), quaternion: new Quaternion(), curl: 0 });
-    return { head_position: new Vector3(), head_quaternion: new Quaternion(), left: hand(), right: hand() };
+    return { head_position: new Vector3(), head_quaternion: new Quaternion(), left: hand(), right: hand(), origin: new Vector3() };
 };
 
 const scratch_position = new Vector3();
@@ -105,6 +110,13 @@ export class PoseBuffer {
         blend_pose(from.head, to.head, alpha, out.head_position, out.head_quaternion);
         blend_hand(from.left, to.left, alpha, out.left);
         blend_hand(from.right, to.right, alpha, out.right);
+
+        if (from.origin && to.origin) {
+            out.origin.set(from.origin[0], from.origin[1], from.origin[2])
+                .lerp(scratch_position.set(to.origin[0], to.origin[1], to.origin[2]), alpha);
+        } else {
+            out.origin.set(out.head_position.x, out.head_position.y - FALLBACK_EYE_HEIGHT, out.head_position.z);
+        }
         return true;
     }
 }
@@ -121,6 +133,9 @@ export const push_pose = (peer_id: string, pose: PoseMessage, local_now: number)
 };
 
 export const get_pose_buffer = (peer_id: string): PoseBuffer | undefined => buffers.get(peer_id);
+
+// every remote player we've had a pose from, by peer id
+export const get_pose_buffers = (): ReadonlyMap<string, PoseBuffer> => buffers;
 
 // drop anyone who's left
 export const retain_pose_buffers = (peer_ids: Set<string>) => {

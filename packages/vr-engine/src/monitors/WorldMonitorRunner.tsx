@@ -9,7 +9,8 @@ import { useWebSDKMessaging } from "../contexts/WebSDKMessagingContext";
 import { get_all_object_refs, get_object_refs } from "../engine/object_ref_registry";
 import { fire_triggers, has_report_sink, publish_reports } from "../engine/report_outbox";
 import { register_triggers } from "../engine/trigger_registry";
-import { get_player_position } from "../player/player_position_registry";
+import { is_local_player, remote_player_ids, sample_player_position } from "../net/player_positions";
+import { get_local_player_id, get_player_position } from "../player/player_position_registry";
 import type { CompiledWorldMonitor } from "./world_monitor_registry";
 import {
     get_world_monitor_entries,
@@ -75,12 +76,31 @@ const resolve_target = (target: TargetRef, pool: Vector3[], out: ResolvedSubject
         out.push({ ref: { kind: "object", id }, pos, key: `o:${id}` });
     };
 
+    // players are identified by their session player id (the local one too, when known), so a
+    // report names who it was about and the local player keys the same as everyone else
     const push_local_player = () => {
         const pos = take(pool, out.length);
         if (!get_player_position(pos)) {
             return;
         }
-        out.push({ ref: { kind: "player", id: null }, pos, key: "p:@local" });
+        const id = get_local_player_id();
+        out.push({ ref: { kind: "player", id }, pos, key: `p:${id ?? "@local"}` });
+    };
+
+    const push_remote_player = (peer_id: string) => {
+        const pos = take(pool, out.length);
+        // world monitors run on the host, so this is how they see clients
+        if (!sample_player_position(peer_id, pos)) {
+            return;
+        }
+        out.push({ ref: { kind: "player", id: peer_id }, pos, key: `p:${peer_id}` });
+    };
+
+    const push_all_players = () => {
+        push_local_player();
+        for (const peer_id of remote_player_ids()) {
+            push_remote_player(peer_id);
+        }
     };
 
     switch (target.kind) {
@@ -92,10 +112,11 @@ const resolve_target = (target: TargetRef, pool: Vector3[], out: ResolvedSubject
             break;
         }
         case "player": {
-            // only the local player has a position source today; remote players
-            // slot in behind get_player_position when multiplayer lands
-            if (target.id === null) {
+            // null is shorthand for the local player
+            if (target.id === null || is_local_player(target.id)) {
                 push_local_player();
+            } else {
+                push_remote_player(target.id);
             }
             break;
         }
@@ -109,7 +130,7 @@ const resolve_target = (target: TargetRef, pool: Vector3[], out: ResolvedSubject
             break;
         }
         case "any-player": {
-            push_local_player();
+            push_all_players();
             break;
         }
         case "any": {
@@ -119,7 +140,7 @@ const resolve_target = (target: TargetRef, pool: Vector3[], out: ResolvedSubject
                     push_object(cur.id, cur);
                 }
             }
-            push_local_player();
+            push_all_players();
             break;
         }
     }

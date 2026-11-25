@@ -47,7 +47,7 @@ const REST_RESENDS = 3;
 // drives a node to a world pose through its parent, for held objects with no body (#23)
 const scratch_inverse = new Matrix4();
 const scratch_parent_q = new Quaternion();
-const set_world_pose = (node: Object3D, position: Vector3, quaternion: Quaternion) => {
+export const set_world_pose = (node: Object3D, position: Vector3, quaternion: Quaternion) => {
     const parent = node.parent;
     if (!parent) {
         node.position.copy(position);

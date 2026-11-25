@@ -4,7 +4,12 @@ import {AnimationSchema, safe_parse_and_adopt} from "@hyperlinkvr/vr-engine-sche
 import {useWebSDKMessaging} from "../contexts/WebSDKMessagingContext";
 import {register_command_handler} from "../engine/trigger_registry";
 import {session_to_local} from "../net/session_clock";
-import {pause_animation, release_animation, resume_animation, seek_animation, start_animation, stop_animation} from "./playback";
+import {pause_animation, release_animation, remember_animation_definition, resume_animation, seek_animation, start_animation, stop_animation} from "./playback";
+
+// binding ids that drive animations, so the state journal can leave their play/pause out: an
+// animation's exact playback state is snapshotted directly instead
+const animation_bindings = new Set<string>();
+export const is_animation_binding = (binding_id: string) => animation_bindings.has(binding_id);
 
 export const AnimationSync = () => {
     const rtc = useWebSDKMessaging();
@@ -61,6 +66,7 @@ export const AnimationSync = () => {
 
             // compiled and registered paused at zero, so autoplay is just an immediate resume
             start_animation(id, animation, performance.now());
+            remember_animation_definition(id, message.animation);
             if (!animation.autoplay) {
                 pause_animation(id, performance.now());
                 seek_animation(id, 0, performance.now());
@@ -68,6 +74,7 @@ export const AnimationSync = () => {
 
             const binding_id = animation.binding?.id;
             if (binding_id) {
+                animation_bindings.add(binding_id);
                 command_unlisteners.set(id, register_command_handler(
                     binding_id,
                     (command, args) => run_command(id, command, args)

@@ -3,6 +3,7 @@ import type { WebSDKActionMessage, WebSDKActionName } from "@hyperlinkvr/types";
 
 import { get_local_player_id } from "../player/player_position_registry";
 import { session_now } from "./session_clock";
+import { forget_journal_object, journal_action } from "./state_journal";
 
 export const COMMAND_CHANNEL = "cmd";
 // client → host: reports its player caused (button presses, grabs, triggers), so the host's page
@@ -89,7 +90,15 @@ const COMMAND_SPECS: Partial<Record<WebSDKActionName, CommandSpec>> = {
     HVRSDK_UPDATE_WORLD_ENV: {},
     HVRSDK_RESET_WORLD_ENV: {},
 
-    HVRSDK_INTERACTION_COMMAND: {},
+    // stamp playback starts in session time, so a sound/effect starts at the same point everywhere and
+    // a late joiner replaying it (state_journal) can tell how far in it should be (timed_playback)
+    HVRSDK_INTERACTION_COMMAND: {
+        stamp: (m: any) => {
+            if (m.command === "play" || m.command === "restart") {
+                m.args = { ...m.args, fired_at: m.args?.fired_at ?? session_now() };
+            }
+        },
+    },
     HVRSDK_PREFAB_COMMAND: {},
 
     // lifecycle: the host's "world is ready" replicates so clients present during load clear
@@ -128,6 +137,13 @@ export const route_command = (message: WebSDKActionMessage, origin: Origin): boo
         if (origin === "page") {
             COMMAND_SPECS[action]?.mint?.(message);
             COMMAND_SPECS[action]?.stamp?.(message);
+        }
+
+        // remember state-setting interaction/prefab commands for late joiners (state_journal)
+        if (action === "HVRSDK_INTERACTION_COMMAND" || action === "HVRSDK_PREFAB_COMMAND") {
+            journal_action(message as any);
+        } else if (action === "HVRSDK_DESTROY_ENGINE_OBJECT") {
+            forget_journal_object((message as any).object_id);
         }
 
         // TODO: stamp a monotonic seq here so late-join snapshots have a boundary and host migration can resume. reliable+ordered per (sender,channel) covers plain order

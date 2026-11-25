@@ -12,6 +12,7 @@ import { useEffect, useRef } from "react";
 
 import { useWebSDKMessaging } from "../contexts/WebSDKMessagingContext";
 import { add_report_sink } from "../engine/report_outbox";
+import { run_triggers } from "../engine/trigger_registry";
 import { request_watch_modal } from "../player/watch_event_bus";
 import { set_world_authority } from "./authority";
 import { PLAYER_ACTION_CHANNEL, REPORT_CHANNEL, SPAWN_CHANNEL } from "./command_bus";
@@ -67,6 +68,12 @@ export const MultiplayerSync = () => {
             }
             const reports = JSON.parse(message.payload as string) as ReportEvent[];
             const tagged = reports.map((report) => ({ ...report, player: message.from }));
+
+            // the client's event runs the world's shared triggers here (the client ran only its local
+            // ones), and their effects replicate to everyone
+            for (const report of reports) {
+                run_triggers(report.source_id, report.payload, true, true);
+            }
             try {
                 emit_event({ type: "HVRSDK_ENGINE_OBJECT_REPORT_BATCH", reports: tagged });
             } catch (error) {

@@ -21,3 +21,5 @@ export const cancel_active_seek = (id: string) => {
 };
 
 export const get_active_seeks = () => active;
+
+export const clear_active_seeks = () => active.clear();

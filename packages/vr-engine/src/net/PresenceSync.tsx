@@ -8,6 +8,7 @@ import { retrieved_to_stored_avatar, useAvatar } from "../contexts/AvatarContext
 import type { Hand } from "../input/hands";
 import { useHands } from "../input/hands";
 import { pose_to_curl } from "../player/AvatarHand";
+import { get_player_position } from "../player/player_position_registry";
 import { usePresenceStore } from "../stores/PresenceStore";
 import { useNetSession } from "./NetSession";
 import { clear_pose_buffers, push_pose, retain_pose_buffers } from "./pose_buffer";
@@ -19,6 +20,7 @@ const SEND_INTERVAL_S = 1 / 20;
 
 const scratch_position = new Vector3();
 const scratch_quaternion = new Quaternion();
+const scratch_origin = new Vector3();
 
 const pose_tuple = (position: Vector3, quaternion: Quaternion): PoseTuple => [
     position.x, position.y, position.z,
@@ -126,8 +128,10 @@ export const PresenceSync = () => {
         camera.getWorldQuaternion(scratch_quaternion);
         const head = pose_tuple(scratch_position, scratch_quaternion);
 
+        const has_origin = get_player_position(scratch_origin);
         const pose = encode_pose({
             t: performance.now(),
+            ...(has_origin ? { origin: [scratch_origin.x, scratch_origin.y, scratch_origin.z] as [number, number, number] } : {}),
             head,
             left: hand_tuple(hands.find((hand) => hand.handedness === "left")),
             right: hand_tuple(hands.find((hand) => hand.handedness === "right"))

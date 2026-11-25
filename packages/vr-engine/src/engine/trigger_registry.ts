@@ -71,10 +71,20 @@ const matches_filter = (payload: any, filter: TriggerEventFilter | undefined): b
     return true;
 };
 
-// `authoritative` is whether this engine owns the source (host for world/objects). a
-// non-authoritative engine (a shared client) still runs `local` triggers — instant cosmetic
-// reactions to its own player's actions — but skips the rest, which the host runs and replicates.
-export const run_triggers = (source_id: string, payload: any, authoritative: boolean) => {
+// shared worlds: the host replicates what its shared (non-local) triggers do to every client
+type TriggerReplicator = (binding_id: string, command: string, args: any) => void;
+let replicator: TriggerReplicator | null = null;
+
+export const set_trigger_replicator = (fn: TriggerReplicator | null) => {
+    replicator = fn;
+};
+
+// `authoritative`: this engine runs shared (non-local) triggers, i.e. it's the host (or solo) and
+// speaks for the event. a shared client only ever runs `local` triggers (instant cosmetic reactions
+// to its own player's actions); the host runs the rest, for its own events and for the reports
+// clients forward to it, and replicates each command they run so every engine applies it.
+// `skip_local`: the event came from a client, which already ran the local ones for itself.
+export const run_triggers = (source_id: string, payload: any, authoritative: boolean, skip_local = false) => {
     const triggers = triggers_by_source.get(source_id);
     if (!triggers) return;
 
@@ -83,6 +93,7 @@ export const run_triggers = (source_id: string, payload: any, authoritative: boo
     for (const trigger of triggers) {
         if (trigger.source.id !== source_id) continue;
         if (!authoritative && !trigger.local) continue;
+        if (skip_local && trigger.local) continue;
         if (!matches_filter(payload, trigger.event_filter)) continue;
 
         if (trigger.cooldown_ms && trigger.cooldown_ms > 0) {
@@ -114,6 +125,11 @@ export const run_triggers = (source_id: string, payload: any, authoritative: boo
                 handler(target.command, args);
             } catch (error) {
                 console.error(`Trigger target "${target.command}" threw:`, error);
+            }
+
+            // a shared trigger's effect happens on every engine, not just here
+            if (!trigger.local && target_id) {
+                replicator?.(target_id, target.command, args);
             }
         }
     }

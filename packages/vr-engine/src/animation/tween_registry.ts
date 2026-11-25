@@ -22,3 +22,5 @@ export const cancel_active_tween = (id: string) => {
 };
 
 export const get_active_tweens = () => active;
+
+export const clear_active_tweens = () => active.clear();
