@@ -25,6 +25,22 @@ const LEAN_LAG_RATE = 0.0002;
 const MAX_LEAN = 0.25; // radians
 const LEAN_SCALE = 3;
 
+// neck pivot relative to the eyes, in head space. FLAT_BACK doesn't rotate with the head
+const NECK_DOWN = 0.1;
+const NECK_BACK = 0.03;
+const FLAT_BACK = 0.02;
+const TORSO_BELOW_NECK = 0.066;
+const MAX_NECK_PITCH = 0.9; // radians, soft cap
+
+// tilt about the hips past the soft cap
+const TORSO_PIVOT_BELOW_TOP = 0.5; // model origin is at the top
+const TILT_FOLLOW_UP = 1.5;
+const TILT_FOLLOW_DOWN = 1.3;
+const MAX_TORSO_TILT = 0.35; // radians
+const NECK_SLIDE_TAIL = 0.3; // how much pitch past the cap still slides
+const RISE_FOLLOW_UP = 1;
+const RISE_FOLLOW_DOWN = 0;
+
 export const TORSO_MODEL_URL = torso;
 
 export const torso_scale_for_height = (player_height_cm: number) =>
@@ -39,25 +55,54 @@ export const pose_torso = (
     delta: number,
     out: Object3D
 ): Vector3 => {
-    const pos = head_pos.clone();
     const quat = head_quat.clone();
 
-    // place torso below the head
-    pos.y -= 0.166 * scale_factor;
+    // pitch-independent so looking up/down doesn't cause leaning
+    const lean_pos = head_pos.clone();
+    lean_pos.y -= (NECK_DOWN + TORSO_BELOW_NECK) * scale_factor;
 
-    const anchor = lag_anchor ?? pos.clone();
+    const anchor = lag_anchor ?? lean_pos.clone();
 
     const lean_lag_smoothing = 1 - Math.pow(LEAN_LAG_RATE, delta);
-    anchor.lerp(pos, lean_lag_smoothing);
+    anchor.lerp(lean_pos, lean_lag_smoothing);
 
     // rotate torso to match camera rotation, but only on the y-axis
+    // blend in head up so yaw is stable looking straight up/down
     // TODO lag rotation slightlky
     const forward = new Vector3(0, 0, -1).applyQuaternion(quat);
-    const yaw = Math.atan2(-forward.x, -forward.z);
+    const up = new Vector3(0, 1, 0).applyQuaternion(quat);
+    const pitch = Math.asin(Math.max(-1, Math.min(1, forward.y)));
+    const yaw_dir = forward.addScaledVector(up, -forward.y);
+    const yaw = Math.atan2(-yaw_dir.x, -yaw_dir.z);
     quat.setFromAxisAngle(Y_AXIS, yaw);
 
+    // hang the torso from the neck pivot, following a soft-capped pitch
+    const capped_pitch = MAX_NECK_PITCH * Math.tanh(pitch / MAX_NECK_PITCH);
+    const neck_pitch = capped_pitch + (pitch - capped_pitch) * NECK_SLIDE_TAIL;
+    const neck_quat = quat.clone().multiply(new Quaternion().setFromAxisAngle(X_AXIS, neck_pitch));
+    const pos = new Vector3(0, -NECK_DOWN, NECK_BACK)
+        .multiplyScalar(scale_factor)
+        .applyQuaternion(neck_quat)
+        .add(head_pos);
+    pos.y -= TORSO_BELOW_NECK * scale_factor;
+
+    pos.x += Math.sin(yaw) * FLAT_BACK * scale_factor;
+    pos.z += Math.cos(yaw) * FLAT_BACK * scale_factor;
+
+    // make up the capped pitch by tilting about the hips (z) and lifting (y)
+    const neck_z = (p: number) => -NECK_DOWN * Math.sin(p) + NECK_BACK * Math.cos(p);
+    const neck_y = (p: number) => -NECK_DOWN * Math.cos(p) - NECK_BACK * Math.sin(p);
+    const residual_z = (neck_z(pitch) - neck_z(neck_pitch)) * scale_factor * (pitch > 0 ? TILT_FOLLOW_UP : TILT_FOLLOW_DOWN);
+    const residual_y = (neck_y(pitch) - neck_y(neck_pitch)) * scale_factor;
+    pos.y += residual_y * (pitch > 0 ? RISE_FOLLOW_UP : RISE_FOLLOW_DOWN);
+
+    const pivot_len = TORSO_PIVOT_BELOW_TOP * scale_factor;
+    const tilt = Math.max(-MAX_TORSO_TILT, Math.min(MAX_TORSO_TILT, Math.atan2(residual_z, pivot_len)));
+    pos.add(new Vector3(0, pivot_len * (Math.cos(tilt) - 1), pivot_len * Math.sin(tilt)).applyQuaternion(quat));
+    quat.multiply(new Quaternion().setFromAxisAngle(X_AXIS, tilt));
+
     // apply torso leaning proportional to the difference between lagged and true position
-    const world_diff = new Vector3().subVectors(pos, anchor);
+    const world_diff = new Vector3().subVectors(lean_pos, anchor);
     const local_diff = world_diff.applyQuaternion(quat.clone().invert());
 
     const lean_back = Math.max(
@@ -74,10 +119,6 @@ export const pose_torso = (
         .multiply(new Quaternion().setFromAxisAngle(Z_AXIS, lean_side));
 
     quat.multiply(lean_quat);
-
-    // move slightly behind the new forward direction
-    const flat_forward = new Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
-    pos.add(flat_forward.multiplyScalar(-0.05));
 
     out.position.copy(pos);
     out.quaternion.copy(quat);
