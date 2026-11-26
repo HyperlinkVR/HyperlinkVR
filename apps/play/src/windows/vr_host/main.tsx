@@ -64,11 +64,11 @@ const SpectatorUI = () => {
 
     const [is_supported, setIsSupported] = useState<boolean | null>(false);
 
-    const [on_ready, setXRReady] = useState(false);
-    const handle_xr_ready = useCallback(() => setXRReady(true), []);
+    const [ready, setReady] = useState(false);
+    const handle_ready = useCallback(() => setReady(true), []);
 
     const enter_vr = useCallback(() => {
-        if (starting_ref.current || !on_ready) return;
+        if (starting_ref.current || !ready) return;
 
         starting_ref.current = true; // guard against double-entry
         xr_store
@@ -81,7 +81,7 @@ const SpectatorUI = () => {
             });
 
         setPhase("starting");
-    }, [on_ready]);
+    }, [ready]);
 
     useEffect(() => {
         const check_support = async () => {
@@ -133,7 +133,13 @@ const SpectatorUI = () => {
     return (
         <DefaultContextProviders>
             <main className="font-sans">
-                {phase !== "started" && (
+                {!ready && (
+                    <div className="bg-black/80 backdrop-blur-md absolute inset-0 flex flex-col items-center justify-center z-50 text-white gap-8">
+                        <LoadingSpinner className="my-2" />
+                        <p className="text-lg">Loading engine...</p>
+                    </div>
+                )}
+                {ready && phase !== "started" && (
                     <div className="bg-black/80 backdrop-blur-md absolute inset-0 flex flex-col items-center justify-center z-50 text-white gap-8">
                         <LoginHint />
 
@@ -141,7 +147,7 @@ const SpectatorUI = () => {
 
                         <div className="flex flex-col gap-4 w-64 items-center justify-center">
                             {is_supported === null ? null : (
-                                on_ready ? (
+                                ready ? (
                                 // TODO: we really need a button component
                                 <button
                                     className="w-full px-4 py-2 bg-blue-600 rounded-lg hover:not-disabled:bg-blue-700 transition text-xl font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-600"
@@ -167,7 +173,7 @@ const SpectatorUI = () => {
                 )}
                 <div className="h-screen w-screen bg-black flex items-center justify-center">
                     <DevNetworkEngineProvider>
-                        <EngineHost mode={mode} on_xr_ready={handle_xr_ready} entered={phase === "started"} />
+                        <EngineHost mode={mode} on_ready={handle_ready} entered={phase === "started"} />
                     </DevNetworkEngineProvider>
                 </div>
             </main>
@@ -176,5 +182,3 @@ const SpectatorUI = () => {
 };
 
 ReactDOM.createRoot(document.getElementById("root")!).render(<SpectatorUI />);
-
-// TODO: button to enter flat mode

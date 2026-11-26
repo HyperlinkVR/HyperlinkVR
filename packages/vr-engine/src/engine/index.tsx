@@ -697,13 +697,13 @@ const EngineHostInternal = memo(
 
 // `entered`: the host app's "play" overlay is gone, so the player can see the game (players.on_enter).
 // hosts without such an overlay leave it at the default
-export const EngineHost = ({ on_xr_ready, mode, entered = true }: { on_xr_ready: () => void, mode: "vr" | "flat", entered?: boolean }) => (
+export const EngineHost = ({ on_ready, mode, entered = true }: { on_ready: () => void, mode: "vr" | "flat", entered?: boolean }) => (
     <ErrorBoundary
         FallbackComponent={FatalErrorFallback}
         onReset={() => window.location.reload()}
     >
         <EnteredSync entered={entered} />
-        <EngineHostInternal on_ready={on_xr_ready} mode={mode} />
+        <EngineHostInternal on_ready={on_ready} mode={mode} />
     </ErrorBoundary>
 );
 
