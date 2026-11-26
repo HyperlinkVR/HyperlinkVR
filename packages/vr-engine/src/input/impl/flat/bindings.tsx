@@ -207,7 +207,7 @@ const update_ui_repeat = (
     return false;
 };
 
-export const FlatInputRunner = () => {
+export const FlatInputRunner = ({entered}: {entered: boolean}) => {
     const { gl } = useThree();
 
     const watch_presented = useFlatInputStore((s) => s.watch_presented);
@@ -597,6 +597,25 @@ export const FlatInputRunner = () => {
         frame_input.grab = !watch_open && (mouse_buttons.grab || pad_grab_held.current);
         frame_input.use = !watch_open && (mouse_buttons.use || pad_use_held.current);
     }, -10); // before default-priority consumers of frame_input
+
+    // acquire lock on enter
+    useEffect(() => {
+        if (!entered) return;
+
+        const canvas = gl.domElement;
+        if (document.pointerLockElement !== canvas && !cursor_free_explicit.current) {
+            try {
+                const lock_result = canvas.requestPointerLock() as unknown as
+                    | Promise<void>
+                    | undefined;
+                lock_result?.catch(() => {});
+            } catch {
+                // ignored
+            }
+        }
+    }, [entered, gl.domElement]);
+
+    // TODO: hitting escape on top level of watch closes it but then also frees pointer lock, reacquire it
 
     return null;
 };

@@ -480,7 +480,7 @@ const DiscordPresenceSync = () => {
 const anim_logo_svg = new URL("../../../assets/hyperlinkvr_anim.svg", import.meta.url).href;
 
 const EngineHostInternal = memo(
-    ({ on_ready, mode }: { on_ready: () => void; mode: "vr" | "flat" }) => {
+    ({ on_ready, mode, entered }: { on_ready: () => void; mode: "vr" | "flat", entered: boolean }) => {
         // gracefully end session on unmount to avoid renderer crash
         useEffect(() => {
             return () => {
@@ -655,7 +655,7 @@ const EngineHostInternal = memo(
                                                                         >
                                                                             {mode === "flat" && (
                                                                                 <>
-                                                                                    <FlatInputRunner />
+                                                                                    <FlatInputRunner entered={entered} />
                                                                                     <FlatClickRaycaster />
                                                                                     <FlatAvatarHands />
                                                                                 </>
@@ -703,7 +703,7 @@ export const EngineHost = ({ on_ready, mode, entered = true }: { on_ready: () =>
         onReset={() => window.location.reload()}
     >
         <EnteredSync entered={entered} />
-        <EngineHostInternal on_ready={on_ready} mode={mode} />
+        <EngineHostInternal on_ready={on_ready} mode={mode} entered={entered} />
     </ErrorBoundary>
 );
 
