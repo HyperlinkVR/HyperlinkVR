@@ -98,7 +98,10 @@ const RemoteCapsule = ({ pose, peer_id, live }: { pose: SampledPose; peer_id: st
 // it can't knock things around from a stale spot
 const PARKED_Y = -1000;
 
-const remote_kinematic = (collider: { type: "sphere"; radius: number } | { type: "auto" }) => ({
+const remote_kinematic = (collider:
+    | { type: "sphere"; radius: number }
+    | { type: "capsule"; radius: number; height: number; offset?: [number, number, number] }
+    | { type: "auto" }) => ({
     rigid_body: {
         type: "kinematic-pos" as const,
         collider
@@ -166,17 +169,24 @@ const RemoteTorso = ({ pose, height_cm, peer_id }: { pose: SampledPose; height_c
 
     return (
         <>
-            {/* same layout as the local torso: pose an empty anchor, and let the body track it with the
-                mesh inside the body. nesting the body under the posed group would transform it twice */}
-            <group ref={ref} />
+            {/* the mesh sits in the posed group itself, so it's exactly under the head (keeping the lean).
+                unlike the local torso, it isn't inside its physics body: a body only moves on the next
+                physics step, and on top of a network-interpolated head that step's lag shows as the head
+                floating off the torso. the body is just a collider that follows, for pushing props */}
+            <group ref={ref}>
+                <primitive object={torso} />
+            </group>
             <ObjectPhysics
                 body_name={remote_avatar_body_name("torso", peer_id)}
                 collision_groups={REMOTE_BODY_GROUPS}
-                physics={remote_kinematic({ type: "auto" })}
+                physics={remote_kinematic({
+                    type: "capsule",
+                    radius: 0.16 * scale_factor,
+                    height: 0.3 * scale_factor,
+                    offset: [0, -0.25 * scale_factor, 0]
+                })}
                 kinematic_pos_tracking_ref={ref}
-            >
-                <primitive object={torso} />
-            </ObjectPhysics>
+            />
         </>
     );
 };
