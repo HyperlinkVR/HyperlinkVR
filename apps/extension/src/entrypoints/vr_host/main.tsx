@@ -113,7 +113,7 @@ const SpectatorUI = () => {
         };
     }, []);
 
-    const [mode, setMode] = useState<"vr" | "flat">("vr");
+    const [mode, setMode] = useState<"vr" | "flat">("flat");
 
     const play_flat = useCallback(() => {
         setMode("flat");
@@ -164,7 +164,7 @@ const SpectatorUI = () => {
                             <button
                                 className="w-full px-4 py-2 bg-blue-600 rounded-lg hover:not-disabled:bg-blue-700 transition text-xl font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-600"
                                 onClick={play_flat}
-                                disabled={phase === "starting" || mode === "flat"}
+                                disabled={phase === "starting"}
                             >
                                 Play in flat mode
                             </button>
