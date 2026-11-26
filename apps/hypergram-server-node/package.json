@@ -9,7 +9,7 @@
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {
-        "@hono/node-server": "^2.1.1",
+        "@hono/node-server": "^2.1.6",
         "@hyperlinkvr/hypergram-read-host": "workspace:*",
         "@hyperlinkvr/hypergram-schemas": "workspace:*",
         "@hyperlinkvr/hypergram-server-lib": "workspace:*"
