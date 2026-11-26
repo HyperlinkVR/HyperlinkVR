@@ -71,6 +71,8 @@ const SpectatorUI = () => {
         if (starting_ref.current || !ready) return;
 
         starting_ref.current = true; // guard against double-entry
+
+        setMode("vr");
         xr_store
             .enterVR()
             .then(() => setPhase("started"))
@@ -78,6 +80,7 @@ const SpectatorUI = () => {
                 console.error(err);
                 starting_ref.current = false; // allow retry on failure
                 setPhase("idle");
+                setMode("flat");
             });
 
         setPhase("starting");
@@ -113,7 +116,7 @@ const SpectatorUI = () => {
         };
     }, []);
 
-    const [mode, setMode] = useState<"vr" | "flat">("vr");
+    const [mode, setMode] = useState<"vr" | "flat">("flat");
 
     const play_flat = useCallback(() => {
         setMode("flat");
@@ -164,7 +167,7 @@ const SpectatorUI = () => {
                             <button
                                 className="w-full px-4 py-2 bg-blue-600 rounded-lg hover:not-disabled:bg-blue-700 transition text-xl font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-600"
                                 onClick={play_flat}
-                                disabled={phase === "starting" || mode === "flat"}
+                                disabled={phase === "starting"}
                             >
                                 Play in flat mode
                             </button>
