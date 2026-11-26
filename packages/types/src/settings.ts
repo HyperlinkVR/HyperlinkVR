@@ -663,6 +663,17 @@ export const settings_def = build_settings({
         }
     },
 
+    devtools_show_net_overlay: {
+        default_value: false,
+        local_only: true,
+        ui: {
+            flat: {
+                label: "Show multiplayer overlay",
+                widget: { type: "switch" }
+            }
+        }
+    },
+
     devtools_emulated_device_profile: {
         default_value: null as DeviceProfile | null,
         local_only: true

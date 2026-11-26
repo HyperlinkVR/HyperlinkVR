@@ -112,6 +112,7 @@ const NetworkTools = () => {
     return (
         <>
             <FlatSettingWidget setting_key="devtools_network_mode" />
+            <ToolSettingSwitch label="Show multiplayer overlay" setting_key="devtools_show_net_overlay" />
 
             {/* simulated conditions only apply to the local carrier, not a real socket */}
             {mode === "local" && (

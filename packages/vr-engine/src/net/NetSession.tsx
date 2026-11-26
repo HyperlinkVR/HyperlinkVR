@@ -17,13 +17,18 @@ interface RoomState {
 export type SessionEnd = "host-left" | "connection-lost";
 
 interface NetSession extends RoomState {
+    // what this session is actually running as: a shared world we couldn't join runs solo
     mode: MultiplayerMode;
+    // what the world asked for (from max_players), before any fallback
+    world_mode: MultiplayerMode;
+    // the room join failed or timed out (or there's no network engine), so a shared world runs solo
+    join_failed: boolean;
     ended: SessionEnd | null;
 }
 
 const NO_SESSION: RoomState = { room: null, peers: [], host: null };
 
-const NetSessionContext = createContext<NetSession>({ ...NO_SESSION, mode: "solo", ended: null });
+const NetSessionContext = createContext<NetSession>({ ...NO_SESSION, mode: "solo", world_mode: "solo", join_failed: false, ended: null });
 
 // TODO: instance selection (invites etc), everyone on a world shares one for now
 const DEFAULT_INSTANCE = "main";
@@ -134,7 +139,8 @@ export const NetSessionProvider = ({ children }: { children: React.ReactNode }) 
         };
     }, [network, world, shared, username, uuid]);
 
-    return <NetSessionContext.Provider value={{ ...session, mode, ended }}>{children}</NetSessionContext.Provider>;
+    const unjoinable = join_failed || (shared && !network);
+    return <NetSessionContext.Provider value={{ ...session, mode, world_mode, join_failed: unjoinable, ended }}>{children}</NetSessionContext.Provider>;
 };
 
 export const useNetSession = () => useContext(NetSessionContext);

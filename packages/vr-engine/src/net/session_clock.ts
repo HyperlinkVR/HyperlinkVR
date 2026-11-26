@@ -5,6 +5,8 @@
 // offset = session_time - local_time. 0 on the host and in solo, so every conversion below is the
 // identity there — this changes nothing until a client actually syncs.
 let offset = 0;
+// round trip to the host of the sample the offset came from (the lowest seen), null on the host/solo
+let rtt: number | null = null;
 
 export const set_clock_offset = (ms: number) => {
     offset = ms;
@@ -12,8 +14,15 @@ export const set_clock_offset = (ms: number) => {
 
 export const get_clock_offset = () => offset;
 
+export const set_clock_rtt = (ms: number | null) => {
+    rtt = ms;
+};
+
+export const get_clock_rtt = () => rtt;
+
 export const reset_clock = () => {
     offset = 0;
+    rtt = null;
 };
 
 // current time on the shared session clock

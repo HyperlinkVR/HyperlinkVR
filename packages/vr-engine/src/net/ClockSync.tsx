@@ -7,7 +7,7 @@ import { useEffect } from "react";
 
 import { CLOCK_CHANNEL } from "./command_bus";
 import { useNetSession } from "./NetSession";
-import { reset_clock, set_clock_offset } from "./session_clock";
+import { reset_clock, set_clock_offset, set_clock_rtt } from "./session_clock";
 
 interface Ping {
     id: number;
@@ -47,6 +47,7 @@ export const ClockSync = () => {
                     best_rtt = rtt;
                     // host clock at t3 ≈ host_t + rtt/2; offset = (host clock at t3) - t3
                     set_clock_offset(data.host_t + rtt / 2 - t3);
+                    set_clock_rtt(rtt);
                 }
             } else if (is_host()) {
                 // host: answer with our clock (session time)
