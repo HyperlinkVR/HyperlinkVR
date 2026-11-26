@@ -427,6 +427,23 @@ interface WebSDKBatchEngineObjectReportEventMessage extends BaseWebSDKEventMessa
     reports: ReportEvent[];
 }
 
+// the player is in the session: the earliest moment (no world or body yet). see players.on_join
+interface WebSDKPlayerJoinedEventMessage extends BaseWebSDKEventMessage {
+    type: "HVRSDK_PLAYER_JOINED";
+    id: string;
+    username?: string | null;
+    account_id?: string | null;
+    remote?: boolean;
+}
+
+// the player can see and play: spawned, and nothing in the way (play clicked / headset on). see players.on_enter
+interface WebSDKPlayerEnteredEventMessage extends BaseWebSDKEventMessage {
+    type: "HVRSDK_PLAYER_ENTERED";
+    id: string;
+    mode?: "vr" | "flat";
+    remote?: boolean;
+}
+
 interface WebSDKPlayerSpawnedEventMessage extends BaseWebSDKEventMessage {
     type: "HVRSDK_PLAYER_SPAWNED";
     // the player's id for this session (peer id in a room). never null
@@ -450,7 +467,9 @@ export type WebSDKEventMessage =
     WebSDKReadyEventMessage
     | WebSDKEngineObjectReportEventMessage
     | WebSDKBatchEngineObjectReportEventMessage
+    | WebSDKPlayerJoinedEventMessage
     | WebSDKPlayerSpawnedEventMessage
+    | WebSDKPlayerEnteredEventMessage
     | WebSDKPlayerLeftEventMessage;
 
 export type EventMessage =

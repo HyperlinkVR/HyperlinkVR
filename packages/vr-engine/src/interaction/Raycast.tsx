@@ -23,6 +23,7 @@ import {
     target_key
 } from "./util/target_resolution";
 import { get_object_holder } from "./util/holders";
+import { remote_capsule_target } from "../net/remote_capsules";
 
 const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
 const FORWARD = new Vector3(0, 0, -1);
@@ -275,7 +276,7 @@ export const Raycast = ({
                 hit_index: number
             ): { hit: RaycastHit; valid: boolean } => {
                 const node = node_for_collider(collider);
-                const target = resolve_hit_target(node);
+                const target = resolve_hit_target(node) ?? remote_capsule_target(collider.handle);
 
                 scratch_point
                     .copy(scratch_direction)
@@ -302,7 +303,7 @@ export const Raycast = ({
                 const predicate =
                     targets.non_targets === "pass-through"
                         ? (collider: RapierCollider) =>
-                            passes_filters(resolve_hit_target(node_for_collider(collider)), targets)
+                            passes_filters(resolve_hit_target(node_for_collider(collider)) ?? remote_capsule_target(collider.handle), targets)
                         : undefined;
 
                 if (thickness > 0) {

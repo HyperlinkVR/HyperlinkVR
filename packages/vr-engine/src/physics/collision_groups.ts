@@ -4,6 +4,9 @@ import type {CollisionFilter} from "@hyperlinkvr/vr-engine-schemas";
 export const GROUP_WORLD = 0;
 export const GROUP_PLAYER = 1;
 export const GROUP_PROP = 2;
+// remote players' collision capsules: they meet only players' character controllers (never props, so
+// they don't shove things around), and whether they block is the world's player_collisions setting
+export const GROUP_PLAYER_BLOCKER = 3;
 
 export const PLAYER_COLLISION_GROUPS = interactionGroups(GROUP_PLAYER);
 

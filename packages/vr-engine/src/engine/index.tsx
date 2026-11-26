@@ -27,6 +27,7 @@ import { AnimationSync } from "../animation/AnimationSync";
 import { SeekRunner } from "../animation/SeekRunner";
 import { SeekSync } from "../animation/SeekSync";
 import { wait_for_all_objects_ready } from "./object_ready_registry";
+import { usePlayerPresenceStore } from "../player/presence_store";
 import { TweenRunner } from "../animation/TweenRunner";
 import { DOMMirror } from "../browser/DOMMirror";
 import { URLBar } from "../browser/URLBar";
@@ -247,6 +248,9 @@ const SceneContents = ({
     // then would yank a player the world has already placed (e.g. a shared client the host teleported
     // to spawn) back to the origin
     const reset_generation_ref = useRef(0);
+    const net_session = useNetSession();
+    const net_session_ref = useRef(net_session);
+    net_session_ref.current = net_session;
     useEffect(() => {
         if (doc_generation === 0 || doc_generation === reset_generation_ref.current) {
             return;
@@ -255,7 +259,13 @@ const SceneContents = ({
 
         setWorldEnv(support === "supported" ? WORLD_ENV_DEFAULT : WORLD_ENV_GRAYSPACE);
 
-        if (internal_ref.current) {
+        // a shared client that has already spawned here was placed by the host: our page loading late
+        // (or reloading) mustn't throw it back to the origin
+        const { room: current_room } = net_session_ref.current;
+        const placed_by_host = !!current_room && current_room.self.id !== current_room.host()
+            && usePlayerPresenceStore.getState().spawned;
+
+        if (internal_ref.current && !placed_by_host) {
             internal_ref.current.position.set(0, 0, 0);
             internal_ref.current.rotation.set(0, 0, 0);
         }
@@ -685,13 +695,23 @@ const EngineHostInternal = memo(
 
 // TODO: how could the contexts be denested for cleanliness
 
-export const EngineHost = ({ on_xr_ready, mode }: { on_xr_ready: () => void, mode: "vr" | "flat" }) => (
+// `entered`: the host app's "play" overlay is gone, so the player can see the game (players.on_enter).
+// hosts without such an overlay leave it at the default
+export const EngineHost = ({ on_xr_ready, mode, entered = true }: { on_xr_ready: () => void, mode: "vr" | "flat", entered?: boolean }) => (
     <ErrorBoundary
         FallbackComponent={FatalErrorFallback}
         onReset={() => window.location.reload()}
     >
+        <EnteredSync entered={entered} />
         <EngineHostInternal on_ready={on_xr_ready} mode={mode} />
     </ErrorBoundary>
 );
+
+const EnteredSync = ({ entered }: { entered: boolean }) => {
+    useEffect(() => {
+        usePlayerPresenceStore.getState().set_entered(entered);
+    }, [entered]);
+    return null;
+};
 
 // TODO: see if soft reset possible

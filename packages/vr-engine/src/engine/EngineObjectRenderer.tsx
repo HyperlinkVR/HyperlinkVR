@@ -142,16 +142,27 @@ const EngineObjectRendererInner = ({
         }
     }, [body_owns_pose, data.transform]);
 
-    const RendererComponentWrapper = useMemo(() => {
-        if (suspend) {
-            return (props: RendererComponentProps<any>) => (
-                <Suspense fallback={null}>
-                    <RendererComponent {...props} />
-                </Suspense>
-            );
-        }
-        return RendererComponent;
-    }, [RendererComponent, suspend]);
+    // the ready marker sits inside the same suspense boundary as the content, so "ready" means the
+    // content (mesh, interactions, their command handlers, a grabbable's target) has actually mounted,
+    // not just the object's shell. a create reply, and a late joiner replaying state onto the object,
+    // both wait on it
+    const content = (
+        <>
+            <RendererComponent
+                root_ref={refs.current.root}
+                user_data_ref={user_data_ref}
+                id={data.id}
+                transform={data.transform}
+                tags={data.tags}
+                {...obj_rest}
+            />
+
+            <ObjectReadyMarker
+                object_id={data.id}
+                has_physics={has_physics}
+            />
+        </>
+    );
 
     return (
         <ObjectRefsProvider value={refs.current}>
@@ -161,19 +172,7 @@ const EngineObjectRendererInner = ({
                 scale={data.transform.scale}
                 userData={refs.current.user_data}
             >
-                <RendererComponentWrapper
-                    root_ref={refs.current.root}
-                    user_data_ref={user_data_ref}
-                    id={data.id}
-                    transform={data.transform}
-                    tags={data.tags}
-                    {...obj_rest}
-                />
-
-                <ObjectReadyMarker
-                    object_id={data.id}
-                    has_physics={has_physics}
-                />
+                {suspend ? <Suspense fallback={null}>{content}</Suspense> : content}
             </group>
         </ObjectRefsProvider>
     );

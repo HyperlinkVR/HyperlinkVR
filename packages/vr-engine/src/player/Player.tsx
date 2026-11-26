@@ -27,6 +27,7 @@ import { SPAWN_CHANNEL } from "../net/command_bus";
 import { useLocalPlayerId, useNetSession } from "../net/NetSession";
 import { Layer, LayerGroup } from "../render";
 import { useWorldLoadingStateStore } from "../stores/WorldLoadingStateStore";
+import { usePlayerPresenceStore } from "./presence_store";
 import { Avatar } from "./Avatar";
 import { FlatCameraRig } from "./FlatCameraRig";
 import { KeyboardSlot } from "./KeyboardSlot";
@@ -209,11 +210,53 @@ export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>
     const world_ready = useWorldLoadingStateStore((store) => store.world_ready);
     const synced_with_host = useWorldLoadingStateStore((store) => store.synced_with_host);
     const spawned_for_world = useRef(false);
+    const joined_for_page = useRef(false);
+    const entered_for_world = useRef(false);
+    const entered = usePlayerPresenceStore((store) => store.entered);
+    const spawned = usePlayerPresenceStore((store) => store.spawned);
+    const set_spawned = usePlayerPresenceStore((store) => store.set_spawned);
+    const is_shared_client = !!room && room.self.id !== room.host();
 
+    // the local player's arrival, as the world's page hears it (players.on_join / on_spawn / on_enter).
+    // in a shared world a client's page doesn't run the world, the host's does: the host learns a
+    // client joined from the room itself, and the client announces its spawn and enter to the host,
+    // which raises them on its page as remote events
+
+    // join: the earliest moment, as soon as the page can hear it. in a shared world, once we're in the
+    // room (so it carries our peer id), or the session failed and we're running solo
+    useEffect(() => {
+        if (!connected) {
+            // a new page (navigation, reload) hears it again
+            joined_for_page.current = false;
+            return;
+        }
+        if (joined_for_page.current || is_shared_client) {
+            return;
+        }
+        if (net_mode === "shared" && !in_room && !session_ended) {
+            return;
+        }
+        joined_for_page.current = true;
+        try {
+            emit_event({
+                type: "HVRSDK_PLAYER_JOINED",
+                id: local_id,
+                username: auth_session?.username ?? null,
+                account_id: auth_session?.uuid ?? null
+            });
+        } catch (error) {
+            console.warn("Failed to emit player join event", error);
+        }
+    }, [connected, is_shared_client, net_mode, in_room, session_ended, emit_event, local_id, auth_session]);
+
+    // spawn: the world has loaded and we have a body that can be placed, even behind the play overlay,
+    // so a world teleporting us here has us in place before we look
     useEffect(() => {
         if (!world_ready) {
             // re-arm for the next world
             spawned_for_world.current = false;
+            entered_for_world.current = false;
+            set_spawned(false);
             return;
         }
 
@@ -229,20 +272,21 @@ export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>
             return;
         }
 
-        // a shared client's page doesn't run the world, the host's does: announce the spawn there
-        // instead, once we hold the host's world and it has loaded (not off a world_ready left over
-        // from our page running the world solo before the room joined — the host would teleport us
-        // into a world that's about to be wiped). the host emits it to its page as a remote spawn
-        if (room && room.self.id !== room.host()) {
+        if (is_shared_client) {
+            // once we hold the host's world and it has loaded (not off a world_ready left over from our
+            // page running the world solo before the room joined). our page's new-document reset can
+            // still land after this, but it leaves a spawned shared client where the host put it
             if (!synced_with_host) {
                 return;
             }
             spawned_for_world.current = true;
-            room.send("host", SPAWN_CHANNEL, JSON.stringify({ mode: session_mode }), "reliable");
+            set_spawned(true);
+            room!.send("host", SPAWN_CHANNEL, JSON.stringify({ event: "spawn", mode: session_mode }), "reliable");
             return;
         }
 
         spawned_for_world.current = true;
+        set_spawned(true);
         try {
             emit_event({
                 type: "HVRSDK_PLAYER_SPAWNED",
@@ -254,7 +298,26 @@ export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>
         } catch (error) {
             console.warn("Failed to emit player spawn event", error);
         }
-    }, [world_ready, synced_with_host, connected, session_mode, emit_event, local_id, net_mode, room, in_room, session_ended, auth_session]);
+    }, [world_ready, synced_with_host, connected, session_mode, emit_event, local_id, net_mode, room, in_room, session_ended, auth_session, is_shared_client, set_spawned]);
+
+    // enter: spawned, and nothing in the way (the host app's play overlay is gone). entered stays true
+    // across worlds, so arriving somewhere new mid-session enters as soon as we spawn
+    useEffect(() => {
+        if (!spawned || !entered || entered_for_world.current) {
+            return;
+        }
+        entered_for_world.current = true;
+
+        if (is_shared_client) {
+            room!.send("host", SPAWN_CHANNEL, JSON.stringify({ event: "enter", mode: session_mode }), "reliable");
+            return;
+        }
+        try {
+            emit_event({ type: "HVRSDK_PLAYER_ENTERED", id: local_id, mode: session_mode });
+        } catch (error) {
+            console.warn("Failed to emit player enter event", error);
+        }
+    }, [spawned, entered, is_shared_client, room, session_mode, emit_event, local_id]);
 
     useEffect(() => {
         // TODO: these ignore target username on the message and assume its for us, nothing to do rn but just remember this is the case when multiplayer happens

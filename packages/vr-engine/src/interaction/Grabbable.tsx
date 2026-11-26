@@ -67,6 +67,9 @@ const VR_THROW_BOOST = 1.5;
 
 const FLAT_REACH_HEAD_OFFSET = 1.75;
 const HOVER_BID_PRIORITY = -1000;
+
+// scale out of a decomposed grab matrix, ignored (see the no-body hold)
+const _discarded_scale = new Vector3();
 const RESTORE_CLEARANCE_SKIN = 0.05;
 const RESTORE_FOOT_PROBE_DROP = 0.7;
 const ATTACH_MAX_SPEED = 8;
@@ -1297,10 +1300,13 @@ export const useGrabbable = (
                         .invert();
                     newWorldMatrix.premultiply(parentInverse.current);
                 }
+                // position and rotation only: a grab never rescales what it holds. a snap grab composes
+                // the hand pose with no scale, so writing scale back would blow a scaled-down object up
+                // to its natural size (locally only; peers get pose, not scale)
                 newWorldMatrix.decompose(
                     target_ref.current.position,
                     target_ref.current.quaternion,
-                    target_ref.current.scale
+                    _discarded_scale
                 );
                 target_ref.current.matrixAutoUpdate = true;
             }

@@ -8,7 +8,7 @@
 // world monitors run host-only because a client hands world authority to the host below.
 
 import type { ReportEvent } from "@hyperlinkvr/vr-engine-schemas";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 import { useWebSDKMessaging } from "../contexts/WebSDKMessagingContext";
 import { add_report_sink } from "../engine/report_outbox";
@@ -84,57 +84,88 @@ export const MultiplayerSync = () => {
         return () => off_message();
     }, [room, is_host, emit_event]);
 
-    // #16: tell the host's page about remote players. on_spawn fires when the client says its player
-    // has actually spawned (its world is hydrated), not on room join, so the world can teleport them
-    // and drop objects in front of them without them falling through ground that isn't loaded yet.
-    // on_leave fires for spawned players that drop out of the peer list. only the host runs the world.
+    // #16: tell the host's page about remote players' arrival and departure:
+    // - join: as soon as they're in the room (no world or body yet)
+    // - spawn: when they announce it, i.e. their world has loaded and they have a placeable body, so the
+    //   world can teleport them and drop things in front of them without them falling through ground
+    //   that isn't loaded yet
+    // - enter: when they announce they can see and play (their play overlay is gone)
+    // - leave: anyone who joined, once they drop out of the peer list
+    // each fires once, always in that order. only the host runs the world, so only it needs these.
+    const joined_ref = useRef<Set<string>>(new Set());
     const spawned_ref = useRef<Set<string>>(new Set());
+    const entered_ref = useRef<Set<string>>(new Set());
+
+    // a logged-in peer joins with its account uuid, which the node adopts as its peer id; a guest has no
+    // username and a minted id
+    const identity_of = useCallback((id: string) => {
+        const username = room?.peers().find((peer) => peer.id === id)?.username ?? null;
+        return { username, account_id: username ? id : null };
+    }, [room]);
+
+    const emit_player = useCallback((message: Parameters<typeof emit_event>[0]) => {
+        try {
+            emit_event(message);
+        } catch (error) {
+            console.warn(`Failed to emit ${message.type}`, error);
+        }
+    }, [emit_event]);
+
+    const ensure_joined = useCallback((id: string) => {
+        if (joined_ref.current.has(id)) return;
+        joined_ref.current.add(id);
+        emit_player({ type: "HVRSDK_PLAYER_JOINED", id, ...identity_of(id), remote: true });
+    }, [emit_player, identity_of]);
+
     useEffect(() => {
         if (!is_host || !connected || !room) {
+            joined_ref.current = new Set();
             spawned_ref.current = new Set();
+            entered_ref.current = new Set();
+            return;
+        }
+
+        const current = new Set(peers.filter((peer) => peer.id !== room.self.id).map((peer) => peer.id));
+        for (const id of current) {
+            ensure_joined(id);
+        }
+        for (const id of [...joined_ref.current]) {
+            if (!current.has(id)) {
+                joined_ref.current.delete(id);
+                spawned_ref.current.delete(id);
+                entered_ref.current.delete(id);
+                emit_player({ type: "HVRSDK_PLAYER_LEFT", id });
+            }
+        }
+    }, [peers, is_host, connected, room, ensure_joined, emit_player]);
+
+    useEffect(() => {
+        if (!is_host || !connected || !room) {
             return;
         }
         const off_message = room.on_message((message) => {
-            if (message.channel !== SPAWN_CHANNEL || spawned_ref.current.has(message.from)) {
+            if (message.channel !== SPAWN_CHANNEL) {
                 return;
             }
-            // a spawn can race the peer-left for a peer that's already gone
+            // an announcement can race the peer-left for a peer that's already gone
             if (!room.peers().some((peer) => peer.id === message.from)) {
                 return;
             }
-            const { mode } = JSON.parse(message.payload as string) as { mode?: "vr" | "flat" };
-            // a logged-in peer joins with its account uuid, which the node adopts as its peer id; a
-            // guest has no username and a minted id
-            const username = room.peers().find((peer) => peer.id === message.from)?.username ?? null;
-            const account_id = username ? message.from : null;
-            spawned_ref.current.add(message.from);
-            try {
-                emit_event({ type: "HVRSDK_PLAYER_SPAWNED", id: message.from, username, account_id, mode, remote: true });
-            } catch (error) {
-                console.warn("Failed to emit remote player spawn", error);
+            // `event` absent: an older client, whose only announcement was spawn
+            const { event = "spawn", mode } = JSON.parse(message.payload as string) as { event?: "spawn" | "enter"; mode?: "vr" | "flat" };
+            const id = message.from;
+            ensure_joined(id);
+
+            if (event === "spawn" && !spawned_ref.current.has(id)) {
+                spawned_ref.current.add(id);
+                emit_player({ type: "HVRSDK_PLAYER_SPAWNED", id, ...identity_of(id), mode, remote: true });
+            } else if (event === "enter" && spawned_ref.current.has(id) && !entered_ref.current.has(id)) {
+                entered_ref.current.add(id);
+                emit_player({ type: "HVRSDK_PLAYER_ENTERED", id, mode, remote: true });
             }
         });
         return () => off_message();
-    }, [is_host, connected, room, emit_event]);
-
-    useEffect(() => {
-        if (!is_host || !room) {
-            return;
-        }
-
-        const current = new Set(peers.map((peer) => peer.id));
-        for (const id of [...spawned_ref.current]) {
-            if (!current.has(id)) {
-                spawned_ref.current.delete(id);
-                try {
-                    emit_event({ type: "HVRSDK_PLAYER_LEFT", id });
-                } catch (error) {
-                    console.warn("Failed to emit remote player leave", error);
-                }
-            }
-        }
-
-    }, [peers, is_host, room, emit_event]);
+    }, [is_host, connected, room, ensure_joined, emit_player, identity_of]);
 
     // #14: player-targeted actions. the host forwards ones aimed at a remote player to that player's
     // engine (see player_actions / WebSDKMessagingContext) and relays the reply to its page; a client

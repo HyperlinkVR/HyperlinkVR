@@ -11,7 +11,7 @@ export * as world from "./world";
 
 import { report_meta } from "./meta";
 import { bind_rtc_event, facilitate_rtc, send_via_messaging, send_via_rtc } from "./messenger";
-import { _dispatch_leave as dispatch_player_leave, _dispatch_spawn as dispatch_player_spawn } from "./players";
+import { _dispatch_enter as dispatch_player_enter, _dispatch_join as dispatch_player_join, _dispatch_leave as dispatch_player_leave, _dispatch_spawn as dispatch_player_spawn } from "./players";
 
 let unbind_rtc_events: (() => void) | undefined;
 export const connect = async () => {
@@ -31,13 +31,17 @@ export const connect = async () => {
         }
     });
 
+    const unbind_join = bind_rtc_event("HVRSDK_PLAYER_JOINED", (msg) => dispatch_player_join(msg));
     const unbind_spawn = bind_rtc_event("HVRSDK_PLAYER_SPAWNED", (msg) => dispatch_player_spawn(msg));
+    const unbind_enter = bind_rtc_event("HVRSDK_PLAYER_ENTERED", (msg) => dispatch_player_enter(msg));
     const unbind_leave = bind_rtc_event("HVRSDK_PLAYER_LEFT", (msg) => dispatch_player_leave(msg));
 
     unbind_rtc_events = () => {
         unbind_report();
         unbind_report_batch();
+        unbind_join();
         unbind_spawn();
+        unbind_enter();
         unbind_leave();
     }
 }

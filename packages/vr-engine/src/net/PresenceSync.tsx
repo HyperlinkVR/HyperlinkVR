@@ -9,6 +9,7 @@ import type { Hand } from "../input/hands";
 import { useHands } from "../input/hands";
 import { pose_to_curl } from "../player/AvatarHand";
 import { get_player_position } from "../player/player_position_registry";
+import { usePlayerPresenceStore } from "../player/presence_store";
 import { usePresenceStore } from "../stores/PresenceStore";
 import { useNetSession } from "./NetSession";
 import { clear_pose_buffers, push_pose, retain_pose_buffers } from "./pose_buffer";
@@ -114,7 +115,11 @@ export const PresenceSync = () => {
 
     const since_send = useRef(0);
     useFrame(({ camera }, delta) => {
-        if (!room || peers.length < 2) {
+        // nothing to show until we've entered (clicked play): we spawn behind the play overlay, and the
+        // world's spawn teleport lands a round trip later, so sending from spawn would show us standing
+        // at the origin first. by the time we enter we're where the world put us
+        const presence = usePlayerPresenceStore.getState();
+        if (!room || peers.length < 2 || !presence.spawned || !presence.entered) {
             return;
         }
 

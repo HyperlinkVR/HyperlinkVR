@@ -287,49 +287,117 @@ export type PlayerRef = Player | string;
 export const player_ref_id = (ref: PlayerRef): string => (typeof ref === "string" ? ref : ref.get_id());
 
 type SpawnCallback = (player: Player, info: SpawnInfo) => void;
-type LeaveCallback = (player: Player) => void;
+type PlayerCallback = (player: Player) => void;
 
+const join_callbacks = new Set<PlayerCallback>();
 const spawn_callbacks = new Set<SpawnCallback>();
-const leave_callbacks = new Set<LeaveCallback>();
+const enter_callbacks = new Set<SpawnCallback>();
+const leave_callbacks = new Set<PlayerCallback>();
 
+// who has reached each stage, so a handler registered late (the local player can join before the
+// world's script has subscribed) still hears about everyone already there
+const joined = new Set<string>();
+const spawned = new Map<string, SpawnInfo>();
+const entered = new Map<string, SpawnInfo>();
 
-// fires when a player enters the world (the local player, or a remote one on the host)
-export const on_spawn = (callback: SpawnCallback): (() => void) => {
-    spawn_callbacks.add(callback);
+// `catch_up` is taken now (who's already there) and run on the next microtask, so a player whose event
+// arrives in between is heard once, through the event, not twice
+const subscribe = <T>(set: Set<T>, callback: T, catch_up: () => () => void): (() => void) => {
+    set.add(callback);
+    queueMicrotask(catch_up());
     return () => {
-        spawn_callbacks.delete(callback);
+        set.delete(callback);
     };
 };
 
-// fires when a remote player leaves
-export const on_leave = (callback: LeaveCallback): (() => void) => {
-    leave_callbacks.add(callback);
-    return () => {
-        leave_callbacks.delete(callback);
-    };
-};
+/**
+ * A player arrived in the session: the earliest moment, before their world has loaded or they have a
+ * body. Good for rosters, "X is joining", reserving a slot. Not for placing them (see {@link on_spawn}).
+ */
+export const on_join = (callback: PlayerCallback): (() => void) => subscribe(join_callbacks, callback, () => {
+    const already = [...joined].map((id) => live_players.get(id)).filter((player): player is Player => !!player);
+    return () => already.forEach((player) => callback(player));
+});
 
-// everyone present right now (local + any remote players the host has learned about)
+/**
+ * The player can see and play: they've spawned and nothing is in the way (they clicked play or put the
+ * headset on). Arriving in another world mid-session counts straight away. Start countdowns, timers
+ * and anything they mustn't miss here.
+ */
+export const on_enter = (callback: SpawnCallback): (() => void) => subscribe(enter_callbacks, callback, () => {
+    const already = [...entered].flatMap(([id, info]) => live_players.has(id) ? [[live_players.get(id)!, info] as const] : []);
+    return () => already.forEach(([player, info]) => callback(player, info));
+});
+
+
+/**
+ * A player has a body in the world that can be placed: their world has loaded, even if they haven't
+ * clicked play yet. Teleport them to the start and hand out their things here, so they're already in
+ * place when they look. (Fires for the local player, and on the host for each remote player.)
+ */
+export const on_spawn = (callback: SpawnCallback): (() => void) => subscribe(spawn_callbacks, callback, () => {
+    const already = [...spawned].flatMap(([id, info]) => live_players.has(id) ? [[live_players.get(id)!, info] as const] : []);
+    return () => already.forEach(([player, info]) => callback(player, info));
+});
+
+/** A player left (whether or not they ever spawned or entered). */
+export const on_leave = (callback: PlayerCallback): (() => void) => subscribe(leave_callbacks, callback, () => () => {});
+
+// everyone in the session right now (joined, whether or not they've spawned yet)
 export const list = (): Player[] => [...live_players.values()];
+
+const remember = (id: string, username?: string | null, account_id?: string | null) => {
+    let player = live_players.get(id);
+    if (!player) {
+        player = new Player(id);
+        live_players.set(id, player);
+    }
+    const known = records.get(id);
+    records.set(id, {
+        username: username !== undefined ? username : known?.username ?? null,
+        account_id: account_id !== undefined ? account_id : known?.account_id ?? null
+    });
+    return player;
+};
+
+const run = <A extends unknown[]>(callbacks: Set<(...args: A) => void>, label: string, ...args: A) => {
+    for (const callback of callbacks) {
+        try {
+            callback(...args);
+        } catch (error) {
+            console.error(`Error in player ${label} callback:`, error);
+        }
+    }
+};
+
+/** @internal */
+export const _dispatch_join = (event: NamedWebSDKEvent<"HVRSDK_PLAYER_JOINED">) => {
+    if (joined.has(event.id)) return;
+    joined.add(event.id);
+    const player = remember(event.id, event.username, event.account_id);
+    run(join_callbacks, "join", player);
+};
 
 /** @internal */
 export const _dispatch_spawn = (event: NamedWebSDKEvent<"HVRSDK_PLAYER_SPAWNED">) => {
-    const player = new Player(event.id);
-    live_players.set(event.id, player);
-    records.set(event.id, {username: event.username ?? null, account_id: event.account_id ?? null});
+    const player = remember(event.id, event.username, event.account_id);
     if (!event.remote) {
         local_player = player;
         for (const resolve of local_player_waiters.splice(0)) {
             resolve(player);
         }
     }
-    for (const callback of spawn_callbacks) {
-        try {
-            callback(player, {mode: event.mode, remote: event.remote});
-        } catch (error) {
-            console.error("Error in player spawn callback:", error);
-        }
-    }
+    const info: SpawnInfo = {mode: event.mode, remote: event.remote};
+    spawned.set(event.id, info);
+    run(spawn_callbacks, "spawn", player, info);
+};
+
+/** @internal */
+export const _dispatch_enter = (event: NamedWebSDKEvent<"HVRSDK_PLAYER_ENTERED">) => {
+    const player = remember(event.id);
+    const info: SpawnInfo = {mode: event.mode, remote: event.remote};
+    entered.set(event.id, info);
+    run(enter_callbacks, "enter", player, info);
 };
 
 /** @internal */
@@ -344,5 +412,8 @@ export const _dispatch_leave = (event: NamedWebSDKEvent<"HVRSDK_PLAYER_LEFT">) =
         }
     }
     records.delete(event.id);
+    joined.delete(event.id);
+    spawned.delete(event.id);
+    entered.delete(event.id);
     monitors_by_player.delete(event.id);
 };

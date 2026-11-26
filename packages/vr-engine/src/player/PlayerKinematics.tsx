@@ -11,7 +11,8 @@ import {useFlatFrameInput} from "../input/impl/flat/bindings";
 import {useSessionMode} from "../../../react/src/contexts/SessionMode";
 import {JUMP_SPEED} from "../input/values";
 import {useWorldEnvironment} from "../world/WorldEnvironmentContext";
-import {CAPSULE_RADIUS, consume_player_movement, set_capsule_world_position} from "./motion";
+import {CAPSULE_RADIUS, consume_player_movement, HEAD_CLEARANCE, MAX_PLAYER_HEIGHT, MIN_PLAYER_HEIGHT, set_capsule_world_position} from "./motion";
+import {is_remote_capsule} from "../net/remote_capsules";
 import {PLAYER_COLLISION_GROUPS, EXCLUDE_SENSORS} from "../physics/collision_groups";
 import {get_active_seat} from "./seating";
 import {REMOTE_AVATAR_PREFIX} from "../interaction/util/target_resolution";
@@ -52,9 +53,6 @@ const FlatJumpButton = ({jump_pressed_ref}: {jump_pressed_ref: RefObject<boolean
 // TODO: is it worth having a binding thingy for XR then reading in an abstract way? then again this seems to be the only place its needed for now
 
 
-const MIN_PLAYER_HEIGHT = 0.6;   // crouched / seated floor
-const MAX_PLAYER_HEIGHT = 2.2;   // sanity ceiling (bad tracking, standing on a chair)
-const HEAD_CLEARANCE = 0.1;      // eyes aren't at the crown of your head
 
 const MAX_STEP_HEIGHT = 0.3;
 const MIN_STEP_WIDTH = 0.2;
@@ -96,15 +94,21 @@ export const PlayerKinematics = () => {
 
     const should_hit_environment = useCallback(
         (collider: RapierCollider): boolean => {
+            // another player's capsule (#25) blocks only when the world turns player collisions on: by
+            // default players walk through each other (no body-blocking doorways)
+            if (is_remote_capsule(collider.handle)) {
+                return player_collisions_ref.current;
+            }
+
             const body = collider.parent();
             if (!body) return true;
 
             const name = rigidBodyStates.get(body.handle)?.object.name ?? "";
 
-            // never our own body. another player's (#25) only when the world turns player collisions on:
-            // by default players walk through each other (no body-blocking doorways)
+            // never a body part: our own, or another player's head/torso/hands (those are for pushing
+            // props and catching raycasts; player-vs-player is the capsule alone)
             if (name.startsWith(REMOTE_AVATAR_PREFIX)) {
-                return player_collisions_ref.current;
+                return false;
             }
             const is_own_part =
                 name.startsWith("avatar_head_rb") ||

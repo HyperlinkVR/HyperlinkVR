@@ -167,7 +167,7 @@ const SpectatorUI = () => {
                 )}
                 <div className="h-screen w-screen bg-black flex items-center justify-center">
                     <DevNetworkEngineProvider>
-                        <EngineHost mode={mode} on_xr_ready={handle_xr_ready} />
+                        <EngineHost mode={mode} on_xr_ready={handle_xr_ready} entered={phase === "started"} />
                     </DevNetworkEngineProvider>
                 </div>
             </main>
