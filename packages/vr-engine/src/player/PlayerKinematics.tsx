@@ -15,7 +15,8 @@ import {CAPSULE_RADIUS, consume_player_movement, HEAD_CLEARANCE, MAX_PLAYER_HEIG
 import {is_remote_capsule} from "../net/remote_capsules";
 import {PLAYER_COLLISION_GROUPS, EXCLUDE_SENSORS} from "../physics/collision_groups";
 import {get_active_seat} from "./seating";
-import {REMOTE_AVATAR_PREFIX} from "../interaction/util/target_resolution";
+import {REMOTE_AVATAR_PREFIX, resolve_object_node} from "../interaction/util/target_resolution";
+import {is_simulated_locally} from "../net/authority";
 import {get_player_teleport_seq} from "./player_position_registry";
 import {useWorldLoadingStateStore} from "../stores/WorldLoadingStateStore";
 
@@ -114,8 +115,19 @@ export const PlayerKinematics = () => {
                 name.startsWith("avatar_head_rb") ||
                 name.startsWith("avatar_torso_rb") ||
                 name.startsWith("avatar_hand_rb");
+            if (is_own_part) {
+                return false;
+            }
 
-            return !is_own_part;
+            // a body another player simulates (in their hand, thrown, or theirs to keep) is only a
+            // kinematic copy here: treating it as solid would let it shove us around as it follows their
+            // stream. we can't push it either, so pass through; our avatar body pushes it on their engine
+            const object_id = resolve_object_node(rigidBodyStates.get(body.handle)?.object ?? null)?.userData?.object_id;
+            if (typeof object_id === "string" && !is_simulated_locally(object_id)) {
+                return false;
+            }
+
+            return true;
         },
         [rigidBodyStates]
     );

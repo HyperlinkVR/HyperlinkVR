@@ -30,6 +30,7 @@ import {
     get_held_objects,
     get_owner_overrides,
     get_ownership_table,
+    is_body_free,
     is_body_pinned,
     is_held_object,
     on_body_owner_change,
@@ -79,8 +80,10 @@ type OwnershipMessage =
     | { type: "ready" }
     | { type: "claim"; id: string }
     | { type: "release"; id: string }
-    | { type: "owner"; id: string; owner: PeerID | null; pinned?: boolean }
-    | { type: "table"; owners: [string, PeerID | null, boolean][] };
+    // client → host: the grab holding a body it owns let go, so the body is free to be claimed
+    | { type: "let_go"; id: string }
+    | { type: "owner"; id: string; owner: PeerID | null; pinned?: boolean; free?: boolean }
+    | { type: "table"; owners: [string, PeerID | null, boolean, boolean?][] };
 
 export const PhysicsSync = () => {
     const { room, mode } = useNetSession();
@@ -143,7 +146,7 @@ export const PhysicsSync = () => {
 
         // a client's claims and releases go to the host; the host's decisions go to everyone
         set_ownership_sender(is_host ? null : (request) => send("host", request));
-        set_ownership_broadcaster(is_host ? (id, owner, pinned) => send("others", { type: "owner", id, owner, pinned }) : null);
+        set_ownership_broadcaster(is_host ? (id, owner, pinned, free) => send("others", { type: "owner", id, owner, pinned, free }) : null);
 
         const off_message = room.on_message((message) => {
             if (message.channel === PHYSICS_CHANNEL) {
@@ -179,20 +182,24 @@ export const PhysicsSync = () => {
                 } else if (request.type === "claim") {
                     const current = get_body_owner(request.id);
                     // a pinned body only ever goes to its owner. otherwise it's taken if another peer
-                    // has it, or it's in one of the host's own hands
+                    // holds it (one they've let go of is free to catch), or it's in one of the host's hands
                     const taken = is_body_pinned(request.id)
                         ? current !== message.from
-                        : (current !== room.self.id && current !== message.from) || is_object_held(request.id);
+                        : (current !== room.self.id && current !== message.from && !is_body_free(request.id))
+                            || is_object_held(request.id);
                     if (taken) {
                         // correct the claimer; they'll let go
                         const owner = current === room.self.id ? null : current;
-                        send({ peer: message.from }, { type: "owner", id: request.id, owner, pinned: is_body_pinned(request.id) });
+                        send({ peer: message.from }, { type: "owner", id: request.id, owner, pinned: is_body_pinned(request.id), free: is_body_free(request.id) });
                     } else {
                         assign_body_owner(request.id, message.from, is_body_pinned(request.id));
                     }
                 } else if (request.type === "release" && get_body_owner(request.id) === message.from
                     && !is_body_pinned(request.id)) {
                     assign_body_owner(request.id, null);
+                } else if (request.type === "let_go" && get_body_owner(request.id) === message.from
+                    && !is_body_pinned(request.id)) {
+                    assign_body_owner(request.id, message.from, false, true);
                 }
                 return;
             }
@@ -202,10 +209,10 @@ export const PhysicsSync = () => {
                 return;
             }
             if (request.type === "owner") {
-                set_body_owner(request.id, request.owner, request.pinned ?? false);
+                set_body_owner(request.id, request.owner, request.pinned ?? false, request.free ?? false);
             } else if (request.type === "table") {
-                for (const [id, owner, pinned] of request.owners) {
-                    set_body_owner(id, owner, pinned);
+                for (const [id, owner, pinned, is_free] of request.owners) {
+                    set_body_owner(id, owner, pinned, is_free ?? false);
                 }
             }
         });

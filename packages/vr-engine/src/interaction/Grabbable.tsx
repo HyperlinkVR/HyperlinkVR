@@ -40,7 +40,7 @@ import {
 import { CAPSULE_RADIUS, get_capsule_world_position } from "../player/motion";
 import { rotation_to_quaternion } from "../util/rotation";
 import { clear_object_holder, set_object_holder } from "./util/holders";
-import { can_claim_body, claim_body, is_networked_object, on_body_owner_change, owns_body, register_grab_target } from "../net/ownership";
+import { can_claim_body, claim_body, is_networked_object, let_go_body, on_body_owner_change, owns_body, register_grab_target } from "../net/ownership";
 
 export type HandTarget = "watch_hand" | "non_watch_hand" | "left" | "right";
 
@@ -890,7 +890,11 @@ export const useGrabbable = (
     ) => {
         grabbingHand.current = null;
         release_hand_claim(hand, grabbable_id);
-        if (obj_refs) clear_object_holder(obj_refs.id, hand);
+        if (obj_refs) {
+            clear_object_holder(obj_refs.id, hand);
+            // shared worlds: a body we let go of (thrown, dropped) is free to be caught meanwhile
+            let_go_body(obj_refs.id);
+        }
         on_grab_end?.(hand);
         publish_held(false);
         attach_gliding.current = false;

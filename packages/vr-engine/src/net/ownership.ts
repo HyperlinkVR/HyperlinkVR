@@ -18,7 +18,7 @@ import { set_remote_simulator } from "./authority";
 // ownership is turned into the low-level authority fact (`set_remote_simulator`) that
 // report_outbox and PhysicsSync read.
 
-type OwnershipRequest = { type: "claim"; id: string } | { type: "release"; id: string };
+type OwnershipRequest = { type: "claim"; id: string } | { type: "release"; id: string } | { type: "let_go"; id: string };
 
 let self_id: PeerID | null = null;
 // the host, or null outside a shared room (then everything is simulated here)
@@ -31,9 +31,12 @@ const grab_targets = new Map<string, RefObject<Object3D | null>>();
 const overrides = new Map<string, PeerID>();
 // pinned overrides (#24) stay with their owner: no hand-back at rest, and nobody else can claim them
 const pinned = new Set<string>();
+// bodies whose owner has let go of them (thrown, rolling): they stay with the thrower until they come to
+// rest, but anyone can claim one meanwhile, so a throw can be caught and a rolling ball picked up
+const free = new Set<string>();
 const listeners = new Set<(id: string) => void>();
 // host only: replicates an ownership change to everyone (set by PhysicsSync)
-let broadcast: ((id: string, owner: PeerID | null, pinned: boolean) => void) | null = null;
+let broadcast: ((id: string, owner: PeerID | null, pinned: boolean, free: boolean) => void) | null = null;
 
 export const get_body_owner = (id: string): PeerID | null => overrides.get(id) ?? default_owner;
 
@@ -51,8 +54,10 @@ export const can_claim_body = (id: string): boolean => {
         return !owner || owner === self_id;
     }
     const override = overrides.get(id);
-    return !override || override === self_id;
+    return !override || override === self_id || free.has(id);
 };
+
+export const is_body_free = (id: string): boolean => free.has(id);
 
 export const is_dynamic_body = (id: string): boolean => dynamic_bodies.has(id);
 // a grabbable that isn't a dynamic body: owned by whoever holds it, the host otherwise
@@ -66,11 +71,11 @@ export const is_body_pinned = (id: string): boolean => pinned.has(id);
 export const get_dynamic_bodies = (): ReadonlySet<string> => dynamic_bodies;
 export const get_owner_overrides = (): [string, PeerID][] => [...overrides];
 
-// everything that differs from "host owns it, unpinned" — claims, and pins (including pins to the
-// host, which have no override). what a newcomer needs to be told
-export const get_ownership_table = (): [string, PeerID | null, boolean][] => {
-    const ids = new Set([...overrides.keys(), ...pinned]);
-    return [...ids].map((id) => [id, get_body_owner(id), pinned.has(id)]);
+// everything that differs from "host owns it, unpinned, held" — claims, pins (including pins to the
+// host, which have no override) and free bodies. what a newcomer needs to be told
+export const get_ownership_table = (): [string, PeerID | null, boolean, boolean][] => {
+    const ids = new Set([...overrides.keys(), ...pinned, ...free]);
+    return [...ids].map((id) => [id, get_body_owner(id), pinned.has(id), free.has(id)]);
 };
 
 const apply = (id: string) => {
@@ -102,6 +107,7 @@ export const configure_ownership = (self: PeerID | null, host: PeerID | null) =>
     default_owner = host;
     overrides.clear();
     pinned.clear();
+    free.clear();
     for (const id of [...dynamic_bodies, ...grab_targets.keys()]) {
         notify(id);
     }
@@ -111,7 +117,7 @@ export const set_ownership_sender = (sender: ((request: OwnershipRequest) => voi
     send_to_host = sender;
 };
 
-export const set_ownership_broadcaster = (fn: ((id: string, owner: PeerID | null, pinned: boolean) => void) | null) => {
+export const set_ownership_broadcaster = (fn: ((id: string, owner: PeerID | null, pinned: boolean, free: boolean) => void) | null) => {
     broadcast = fn;
 };
 
@@ -128,6 +134,7 @@ export const register_dynamic_body = (id: string): (() => void) => {
         }
         overrides.delete(id);
         pinned.delete(id);
+        free.delete(id);
         set_remote_simulator(id, null);
     };
 };
@@ -145,6 +152,7 @@ export const register_grab_target = (id: string, target: RefObject<Object3D | nu
         if (!dynamic_bodies.has(id)) {
             overrides.delete(id);
             pinned.delete(id);
+            free.delete(id);
             set_remote_simulator(id, null);
         }
     };
@@ -152,7 +160,7 @@ export const register_grab_target = (id: string, target: RefObject<Object3D | nu
 
 // null (or the host) hands the body to the default owner. pinning is independent of who owns it, so
 // a body can be pinned to the host too
-export const set_body_owner = (id: string, owner: PeerID | null, pin = false) => {
+export const set_body_owner = (id: string, owner: PeerID | null, pin = false, is_free = false) => {
     if (owner && owner !== default_owner) {
         overrides.set(id, owner);
     } else {
@@ -163,13 +171,33 @@ export const set_body_owner = (id: string, owner: PeerID | null, pin = false) =>
     } else {
         pinned.delete(id);
     }
+    // a new owner is holding it (or it's back with the host), so it isn't up for grabs
+    if (is_free && !pin) {
+        free.add(id);
+    } else {
+        free.delete(id);
+    }
     notify(id);
 };
 
 // host only: change ownership and replicate it
-export const assign_body_owner = (id: string, owner: PeerID | null, pin = false) => {
-    set_body_owner(id, owner, pin);
-    broadcast?.(id, owner, pin);
+export const assign_body_owner = (id: string, owner: PeerID | null, pin = false, is_free = false) => {
+    set_body_owner(id, owner, pin, is_free);
+    broadcast?.(id, owner, pin, is_free && !pin);
+};
+
+// the grab holding a body we own let go (a throw or a drop). it stays ours until it rests, but it's free
+// for anyone to claim meanwhile. the host settles that, so a client tells it; the host just broadcasts
+export const let_go_body = (id: string) => {
+    if (!is_networked_object(id) || !self_id || pinned.has(id) || get_body_owner(id) !== self_id) {
+        return;
+    }
+    if (broadcast) {
+        assign_body_owner(id, self_id === default_owner ? null : self_id, false, true);
+    } else {
+        free.add(id);
+        send_to_host?.({ type: "let_go", id });
+    }
 };
 
 // a grab here takes the body optimistically (so the hand drives it this frame), and asks the host.
