@@ -1,7 +1,7 @@
 import { Quaternion, Vector3 } from "three";
 
-// client-side buffer for host-streamed physics bodies (#21). each sample is a full pose stamped in
-// session time (#9), so unlike the presence PoseBuffer there's no offset to estimate — sample at
+// client-side buffer for host-streamed physics bodies. each sample is a full pose stamped in
+// session time, so unlike the presence PoseBuffer there's no offset to estimate: sample at
 // session_now() minus a fixed delay and blend between the two samples around it. a lost or late
 // sample only costs smoothness, never correctness: every sample stands alone.
 

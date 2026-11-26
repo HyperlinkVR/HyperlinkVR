@@ -17,7 +17,7 @@ const TEXTS: Record<string, { title: string; body: string }> = {
     }
 };
 
-// shown when a shared session ends under the player (#17). for v1 there's no host migration, so the
+// shown when a shared session ends under the player. there's no host migration yet, so the
 // instance just ends: they can stay in the frozen world, or browse for somewhere else to go.
 export const SessionEndedModalScreen = ({ args }: ScreenProps) => {
     const { resolve_modal, back, change_screen } = useNavState();

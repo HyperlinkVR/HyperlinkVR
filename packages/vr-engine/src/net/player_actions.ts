@@ -1,7 +1,7 @@
 import type { PeerID } from "@hyperlinkvr/core";
 import type { WebSDKActionName } from "@hyperlinkvr/types";
 
-// actions aimed at one player (#14). the host's page runs the world, but a remote player's origin,
+// actions aimed at one player. the host's page runs the world, but a remote player's origin,
 // position and navigation live on *their* engine, so the host forwards these to the target peer and
 // relays the reply back to its page. null / our own id means the local player: handled in place.
 const PLAYER_TARGETED = new Set<WebSDKActionName>([

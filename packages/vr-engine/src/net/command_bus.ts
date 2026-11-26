@@ -7,19 +7,19 @@ import { forget_journal_object, journal_action } from "./state_journal";
 
 export const COMMAND_CHANNEL = "cmd";
 // client → host: reports its player caused (button presses, grabs, triggers), so the host's page
-// runs the world logic for them (#14). tagged with the client's player id.
+// runs the world logic for them. tagged with the client's player id.
 export const REPORT_CHANNEL = "reports";
-// clock sync ping/pong so a client can estimate its offset to host (session) time (#9)
+// clock sync ping/pong so a client can estimate its offset to host (session) time
 export const CLOCK_CHANNEL = "clock";
-// owner → everyone, unreliable: poses + velocities of moving dynamic bodies it simulates (#21/#22)
+// owner → everyone, unreliable: poses + velocities of moving dynamic bodies it simulates
 export const PHYSICS_CHANNEL = "physics";
-// reliable: body ownership — client claims/releases to the host, host's owner broadcasts (#22)
+// reliable: body ownership: client claims/releases to the host, host's owner broadcasts
 export const OWNERSHIP_CHANNEL = "ownership";
 // a client tells the host its player has actually spawned (world hydrated), so the host page's
 // players.on_spawn fires once the player can stand somewhere, not on room join
 export const SPAWN_CHANNEL = "spawn";
 // host → a client: a player-targeted action (teleport, position, ...) for that client's player, and
-// the client's reply back (#14)
+// the client's reply back
 export const PLAYER_ACTION_CHANNEL = "player-action";
 // seat occupancy: a client claims/releases a seat to the host, the host broadcasts who's in it
 export const SEAT_CHANNEL = "seat";
@@ -32,7 +32,7 @@ interface CommandSpec {
     // fill in host-authored ids before replication (create-style actions)
     mint?: (message: WebSDKActionMessage) => void;
     // rewrite host-local values into shared ones before replication: session timestamps for timed
-    // actions (#9), and "null = local player" into the host's own player id
+    // actions, and "null = local player" into the host's own player id
     stamp?: (message: WebSDKActionMessage) => void;
 }
 
@@ -43,7 +43,7 @@ const COMMAND_SPECS: Partial<Record<WebSDKActionName, CommandSpec>> = {
             m.created_at ??= session_now();
         },
     },
-    // stamp a tween's start in session time so its phase lines up across peers (#9)
+    // stamp a tween's start in session time so its phase lines up across peers
     HVRSDK_MODIFY_ENGINE_OBJECT: {
         stamp: (m: any) => {
             if (m.tween) {
@@ -54,7 +54,7 @@ const COMMAND_SPECS: Partial<Record<WebSDKActionName, CommandSpec>> = {
     HVRSDK_DESTROY_ENGINE_OBJECT: {},
 
     // the sdk uses null for "the local player". on the host that means the host, so resolve it to
-    // the host's id before replicating — otherwise a null scope/target means "whoever reads it"
+    // the host's id before replicating, otherwise a null scope/target means "whoever reads it"
     HVRSDK_CREATE_HUD_ELEMENT: {
         mint: (m: any) => { m.id ??= crypto.randomUUID(); },
         stamp: (m: any) => {
@@ -79,7 +79,7 @@ const COMMAND_SPECS: Partial<Record<WebSDKActionName, CommandSpec>> = {
         mint: (m: any) => { m.id ??= crypto.randomUUID(); },
     },
     HVRSDK_DESTROY_ANIMATION: {},
-    // stamp the start in session time so play/restart line up across peers (#9)
+    // stamp the start in session time so play/restart line up across peers
     HVRSDK_ANIMATION_COMMAND: {
         stamp: (m: any) => {
             if (m.command === "play" || m.command === "restart") {
@@ -92,7 +92,6 @@ const COMMAND_SPECS: Partial<Record<WebSDKActionName, CommandSpec>> = {
         },
     },
 
-    // TODO physics/timing is a later pass (#9 / phase D)
     HVRSDK_SEEK_ENGINE_OBJECT: {},
     HVRSDK_STOP_SEEK_ENGINE_OBJECT: {},
 
@@ -112,7 +111,7 @@ const COMMAND_SPECS: Partial<Record<WebSDKActionName, CommandSpec>> = {
 
     // lifecycle: the host's "world is ready" replicates so clients present during load clear
     // their loading screen off the host's signal, not their own (dropped) page's. late joiners
-    // get world_ready in the join snapshot instead (see #13 / SnapshotSync).
+    // get world_ready in the join snapshot instead (see CommandSync).
     HVRSDK_LOADING_FINISHED: {},
 };
 

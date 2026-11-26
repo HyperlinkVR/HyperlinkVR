@@ -1,12 +1,9 @@
-// shared physics (#20/#21/#22). every dynamic body has one owner (ownership.ts): the host by default,
-// or whoever grabbed it until it comes to rest. the owner simulates and streams it; every other engine
-// flips it kinematic and follows the stream.
+// shared physics. each networked body's owner (ownership.ts) simulates it and streams its pose and
+// velocity; every other engine makes it kinematic and follows the stream.
 //
-// built to survive an unreliable transport even though the websocket carrier is reliable today
-// (WebTransport, #19, slots in underneath with no change here): every frame carries full absolute
-// state stamped in session time, so a dropped or reordered frame only costs smoothness. only moving
-// (or held) bodies are sent; when one falls asleep it's sent a few more times so a dropped final
-// frame can't leave anyone holding a stale pose. ownership itself rides the reliable channel.
+// frames carry full state stamped in session time, so a dropped or reordered frame only costs
+// smoothness (ready for an unreliable transport). only moving or held bodies are sent, plus a few
+// resends when one falls asleep. ownership changes go over the reliable channel.
 
 import type { PeerID } from "@hyperlinkvr/core";
 import { useFrame } from "@react-three/fiber";
@@ -45,7 +42,7 @@ import { session_now } from "./session_clock";
 const SEND_INTERVAL_MS = 1000 / 30;
 const REST_RESENDS = 3;
 
-// drives a node to a world pose through its parent, for held objects with no body (#23)
+// drives a node to a world pose through its parent, for held objects with no body
 const scratch_inverse = new Matrix4();
 const scratch_parent_q = new Quaternion();
 export const set_world_pose = (node: Object3D, position: Vector3, quaternion: Quaternion) => {
@@ -108,7 +105,7 @@ export const PhysicsSync = () => {
     const pending_pins = useRef(new Map<string, PeerID>());
     const scratch = useRef({ position: new Vector3(), quaternion: new Quaternion() });
 
-    // ownership follows the room. v1 has no host migration (#17), so the host is fixed for its life
+    // ownership follows the room. there's no host migration yet, so the host is fixed for its life
     useEffect(() => {
         if (!shared || !room) {
             configure_ownership(null, null);
@@ -237,7 +234,7 @@ export const PhysicsSync = () => {
             }
         });
 
-        // client: tell the host our physics is live — only once our listener above is attached
+        // client: tell the host our physics is live, only once our listener above is attached
         if (!is_host) {
             send("host", { type: "ready" });
         }
@@ -251,8 +248,8 @@ export const PhysicsSync = () => {
         };
     }, [shared, room, is_host]);
 
-    // #24: the sdk pins an object's physics to a player. ownership is host-authored like everything
-    // else shared — a client's (inert) page asking is refused, and solo has nobody to pin to
+    // the sdk pins an object's physics to a player. ownership is host-authored like everything
+    // else shared: a client's (inert) page asking is refused, and solo has nobody to pin to
     useEffect(() => on_action("HVRSDK_SET_OBJECT_OWNERSHIP", (message, reply) => {
         if (shared && !is_host) {
             reply({ for: "HVRSDK_SET_OBJECT_OWNERSHIP", error: "Only the host can set object ownership." });
@@ -366,7 +363,7 @@ export const PhysicsSync = () => {
                 entries.push([id, p.x, p.y, p.z, q.x, q.y, q.z, q.w, v.x, v.y, v.z, w.x, w.y, w.z]);
             }
 
-            // held objects (#23): grabbables that aren't dynamic bodies. their holder streams them while
+            // held objects: grabbables that aren't dynamic bodies. their holder streams them while
             // they're in hand (plus the usual few resends once let go), then a client hands them
             // straight back: with no physics there's nothing to settle
             for (const id of get_held_objects()) {
@@ -441,7 +438,7 @@ export const PhysicsSync = () => {
 
             const body = refs.rigid_body.current;
 
-            // held objects (#23): drive their kinematic body, or the node the grab moves
+            // held objects: drive their kinematic body, or the node the grab moves
             if (is_held_object(id)) {
                 if (is_simulated_locally(id) || !buffer.sample(render_t, position, quaternion)) {
                     continue;

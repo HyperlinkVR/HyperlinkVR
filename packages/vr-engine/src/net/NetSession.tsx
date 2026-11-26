@@ -12,8 +12,8 @@ interface RoomState {
     host: PeerID | null;
 }
 
-// why a shared session ended under us. v1 has no host migration (#28), so either of these ends the
-// instance for this player — the world's logic and state lived on the host's page
+// why a shared session ended under us. there's no host migration yet, so either of these ends the
+// instance for this player: the world's logic and state lived on the host's page
 export type SessionEnd = "host-left" | "connection-lost";
 
 interface NetSession extends RoomState {
@@ -109,7 +109,7 @@ export const NetSessionProvider = ({ children }: { children: React.ReactNode }) 
                     }
 
                     // the host only changes when the host leaves. the world's logic and state lived on
-                    // its page, so nothing carries over to the new host — end the instance (v1, #17)
+                    // its page, so nothing carries over to the new host, so end the instance (no host migration yet)
                     if (event.type === "host-changed" && event.host !== original_host) {
                         setEnded("host-left");
                         setSession(NO_SESSION);
@@ -150,12 +150,10 @@ const JOIN_TIMEOUT_MS = 10_000;
 // a solo guest has no account and no room, but still needs a player id: minted once per page load
 const SOLO_GUEST_ID = `guest-${crypto.randomUUID()}`;
 
-// the id this player is known by — never null, so null can only ever mean "the local player" as
-// shorthand, never "a guest" (whether someone has an account is a separate fact: account_id). in a
-// room that's the peer id — what the host stamps on forwarded reports and what remote spawns carry,
-// so every engine agrees on it (for a logged-in user the node adopts the account uuid as the peer
-// id, so it's the same value). outside a room it's the account uuid, or a minted id for a guest.
-// use this, not the raw auth uuid, for anything player-scoped.
+// this player's id, never null (so null only ever means "the local player" as shorthand). in a room
+// it's the peer id, which every engine and every forwarded report uses (a logged-in user's peer id is
+// their account uuid). outside a room: the account uuid, or a minted id for a guest.
+
 export const useLocalPlayerId = (): string => {
     const { room } = useNetSession();
     const uuid = useAuthSession()?.uuid ?? null;

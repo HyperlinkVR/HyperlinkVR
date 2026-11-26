@@ -95,7 +95,7 @@ export const PlayerKinematics = () => {
 
     const should_hit_environment = useCallback(
         (collider: RapierCollider): boolean => {
-            // another player's capsule (#25) blocks only when the world turns player collisions on: by
+            // another player's capsule blocks only when the world turns player collisions on: by
             // default players walk through each other (no body-blocking doorways)
             if (is_remote_capsule(collider.handle)) {
                 return player_collisions_ref.current;
@@ -242,7 +242,7 @@ export const PlayerKinematics = () => {
 
         // the capsule stands under the head. in vr mode with no session running yet (before you've
         // entered), the XR origin doesn't carry the camera, so the camera sits wherever it was left
-        // (near world 0,0) while the origin is wherever the world placed us — standing the capsule
+        // (near world 0,0) while the origin is wherever the world placed us. standing the capsule
         // under that camera puts it at the wrong x/z (inside whatever's there), and resolving it out
         // sinks the origin through the floor. so until a session is presenting, stand on the origin
         if (session_mode === "vr" && !gl.xr.isPresenting) {

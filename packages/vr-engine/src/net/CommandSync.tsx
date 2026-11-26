@@ -34,7 +34,7 @@ interface BindingCommand {
     binding_command: { binding_id: string; command: string; args: any };
 }
 
-// current world state handed to a late joiner (#13). times are session times, so a tween or
+// current world state handed to a late joiner. times are session times, so a tween or
 // animation picks up at exactly the phase the host has it at
 interface Snapshot {
     objects: CreatedEngineObject[];
@@ -50,7 +50,7 @@ interface Snapshot {
     seeks: (SeekConfig & { id: string })[];
     // state set by interaction/prefab commands since creation (state_journal)
     journal: JournalEntry[];
-    // held objects without a body sit where their grab node was left, not at their root (#23)
+    // held objects without a body sit where their grab node was left, not at their root
     held: [string, number, number, number, number, number, number, number][];
     // who sits in which seat
     seats: [string, string][];

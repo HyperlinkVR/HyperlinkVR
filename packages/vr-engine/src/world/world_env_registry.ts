@@ -1,7 +1,7 @@
 import type { WorldEnvFull } from "@hyperlinkvr/vr-engine-schemas";
 
 // world-env lives in the SDK provider's React state. this registry bridges it to non-react code:
-// the host reads the current value for the late-join snapshot (#13), and a joining client pushes
+// the host reads the current value for the late-join snapshot, and a joining client pushes
 // the host's value back into the provider. world-env is plain data (colours/numbers), so no asset
 // adoption is needed.
 let current_env: WorldEnvFull | null = null;

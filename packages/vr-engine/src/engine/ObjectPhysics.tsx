@@ -485,7 +485,7 @@ const ObjectPhysicsInternal = ({
     // body-owned types (fixed/dynamic/kinematic-vel) place the body directly from the transform.
     const body_transform = rb.type === "kinematic-pos" ? undefined : transform;
 
-    // #20/#22: dynamic bodies take part in shared ownership. whoever owns one simulates it; on every
+    // dynamic bodies take part in shared ownership. whoever owns one simulates it; on every
     // other engine PhysicsSync flips it kinematic and drives it from the owner's stream. that flip is
     // done imperatively each frame rather than through the RigidBody `type` prop: a prop change makes
     // rapier re-apply the type, which would undo a grab's kinematic hold the moment a claim lands.

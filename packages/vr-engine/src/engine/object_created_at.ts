@@ -1,9 +1,6 @@
-// when each object was created, in session time, so state that started with the object (an
-// autoplaying sound) can be picked up at the right point by a late joiner.
-//
-// the host stamps the time as it mints a created object (command bus). only objects a joiner received
-// in its snapshot get the catch-up treatment: an object created live just starts once it has loaded,
-// as it always has (otherwise a short one-shot that loads slower than it lasts would never be heard)
+// when each object was created, in session time, so a late joiner can catch up state that started
+// with it (an autoplaying sound). only objects that came in the joiner's snapshot catch up; an object
+// created live starts once it has loaded, as before.
 
 const created_at = new Map<string, number>();
 const joined_late = new Map<string, number>();

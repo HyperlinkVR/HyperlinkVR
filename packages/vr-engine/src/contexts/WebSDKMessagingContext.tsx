@@ -118,7 +118,7 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
             send_over_data_channel({ ...reply_message, correlation_id: data.correlation_id });
         };
 
-        // on the host, an action aimed at a remote player goes to their engine (#14)
+        // on the host, an action aimed at a remote player goes to their engine
         if (forward_player_action(data, reply)) {
             return;
         }

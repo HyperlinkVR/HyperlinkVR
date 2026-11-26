@@ -127,7 +127,7 @@ interface WebSDKDestroyEngineObjectAction extends BaseWebSDKActionMessage {
     object_id: string;
 }
 
-// pin a dynamic object's physics to one player (#24): their engine always simulates it, and nobody
+// pin a dynamic object's physics to one player: their engine always simulates it, and nobody
 // else can grab or claim it. null hands it back to the host. only the host's page can set this.
 interface WebSDKSetObjectOwnershipAction extends BaseWebSDKActionMessage {
     action: "HVRSDK_SET_OBJECT_OWNERSHIP";
@@ -143,7 +143,7 @@ interface WebSDKModifyEngineObjectAction extends BaseWebSDKActionMessage {
     object_id: string;
     changes: EngineObjectModification;
     tween?: Tween;
-    // session time the tween started, stamped by the host at broadcast so peers share its phase (#9)
+    // session time the tween started, stamped by the host at broadcast so peers share its phase
     tween_started_at?: number;
 }
 

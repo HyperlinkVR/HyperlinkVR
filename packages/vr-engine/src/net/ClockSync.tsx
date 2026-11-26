@@ -1,7 +1,7 @@
-// estimates a client's offset to the host's session clock, NTP-style (#9). the host is the time
+// estimates a client's offset to the host's session clock, NTP-style. the host is the time
 // authority (offset 0) and just answers pings; a client pings, measures round-trip, and keeps the
-// offset from its lowest-RTT sample (least jitter). reliable channel, so RTT includes the relay hop
-// — fine for lining up animation/tween starts, which only need ~frame accuracy.
+// offset from its lowest-RTT sample (least jitter). the RTT includes the relay hop, which is fine:
+// lining up animation/tween starts only needs about frame accuracy.
 
 import { useEffect } from "react";
 
@@ -40,7 +40,7 @@ export const ClockSync = () => {
             const data = JSON.parse(message.payload as string) as Ping | Pong;
 
             if ("host_t" in data) {
-                // client: got a pong — offset from the lowest-RTT sample
+                // client: got a pong. offset from the lowest-RTT sample
                 const t3 = performance.now();
                 const rtt = t3 - data.t0;
                 if (rtt < best_rtt) {

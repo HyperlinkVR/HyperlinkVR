@@ -28,21 +28,17 @@ const REMOTE_LAYERS = [Layer.PlayerModel_TorsoAndHands];
 
 const NAME_TAG_HEIGHT = 0.3;
 
-// #25: remote players get kinematic bodies that follow their interpolated pose, so they push props
-// this engine simulates (the host for unowned ones, the owner for claimed/pinned) and raycasts hit
-// them (resolving to that player). they're in the player group so a prop's `players` collision
-// filter applies to them like to a local player. they never block players: player-vs-player is a
-// single capsule per remote player (RemoteCapsule), the same shape as the local character controller's,
-// so hands reaching out don't bump people and it's one shape test instead of four.
-// zones still only detect the local player's own body (the remote_ prefix keeps these out of that),
-// since each player's engine reports its own player entering zones.
+// remote players' head, torso and hands are kinematic bodies following their interpolated pose: they
+// push props this engine simulates and catch raycasts, and a prop's `players` filter applies to them.
+// they never block players; that's one thin capsule per remote player (RemoteCapsule). zones ignore
+// them, since each player's own engine reports its player entering zones.
+
 const REMOTE_BODY_GROUPS = interactionGroups(GROUP_PLAYER, [GROUP_PROP]);
 const REMOTE_CAPSULE_GROUPS = interactionGroups(GROUP_PLAYER_BLOCKER, [GROUP_PLAYER]);
 
-// the closest two players get is their capsule radii added. the local controller's radius (0.3) is a
-// deliberately generous world-collision radius and already supplies nearly all of that, so a remote
-// player's body is barely more than a line: ~0.35m centre to centre, chest to chest (a vr comfort
-// boundary can sit on top)
+// players stop when their capsules touch, so the gap is both radii. the local controller's 0.3 already
+// covers most of it, so a remote body is nearly a line: about 0.35m centre to centre
+
 const REMOTE_BODY_RADIUS = 0.05;
 
 // the remote capsule starts this far off the ground: at the local controller's radius, so the local

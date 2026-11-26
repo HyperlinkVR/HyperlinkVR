@@ -22,7 +22,7 @@ interface HUDStoreState {
     next_sequence: number;
 
     add_element: (element: CreatedHUDElement) => void;
-    // replace the whole set from a late-join snapshot (#13)
+    // replace the whole set from a late-join snapshot
     hydrate: (elements: Record<string, StoredHUDElement>, next_sequence: number) => void;
     remove_element: (element_id: string) => void;
     get_element: (element_id: string) => StoredHUDElement | undefined;

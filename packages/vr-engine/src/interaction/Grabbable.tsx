@@ -558,7 +558,7 @@ export const useGrabbable = (
 
     const perform_grab = useCallback(
         (hand: Hand, use_snap = true) => {
-            // shared worlds (#22/#23): another peer's claimed body or held object is in their hand (or mid-throw)
+            // shared worlds: another peer's claimed body or held object is in their hand (or mid-throw)
             const owned_id = obj_refs && is_networked_object(obj_refs.id) ? obj_refs.id : null;
             if (owned_id && !can_claim_body(owned_id)) {
                 return;
@@ -918,9 +918,9 @@ export const useGrabbable = (
         }
     };
 
-    // shared worlds (#22): if the host refuses our claim (someone else got there first), let go — the
+    // shared worlds: if the host refuses our claim (someone else got there first), let go — the
     // body is theirs, and PhysicsSync starts following them again
-    // #23: register what this grab moves, so if the object isn't a dynamic body it can still be held
+    // register what this grab moves, so if the object isn't a dynamic body it can still be held
     // across peers (claimed by its holder, who streams the pose; everyone else follows)
     useEffect(() => {
         const id = obj_refs?.id;

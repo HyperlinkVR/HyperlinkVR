@@ -1,17 +1,12 @@
-// host-side record of the state interaction/prefab commands have set, for late joiners (#13).
+// host-side record of state set by interaction/prefab commands, replayed to late joiners.
 //
-// those commands change state that lives inside the engine (a light's colour, a button's label, a golf
-// ball's lock), not on the stored object the snapshot is built from, so a joiner would otherwise see
-// every object as it was created. the host keeps the latest state-setting command per target and
-// command, in the order they last happened, and a joiner replays them once its objects have mounted.
+// that state lives inside the engine (a light's colour, a button's label), not on the stored objects
+// the snapshot is built from. the host keeps the latest state-setting command per target and replays
+// them, in order, once a joiner's objects have mounted.
 //
-// only commands that *set* state are kept: `set_*`, plus lock/unlock (one slot, last wins). interaction
-// playback (play/pause/stop/restart on a sound or particle emitter) is state too, in one "playback" slot:
-// it carries the session time it fired, and the handler uses that to start a looping track at the right
-// point and to skip a one-shot that already finished (timed_playback), so nothing old refires. other
-// one-shots (fire, pulse…) aren't kept. prefab commands don't get the playback slot (a prefab's own
-// play isn't time-aware), and nor do animations (their exact playback state is snapshotted instead).
-// commands come from the host's page (routed through the command bus) and from its shared triggers.
+// kept: `set_*`, lock/unlock (one slot), and play/pause/stop/restart on sounds and particles (one
+// "playback" slot, timed so the handler can resume a loop in step and skip a finished one-shot).
+// not kept: other one-shots (fire, pulse), prefab playback, and animations (snapshotted directly).
 
 export type JournalEntry =
     // an SDK action (HVRSDK_INTERACTION_COMMAND / HVRSDK_PREFAB_COMMAND), replayed through the dispatcher

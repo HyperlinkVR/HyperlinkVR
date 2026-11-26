@@ -1,10 +1,9 @@
 import { create } from "zustand";
 
-// where the local player is in arriving, as the world sees it (players.on_join / on_spawn / on_enter).
-// `entered`: nothing stands between them and the game: the host app has dismissed its "play" overlay
-// (play clicked / headset on). it stays true across worlds within a session, so arriving somewhere new
-// via the watch counts as entered as soon as you spawn. `spawned`: they have a placeable body in the
-// current world. remote avatars are only drawn (and only collide) once their player has spawned
+// how far the local player has arrived (players.on_spawn / on_enter). `spawned`: they have a placeable
+// body in this world. `entered`: the host app's play overlay is gone; it stays true across worlds, so
+// arriving somewhere new mid-session enters as soon as you spawn. avatars are only sent once both hold.
+
 interface PlayerPresenceState {
     entered: boolean;
     spawned: boolean;

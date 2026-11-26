@@ -3,7 +3,7 @@ import type { Object3D } from "three";
 
 import { get_local_player_id } from "../../player/player_position_registry";
 
-// remote players' bodies (#25) are named `remote_avatar_<part>_rb[-hand]:<peer id>`. the prefix keeps
+// remote players' bodies are named `remote_avatar_<part>_rb[-hand]:<peer id>`. the prefix keeps
 // them clear of every `avatar_` check meant for the local player's own body (the character controller,
 // zone player detection), and the suffix says whose body it is
 export const REMOTE_AVATAR_PREFIX = "remote_";

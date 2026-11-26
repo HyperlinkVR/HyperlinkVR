@@ -1,11 +1,9 @@
-// the upstream half of shared mode: client player input flows *up* to the host, and the host
-// learns about remote players (#14, #16). the downstream half — host state → clients — is CommandSync.
+// the client → host half of shared mode: a client's reports go up to the host, and the host learns
+// about remote players. host → clients is CommandSync.
 //
-// scope note: a client forwards every report its engine produces. player-caused reports (button
-// presses, grabs, trigger-enters, raycasts, input) are unambiguous — they only fire on the engine
-// where that player is local, so they can't double-fire on the host. object-caused reports (zones,
-// collisions) are spoken for by one engine via their subject (report_outbox ReportSubject, #20), and
-// world monitors run host-only because a client hands world authority to the host below.
+// a client forwards every report its engine speaks for. player-caused ones only fire on that
+// player's engine; object-caused ones are spoken for by one engine (report_outbox ReportSubject);
+// world monitors run only on the host.
 
 import type { ReportEvent } from "@hyperlinkvr/vr-engine-schemas";
 import { useCallback, useEffect, useRef } from "react";
@@ -25,7 +23,7 @@ export const MultiplayerSync = () => {
     const { room, peers, mode, ended } = useNetSession();
     const { emit_event, apply_remote_command, connected } = useWebSDKMessaging();
 
-    // #17: tell the player their session ended (the watch modal lets them stay or go browse)
+    // tell the player their session ended (the watch modal lets them stay or go browse)
     useEffect(() => {
         if (!ended) {
             return;
@@ -36,14 +34,14 @@ export const MultiplayerSync = () => {
     const is_host = !!room && room.self.id === room.host();
     const is_shared_client = mode === "shared" && !!room && !is_host;
 
-    // #10 (slice): world-level logic (world monitors) runs on the host only. a shared client hands
-    // world authority up so it doesn't double-fire — the host runs them and replicates the results.
+    // world-level logic (world monitors) runs on the host only. a shared client hands
+    // world authority up so it doesn't double-fire; the host runs them and replicates the results.
     useEffect(() => {
         set_world_authority(!is_shared_client);
         return () => set_world_authority(true);
     }, [is_shared_client]);
 
-    // #14: a client forwards the reports its player caused to the host (reports are already stamped
+    // a client forwards the reports its player caused to the host (reports are already stamped
     // with the local player id by report_outbox).
     useEffect(() => {
         if (!is_shared_client || !room) {
@@ -51,7 +49,7 @@ export const MultiplayerSync = () => {
         }
         return add_report_sink((reports) => {
             // convert each report's ts from local to session time so the host reads a consistent
-            // timeline (its own reports are already session time — host offset is 0)
+            // timeline (its own reports are already session time, as its offset is 0)
             const in_session = reports.map((report) => ({ ...report, ts: local_to_session(report.ts) }));
             room.send("host", REPORT_CHANNEL, JSON.stringify(in_session), "reliable");
         });
@@ -84,14 +82,10 @@ export const MultiplayerSync = () => {
         return () => off_message();
     }, [room, is_host, emit_event]);
 
-    // #16: tell the host's page about remote players' arrival and departure:
-    // - join: as soon as they're in the room (no world or body yet)
-    // - spawn: when they announce it, i.e. their world has loaded and they have a placeable body, so the
-    //   world can teleport them and drop things in front of them without them falling through ground
-    //   that isn't loaded yet
-    // - enter: when they announce they can see and play (their play overlay is gone)
-    // - leave: anyone who joined, once they drop out of the peer list
-    // each fires once, always in that order. only the host runs the world, so only it needs these.
+    // remote players' arrival, raised on the host's page in this order, once each:
+    // join (in the room), spawn (announced once their world has loaded and they have a placeable body),
+    // enter (announced once their play overlay is gone), leave (dropped out of the room)
+
     const joined_ref = useRef<Set<string>>(new Set());
     const spawned_ref = useRef<Set<string>>(new Set());
     const entered_ref = useRef<Set<string>>(new Set());
@@ -167,7 +161,7 @@ export const MultiplayerSync = () => {
         return () => off_message();
     }, [is_host, connected, room, ensure_joined, emit_player, identity_of]);
 
-    // #14: player-targeted actions. the host forwards ones aimed at a remote player to that player's
+    // player-targeted actions. the host forwards ones aimed at a remote player to that player's
     // engine (see player_actions / WebSDKMessagingContext) and relays the reply to its page; a client
     // runs them against its own player and replies. only the host may send them.
     useEffect(() => {

@@ -1,10 +1,8 @@
 import type { PeerID } from "@hyperlinkvr/core";
 
-// who sits where (seat id → player id), so two players can't take the same seat. the host settles it:
-// a player sitting by input takes the seat straight away and asks the host, who confirms, or answers
-// with the real occupant, which makes the loser stand back up. the SDK's sit/stand are replicated
-// commands every engine applies in the same order, so they set occupancy directly (the page wins).
-// solo: no transport, so this is just a local table.
+// who sits where (seat id → player id). sitting by input takes the seat straight away and asks the
+// host, which confirms or answers with the real occupant (the loser stands up). the SDK's sit/stand
+// are replicated commands, applied in order everywhere. solo: just a local table.
 
 export type SeatRequest = { type: "claim" | "release"; seat_id: string };
 export type SeatMessage = { type: "occupant"; seat_id: string; player: PeerID | null };

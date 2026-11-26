@@ -4,19 +4,15 @@ import type { Object3D } from "three";
 
 import { set_remote_simulator } from "./authority";
 
-// who simulates each dynamic body in a shared world (#22). the host owns every body by default; a
-// grab hands it to the grabbing peer, who keeps it until it comes to rest (so a throw plays out on
-// the thrower's own engine, with no mid-flight handoff to rewind). the host arbitrates claims and
-// broadcasts the result, so every engine agrees who to follow.
+// who simulates each networked body in a shared world. the host owns everything by default. a grab
+// claims the body for the grabber, who keeps simulating it until it comes to rest, so a throw plays
+// out on the thrower's engine. once they let go it's "free": still theirs, but anyone can claim it.
+// the host settles claims and broadcasts the result.
 //
-// dynamic bodies take part, and so do held objects (#23): a grabbable that isn't a dynamic body (no
-// body, or a kinematic one) is moved only by the hand holding it, so while held its holder owns it,
-// streams its pose and speaks for its reports; it's handed back as soon as it's let go (nothing to
-// settle). other fixed/kinematic objects are deterministic, so each engine runs and reports for its
-// own copy (that's what keeps a client's button presses reportable).
+// dynamic bodies take part, and so do grabbables without one ("held objects"), which are owned by
+// whoever holds them. everything else is deterministic, so each engine runs its own copy.
 //
-// ownership is turned into the low-level authority fact (`set_remote_simulator`) that
-// report_outbox and PhysicsSync read.
+// ownership feeds `set_remote_simulator`, which report_outbox and PhysicsSync read.
 
 type OwnershipRequest = { type: "claim"; id: string } | { type: "release"; id: string } | { type: "let_go"; id: string };
 
@@ -29,7 +25,7 @@ const dynamic_bodies = new Set<string>();
 // every grabbable's moved node, by object id. one that isn't also a dynamic body is a held object
 const grab_targets = new Map<string, RefObject<Object3D | null>>();
 const overrides = new Map<string, PeerID>();
-// pinned overrides (#24) stay with their owner: no hand-back at rest, and nobody else can claim them
+// pinned overrides stay with their owner: no hand-back at rest, and nobody else can claim them
 const pinned = new Set<string>();
 // bodies whose owner has let go of them (thrown, rolling): they stay with the thrower until they come to
 // rest, but anyone can claim one meanwhile, so a throw can be caught and a rolling ball picked up
@@ -47,7 +43,7 @@ export const owns_body = (id: string): boolean => {
 };
 
 // grabbable here unless another peer has it: claimed (in their hand, or their throw is in flight),
-// or pinned to them (#24 — including pinned to the host)
+// or pinned to them (including pinned to the host)
 export const can_claim_body = (id: string): boolean => {
     if (pinned.has(id)) {
         const owner = get_body_owner(id);
@@ -71,7 +67,7 @@ export const is_body_pinned = (id: string): boolean => pinned.has(id);
 export const get_dynamic_bodies = (): ReadonlySet<string> => dynamic_bodies;
 export const get_owner_overrides = (): [string, PeerID][] => [...overrides];
 
-// everything that differs from "host owns it, unpinned, held" — claims, pins (including pins to the
+// everything that differs from "host owns it, unpinned, held": claims, pins (including pins to the
 // host, which have no override) and free bodies. what a newcomer needs to be told
 export const get_ownership_table = (): [string, PeerID | null, boolean, boolean][] => {
     const ids = new Set([...overrides.keys(), ...pinned, ...free]);
@@ -210,7 +206,7 @@ export const claim_body = (id: string) => {
     send_to_host?.({ type: "claim", id });
 };
 
-// hand a claimed body back to the host once it's at rest (never a pinned one — it stays with its owner)
+// hand a claimed body back to the host once it's at rest (never a pinned one, which stays with its owner)
 export const release_body = (id: string) => {
     if (pinned.has(id)) {
         return;
